@@ -7,5 +7,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<User> FindBySteamId64Async(string steamId);
         Task AddUserAsync(User user);
         Task UpdateUserAsync(User user);
+        Task UpdateUserNameAsync(string steamId64, string name);
     }
 }

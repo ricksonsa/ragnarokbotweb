@@ -1,4 +1,8 @@
 ﻿using FluentFTP;
+using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Timer = System.Timers.Timer;
 
 namespace RagnarokBotWeb.HostedServices
 {
@@ -6,13 +10,44 @@ namespace RagnarokBotWeb.HostedServices
     {
         private readonly FtpClient _ftpClient;
         private readonly string _baseFileName;
-        private readonly Dictionary<string, int> _processedLines = [];
+        private readonly Dictionary<string, Line> _processedLines = [];
+        private readonly IServiceProvider _services;
+        public static Timer Timer;
 
-        public BaseHostedService(FtpClient ftpClient, string baseFileName)
+        public BaseHostedService(IServiceProvider serviceProvider, FtpClient ftpClient, string baseFileName, int seconds = 10)
         {
             _ftpClient = ftpClient;
             _baseFileName = baseFileName;
+
+            Timer = new Timer(TimeSpan.FromSeconds(seconds));
+            Timer.Elapsed += async (sender, e) => await Process();
+            Timer.AutoReset = true;
+            Timer.Enabled = true;
+            _services = serviceProvider;
+
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                var readings = uow.Readings.Where(reader => reader.CreateDate.Date == DateTime.Now.Date).ToList();
+                if (readings.Any())
+                {
+                    _processedLines = readings
+                      .Select(reader => new Line(reader.Value, reader.FileName, reader.Hash))
+                      .ToDictionary(value => value.Hash);
+                }
+            }
         }
+
+        private async Task SaveLine(Line line)
+        {
+            using (var scope = _services.CreateScope())
+            {
+                var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                await uow.Readings.AddAsync(new Reader(line.File, line.Value, line.Hash));
+                await uow.SaveAsync();
+            }
+        }
+
         public abstract Task Process();
 
         public IEnumerable<string> GetLogFiles()
@@ -20,37 +55,29 @@ namespace RagnarokBotWeb.HostedServices
             var timeStamp = DateTime.Now.ToString("yyyyMMdd");
             var timeStampToday = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
             var files = _ftpClient.GetNameListing("/189.1.169.132_7000/");
-            return files.ToList().Where(fileName => fileName.StartsWith(_baseFileName + timeStamp) || fileName.StartsWith(_baseFileName + timeStampToday));
+            return files.ToList()
+                .Where(fileName =>
+                fileName.StartsWith(_baseFileName + timeStamp) || fileName.StartsWith(_baseFileName + timeStampToday));
         }
 
-        public IList<string> GetUnreadFileLines(string fileName)
+        public IList<Line> GetUnreadFileLines(string fileName)
         {
             using (var stream = _ftpClient.OpenRead("/189.1.169.132_7000/" + fileName, FtpDataType.ASCII))
             using (var reader = new StreamReader(stream))
             {
                 string line;
-                IList<string> lines = [];
-                int counter = _processedLines.ContainsKey(fileName) ? _processedLines[fileName] : 0;
-
-                // FIXME: Melhorar essa parada aqui
-                // Para skipar as linhas ja lidas
-                for (int i = 0; i < counter - 1; i++)
-                {
-                    reader.ReadLine();
-                }
+                IList<Line> lines = [];
 
                 while ((line = reader.ReadLine()) != null)
                 {
-                    lines.Add(line);
-                    if (_processedLines.ContainsKey(fileName))
+                    var fixedLine = line.Replace("\0", "");
+                    var lineObject = new Line(fixedLine, fileName);
+                    if (!_processedLines.ContainsKey(lineObject.Hash))
                     {
-                        _processedLines[fileName] = counter;
+                        lines.Add(lineObject);
+                        _processedLines.Add(lineObject.Hash, lineObject);
+                        SaveLine(lineObject);
                     }
-                    else
-                    {
-                        _processedLines.Add(fileName, counter);
-                    }
-                    counter++;
                 }
 
                 return lines;

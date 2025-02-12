@@ -6,6 +6,7 @@
         public string? SteamId64 { get; set; }
         public string? ScumId { get; set; }
         public string? DiscordId { get; set; }
+        public string? Presence { get; set; }
         public DateTime CreateDate { get; set; }
     }
 }

@@ -1,19 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
-using RagnarokBotWeb.Infrastructure.Configuration;
+using RagnarokBotWeb.HostedServices;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
-using System.Collections.Concurrent;
 
 namespace RagnarokBotWeb.Domain.Services
 {
     public class PlayerService : IPlayerService
     {
         private readonly IUnitOfWork _uow;
-        public static ConcurrentDictionary<string, User> ConnectedUsers = [];
         private readonly ILogger<PlayerService> _logger;
-
-        private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
         public PlayerService(IUnitOfWork uow, ILogger<PlayerService> logger)
         {
@@ -21,7 +17,7 @@ namespace RagnarokBotWeb.Domain.Services
             _logger = logger;
         }
 
-        public bool IsPlayerConnected(string steamId64) => ConnectedUsers.ContainsKey(steamId64);
+        public bool IsPlayerConnected(string steamId64) => GameLoadStateHostedService.ConnectedUsers.ContainsKey(steamId64);
 
         public async Task PlayerConnected(string steamId64, string scumId, string name)
         {
@@ -30,6 +26,7 @@ namespace RagnarokBotWeb.Domain.Services
             user ??= new();
             user.SteamId64 = steamId64;
             user.ScumId = scumId;
+            user.Presence = "online";
             user.Name = name;
 
             if (user.Id == 0)
@@ -46,12 +43,15 @@ namespace RagnarokBotWeb.Domain.Services
                 _logger.Log(LogLevel.Information, $"Registered User Connected {steamId64} {name}({scumId})");
             }
 
-            ConnectedUsers.AddOrUpdate(steamId64, user, (key, oldValue) => oldValue);
+            GameLoadStateHostedService.ConnectedUsers.AddOrUpdate(steamId64, user, (key, oldValue) => oldValue);
         }
 
-        public User PlayerDisconnected(string steamId64)
+        public async Task<User> PlayerDisconnected(string steamId64)
         {
-            ConnectedUsers.Remove(steamId64, out var user);
+            GameLoadStateHostedService.ConnectedUsers.Remove(steamId64, out var user);
+            user!.Presence = "offline";
+            _uow.Users.Update(user);
+            await _uow.SaveAsync();
             return user!;
         }
     }

@@ -3,15 +3,15 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public class LoginHostedService : BaseHostedService, IHostedService
+    public class EconomyHostedService : BaseHostedService, IHostedService
     {
-        private readonly ILogger<LoginHostedService> _logger;
+        private readonly ILogger<EconomyHostedService> _logger;
         private readonly IServiceProvider _services;
 
-        public LoginHostedService(
-            ILogger<LoginHostedService> logger,
+        public EconomyHostedService(
+            ILogger<EconomyHostedService> logger,
             IFtpService ftpService,
-            IServiceProvider services) : base(services, ftpService.GetClient(), "login_", 15)
+            IServiceProvider services) : base(services, ftpService.GetClient(), "economy_", 120)
         {
             _logger = logger;
             _services = services;
@@ -21,7 +21,7 @@ namespace RagnarokBotWeb.HostedServices
         {
             try
             {
-                _logger.LogInformation("Triggered LoginLogTask->Process at: {time}", DateTimeOffset.Now);
+                _logger.LogInformation("Triggered EconomyHostedService->Process at: {time}", DateTimeOffset.Now);
 
                 using (var scope = _services.CreateScope())
                 {
@@ -29,22 +29,17 @@ namespace RagnarokBotWeb.HostedServices
 
                     foreach (var fileName in GetLogFiles())
                     {
-                        _logger.LogInformation("LoginLogTask->Process Reading file: " + fileName);
+                        _logger.LogInformation("EconomyHostedService->Process Reading file: " + fileName);
 
                         foreach (var line in GetUnreadFileLines(fileName))
                         {
                             if (string.IsNullOrEmpty(line.Value)) continue;
+                            if (line.Value.Contains("Game version")) continue;
 
-                            var (steamId64, scumId, name, loggedIn) = new LoginLogParser().Parse(line.Value);
-                            if (string.IsNullOrWhiteSpace(steamId64)) continue;
-
-                            if (loggedIn)
+                            if (line.Value.Contains("changed their name"))
                             {
-                                await playerService.PlayerConnected(steamId64, scumId, name);
-                            }
-                            else
-                            {
-                                await playerService.PlayerDisconnected(steamId64);
+                                var (steamId64, scumId, changedName) = new ChangeNameLogParser().Parse(line.Value);
+                                await playerService.PlayerConnected(steamId64, scumId, changedName);
                             }
                         }
                     }
@@ -66,6 +61,5 @@ namespace RagnarokBotWeb.HostedServices
             Timer.Stop();
             return Task.CompletedTask;
         }
-
     }
 }

@@ -23,6 +23,10 @@ namespace RagnarokBotWeb
             builder.Services.AddDbContext<AppDbContext>();
 
             builder.Services.AddHostedService<LoginHostedService>();
+            builder.Services.AddHostedService<GameplayHostedService>();
+            builder.Services.AddHostedService<EconomyHostedService>();
+            builder.Services.AddHostedService<SeedDataHostedService>();
+            builder.Services.AddHostedService<GameLoadStateHostedService>();
 
             builder.Configuration.AddJsonFile("appsettings.json");
             builder.Services.Configure<AppSettings>(options => builder.Configuration.GetSection(nameof(AppSettings)).Bind(options));
@@ -30,10 +34,11 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<ILockpickService, LockpickService>();
+            builder.Services.AddScoped<IBunkerService, BunkerService>();
 
             builder.Services.AddScoped<IPlayerService, PlayerService>();
             builder.Services.AddSingleton<IFtpService, FtpService>();
-
 
             var app = builder.Build();
 

@@ -34,5 +34,13 @@ namespace RagnarokBotWeb.Domain.Services
             _userRepository.Update(user);
             await _userRepository.SaveAsync();
         }
+
+        public async Task UpdateUserNameAsync(string steamId64, string name)
+        {
+            var user = await FindBySteamId64Async(steamId64);
+            user.Name = name;
+            _userRepository.Update(user);
+            await _userRepository.SaveAsync();
+        }
     }
 }
