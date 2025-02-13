@@ -19,6 +19,11 @@ namespace RagnarokBotWeb.Domain.Services
 
         public bool IsPlayerConnected(string steamId64) => GameLoadStateHostedService.ConnectedUsers.ContainsKey(steamId64);
 
+        public List<User> OnlinePlayers()
+        {
+            return GameLoadStateHostedService.ConnectedUsers.Values.ToList();
+        }
+
         public async Task PlayerConnected(string steamId64, string scumId, string name)
         {
             var user = await _uow.Users.FirstOrDefaultAsync(user => user.SteamId64 == steamId64);
@@ -49,10 +54,17 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<User> PlayerDisconnected(string steamId64)
         {
             GameLoadStateHostedService.ConnectedUsers.Remove(steamId64, out var user);
+
+            if (user is null)
+            {
+                user = await _uow.Users.FirstOrDefaultAsync(user => user.SteamId64 == steamId64);
+            }
+
             user!.Presence = "offline";
             _uow.Users.Update(user);
             await _uow.SaveAsync();
-            return user!;
+
+            return user;
         }
     }
 }

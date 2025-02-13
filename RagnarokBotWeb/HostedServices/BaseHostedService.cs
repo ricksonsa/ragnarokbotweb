@@ -33,6 +33,7 @@ namespace RagnarokBotWeb.HostedServices
                 {
                     _processedLines = readings
                       .Select(reader => new Line(reader.Value, reader.FileName, reader.Hash))
+                      .DistinctBy(x => x.Hash)
                       .ToDictionary(value => value.Hash);
                 }
             }
@@ -52,12 +53,14 @@ namespace RagnarokBotWeb.HostedServices
 
         public IEnumerable<string> GetLogFiles()
         {
-            var timeStamp = DateTime.Now.ToString("yyyyMMdd");
-            var timeStampToday = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
+            var timeStampYesterday = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
+            var timeStampToday = DateTime.Now.ToString("yyyyMMdd");
+            var timeStampTomorrow = DateTime.Now.AddDays(1).ToString("yyyyMMdd");
             var files = _ftpClient.GetNameListing("/189.1.169.132_7000/");
             return files.ToList()
                 .Where(fileName =>
-                fileName.StartsWith(_baseFileName + timeStamp) || fileName.StartsWith(_baseFileName + timeStampToday));
+                fileName.StartsWith(_baseFileName + timeStampYesterday) || fileName.StartsWith(_baseFileName + timeStampToday) || fileName.StartsWith(_baseFileName + timeStampTomorrow))
+                .OrderBy(x => DateTime.ParseExact(x.Split("_")[1].Replace(".log", string.Empty), "yyyyMMddHHmmss", null));
         }
 
         public IList<Line> GetUnreadFileLines(string fileName)

@@ -16,7 +16,10 @@ namespace RagnarokBotWeb
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(options =>
+            {
+                //options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -27,20 +30,33 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<EconomyHostedService>();
             builder.Services.AddHostedService<SeedDataHostedService>();
             builder.Services.AddHostedService<GameLoadStateHostedService>();
+            builder.Services.AddHostedService<KillHostedService>();
 
             builder.Configuration.AddJsonFile("appsettings.json");
             builder.Services.Configure<AppSettings>(options => builder.Configuration.GetSection(nameof(AppSettings)).Bind(options));
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IItemRepository, ItemRepository>();
+            builder.Services.AddScoped<IPackRepository, PackRepository>();
+            builder.Services.AddScoped<IPackItemRepository, PackItemRepository>();
+
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
             builder.Services.AddScoped<IBunkerService, BunkerService>();
-
+            builder.Services.AddScoped<IItemService, ItemService>();
+            builder.Services.AddScoped<IPackService, PackService>();
             builder.Services.AddScoped<IPlayerService, PlayerService>();
+
             builder.Services.AddSingleton<IFtpService, FtpService>();
 
+            builder.Services.AddHealthChecks();
+
+            builder.Services.AddMvc();
+
             var app = builder.Build();
+
+            app.MapHealthChecks("/health");
 
             // Apply migrations automatically
             using (var scope = app.Services.CreateScope())

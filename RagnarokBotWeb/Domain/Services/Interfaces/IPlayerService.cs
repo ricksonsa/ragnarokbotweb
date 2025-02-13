@@ -6,6 +6,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     {
         bool IsPlayerConnected(string steamId64);
         Task PlayerConnected(string steamId64, string scumId, string name);
+        List<User> OnlinePlayers();
         Task<User> PlayerDisconnected(string steamId64);
     }
 }

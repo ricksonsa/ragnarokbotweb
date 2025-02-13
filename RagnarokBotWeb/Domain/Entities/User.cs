@@ -7,6 +7,7 @@
         public string? ScumId { get; set; }
         public string? DiscordId { get; set; }
         public string? Presence { get; set; }
+        public decimal Balance { get; set; } = 0;
         public DateTime CreateDate { get; set; }
     }
 }

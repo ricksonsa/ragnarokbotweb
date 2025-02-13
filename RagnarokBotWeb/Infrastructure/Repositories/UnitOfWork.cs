@@ -12,6 +12,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<Lockpick> Lockpicks { get; }
         public DbSet<Bunker> Bunkers { get; }
         public DbSet<Reader> Readings { get; }
+        public DbSet<Kill> Kills { get; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -20,6 +21,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             Lockpicks = context.Lockpicks;
             Bunkers = context.Bunkers;
             Readings = context.Readings;
+            Kills = context.Kills;
         }
 
         public async Task SaveAsync()

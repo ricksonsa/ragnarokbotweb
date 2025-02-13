@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace RagnarokBotWeb.Application.LogParser
 {
-    public class LockpickLogParser : ILogParser<Lockpick>
+    public class LockpickLogParser
     {
         public Lockpick Parse(string line)
         {
@@ -24,12 +24,12 @@ namespace RagnarokBotWeb.Application.LogParser
                 lockTypeSection = lockTypeSection.Substring(0, lockTypeSection.IndexOf("."));
 
                 var dateSection = line.Split(":")[0];
-                string format = "yyyy.MM.dd-HH.mm.ss";
 
                 string name = match.Groups[1].Value;
                 long scumId = long.Parse(match.Groups[2].Value);
                 string steamId64 = match.Groups[3].Value;
                 var lockType = lockTypeSection;
+                string format = "yyyy.MM.dd-HH.mm.ss";
                 var date = DateTime.ParseExact(dateSection, format, CultureInfo.InvariantCulture);
                 bool succes = successSection == "Yes";
                 int attempts = int.Parse(attemptSection);

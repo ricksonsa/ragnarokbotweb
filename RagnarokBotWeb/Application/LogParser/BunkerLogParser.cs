@@ -2,7 +2,7 @@
 
 namespace RagnarokBotWeb.Application.LogParser
 {
-    public class BunkerLogParser : ILogParser<(string, bool, TimeSpan)>
+    public class BunkerLogParser
     {
         public (string, bool, TimeSpan) Parse(string line)
         {

@@ -2,5 +2,6 @@
 {
     public class Order : BaseEntity
     {
+        public Pack Pack { get; set; }
     }
 }

@@ -4,7 +4,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/public/players")]
     public class PlayersController : ControllerBase
     {
         private readonly IPlayerService _playerService;

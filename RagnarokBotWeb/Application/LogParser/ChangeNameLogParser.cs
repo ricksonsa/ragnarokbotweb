@@ -2,7 +2,7 @@
 
 namespace RagnarokBotWeb.Application.LogParser
 {
-    public class ChangeNameLogParser : ILogParser<(string, string, string)>
+    public class ChangeNameLogParser
     {
         public (string, string, string) Parse(string line)
         {
