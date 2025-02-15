@@ -19,5 +19,11 @@ namespace RagnarokBotWeb.Controllers
         {
             return Ok(_playerService.OnlinePlayers());
         }
+
+        [HttpGet("offline")]
+        public async Task<IActionResult> OfflinePlayers()
+        {
+            return Ok(await _playerService.OfflinePlayers());
+        }
     }
 }

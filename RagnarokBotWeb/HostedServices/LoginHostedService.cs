@@ -3,7 +3,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public class LoginHostedService : BaseHostedService, IHostedService
+    public class LoginHostedService : TimedHostedService, IHostedService
     {
         private readonly ILogger<LoginHostedService> _logger;
         private readonly IServiceProvider _services;
@@ -11,7 +11,7 @@ namespace RagnarokBotWeb.HostedServices
         public LoginHostedService(
             ILogger<LoginHostedService> logger,
             IFtpService ftpService,
-            IServiceProvider services) : base(services, ftpService.GetClient(), "login_", 15)
+            IServiceProvider services) : base(services, ftpService.GetClient(), "login_", TimeSpan.FromSeconds(30))
         {
             _logger = logger;
             _services = services;

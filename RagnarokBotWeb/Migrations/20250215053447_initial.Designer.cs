@@ -11,8 +11,8 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250213070720_shop")]
-    partial class shop
+    [Migration("20250215053447_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -60,6 +60,28 @@ namespace RagnarokBotWeb.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Bunkers");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Item", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Items");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Kill", b =>
@@ -136,6 +158,81 @@ namespace RagnarokBotWeb.Migrations
                     b.ToTable("Lockpicks");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Order", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("PackId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PackId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Pack", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("VipPrice")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Packs");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.PackItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("PackId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("PackId");
+
+                    b.ToTable("PackItems");
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Reader", b =>
                 {
                     b.Property<long>("Id")
@@ -162,6 +259,25 @@ namespace RagnarokBotWeb.Migrations
                     b.ToTable("Readings");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Transaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Transactions");
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.User", b =>
                 {
                     b.Property<long>("Id")
@@ -178,15 +294,18 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Presence")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ScumId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SteamId64")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -220,6 +339,56 @@ namespace RagnarokBotWeb.Migrations
                         .HasForeignKey("UserId");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Order", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Pack", "Pack")
+                        .WithMany()
+                        .HasForeignKey("PackId");
+
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Pack");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.PackItem", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Pack", "Pack")
+                        .WithMany("PackItems")
+                        .HasForeignKey("PackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("Pack");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Transaction", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Pack", b =>
+                {
+                    b.Navigation("PackItems");
                 });
 #pragma warning restore 612, 618
         }

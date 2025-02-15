@@ -3,7 +3,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public class EconomyHostedService : BaseHostedService, IHostedService
+    public class EconomyHostedService : TimedHostedService, IHostedService
     {
         private readonly ILogger<EconomyHostedService> _logger;
         private readonly IServiceProvider _services;
@@ -11,7 +11,7 @@ namespace RagnarokBotWeb.HostedServices
         public EconomyHostedService(
             ILogger<EconomyHostedService> logger,
             IFtpService ftpService,
-            IServiceProvider services) : base(services, ftpService.GetClient(), "economy_", 120)
+            IServiceProvider services) : base(services, ftpService.GetClient(), "economy_", TimeSpan.FromMinutes(5))
         {
             _logger = logger;
             _services = services;

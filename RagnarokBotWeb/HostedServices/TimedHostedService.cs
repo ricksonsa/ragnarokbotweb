@@ -6,7 +6,7 @@ using Timer = System.Timers.Timer;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public abstract class BaseHostedService
+    public abstract class TimedHostedService
     {
         private readonly FtpClient _ftpClient;
         private readonly string _baseFileName;
@@ -14,12 +14,12 @@ namespace RagnarokBotWeb.HostedServices
         private readonly IServiceProvider _services;
         public static Timer Timer;
 
-        public BaseHostedService(IServiceProvider serviceProvider, FtpClient ftpClient, string baseFileName, int seconds = 10)
+        public TimedHostedService(IServiceProvider serviceProvider, FtpClient ftpClient, string baseFileName, TimeSpan time)
         {
             _ftpClient = ftpClient;
             _baseFileName = baseFileName;
 
-            Timer = new Timer(TimeSpan.FromSeconds(seconds));
+            Timer = new Timer(time);
             Timer.Elapsed += async (sender, e) => await Process();
             Timer.AutoReset = true;
             Timer.Enabled = true;

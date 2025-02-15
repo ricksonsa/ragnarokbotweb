@@ -161,12 +161,23 @@ namespace RagnarokBotWeb.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("PackId")
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("PackId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PackId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Orders");
                 });
@@ -280,15 +291,18 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Presence")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ScumId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SteamId64")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -328,11 +342,15 @@ namespace RagnarokBotWeb.Migrations
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Pack", "Pack")
                         .WithMany()
-                        .HasForeignKey("PackId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PackId");
+
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Pack");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.PackItem", b =>
@@ -344,7 +362,7 @@ namespace RagnarokBotWeb.Migrations
                         .IsRequired();
 
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Pack", "Pack")
-                        .WithMany()
+                        .WithMany("PackItems")
                         .HasForeignKey("PackId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -363,6 +381,11 @@ namespace RagnarokBotWeb.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Pack", b =>
+                {
+                    b.Navigation("PackItems");
                 });
 #pragma warning restore 612, 618
         }

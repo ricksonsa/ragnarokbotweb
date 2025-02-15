@@ -1,6 +1,5 @@
 ﻿
 using RagnarokBotWeb.Domain.Entities;
-using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices
@@ -12,7 +11,6 @@ namespace RagnarokBotWeb.HostedServices
 
         public SeedDataHostedService(
             ILogger<SeedDataHostedService> logger,
-            IFtpService ftpService,
             IServiceProvider services)
         {
             _logger = logger;

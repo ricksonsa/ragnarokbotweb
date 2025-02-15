@@ -2,19 +2,15 @@
 
 namespace RagnarokBotWeb.Domain.Entities
 {
-    public class Command : BaseEntity
+    public class Command
     {
-        public Guid Uuid { get; set; }
         public string? Coordinates { get; set; }
         public string? Target { get; set; }
-        public string? Value { get; set; }
-        public bool Completed { get; set; } = false;
+        public string Value { get; set; }
         public ECommandType Type { get; set; }
+        public int Amount { get; set; } = 1;
         public Bot? Bot { get; set; }
 
-        public Command()
-        {
-            Uuid = Guid.NewGuid();
-        }
+        public Command() { }
     }
 }

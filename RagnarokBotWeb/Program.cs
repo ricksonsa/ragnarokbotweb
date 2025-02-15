@@ -37,12 +37,15 @@ namespace RagnarokBotWeb
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+            builder.Services.AddScoped<IBotRepository, BotRepository>();
             builder.Services.AddScoped<IItemRepository, ItemRepository>();
             builder.Services.AddScoped<IPackRepository, PackRepository>();
             builder.Services.AddScoped<IPackItemRepository, PackItemRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
+            builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IBunkerService, BunkerService>();
             builder.Services.AddScoped<IItemService, ItemService>();
             builder.Services.AddScoped<IPackService, PackService>();
@@ -56,7 +59,7 @@ namespace RagnarokBotWeb
 
             var app = builder.Build();
 
-            app.MapHealthChecks("/health");
+            app.MapHealthChecks("/healthz");
 
             // Apply migrations automatically
             using (var scope = app.Services.CreateScope())

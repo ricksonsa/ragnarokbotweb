@@ -5,6 +5,10 @@
         Delivery,
         TeleportPlayer,
         Kick,
-        Ban
+        Ban,
+        Announce,
+        Say,
+        Command,
+        DestroyItems
     }
 }

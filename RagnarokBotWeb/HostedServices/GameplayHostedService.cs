@@ -3,7 +3,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public class GameplayHostedService : BaseHostedService, IHostedService
+    public class GameplayHostedService : TimedHostedService, IHostedService
     {
         private readonly ILogger<GameplayHostedService> _logger;
         private readonly IServiceProvider _services;
@@ -11,7 +11,7 @@ namespace RagnarokBotWeb.HostedServices
         public GameplayHostedService(
             ILogger<GameplayHostedService> logger,
             IFtpService ftpService,
-            IServiceProvider services) : base(services, ftpService.GetClient(), "gameplay_", 30)
+            IServiceProvider services) : base(services, ftpService.GetClient(), "gameplay_", TimeSpan.FromMinutes(5))
         {
             _logger = logger;
             _services = services;

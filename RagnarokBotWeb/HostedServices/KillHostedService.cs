@@ -4,7 +4,7 @@ using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public class KillHostedService : BaseHostedService, IHostedService
+    public class KillHostedService : TimedHostedService, IHostedService
     {
         private readonly ILogger<KillHostedService> _logger;
         private readonly IServiceProvider _services;
@@ -12,7 +12,7 @@ namespace RagnarokBotWeb.HostedServices
         public KillHostedService(
             ILogger<KillHostedService> logger,
             IFtpService ftpService,
-            IServiceProvider services) : base(services, ftpService.GetClient(), "kill_", 40)
+            IServiceProvider services) : base(services, ftpService.GetClient(), "kill_", TimeSpan.FromMinutes(5))
         {
             _logger = logger;
             _services = services;

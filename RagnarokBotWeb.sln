@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RagnarokBotWeb", "RagnarokBotWeb\RagnarokBotWeb.csproj", "{12E9F59F-B970-4E21-8D9D-6903C9913624}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RagnarokBotWeb", "RagnarokBotWeb\RagnarokBotWeb.csproj", "{12E9F59F-B970-4E21-8D9D-6903C9913624}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{41987653-FC1E-4E8D-A68D-1CCD30EA4B63}"
+	ProjectSection(SolutionItems) = preProject
+		.Dockerfile = .Dockerfile
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -4,20 +4,18 @@ namespace RagnarokBotWeb.Application.LogParser
 {
     public class LoginLogParser
     {
+        // steamId64, scumId, playerName, isLogin
         public (string, string, string, bool) Parse(string line)
         {
-            string pattern = @":([a-zA-Z]+)\((\d+)\)";
+            string pattern = @"(\d{17}):([a-zA-Z]+)\((\d+)\)";
 
             Match match = Regex.Match(line, pattern);
-
-            string name = match.Groups[1].Value;
-            string scumId = match.Groups[2].Value;
-
-            Match match1 = Regex.Match(line, @"(\d+):([A-Za-z]+)");
-            string steamId64 = match1.Groups[1].Value;
+            string steamId = match.Groups[1].Value;
+            string name = match.Groups[2].Value;
+            string scumId = match.Groups[3].Value;
             bool isLoggedIn = line.Contains("logged in");
 
-            return (steamId64, scumId, name, isLoggedIn);
+            return (steamId, scumId, name, isLoggedIn);
         }
     }
 }

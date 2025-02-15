@@ -24,6 +24,25 @@ namespace RagnarokBotWeb.Domain.Services
             return GameLoadStateHostedService.ConnectedUsers.Values.ToList();
         }
 
+        public Task<List<User>> OfflinePlayers()
+        {
+            return _uow.Users.Where(user => user.Presence == "offline").ToListAsync();
+        }
+
+        public async Task ResetPlayersConnection()
+        {
+            var users = await _uow.Users.ToListAsync();
+
+            users.ForEach(user =>
+            {
+                user.Presence = "offline";
+                _uow.Users.Update(user);
+            });
+            await _uow.SaveAsync();
+
+            GameLoadStateHostedService.ConnectedUsers = [];
+        }
+
         public async Task PlayerConnected(string steamId64, string scumId, string name)
         {
             var user = await _uow.Users.FirstOrDefaultAsync(user => user.SteamId64 == steamId64);

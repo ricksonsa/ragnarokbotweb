@@ -19,5 +19,12 @@ namespace RagnarokBotWeb.Controllers
         {
             return Ok(new { state = _playerService.IsPlayerConnected(steamid) ? "online" : "offline" });
         }
+
+        [HttpGet("state/reset")]
+        public async Task<IActionResult> ResetPlayersState()
+        {
+            await _playerService.ResetPlayersConnection();
+            return Ok();
+        }
     }
 }
