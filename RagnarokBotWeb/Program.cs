@@ -1,3 +1,4 @@
+using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -31,6 +32,9 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<SeedDataHostedService>();
             builder.Services.AddHostedService<GameLoadStateHostedService>();
             builder.Services.AddHostedService<KillHostedService>();
+ 
+            builder.Services.AddHostedService<DiscordBotService>();
+            builder.Services.AddSingleton<IMessageEventHandlerFactory, MessageEventHandlerFactory>();
 
             builder.Configuration.AddJsonFile("appsettings.json");
             builder.Services.Configure<AppSettings>(options => builder.Configuration.GetSection(nameof(AppSettings)).Bind(options));
