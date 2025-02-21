@@ -29,8 +29,9 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<GameplayHostedService>();
             builder.Services.AddHostedService<EconomyHostedService>();
             builder.Services.AddHostedService<SeedDataHostedService>();
-            builder.Services.AddHostedService<GameLoadStateHostedService>();
             builder.Services.AddHostedService<KillHostedService>();
+            builder.Services.AddHostedService<OrderCommandHostedService>();
+            builder.Services.AddHostedService<ListPlayersHostedService>();
 
             builder.Configuration.AddJsonFile("appsettings.json");
             builder.Services.Configure<AppSettings>(options => builder.Configuration.GetSection(nameof(AppSettings)).Bind(options));
@@ -50,8 +51,10 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IItemService, ItemService>();
             builder.Services.AddScoped<IPackService, PackService>();
             builder.Services.AddScoped<IPlayerService, PlayerService>();
+            builder.Services.AddScoped<IBotService, BotService>();
 
             builder.Services.AddSingleton<IFtpService, FtpService>();
+            builder.Services.AddSingleton<ICacheService, CacheService>();
 
             builder.Services.AddHealthChecks();
 

@@ -1,6 +1,7 @@
 ﻿using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Shared.Enums;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -10,50 +11,21 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IOrderRepository _orderRepository;
         private readonly IPackRepository _packRepository;
         private readonly IUserRepository _userRepository;
-        private readonly IBotRepository _botRepository;
 
         public OrderService(ILogger<OrderService> logger,
             IOrderRepository orderRepository,
             IPackRepository packRepository,
-            IUserRepository userRepository,
-            IBotRepository botRepository)
+            IUserRepository userRepository)
         {
             _logger = logger;
             _orderRepository = orderRepository;
             _packRepository = packRepository;
             _userRepository = userRepository;
-            _botRepository = botRepository;
         }
 
         public Task<IEnumerable<Order>> GetCreatedOrders()
         {
-            return _orderRepository.FindAsync(order => order.Status == Enums.EOrderStatus.Created);
-        }
-
-        public async Task<List<Command>> GetCommand(long botId)
-        {
-            var order = await _orderRepository.FindOneWithPackCreated();
-            if (order is null) return null;
-            var bot = await _botRepository.GetByIdAsync(botId);
-            if (bot is null || !bot.Active) return null;
-            order.Status = Enums.EOrderStatus.Command;
-            _orderRepository.Update(order);
-            await _orderRepository.SaveAsync();
-
-            var commands = new List<Command>();
-            order.Pack!.PackItems.ForEach(packItem =>
-            {
-                commands.Add(new Command
-                {
-                    Bot = bot,
-                    Target = order.User!.SteamId64,
-                    Type = Enums.ECommandType.Delivery,
-                    Value = packItem.Item.Code,
-                    Amount = packItem.Amount
-                });
-            });
-
-            return commands;
+            return _orderRepository.FindAsync(order => order.Status == EOrderStatus.Created);
         }
 
         public async Task<Order?> PlaceOrder(string steamId64, long packId)

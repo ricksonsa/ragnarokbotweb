@@ -1,4 +1,4 @@
-﻿namespace RagnarokBotWeb.Domain.Enums
+﻿namespace Shared.Enums
 {
     public enum ECommandType
     {
@@ -9,6 +9,7 @@
         Announce,
         Say,
         Command,
-        DestroyItems
+        DestroyItems,
+        ListPlayers
     }
 }

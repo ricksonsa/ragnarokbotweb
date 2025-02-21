@@ -1,9 +1,10 @@
 ﻿using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.HostedServices.Base;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public class GameplayHostedService : TimedHostedService, IHostedService
+    public class GameplayHostedService : TimedFtpHostedService
     {
         private readonly ILogger<GameplayHostedService> _logger;
         private readonly IServiceProvider _services;

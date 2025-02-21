@@ -1,9 +1,10 @@
 ﻿using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.HostedServices.Base;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public class LoginHostedService : TimedHostedService, IHostedService
+    public class LoginHostedService : TimedFtpHostedService
     {
         private readonly ILogger<LoginHostedService> _logger;
         private readonly IServiceProvider _services;
@@ -11,7 +12,7 @@ namespace RagnarokBotWeb.HostedServices
         public LoginHostedService(
             ILogger<LoginHostedService> logger,
             IFtpService ftpService,
-            IServiceProvider services) : base(services, ftpService.GetClient(), "login_", TimeSpan.FromSeconds(30))
+            IServiceProvider services) : base(services, ftpService.GetClient(), "login_", TimeSpan.FromSeconds(120))
         {
             _logger = logger;
             _services = services;
@@ -44,28 +45,16 @@ namespace RagnarokBotWeb.HostedServices
                             }
                             else
                             {
-                                await playerService.PlayerDisconnected(steamId64);
+                                playerService.PlayerDisconnected(steamId64);
                             }
                         }
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
         }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Timed Hosted Service is starting.");
-            Timer.Start();
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Timed Hosted Service is stopping.");
-            Timer.Stop();
-            return Task.CompletedTask;
-        }
-
     }
 }

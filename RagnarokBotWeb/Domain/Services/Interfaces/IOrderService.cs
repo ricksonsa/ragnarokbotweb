@@ -6,6 +6,5 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     {
         Task<Order?> PlaceOrder(string steamId64, long packId);
         Task<IEnumerable<Order>> GetCreatedOrders();
-        Task<List<Command>> GetCommand(long botId);
     }
 }

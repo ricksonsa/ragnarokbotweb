@@ -1,4 +1,4 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using Shared.Models;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
@@ -6,9 +6,9 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     {
         bool IsPlayerConnected(string steamId64);
         Task PlayerConnected(string steamId64, string scumId, string name);
-        List<User> OnlinePlayers();
-        Task<List<User>> OfflinePlayers();
-        Task ResetPlayersConnection();
-        Task<User> PlayerDisconnected(string steamId64);
+        List<Player> OnlinePlayers();
+        Task<List<Player>> OfflinePlayers();
+        void ResetPlayersConnection();
+        Player? PlayerDisconnected(string steamId64);
     }
 }

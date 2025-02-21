@@ -37,8 +37,12 @@ namespace RagnarokBotWeb.Application.LogParser
             {
                 CreateDate = date,
                 Distance = distance,
-                Killer = _users.FirstOrDefault(user => user.SteamId64 == preParseKill.Killer.UserId)!,
-                Target = _users.FirstOrDefault(user => user.SteamId64 == preParseKill.Victim.UserId)!,
+                Killer = _users.FirstOrDefault(user => user.SteamId64 == preParseKill.Killer.UserId),
+                Target = _users.FirstOrDefault(user => user.SteamId64 == preParseKill.Victim.UserId),
+                KillerSteamId64 = preParseKill.Killer.UserId,
+                TargetSteamId64 = preParseKill.Victim.UserId,
+                KillerName = preParseKill.Killer.ProfileName,
+                TargetName = preParseKill.Victim.ProfileName,
                 Weapon = preParseKill.Weapon
             };
         }

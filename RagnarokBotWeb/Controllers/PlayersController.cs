@@ -21,9 +21,9 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet("state/reset")]
-        public async Task<IActionResult> ResetPlayersState()
+        public IActionResult ResetPlayersState()
         {
-            await _playerService.ResetPlayersConnection();
+            _playerService.ResetPlayersConnection();
             return Ok();
         }
     }

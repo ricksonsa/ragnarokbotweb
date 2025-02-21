@@ -1,4 +1,5 @@
 ﻿using RagnarokBotWeb.Domain.Entities;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
@@ -8,5 +9,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task AddUserAsync(User user);
         Task UpdateUserAsync(User user);
         Task UpdateUserNameAsync(string steamId64, string name);
+        Task UpdateFromPlayers(List<Player>? players);
     }
 }

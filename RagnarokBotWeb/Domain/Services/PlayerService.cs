@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
-using RagnarokBotWeb.HostedServices;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -10,37 +10,44 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly ILogger<PlayerService> _logger;
+        private readonly ICacheService _cacheService;
 
-        public PlayerService(IUnitOfWork uow, ILogger<PlayerService> logger)
+        public PlayerService(IUnitOfWork uow, ILogger<PlayerService> logger, ICacheService cacheService)
         {
             _uow = uow;
             _logger = logger;
+            _cacheService = cacheService;
         }
 
-        public bool IsPlayerConnected(string steamId64) => GameLoadStateHostedService.ConnectedUsers.ContainsKey(steamId64);
+        public bool IsPlayerConnected(string steamId64) => _cacheService.GetConnectedPlayers().ContainsKey(steamId64);
 
-        public List<User> OnlinePlayers()
+        public List<Player> OnlinePlayers()
         {
-            return GameLoadStateHostedService.ConnectedUsers.Values.ToList();
+            return _cacheService.GetConnectedPlayers().Values.ToList();
         }
 
-        public Task<List<User>> OfflinePlayers()
+        public async Task<List<Player>> OfflinePlayers()
         {
-            return _uow.Users.Where(user => user.Presence == "offline").ToListAsync();
-        }
-
-        public async Task ResetPlayersConnection()
-        {
-            var users = await _uow.Users.ToListAsync();
-
-            users.ForEach(user =>
+            var allUsers = (await _uow.Users.ToListAsync()).Select(user => new Player
             {
-                user.Presence = "offline";
-                _uow.Users.Update(user);
-            });
-            await _uow.SaveAsync();
+                Name = user.Name,
+                SteamID = user.SteamId64,
+                AccountBalance = user.Money ?? 0,
+                Fame = user.Fame ?? 0,
+                SteamName = user.SteamName,
+                GoldBalance = user.Gold ?? 0,
+                X = user.X ?? 0,
+                Y = user.Y ?? 0,
+                Z = user.Z ?? 0,
 
-            GameLoadStateHostedService.ConnectedUsers = [];
+            }).ToList();
+            var values = _cacheService.GetConnectedPlayers().Values.ToList();
+            return allUsers.ExceptBy(values.Select(v => v.SteamID), u => u.SteamID).ToList();
+        }
+
+        public void ResetPlayersConnection()
+        {
+            _cacheService.ClearConnectedPlayers();
         }
 
         public async Task PlayerConnected(string steamId64, string scumId, string name)
@@ -50,12 +57,10 @@ namespace RagnarokBotWeb.Domain.Services
             user ??= new();
             user.SteamId64 = steamId64;
             user.ScumId = scumId;
-            user.Presence = "online";
             user.Name = name;
 
             if (user.Id == 0)
             {
-                user.CreateDate = DateTime.Now;
                 await _uow.Users.AddAsync(user);
                 await _uow.SaveAsync();
                 _logger.Log(LogLevel.Information, $"New User Connected {steamId64} {name}({scumId})");
@@ -67,23 +72,17 @@ namespace RagnarokBotWeb.Domain.Services
                 _logger.Log(LogLevel.Information, $"Registered User Connected {steamId64} {name}({scumId})");
             }
 
-            GameLoadStateHostedService.ConnectedUsers.AddOrUpdate(steamId64, user, (key, oldValue) => oldValue);
+            _cacheService.GetCommandQueue().Enqueue(Command.ListPlayers());
         }
 
-        public async Task<User> PlayerDisconnected(string steamId64)
+        public Player? PlayerDisconnected(string steamId64)
         {
-            GameLoadStateHostedService.ConnectedUsers.Remove(steamId64, out var user);
-
-            if (user is null)
+            if (_cacheService.GetConnectedPlayers().Remove(steamId64, out var player))
             {
-                user = await _uow.Users.FirstOrDefaultAsync(user => user.SteamId64 == steamId64);
+                return player;
             }
 
-            user!.Presence = "offline";
-            _uow.Users.Update(user);
-            await _uow.SaveAsync();
-
-            return user;
+            return null;
         }
     }
 }

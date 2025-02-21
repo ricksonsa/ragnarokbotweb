@@ -1,4 +1,4 @@
-﻿namespace RagnarokBotWeb.Domain.Enums
+﻿namespace Shared.Enums
 {
     public enum EOrderStatus
     {

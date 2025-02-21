@@ -26,12 +26,15 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("State")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("SteamId64")
+                    b.Property<string>("Identifier")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastInteracted")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("State")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -90,20 +93,31 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<float>("Distance")
+                    b.Property<float?>("Distance")
                         .HasColumnType("REAL");
 
-                    b.Property<long>("KillerId")
+                    b.Property<long?>("KillerId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("KillerName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("KillerSteamId64")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Sector")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("TargetId")
+                    b.Property<long?>("TargetId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("TargetName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TargetSteamId64")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Weapon")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -281,8 +295,8 @@ namespace RagnarokBotWeb.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("Coin")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("TEXT");
@@ -290,20 +304,35 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<string>("DiscordId")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("Fame")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<string>("Presence")
+                    b.Property<long?>("Gold")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("Money")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ScumId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SteamId64")
-                        .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("SteamName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<float?>("X")
+                        .HasColumnType("REAL");
+
+                    b.Property<float?>("Y")
+                        .HasColumnType("REAL");
+
+                    b.Property<float?>("Z")
+                        .HasColumnType("REAL");
 
                     b.HasKey("Id");
 
@@ -314,15 +343,11 @@ namespace RagnarokBotWeb.Migrations
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.User", "Killer")
                         .WithMany()
-                        .HasForeignKey("KillerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("KillerId");
 
                     b.HasOne("RagnarokBotWeb.Domain.Entities.User", "Target")
                         .WithMany()
-                        .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TargetId");
 
                     b.Navigation("Killer");
 

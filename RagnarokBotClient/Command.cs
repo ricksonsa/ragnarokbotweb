@@ -1,6 +1,6 @@
 ﻿using Shared.Enums;
 
-namespace RagnarokBotWeb.Domain.Entities
+namespace RagnarokBotClient
 {
     public class Command
     {
@@ -9,16 +9,5 @@ namespace RagnarokBotWeb.Domain.Entities
         public string Value { get; set; }
         public ECommandType Type { get; set; }
         public int Amount { get; set; } = 1;
-        public Bot? Bot { get; set; }
-
-        public Command() { }
-
-        public static Command ListPlayers()
-        {
-            return new Command
-            {
-                Type = ECommandType.ListPlayers
-            };
-        }
     }
 }

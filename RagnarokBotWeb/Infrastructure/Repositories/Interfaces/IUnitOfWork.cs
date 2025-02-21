@@ -10,6 +10,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         DbSet<Bunker> Bunkers { get; }
         DbSet<Reader> Readings { get; }
         DbSet<Kill> Kills { get; }
+        DbSet<Bot> Bots { get; }
         Task SaveAsync();
     }
 }

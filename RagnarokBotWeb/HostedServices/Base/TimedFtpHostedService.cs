@@ -1,28 +1,21 @@
-﻿using FluentFTP;
+﻿
+using FluentFTP;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
-using Timer = System.Timers.Timer;
 
-namespace RagnarokBotWeb.HostedServices
+namespace RagnarokBotWeb.HostedServices.Base
 {
-    public abstract class TimedHostedService
+    public abstract class TimedFtpHostedService : TimedHostedService
     {
         private readonly FtpClient _ftpClient;
         private readonly string _baseFileName;
         private readonly Dictionary<string, Line> _processedLines = [];
         private readonly IServiceProvider _services;
-        public static Timer Timer;
-
-        public TimedHostedService(IServiceProvider serviceProvider, FtpClient ftpClient, string baseFileName, TimeSpan time)
+        public TimedFtpHostedService(IServiceProvider serviceProvider, FtpClient ftpClient, string baseFileName, TimeSpan time) : base(time)
         {
             _ftpClient = ftpClient;
             _baseFileName = baseFileName;
-
-            Timer = new Timer(time);
-            Timer.Elapsed += async (sender, e) => await Process();
-            Timer.AutoReset = true;
-            Timer.Enabled = true;
             _services = serviceProvider;
 
             using (var scope = serviceProvider.CreateScope())
@@ -48,8 +41,6 @@ namespace RagnarokBotWeb.HostedServices
                 await uow.SaveAsync();
             }
         }
-
-        public abstract Task Process();
 
         public IEnumerable<string> GetLogFiles()
         {
@@ -86,5 +77,6 @@ namespace RagnarokBotWeb.HostedServices
                 return lines;
             }
         }
+
     }
 }

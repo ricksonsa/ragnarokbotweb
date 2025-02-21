@@ -1,4 +1,4 @@
-﻿using RagnarokBotWeb.Domain.Enums;
+﻿using Shared.Enums;
 
 namespace RagnarokBotWeb.Domain.Entities
 {

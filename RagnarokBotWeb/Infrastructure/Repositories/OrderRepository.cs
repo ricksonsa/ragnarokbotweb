@@ -2,6 +2,7 @@
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Shared.Enums;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories
 {
@@ -21,10 +22,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return _appDbContext.Orders
                 .Include(order => order.User)
                 .Include(order => order.Pack)
-                .ThenInclude(pack => pack.PackItems)
+                .ThenInclude(pack => pack!.PackItems)
                 .ThenInclude(packItems => packItems.Item)
-                .OrderByDescending(order => order.CreateDate)
-                .FirstOrDefaultAsync(order => order.Status == Domain.Enums.EOrderStatus.Created);
+                .OrderBy(order => order.CreateDate)
+                .FirstOrDefaultAsync(order => order.Status == EOrderStatus.Created);
         }
     }
 }

@@ -13,6 +13,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<Bunker> Bunkers { get; }
         public DbSet<Reader> Readings { get; }
         public DbSet<Kill> Kills { get; }
+        public DbSet<Bot> Bots { get; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -22,6 +23,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             Bunkers = context.Bunkers;
             Readings = context.Readings;
             Kills = context.Kills;
+            Bots = context.Bots;
         }
 
         public async Task SaveAsync()

@@ -17,9 +17,10 @@ namespace RagnarokBotWeb.Migrations
                 {
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    SteamId64 = table.Column<string>(type: "TEXT", nullable: false),
+                    Identifier = table.Column<string>(type: "TEXT", nullable: false),
                     Active = table.Column<bool>(type: "INTEGER", nullable: false),
-                    State = table.Column<int>(type: "INTEGER", nullable: false)
+                    State = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastInteracted = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -94,12 +95,18 @@ namespace RagnarokBotWeb.Migrations
                 {
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    SteamId64 = table.Column<string>(type: "TEXT", nullable: false),
-                    ScumId = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    SteamId64 = table.Column<string>(type: "TEXT", nullable: true),
+                    ScumId = table.Column<string>(type: "TEXT", nullable: true),
+                    SteamName = table.Column<string>(type: "TEXT", nullable: true),
+                    Money = table.Column<long>(type: "INTEGER", nullable: true),
+                    Gold = table.Column<long>(type: "INTEGER", nullable: true),
+                    Fame = table.Column<long>(type: "INTEGER", nullable: true),
+                    X = table.Column<float>(type: "REAL", nullable: true),
+                    Y = table.Column<float>(type: "REAL", nullable: true),
+                    Z = table.Column<float>(type: "REAL", nullable: true),
                     DiscordId = table.Column<string>(type: "TEXT", nullable: true),
-                    Presence = table.Column<string>(type: "TEXT", nullable: true),
-                    Balance = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Coin = table.Column<long>(type: "INTEGER", nullable: false),
                     CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -140,10 +147,14 @@ namespace RagnarokBotWeb.Migrations
                 {
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    KillerId = table.Column<long>(type: "INTEGER", nullable: false),
-                    TargetId = table.Column<long>(type: "INTEGER", nullable: false),
-                    Weapon = table.Column<string>(type: "TEXT", nullable: false),
-                    Distance = table.Column<float>(type: "REAL", nullable: false),
+                    KillerId = table.Column<long>(type: "INTEGER", nullable: true),
+                    TargetId = table.Column<long>(type: "INTEGER", nullable: true),
+                    KillerSteamId64 = table.Column<string>(type: "TEXT", nullable: true),
+                    TargetSteamId64 = table.Column<string>(type: "TEXT", nullable: true),
+                    KillerName = table.Column<string>(type: "TEXT", nullable: true),
+                    TargetName = table.Column<string>(type: "TEXT", nullable: true),
+                    Weapon = table.Column<string>(type: "TEXT", nullable: true),
+                    Distance = table.Column<float>(type: "REAL", nullable: true),
                     Sector = table.Column<string>(type: "TEXT", nullable: true),
                     CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -154,14 +165,12 @@ namespace RagnarokBotWeb.Migrations
                         name: "FK_Kills_Users_KillerId",
                         column: x => x.KillerId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Kills_Users_TargetId",
                         column: x => x.TargetId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(

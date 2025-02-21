@@ -1,10 +1,11 @@
 ﻿using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices
 {
-    public class KillHostedService : TimedHostedService, IHostedService
+    public class KillHostedService : TimedFtpHostedService
     {
         private readonly ILogger<KillHostedService> _logger;
         private readonly IServiceProvider _services;
