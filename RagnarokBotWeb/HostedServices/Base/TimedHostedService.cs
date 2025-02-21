@@ -2,7 +2,7 @@
 
 namespace RagnarokBotWeb.HostedServices.Base
 {
-    public abstract class TimedHostedService : IHostedService
+    public abstract class TimedHostedService : BackgroundService, IDisposable
     {
         public static Timer Timer;
 
@@ -16,16 +16,16 @@ namespace RagnarokBotWeb.HostedServices.Base
 
         public abstract Task Process();
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             Timer.Start();
             return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public override void Dispose()
         {
             Timer.Stop();
-            return Task.CompletedTask;
+            base.Dispose();
         }
     }
 }
