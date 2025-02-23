@@ -1,6 +1,6 @@
 using Discord.WebSocket;
 
-namespace RagnarokBotWeb.Application.Discord;
+namespace RagnarokBotWeb.Application.Discord.Handlers;
 
 public interface IMessageEventHandler
 {

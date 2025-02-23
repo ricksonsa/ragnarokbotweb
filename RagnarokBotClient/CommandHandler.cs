@@ -21,35 +21,24 @@ namespace RagnarokBotClient
         {
             switch (command.Type)
             {
-                case ECommandType.Delivery:
-                    return ScumManager.SpawnItem(command.Value!, command.Amount, command.Target!);
-                case ECommandType.Kick:
-                    return ScumManager.KickPlayer(command.Target ?? command.Value);
-                case ECommandType.Ban:
-                    return ScumManager.BanPlayer(command.Target ?? command.Value);
-                case ECommandType.Announce:
-                    return ScumManager.Announce(command.Value);
-                case ECommandType.Say:
-                    return ScumManager.Say(command.Value);
+                case ECommandType.Delivery: return ScumManager.SpawnItem(command.Value!, command.Amount, command.Target!);
+
+                case ECommandType.Kick: return ScumManager.KickPlayer(command.Target ?? command.Value);
+
+                case ECommandType.Ban: return ScumManager.BanPlayer(command.Target ?? command.Value);
+
+                case ECommandType.Announce: return ScumManager.Announce(command.Value);
+
+                case ECommandType.Say: return ScumManager.Say(command.Value);
+
                 case ECommandType.TeleportPlayer:
                     var v = command.Coordinates!.Split(" ");
                     var x = v[0];
                     var y = v[1];
                     var z = v[2];
                     return ScumManager.Teleport(command.Target!, x, y, z);
-                case ECommandType.ListPlayers:
-                    return HandleListPlayers();
-                    //return ScumManager.DumpListPlayers()
-                    //    .ContinueWith((_) =>
-                    //    {
-                    //        Task.Delay(1000).Wait();
-                    //        var clipboardContent = Clipboard.GetText();
-                    //        if (string.IsNullOrWhiteSpace(clipboardContent) || string.IsNullOrEmpty(clipboardContent))
-                    //        {
-                    //            var x = "entrou aqui";
-                    //        }
-                    //        _remote.PatchAsync($"api/bots/players?itentifier={_identifier}", clipboardContent);
-                    //    });
+
+                case ECommandType.ListPlayers: return HandleListPlayers();
             }
 
             return Task.CompletedTask;

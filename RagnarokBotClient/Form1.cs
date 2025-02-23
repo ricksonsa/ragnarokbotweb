@@ -203,5 +203,10 @@ namespace RagnarokBotClient
             };
             _commandQueue.Enqueue(command);
         }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

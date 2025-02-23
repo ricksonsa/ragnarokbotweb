@@ -32,7 +32,6 @@
             StatusValue = new Label();
             LogBox = new RichTextBox();
             StartButton = new Button();
-            TestBtn = new Button();
             SuspendLayout();
             // 
             // StatusText
@@ -76,22 +75,11 @@
             StartButton.UseVisualStyleBackColor = true;
             StartButton.Click += StartButton_Click;
             // 
-            // TestBtn
-            // 
-            TestBtn.Location = new Point(104, 47);
-            TestBtn.Name = "TestBtn";
-            TestBtn.Size = new Size(75, 23);
-            TestBtn.TabIndex = 4;
-            TestBtn.Text = "Test";
-            TestBtn.UseVisualStyleBackColor = true;
-            TestBtn.Click += TestBtn_Click;
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(TestBtn);
             Controls.Add(StartButton);
             Controls.Add(LogBox);
             Controls.Add(StatusValue);
@@ -99,6 +87,7 @@
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Name = "Form1";
             Text = "Ragnarok Bot";
+            Load += Form1_Load;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -109,6 +98,5 @@
         private Label StatusValue;
         private RichTextBox LogBox;
         private Button StartButton;
-        private Button TestBtn;
     }
 }

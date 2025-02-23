@@ -10,13 +10,13 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly IBotRepository _botRepository;
         private readonly ICacheService _cacheService;
-        private readonly IUserService _userService;
+        private readonly IPlayerService _playerService;
 
-        public BotService(IBotRepository botRepository, ICacheService cacheService, IUserService userService)
+        public BotService(IBotRepository botRepository, ICacheService cacheService, IPlayerService playerService)
         {
             _botRepository = botRepository;
             _cacheService = cacheService;
-            _userService = userService;
+            _playerService = playerService;
         }
 
         public async Task<Bot> RegisterBot(string identifier)
@@ -37,7 +37,7 @@ namespace RagnarokBotWeb.Domain.Services
             var players = ListPlayersParser.ParsePlayers(input);
             _cacheService.ClearConnectedPlayers();
             _cacheService.SetConnectedPlayers(players);
-            await _userService.UpdateFromPlayers(players);
+            await _playerService.UpdateFromScumPlayers(players);
         }
 
         public async Task UpdateInteraction(string identifier)

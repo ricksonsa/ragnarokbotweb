@@ -5,9 +5,9 @@ namespace Shared.Parser
 {
     public static class ListPlayersParser
     {
-        public static List<Player> ParsePlayers(string data)
+        public static List<ScumPlayer> ParsePlayers(string data)
         {
-            var players = new List<Player>();
+            var players = new List<ScumPlayer>();
             var playerSections = Regex.Split(data, @"(?=\d+\.)").Skip(1); // Split data by player sections
             playerSections = Regex.Split(data, @"\r?\n\r?\n").Where(s => s.Trim().Length > 0); // Split data by double newline
 
@@ -15,7 +15,7 @@ namespace Shared.Parser
             {
                 foreach (var section in playerSections)
                 {
-                    var player = new Player();
+                    var player = new ScumPlayer();
                     player.Name = Regex.Match(section, @"\d+\. ([^\n]+)").Groups[1].Value;
 
                     var steamMatch = Regex.Match(section, @"Steam: ([^\(]+) \((\d+)\)");

@@ -1,4 +1,5 @@
 using RagnarokBotWeb.Application.Discord;
+using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -41,7 +42,7 @@ namespace RagnarokBotWeb
             builder.Services.Configure<AppSettings>(options => builder.Configuration.GetSection(nameof(AppSettings)).Bind(options));
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IPlayerRepository, PlayerRepository>();
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IBotRepository, BotRepository>();
             builder.Services.AddScoped<IItemRepository, ItemRepository>();

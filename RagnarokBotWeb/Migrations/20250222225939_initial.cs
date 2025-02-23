@@ -12,6 +12,22 @@ namespace RagnarokBotWeb.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Blocks",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    EntityType = table.Column<int>(type: "INTEGER", nullable: false),
+                    BlockDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Active = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Blocks", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Bots",
                 columns: table => new
                 {
@@ -40,6 +56,21 @@ namespace RagnarokBotWeb.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Bunkers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChannelTemplates",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    CategoryName = table.Column<string>(type: "TEXT", nullable: true),
+                    ChannelType = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChannelTemplates", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -74,6 +105,31 @@ namespace RagnarokBotWeb.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Players",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    ScumId = table.Column<string>(type: "TEXT", nullable: true),
+                    SteamId64 = table.Column<string>(type: "TEXT", nullable: true),
+                    SteamName = table.Column<string>(type: "TEXT", nullable: true),
+                    DiscordId = table.Column<string>(type: "TEXT", nullable: true),
+                    Money = table.Column<long>(type: "INTEGER", nullable: true),
+                    Gold = table.Column<long>(type: "INTEGER", nullable: true),
+                    Fame = table.Column<long>(type: "INTEGER", nullable: true),
+                    X = table.Column<float>(type: "REAL", nullable: true),
+                    Y = table.Column<float>(type: "REAL", nullable: true),
+                    Z = table.Column<float>(type: "REAL", nullable: true),
+                    Coin = table.Column<long>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Players", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Readings",
                 columns: table => new
                 {
@@ -90,28 +146,59 @@ namespace RagnarokBotWeb.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
+                name: "Tenants",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: true),
-                    SteamId64 = table.Column<string>(type: "TEXT", nullable: true),
-                    ScumId = table.Column<string>(type: "TEXT", nullable: true),
-                    SteamName = table.Column<string>(type: "TEXT", nullable: true),
-                    Money = table.Column<long>(type: "INTEGER", nullable: true),
-                    Gold = table.Column<long>(type: "INTEGER", nullable: true),
-                    Fame = table.Column<long>(type: "INTEGER", nullable: true),
-                    X = table.Column<float>(type: "REAL", nullable: true),
-                    Y = table.Column<float>(type: "REAL", nullable: true),
-                    Z = table.Column<float>(type: "REAL", nullable: true),
-                    DiscordId = table.Column<string>(type: "TEXT", nullable: true),
-                    Coin = table.Column<long>(type: "INTEGER", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Users", x => x.Id);
+                    table.PrimaryKey("PK_Tenants", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Commands",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Value = table.Column<string>(type: "TEXT", nullable: false),
+                    BotId = table.Column<long>(type: "INTEGER", nullable: true),
+                    Executed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ExecuteDate = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Commands", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Commands_Bots_BotId",
+                        column: x => x.BotId,
+                        principalTable: "Bots",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ButtonTemplates",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Command = table.Column<string>(type: "TEXT", nullable: false),
+                    Public = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ChannelTemplateId = table.Column<long>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ButtonTemplates", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ButtonTemplates_ChannelTemplates_ChannelTemplateId",
+                        column: x => x.ChannelTemplateId,
+                        principalTable: "ChannelTemplates",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -162,14 +249,14 @@ namespace RagnarokBotWeb.Migrations
                 {
                     table.PrimaryKey("PK_Kills", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Kills_Users_KillerId",
+                        name: "FK_Kills_Players_KillerId",
                         column: x => x.KillerId,
-                        principalTable: "Users",
+                        principalTable: "Players",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Kills_Users_TargetId",
+                        name: "FK_Kills_Players_TargetId",
                         column: x => x.TargetId,
-                        principalTable: "Users",
+                        principalTable: "Players",
                         principalColumn: "Id");
                 });
 
@@ -192,9 +279,9 @@ namespace RagnarokBotWeb.Migrations
                 {
                     table.PrimaryKey("PK_Lockpicks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Lockpicks_Users_UserId",
+                        name: "FK_Lockpicks_Players_UserId",
                         column: x => x.UserId,
-                        principalTable: "Users",
+                        principalTable: "Players",
                         principalColumn: "Id");
                 });
 
@@ -218,9 +305,9 @@ namespace RagnarokBotWeb.Migrations
                         principalTable: "Packs",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Orders_Users_UserId",
+                        name: "FK_Orders_Players_UserId",
                         column: x => x.UserId,
-                        principalTable: "Users",
+                        principalTable: "Players",
                         principalColumn: "Id");
                 });
 
@@ -237,12 +324,124 @@ namespace RagnarokBotWeb.Migrations
                 {
                     table.PrimaryKey("PK_Transactions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Transactions_Users_UserId",
+                        name: "FK_Transactions_Players_UserId",
                         column: x => x.UserId,
-                        principalTable: "Users",
+                        principalTable: "Players",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "Guilds",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RunTemplate = table.Column<bool>(type: "INTEGER", nullable: false),
+                    TenantId = table.Column<long>(type: "INTEGER", nullable: false),
+                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Guilds", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Guilds_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    TenantId = table.Column<long>(type: "INTEGER", nullable: false),
+                    Email = table.Column<string>(type: "TEXT", nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Active = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Users_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Channels",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    GuildId = table.Column<long>(type: "INTEGER", nullable: false),
+                    ChannelType = table.Column<int>(type: "INTEGER", nullable: false),
+                    DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Channels", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Channels_Guilds_GuildId",
+                        column: x => x.GuildId,
+                        principalTable: "Guilds",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Buttons",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Label = table.Column<string>(type: "TEXT", nullable: false),
+                    DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false),
+                    Command = table.Column<string>(type: "TEXT", nullable: false),
+                    ChannelId = table.Column<long>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Buttons", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Buttons_Channels_ChannelId",
+                        column: x => x.ChannelId,
+                        principalTable: "Channels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Buttons_ChannelId",
+                table: "Buttons",
+                column: "ChannelId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ButtonTemplates_ChannelTemplateId",
+                table: "ButtonTemplates",
+                column: "ChannelTemplateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Channels_GuildId",
+                table: "Channels",
+                column: "GuildId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Commands_BotId",
+                table: "Commands",
+                column: "BotId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Guilds_TenantId",
+                table: "Guilds",
+                column: "TenantId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Kills_KillerId",
@@ -283,16 +482,30 @@ namespace RagnarokBotWeb.Migrations
                 name: "IX_Transactions_UserId",
                 table: "Transactions",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_TenantId",
+                table: "Users",
+                column: "TenantId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Bots");
+                name: "Blocks");
 
             migrationBuilder.DropTable(
                 name: "Bunkers");
+
+            migrationBuilder.DropTable(
+                name: "Buttons");
+
+            migrationBuilder.DropTable(
+                name: "ButtonTemplates");
+
+            migrationBuilder.DropTable(
+                name: "Commands");
 
             migrationBuilder.DropTable(
                 name: "Kills");
@@ -313,13 +526,31 @@ namespace RagnarokBotWeb.Migrations
                 name: "Transactions");
 
             migrationBuilder.DropTable(
+                name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Channels");
+
+            migrationBuilder.DropTable(
+                name: "ChannelTemplates");
+
+            migrationBuilder.DropTable(
+                name: "Bots");
+
+            migrationBuilder.DropTable(
                 name: "Items");
 
             migrationBuilder.DropTable(
                 name: "Packs");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Players");
+
+            migrationBuilder.DropTable(
+                name: "Guilds");
+
+            migrationBuilder.DropTable(
+                name: "Tenants");
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Shared.Models
 {
-    public class Player
+    public class ScumPlayer
     {
         public string Name { get; set; }
         public string SteamName { get; set; }

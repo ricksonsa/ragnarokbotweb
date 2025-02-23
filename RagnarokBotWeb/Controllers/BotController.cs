@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
@@ -39,7 +39,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPost("commands")]
-        public IActionResult CreateCommand(Command command)
+        public IActionResult CreateCommand(BotCommand command)
         {
             _cacheService.GetCommandQueue().Enqueue(command);
             return Ok(command);

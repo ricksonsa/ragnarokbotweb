@@ -6,7 +6,7 @@ namespace RagnarokBotWeb.Domain.Entities
     {
         public Pack? Pack { get; set; }
         public EOrderStatus Status { get; set; }
-        public User? User { get; set; }
+        public Player? User { get; set; }
         public DateTime CreateDate { get; set; }
 
         public Order()

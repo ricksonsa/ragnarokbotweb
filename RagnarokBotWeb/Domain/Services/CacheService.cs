@@ -1,4 +1,4 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using Shared.Models;
 
@@ -6,8 +6,8 @@ namespace RagnarokBotWeb.Domain.Services
 {
     public class CacheService : ICacheService
     {
-        private Dictionary<string, Player> _connectedUsers;
-        private readonly Queue<Command> _commandQueue;
+        private Dictionary<string, ScumPlayer> _connectedUsers;
+        private readonly Queue<BotCommand> _commandQueue;
 
         public CacheService()
         {
@@ -15,12 +15,12 @@ namespace RagnarokBotWeb.Domain.Services
             _commandQueue = [];
         }
 
-        public Dictionary<string, Player> GetConnectedPlayers()
+        public Dictionary<string, ScumPlayer> GetConnectedPlayers()
         {
             return _connectedUsers;
         }
 
-        public Queue<Command> GetCommandQueue()
+        public Queue<BotCommand> GetCommandQueue()
         {
             return _commandQueue;
         }
@@ -30,7 +30,7 @@ namespace RagnarokBotWeb.Domain.Services
             _connectedUsers = [];
         }
 
-        public void SetConnectedPlayers(List<Player> players)
+        public void SetConnectedPlayers(List<ScumPlayer> players)
         {
             _connectedUsers = players.DistinctBy(player => player.SteamID).ToDictionary(value => value.SteamID);
         }

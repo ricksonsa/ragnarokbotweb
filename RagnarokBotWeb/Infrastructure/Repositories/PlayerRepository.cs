@@ -4,8 +4,8 @@ using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories
 {
-    public class UserRepository : Repository<User>, IUserRepository
+    public class PlayerRepository : Repository<Player>, IPlayerRepository
     {
-        public UserRepository(AppDbContext context) : base(context) { }
+        public PlayerRepository(AppDbContext context) : base(context) { }
     }
 }

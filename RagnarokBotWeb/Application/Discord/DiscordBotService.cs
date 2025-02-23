@@ -1,5 +1,6 @@
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
+using RagnarokBotWeb.Application.Discord.Handlers;
 
 namespace RagnarokBotWeb.Application.Discord;
 
@@ -31,6 +32,7 @@ public class DiscordBotService : BackgroundService
     {
         _client.Log += LogAsync;
         _client.MessageReceived += MessageReceivedAsync;
+        _client.InteractionCreated += InteractionCreated;
 
         if (string.IsNullOrEmpty(_token))
         {
@@ -52,22 +54,62 @@ public class DiscordBotService : BackgroundService
         }
     }
 
+    private async Task InteractionCreated(SocketInteraction interaction)
+    {
+        _logger.LogInformation("Interaction comming from discord.");
+
+        if (interaction is SocketMessageComponent component)
+        {
+            if (component.Data.CustomId == "welcome_pack")
+            {
+                var user = component.User as SocketGuildUser;
+
+                try
+                {
+                    // Tenta enviar a DM
+                    var dmChannel = await user.CreateDMChannelAsync();
+                    await dmChannel.SendMessageAsync("🎁 Você recebeu seu Welcome Pack! Seja bem-vindo ao servidor!");
+
+                    // Responde no canal para confirmar o envio
+                    await component.RespondAsync("📩 Seu Welcome Pack foi enviado na sua DM!", ephemeral: true);
+                }
+                catch (Exception)
+                {
+                    await component.RespondAsync("⚠️ Não consegui enviar sua DM. Certifique-se de que suas mensagens diretas estão ativadas!", ephemeral: true);
+                }
+            }
+        }
+    }
+
     private Task LogAsync(LogMessage log)
     {
         _logger.LogInformation(log.ToString());
         return Task.CompletedTask;
     }
 
-    private async Task MessageReceivedAsync(SocketMessage message)
+    private Task MessageReceivedAsync(SocketMessage message)
     {
         if (message.Author.IsBot)
-            return;
+            return Task.CompletedTask;
+
+        // Isso aqui para pegar o tenant do usuário
+        if (message.Channel is SocketTextChannel textChannel)
+        {
+            ulong guildId = textChannel.Guild.Id;
+            Console.WriteLine($"Guild ID: {guildId}");
+        }
+        else
+        {
+            Console.WriteLine("Mensagem recebida em DM.");
+        }
 
         var handler = _messageEventHandlerFactory.GetHandler(message);
         if (handler != null)
-            await handler.HandleAsync(message);
+            _ = handler.HandleAsync(message);
         else
-            await message.Channel.SendMessageAsync($"Event with name = {message.Content} not found.");
+            _ = message.Channel.SendMessageAsync($"Event with name = {message.Content} not found.");
+
+        return Task.CompletedTask;
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

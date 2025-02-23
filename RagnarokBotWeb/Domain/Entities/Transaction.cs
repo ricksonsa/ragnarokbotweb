@@ -3,6 +3,6 @@
     public class Transaction : BaseEntity
     {
         public decimal Amount { get; set; }
-        public User User { get; set; }
+        public Player User { get; set; }
     }
 }

@@ -11,7 +11,7 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250221060319_initial")]
+    [Migration("20250222225939_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -19,6 +19,30 @@ namespace RagnarokBotWeb.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Block", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("BlockDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("EntityType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Blocks");
+                });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Bot", b =>
                 {
@@ -63,6 +87,151 @@ namespace RagnarokBotWeb.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Bunkers");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Button", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ChannelId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Command")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<ulong>("DiscordId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChannelId");
+
+                    b.ToTable("Buttons");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ButtonTemplate", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ChannelTemplateId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Command")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Public")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChannelTemplateId");
+
+                    b.ToTable("ButtonTemplates");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Channel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChannelType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong>("DiscordId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("GuildId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuildId");
+
+                    b.ToTable("Channels");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ChannelTemplate", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CategoryName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ChannelType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ChannelTemplates");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Command", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("BotId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ExecuteDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Executed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BotId");
+
+                    b.ToTable("Commands");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Guild", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RunTemplate")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Guilds");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Item", b =>
@@ -247,52 +416,7 @@ namespace RagnarokBotWeb.Migrations
                     b.ToTable("PackItems");
                 });
 
-            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Reader", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Hash")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Readings");
-                });
-
-            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Transaction", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Transactions");
-                });
-
-            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.User", b =>
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Player", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -339,16 +463,158 @@ namespace RagnarokBotWeb.Migrations
 
                     b.HasKey("Id");
 
+                    b.ToTable("Players");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Reader", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Readings");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Tenant", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tenants");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Transaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.User", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Button", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Channel", "Channel")
+                        .WithMany()
+                        .HasForeignKey("ChannelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Channel");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ButtonTemplate", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ChannelTemplate", "ChannelTemplate")
+                        .WithMany()
+                        .HasForeignKey("ChannelTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChannelTemplate");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Channel", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Guild", "Guild")
+                        .WithMany()
+                        .HasForeignKey("GuildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Guild");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Command", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Bot", "Bot")
+                        .WithMany()
+                        .HasForeignKey("BotId");
+
+                    b.Navigation("Bot");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Guild", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Kill", b =>
                 {
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.User", "Killer")
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "Killer")
                         .WithMany()
                         .HasForeignKey("KillerId");
 
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.User", "Target")
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "Target")
                         .WithMany()
                         .HasForeignKey("TargetId");
 
@@ -359,7 +625,7 @@ namespace RagnarokBotWeb.Migrations
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Lockpick", b =>
                 {
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.User", "User")
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
 
@@ -372,7 +638,7 @@ namespace RagnarokBotWeb.Migrations
                         .WithMany()
                         .HasForeignKey("PackId");
 
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.User", "User")
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
 
@@ -402,13 +668,24 @@ namespace RagnarokBotWeb.Migrations
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Transaction", b =>
                 {
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.User", "User")
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.User", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Pack", b =>

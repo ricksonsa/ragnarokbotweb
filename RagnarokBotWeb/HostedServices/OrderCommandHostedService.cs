@@ -1,4 +1,4 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -30,10 +30,10 @@ namespace RagnarokBotWeb.HostedServices
                 orderRepository.Update(order);
                 await orderRepository.SaveAsync();
 
-                var commands = new List<Command>();
+                var commands = new List<BotCommand>();
                 order.Pack!.PackItems.ForEach(packItem =>
                 {
-                    commands.Add(new Command
+                    commands.Add(new BotCommand
                     {
                         Target = order.User!.SteamId64,
                         Type = ECommandType.Delivery,

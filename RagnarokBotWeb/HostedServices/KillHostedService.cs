@@ -43,7 +43,7 @@ namespace RagnarokBotWeb.HostedServices
                                 if (!enumerator.MoveNext()) break; // Ensure we don't get an incomplete pair
                                 var second = enumerator.Current;
 
-                                var kill = new KillLogParser(uow.Users).Parse(first.Value, second.Value);
+                                var kill = new KillLogParser(uow.Players).Parse(first.Value, second.Value);
                                 await uow.Kills.AddAsync(kill);
                                 await uow.SaveAsync();
                             }
@@ -56,20 +56,5 @@ namespace RagnarokBotWeb.HostedServices
                 _logger.LogError(ex.Message);
             }
         }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Timed Hosted Service is starting.");
-            Timer.Start();
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Timed Hosted Service is stopping.");
-            Timer.Stop();
-            return Task.CompletedTask;
-        }
-
     }
 }

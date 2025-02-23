@@ -10,12 +10,12 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ILogger<OrderService> _logger;
         private readonly IOrderRepository _orderRepository;
         private readonly IPackRepository _packRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly IPlayerRepository _userRepository;
 
         public OrderService(ILogger<OrderService> logger,
             IOrderRepository orderRepository,
             IPackRepository packRepository,
-            IUserRepository userRepository)
+            IPlayerRepository userRepository)
         {
             _logger = logger;
             _orderRepository = orderRepository;

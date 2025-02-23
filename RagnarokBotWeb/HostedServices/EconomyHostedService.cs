@@ -48,19 +48,5 @@ namespace RagnarokBotWeb.HostedServices
             }
             catch (Exception) { }
         }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Timed Hosted Service is starting.");
-            Timer.Start();
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Timed Hosted Service is stopping.");
-            Timer.Stop();
-            return Task.CompletedTask;
-        }
     }
 }

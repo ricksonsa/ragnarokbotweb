@@ -4,27 +4,27 @@ namespace RagnarokBotWeb.HostedServices.Base
 {
     public abstract class TimedHostedService : BackgroundService, IDisposable
     {
-        public static Timer Timer;
+        private readonly Timer _timer;
 
         public TimedHostedService(TimeSpan time)
         {
-            Timer = new Timer(time);
-            Timer.Elapsed += async (sender, e) => await Process();
-            Timer.AutoReset = true;
-            Timer.Enabled = true;
+            _timer = new Timer(time);
+            _timer.Elapsed += async (sender, e) => await Process();
+            _timer.AutoReset = true;
+            _timer.Enabled = true;
         }
 
         public abstract Task Process();
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Timer.Start();
+            _timer.Start();
             return Task.CompletedTask;
         }
 
         public override void Dispose()
         {
-            Timer.Stop();
+            _timer.Stop();
             base.Dispose();
         }
     }

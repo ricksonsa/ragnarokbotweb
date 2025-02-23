@@ -2,8 +2,8 @@
 {
     public class Kill : BaseEntity
     {
-        public User? Killer { get; set; }
-        public User? Target { get; set; }
+        public Player? Killer { get; set; }
+        public Player? Target { get; set; }
         public string? KillerSteamId64 { get; set; }
         public string? TargetSteamId64 { get; set; }
         public string? KillerName { get; set; }

@@ -5,7 +5,7 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
 {
     public class AppDbContext : DbContext
     {
-        public DbSet<User> Users { get; set; }
+        public DbSet<Player> Players { get; set; }
         public DbSet<Lockpick> Lockpicks { get; set; }
         public DbSet<Bunker> Bunkers { get; set; }
         public DbSet<Reader> Readings { get; set; }
@@ -16,6 +16,15 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<PackItem> PackItems { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<Block> Blocks { get; set; }
+        public DbSet<Button> Buttons { get; set; }
+        public DbSet<Channel> Channels { get; set; }
+        public DbSet<ButtonTemplate> ButtonTemplates { get; set; }
+        public DbSet<ChannelTemplate> ChannelTemplates { get; set; }
+        public DbSet<Command> Commands { get; set; }
+        public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Guild> Guilds { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {

@@ -2,5 +2,5 @@
 
 namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
-    public interface IUserRepository : IRepository<User> { }
+    public interface IPlayerRepository : IRepository<Player> { }
 }

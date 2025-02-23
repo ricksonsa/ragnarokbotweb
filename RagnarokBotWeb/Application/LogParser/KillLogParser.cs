@@ -9,8 +9,8 @@ namespace RagnarokBotWeb.Application.LogParser
 {
     public class KillLogParser
     {
-        private readonly DbSet<User> _users;
-        public KillLogParser(DbSet<User> users)
+        private readonly DbSet<Player> _users;
+        public KillLogParser(DbSet<Player> users)
         {
             _users = users;
         }

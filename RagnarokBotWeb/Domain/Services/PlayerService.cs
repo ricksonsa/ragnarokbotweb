@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -11,24 +12,29 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IUnitOfWork _uow;
         private readonly ILogger<PlayerService> _logger;
         private readonly ICacheService _cacheService;
+        private readonly IPlayerRepository _playerRepository;
 
-        public PlayerService(IUnitOfWork uow, ILogger<PlayerService> logger, ICacheService cacheService)
+        public PlayerService(
+            IUnitOfWork uow,
+            ILogger<PlayerService> logger,
+            ICacheService cacheService, IPlayerRepository playerRepository)
         {
             _uow = uow;
             _logger = logger;
             _cacheService = cacheService;
+            _playerRepository = playerRepository;
         }
 
         public bool IsPlayerConnected(string steamId64) => _cacheService.GetConnectedPlayers().ContainsKey(steamId64);
 
-        public List<Player> OnlinePlayers()
+        public List<ScumPlayer> OnlinePlayers()
         {
             return _cacheService.GetConnectedPlayers().Values.ToList();
         }
 
-        public async Task<List<Player>> OfflinePlayers()
+        public async Task<List<ScumPlayer>> OfflinePlayers()
         {
-            var allUsers = (await _uow.Users.ToListAsync()).Select(user => new Player
+            var allUsers = (await _uow.Players.ToListAsync()).Select(user => new ScumPlayer
             {
                 Name = user.Name,
                 SteamID = user.SteamId64,
@@ -52,7 +58,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task PlayerConnected(string steamId64, string scumId, string name)
         {
-            var user = await _uow.Users.FirstOrDefaultAsync(user => user.SteamId64 == steamId64);
+            var user = await _uow.Players.FirstOrDefaultAsync(user => user.SteamId64 == steamId64);
 
             user ??= new();
             user.SteamId64 = steamId64;
@@ -61,21 +67,21 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (user.Id == 0)
             {
-                await _uow.Users.AddAsync(user);
+                await _uow.Players.AddAsync(user);
                 await _uow.SaveAsync();
                 _logger.Log(LogLevel.Information, $"New User Connected {steamId64} {name}({scumId})");
             }
             else
             {
-                _uow.Users.Update(user);
+                _uow.Players.Update(user);
                 await _uow.SaveAsync();
                 _logger.Log(LogLevel.Information, $"Registered User Connected {steamId64} {name}({scumId})");
             }
 
-            _cacheService.GetCommandQueue().Enqueue(Command.ListPlayers());
+            _cacheService.GetCommandQueue().Enqueue(BotCommand.ListPlayers());
         }
 
-        public Player? PlayerDisconnected(string steamId64)
+        public ScumPlayer? PlayerDisconnected(string steamId64)
         {
             if (_cacheService.GetConnectedPlayers().Remove(steamId64, out var player))
             {
@@ -83,6 +89,57 @@ namespace RagnarokBotWeb.Domain.Services
             }
 
             return null;
+        }
+
+        public async Task UpdateFromScumPlayers(List<ScumPlayer>? players)
+        {
+            if (players is null) players = _cacheService.GetConnectedPlayers().Values.ToList();
+            foreach (var player in players)
+            {
+                var user = await FindBySteamId64Async(player.SteamID);
+                user ??= new();
+                user.X = player.X;
+                user.Y = player.Y;
+                user.Z = player.Z;
+                user.Name = player.Name;
+                user.SteamId64 = player.SteamID;
+                user.SteamName = player.SteamName;
+                user.Gold = player.GoldBalance;
+                user.Money = player.AccountBalance;
+                user.Fame = player.Fame;
+                _playerRepository.Update(user);
+            }
+            await _playerRepository.SaveAsync();
+        }
+
+        public async Task<IEnumerable<Player>> GetAllUsersAsync()
+        {
+            return await _playerRepository.GetAllAsync();
+        }
+
+        public Task<Player> FindBySteamId64Async(string steamId64)
+        {
+            return _playerRepository.FindOneAsync(user => user.SteamId64 == steamId64);
+        }
+
+        public async Task AddPlayerAsync(Player user)
+        {
+            await _playerRepository.AddAsync(user);
+            await _playerRepository.SaveAsync();
+        }
+
+        public async Task UpdatePlayerAsync(Player user)
+        {
+            _playerRepository.Update(user);
+            await _playerRepository.SaveAsync();
+        }
+
+        public async Task UpdatePlayerNameAsync(string steamId64, string name)
+        {
+            var user = await FindBySteamId64Async(steamId64);
+            user.Name = name;
+            _playerRepository.Update(user);
+            await _playerRepository.SaveAsync();
         }
     }
 }

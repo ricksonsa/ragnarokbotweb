@@ -1,4 +1,4 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -28,11 +28,7 @@ namespace RagnarokBotWeb.HostedServices
                 var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                 if (uow.Bots.Any(bot => bot.State == EBotState.Online))
                 {
-                    var command = new Command
-                    {
-                        Type = ECommandType.ListPlayers
-                    };
-                    _cacheService.GetCommandQueue().Enqueue(command);
+                    _cacheService.GetCommandQueue().Enqueue(BotCommand.ListPlayers());
                 }
             }
             return Task.CompletedTask;

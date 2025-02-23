@@ -59,17 +59,5 @@ namespace RagnarokBotWeb.HostedServices
                 _logger.LogError(ex.Message, this);
             }
         }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            Timer.Start();
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            Timer.Stop();
-            return Task.CompletedTask;
-        }
     }
 }

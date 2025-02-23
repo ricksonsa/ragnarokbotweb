@@ -5,7 +5,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {
-        DbSet<User> Users { get; }
+        DbSet<Player> Players { get; }
         DbSet<Lockpick> Lockpicks { get; }
         DbSet<Bunker> Bunkers { get; }
         DbSet<Reader> Readings { get; }

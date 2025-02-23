@@ -1,8 +1,9 @@
-﻿using System.Linq.Expressions;
+﻿using RagnarokBotWeb.Domain.Entities;
+using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
-    public interface IRepository<T> where T : class
+    public interface IRepository<T> where T : BaseEntity
     {
         Task<IEnumerable<T>> GetAllAsync();
         Task<T> GetByIdAsync(long id);
