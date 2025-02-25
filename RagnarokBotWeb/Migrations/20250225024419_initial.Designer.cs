@@ -11,7 +11,7 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250222225939_initial")]
+    [Migration("20250225024419_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -171,6 +171,9 @@ namespace RagnarokBotWeb.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("Admin")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CategoryName")
                         .HasColumnType("TEXT");
 
@@ -216,6 +219,9 @@ namespace RagnarokBotWeb.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong>("DiscordId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("Enabled")

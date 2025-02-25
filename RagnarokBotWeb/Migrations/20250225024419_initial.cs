@@ -66,7 +66,8 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     CategoryName = table.Column<string>(type: "TEXT", nullable: true),
-                    ChannelType = table.Column<int>(type: "INTEGER", nullable: false)
+                    ChannelType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Admin = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -339,7 +340,8 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     RunTemplate = table.Column<bool>(type: "INTEGER", nullable: false),
                     TenantId = table.Column<long>(type: "INTEGER", nullable: false),
-                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -168,6 +168,9 @@ namespace RagnarokBotWeb.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("Admin")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CategoryName")
                         .HasColumnType("TEXT");
 
@@ -213,6 +216,9 @@ namespace RagnarokBotWeb.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong>("DiscordId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("Enabled")
