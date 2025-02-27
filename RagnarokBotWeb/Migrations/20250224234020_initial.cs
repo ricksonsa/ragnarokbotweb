@@ -151,6 +151,7 @@ namespace RagnarokBotWeb.Migrations
                 {
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
                     Enabled = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -361,6 +362,7 @@ namespace RagnarokBotWeb.Migrations
                     TenantId = table.Column<long>(type: "INTEGER", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
+                    PasswordSalt = table.Column<byte[]>(type: "BLOB", nullable: false),
                     CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Active = table.Column<bool>(type: "INTEGER", nullable: false)
                 },

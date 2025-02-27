@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/bots")]
     public class BotController : ControllerBase
     {

@@ -8,7 +8,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         Task<IEnumerable<T>> GetAllAsync();
         Task<T> GetByIdAsync(long id);
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
+        Task<T> FindByIdAsync(long id);
         Task<T> FindOneAsync(Expression<Func<T, bool>> predicate);
+        Task<bool> HasAny(Expression<Func<T, bool>> predicate);
         Task AddAsync(T entity);
         void Update(T entity);
         void Delete(T entity);

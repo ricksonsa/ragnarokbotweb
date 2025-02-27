@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Shared.Enums;
+using Shared.Security;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -7,28 +8,92 @@ namespace RagnarokBotClient
 {
     public partial class Form1 : Form
     {
+        public static bool Loading = false;
+
         private readonly WebApi _remote;
         private Process _gameProcess;
         private bool _setup = false;
         private string _identifier;
-        private string _exePath;
 
         Queue<Command> _commandQueue = [];
         private CancellationTokenSource _cancellationTokenSource;
+        private string _accessToken;
+        private string _exePath;
 
         public Form1()
         {
             InitializeComponent();
-            _remote = new WebApi(new Settings("https://localhost:7257"));
+            _remote = new WebApi(new Settings("http://localhost:5000"));
             Logger.OnLogging += Logger_OnLogging;
-            UpdateStatus("Waiting...");
             _identifier = Environment.UserName;
+            PasswordBox.UseSystemPasswordChar = true;
             _exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+
+            LoadCredentials();
         }
 
         private void Logger_OnLogging(object? sender, string e)
         {
             UpdateStatus(e, false);
+        }
+
+        public void LoadCredentials()
+        {
+            var path = Path.Combine(_exePath, "credentials");
+            if (File.Exists(path))
+            {
+                var lines = File.ReadAllLines(path);
+                EmailBox.Text = lines[0];
+                PasswordBox.Text = lines[1];
+            }
+        }
+
+        public Task Login()
+        {
+            if (Loading) return Task.CompletedTask;
+            UpdateStatus("Connecting to the server...");
+            Loading = true;
+            TokenResult? tokenResult = null;
+            try
+            {
+                tokenResult = _remote.PostAsync<TokenResult>($"api/authenticate", new
+                {
+                    Email = EmailBox.Text,
+                    Password = PasswordBox.Text,
+                    ConfirmPassword = PasswordBox.Text
+                }).Result;
+            }
+            catch (Exception ex)
+            {
+                Loading = false;
+                AuthFeedback.Invoke(new Action(() => AuthFeedback.Visible = true));
+                tokenResult = null;
+                Debug.WriteLine(ex.Message);
+                UpdateStatus("Failed to connect.");
+            }
+
+            if (tokenResult is not null)
+            {
+                UpdateStatus("Connected.");
+                UpdateStatus("Waiting...");
+                _accessToken = tokenResult.AccessToken;
+                AuthPanel.Invoke(new Action(() => AuthPanel.Visible = false));
+                AuthPanel.Invoke(new Action(() => AuthPanel.Enabled = false));
+                _remote.SetAuthToken(tokenResult.AccessToken);
+                File.WriteAllText(Path.Combine(_exePath, "credentials"), $"{EmailBox.Text}{Environment.NewLine}{PasswordBox.Text}");
+            }
+            Loading = false;
+
+            return Task.CompletedTask;
+        }
+
+        private void LoginButton_Click(object sender, EventArgs e)
+        {
+            Task.Run(() =>
+            {
+                Login();
+
+            });
         }
 
         public void Start()
@@ -66,10 +131,11 @@ namespace RagnarokBotClient
             UpdateStatus("Waiting...");
         }
 
-        private Task HealthCheck(CancellationToken token)
+        private Task<bool> HealthCheck(CancellationToken token)
         {
-            UpdateStatus("Connecting to server...");
+            UpdateStatus("Checking server status...");
             if (token.IsCancellationRequested) token.ThrowIfCancellationRequested();
+
             return _remote.GetAsync("healthz").ContinueWith((val) =>
             {
                 if (token.IsCancellationRequested) token.ThrowIfCancellationRequested();
@@ -79,20 +145,21 @@ namespace RagnarokBotClient
                     if (val.Result == "Healthy")
                     {
                         _remote.PostAsync($"api/bots/register?identifier={_identifier}", null).Wait();
-                        UpdateStatus("Connected.");
+                        return true;
                     }
                     else
                     {
                         UpdateStatus("Could not connect to server.");
                         Stop();
+                        return false;
                     }
                 }
                 catch (Exception)
                 {
                     UpdateStatus("Could not connect to server.");
                     Stop();
+                    return false;
                 }
-
             });
         }
 
@@ -205,6 +272,11 @@ namespace RagnarokBotClient
         }
 
         private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void EmailBox_TextChanged(object sender, EventArgs e)
         {
 
         }

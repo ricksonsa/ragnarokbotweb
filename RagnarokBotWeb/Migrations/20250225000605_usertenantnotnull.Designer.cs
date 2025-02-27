@@ -11,8 +11,8 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250222225939_initial")]
-    partial class initial
+    [Migration("20250225000605_usertenantnotnull")]
+    partial class usertenantnotnull
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -501,6 +501,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.ToTable("Tenants");
@@ -545,7 +548,11 @@ namespace RagnarokBotWeb.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("TenantId")
+                    b.Property<byte[]>("PasswordSalt")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<long?>("TenantId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -681,9 +688,7 @@ namespace RagnarokBotWeb.Migrations
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TenantId");
 
                     b.Navigation("Tenant");
                 });

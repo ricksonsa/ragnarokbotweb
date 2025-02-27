@@ -37,6 +37,11 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return await _dbSet.FirstOrDefaultAsync(predicate);
         }
 
+        public virtual async Task<T> FindByIdAsync(long id)
+        {
+            return await _dbSet.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
         public virtual async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
@@ -55,6 +60,12 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public virtual async Task SaveAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> HasAny(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.AnyAsync(predicate);
+
         }
     }
 }

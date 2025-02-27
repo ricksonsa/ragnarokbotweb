@@ -57,5 +57,17 @@ namespace RagnarokBotWeb.Domain.Services
             await _botRepository.SaveAsync();
             return bot;
         }
+
+        public async Task CheckBotState()
+        {
+            var date = DateTime.Now.AddMinutes(-2);
+            var bots = await _botRepository.FindAsync(bot => bot.State == EBotState.Online && bot.LastInteracted <= date);
+            foreach (var bot in bots)
+            {
+                bot.State = EBotState.Offline;
+                _botRepository.Update(bot);
+            }
+            await _botRepository.SaveAsync();
+        }
     }
 }

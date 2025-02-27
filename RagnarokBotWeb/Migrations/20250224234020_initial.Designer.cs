@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RagnarokBotWeb.Infrastructure.Configuration;
 
@@ -10,9 +11,11 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250224234020_initial")]
+    partial class initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
@@ -549,7 +552,7 @@ namespace RagnarokBotWeb.Migrations
                         .IsRequired()
                         .HasColumnType("BLOB");
 
-                    b.Property<long?>("TenantId")
+                    b.Property<long>("TenantId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -685,7 +688,9 @@ namespace RagnarokBotWeb.Migrations
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
-                        .HasForeignKey("TenantId");
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Tenant");
                 });

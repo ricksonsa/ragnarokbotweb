@@ -12,7 +12,7 @@ namespace RagnarokBotWeb.HostedServices
         private readonly IServiceProvider _serviceProvider;
         private readonly ICacheService _cacheService;
 
-        public ListPlayersHostedService(IServiceProvider serviceProvider, ICacheService cacheService, ILogger<ListPlayersHostedService> logger) : base(TimeSpan.FromSeconds(20))
+        public ListPlayersHostedService(IServiceProvider serviceProvider, ICacheService cacheService, ILogger<ListPlayersHostedService> logger) : base(TimeSpan.FromSeconds(80))
         {
             _serviceProvider = serviceProvider;
             _cacheService = cacheService;

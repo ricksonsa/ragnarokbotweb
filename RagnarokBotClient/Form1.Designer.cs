@@ -32,6 +32,14 @@
             StatusValue = new Label();
             LogBox = new RichTextBox();
             StartButton = new Button();
+            AuthPanel = new Panel();
+            AuthFeedback = new Label();
+            PasswordLabel = new Label();
+            EmailLabel = new Label();
+            LoginButton = new Button();
+            PasswordBox = new TextBox();
+            EmailBox = new TextBox();
+            AuthPanel.SuspendLayout();
             SuspendLayout();
             // 
             // StatusText
@@ -58,10 +66,10 @@
             // LogBox
             // 
             LogBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            LogBox.Location = new Point(12, 85);
+            LogBox.Location = new Point(12, 108);
             LogBox.Name = "LogBox";
             LogBox.ReadOnly = true;
-            LogBox.Size = new Size(776, 353);
+            LogBox.Size = new Size(776, 330);
             LogBox.TabIndex = 2;
             LogBox.Text = "";
             // 
@@ -75,11 +83,80 @@
             StartButton.UseVisualStyleBackColor = true;
             StartButton.Click += StartButton_Click;
             // 
+            // AuthPanel
+            // 
+            AuthPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            AuthPanel.Controls.Add(AuthFeedback);
+            AuthPanel.Controls.Add(PasswordLabel);
+            AuthPanel.Controls.Add(EmailLabel);
+            AuthPanel.Controls.Add(LoginButton);
+            AuthPanel.Controls.Add(PasswordBox);
+            AuthPanel.Controls.Add(EmailBox);
+            AuthPanel.Location = new Point(12, 9);
+            AuthPanel.Name = "AuthPanel";
+            AuthPanel.Size = new Size(776, 93);
+            AuthPanel.TabIndex = 4;
+            // 
+            // AuthFeedback
+            // 
+            AuthFeedback.AutoSize = true;
+            AuthFeedback.ForeColor = Color.IndianRed;
+            AuthFeedback.Location = new Point(70, 64);
+            AuthFeedback.Name = "AuthFeedback";
+            AuthFeedback.Size = new Size(141, 15);
+            AuthFeedback.TabIndex = 5;
+            AuthFeedback.Text = "Invalid email or password";
+            AuthFeedback.Visible = false;
+            // 
+            // PasswordLabel
+            // 
+            PasswordLabel.AutoSize = true;
+            PasswordLabel.Location = new Point(7, 41);
+            PasswordLabel.Name = "PasswordLabel";
+            PasswordLabel.Size = new Size(57, 15);
+            PasswordLabel.TabIndex = 4;
+            PasswordLabel.Text = "Password";
+            // 
+            // EmailLabel
+            // 
+            EmailLabel.AutoSize = true;
+            EmailLabel.Location = new Point(28, 12);
+            EmailLabel.Name = "EmailLabel";
+            EmailLabel.Size = new Size(36, 15);
+            EmailLabel.TabIndex = 3;
+            EmailLabel.Text = "Email";
+            // 
+            // LoginButton
+            // 
+            LoginButton.Location = new Point(325, 38);
+            LoginButton.Name = "LoginButton";
+            LoginButton.Size = new Size(75, 26);
+            LoginButton.TabIndex = 2;
+            LoginButton.Text = "Connect";
+            LoginButton.UseVisualStyleBackColor = true;
+            LoginButton.Click += LoginButton_Click;
+            // 
+            // PasswordBox
+            // 
+            PasswordBox.Location = new Point(70, 38);
+            PasswordBox.Name = "PasswordBox";
+            PasswordBox.Size = new Size(249, 23);
+            PasswordBox.TabIndex = 1;
+            // 
+            // EmailBox
+            // 
+            EmailBox.Location = new Point(70, 9);
+            EmailBox.Name = "EmailBox";
+            EmailBox.Size = new Size(249, 23);
+            EmailBox.TabIndex = 0;
+            EmailBox.TextChanged += EmailBox_TextChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(AuthPanel);
             Controls.Add(StartButton);
             Controls.Add(LogBox);
             Controls.Add(StatusValue);
@@ -88,6 +165,8 @@
             Name = "Form1";
             Text = "Ragnarok Bot";
             Load += Form1_Load;
+            AuthPanel.ResumeLayout(false);
+            AuthPanel.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -98,5 +177,12 @@
         private Label StatusValue;
         private RichTextBox LogBox;
         private Button StartButton;
+        private Panel AuthPanel;
+        private Label PasswordLabel;
+        private Label EmailLabel;
+        private Button LoginButton;
+        private TextBox PasswordBox;
+        private TextBox EmailBox;
+        private Label AuthFeedback;
     }
 }
