@@ -1,13 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Models;
 
 namespace RagnarokBotWeb.Domain.Services
 {
-    public class PlayerService : IPlayerService
+    public class PlayerService : BaseService, IPlayerService
     {
         private readonly IUnitOfWork _uow;
         private readonly ILogger<PlayerService> _logger;
@@ -15,9 +16,10 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IPlayerRepository _playerRepository;
 
         public PlayerService(
+            IHttpContextAccessor contextAccessor,
             IUnitOfWork uow,
             ILogger<PlayerService> logger,
-            ICacheService cacheService, IPlayerRepository playerRepository)
+            ICacheService cacheService, IPlayerRepository playerRepository) : base(contextAccessor)
         {
             _uow = uow;
             _logger = logger;
@@ -25,7 +27,18 @@ namespace RagnarokBotWeb.Domain.Services
             _playerRepository = playerRepository;
         }
 
-        public bool IsPlayerConnected(long serverId, string steamId64) => _cacheService.GetConnectedPlayers(serverId).Any(player => player.SteamID.Equals(steamId64));
+        public bool IsPlayerConnected(string steamId64, long? serverId)
+        {
+            if (serverId.HasValue)
+            {
+                return _cacheService.GetConnectedPlayers(serverId.Value).Any(player => player.SteamID.Equals(steamId64));
+            }
+
+            serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server");
+
+            return _cacheService.GetConnectedPlayers(serverId.Value).Any(player => player.SteamID.Equals(steamId64));
+        }
 
         public List<ScumPlayer> OnlinePlayers(long serverId) => _cacheService.GetConnectedPlayers(serverId);
 
@@ -48,9 +61,18 @@ namespace RagnarokBotWeb.Domain.Services
             return allUsers.ExceptBy(values.Select(v => v.SteamID), u => u.SteamID).ToList();
         }
 
-        public void ResetPlayersConnection(long serverId)
+        public void ResetPlayersConnection(long? serverId)
         {
-            _cacheService.ClearConnectedPlayers(serverId);
+
+            if (serverId.HasValue)
+            {
+                _cacheService.ClearConnectedPlayers(serverId.Value);
+            }
+
+            serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server");
+
+            _cacheService.ClearConnectedPlayers(serverId.Value);
         }
 
         public async Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name)

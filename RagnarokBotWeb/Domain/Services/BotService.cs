@@ -49,7 +49,7 @@ namespace RagnarokBotWeb.Domain.Services
             var players = ListPlayersParser.ParsePlayers(input);
             _cacheService.ClearConnectedPlayers(serverId.Value);
             _cacheService.SetConnectedPlayers(serverId.Value, players);
-            await _playerService.UpdateFromScumPlayers(players);
+            await _playerService.UpdateFromScumPlayers(serverId.Value, players);
         }
 
         public async Task UpdateInteraction()

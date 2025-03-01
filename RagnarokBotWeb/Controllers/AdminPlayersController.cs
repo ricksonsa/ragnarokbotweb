@@ -17,15 +17,15 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet("online")]
-        public IActionResult OnlinePlayers()
+        public IActionResult OnlinePlayers(long serverId)
         {
-            return Ok(_playerService.OnlinePlayers());
+            return Ok(_playerService.OnlinePlayers(serverId));
         }
 
         [HttpGet("offline")]
-        public async Task<IActionResult> OfflinePlayers()
+        public async Task<IActionResult> OfflinePlayers(long serverId)
         {
-            return Ok(await _playerService.OfflinePlayers());
+            return Ok(await _playerService.OfflinePlayers(serverId));
         }
     }
 }
