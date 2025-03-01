@@ -22,7 +22,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return await _dbSet.ToListAsync();
         }
 
-        public virtual async Task<T> GetByIdAsync(long id)
+        public virtual async Task<T?> FindByIdAsync(long id)
         {
             return await _dbSet.FindAsync(id);
         }
@@ -32,14 +32,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return await _dbSet.Where(predicate).ToListAsync();
         }
 
-        public virtual async Task<T> FindOneAsync(Expression<Func<T, bool>> predicate)
+        public virtual async Task<T?> FindOneAsync(Expression<Func<T, bool>> predicate)
         {
             return await _dbSet.FirstOrDefaultAsync(predicate);
-        }
-
-        public virtual async Task<T> FindByIdAsync(long id)
-        {
-            return await _dbSet.FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public virtual async Task AddAsync(T entity)
@@ -66,6 +61,18 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return await _dbSet.AnyAsync(predicate);
 
+        }
+
+        public virtual async Task CreateOrUpdateAsync(T entity)
+        {
+            if (entity.IsTransitory())
+            {
+                await AddAsync(entity);
+            }
+            else
+            {
+                Update(entity);
+            }
         }
     }
 }

@@ -23,7 +23,9 @@ namespace RagnarokBotWeb.HostedServices
                 var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
                 var botRepository = scope.ServiceProvider.GetRequiredService<IBotRepository>();
                 var order = await orderRepository.FindOneWithPackCreated();
+
                 if (order is null) return;
+                if (order.Pack is null) return;
                 if ((await botRepository.FindOneAsync(bot => bot.State == EBotState.Online)) is null) return;
 
                 order.Status = EOrderStatus.Command;
@@ -31,18 +33,13 @@ namespace RagnarokBotWeb.HostedServices
                 await orderRepository.SaveAsync();
 
                 var commands = new List<BotCommand>();
-                order.Pack!.PackItems.ForEach(packItem =>
+                foreach (var packItem in order.Pack.PackItems)
                 {
-                    commands.Add(new BotCommand
-                    {
-                        Target = order.User!.SteamId64,
-                        Type = ECommandType.Delivery,
-                        Value = packItem.Item.Code,
-                        Amount = packItem.Amount
-                    });
-                });
+                    if (order.Player?.SteamId64 is null) continue;
+                    commands.Add(BotCommand.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount));
+                }
 
-                commands.ForEach(_cacheService.GetCommandQueue().Enqueue);
+                commands.ForEach(_cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue);
             }
         }
     }

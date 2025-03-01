@@ -4,10 +4,16 @@ namespace RagnarokBotWeb.Domain.Entities
 {
     public class Bot : BaseEntity
     {
-        public string Identifier { get; set; }
         public bool Active { get; set; }
         public EBotState State { get; set; } = EBotState.None;
         public DateTime? LastInteracted { get; set; }
+        public ScumServer ScumServer { get; set; }
+
+        public Bot(ScumServer server)
+        {
+            ScumServer = server;
+            State = EBotState.Offline;
+        }
 
         public void UpdateInteraction()
         {

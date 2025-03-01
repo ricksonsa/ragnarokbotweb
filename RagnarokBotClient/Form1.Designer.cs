@@ -39,7 +39,11 @@
             LoginButton = new Button();
             PasswordBox = new TextBox();
             EmailBox = new TextBox();
+            ServersPanel = new Panel();
+            label1 = new Label();
+            ServerListBox = new ListBox();
             AuthPanel.SuspendLayout();
+            ServersPanel.SuspendLayout();
             SuspendLayout();
             // 
             // StatusText
@@ -151,11 +155,47 @@
             EmailBox.TabIndex = 0;
             EmailBox.TextChanged += EmailBox_TextChanged;
             // 
+            // ServersPanel
+            // 
+            ServersPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            ServersPanel.Controls.Add(label1);
+            ServersPanel.Controls.Add(ServerListBox);
+            ServersPanel.Location = new Point(12, 379);
+            ServersPanel.Name = "ServersPanel";
+            ServersPanel.Size = new Size(776, 59);
+            ServersPanel.TabIndex = 5;
+            ServersPanel.Visible = false;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 12F);
+            label1.Location = new Point(13, 27);
+            label1.Name = "label1";
+            label1.Size = new Size(230, 21);
+            label1.TabIndex = 1;
+            label1.Text = "Select a game server for the bot";
+            label1.Click += label1_Click;
+            // 
+            // ServerListBox
+            // 
+            ServerListBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            ServerListBox.BorderStyle = BorderStyle.FixedSingle;
+            ServerListBox.Font = new Font("Segoe UI", 15.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            ServerListBox.FormattingEnabled = true;
+            ServerListBox.ItemHeight = 30;
+            ServerListBox.Location = new Point(13, 68);
+            ServerListBox.Name = "ServerListBox";
+            ServerListBox.Size = new Size(748, 0);
+            ServerListBox.TabIndex = 0;
+            ServerListBox.SelectedIndexChanged += ServerListBox_SelectedIndexChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(ServersPanel);
             Controls.Add(AuthPanel);
             Controls.Add(StartButton);
             Controls.Add(LogBox);
@@ -167,6 +207,8 @@
             Load += Form1_Load;
             AuthPanel.ResumeLayout(false);
             AuthPanel.PerformLayout();
+            ServersPanel.ResumeLayout(false);
+            ServersPanel.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -184,5 +226,8 @@
         private TextBox PasswordBox;
         private TextBox EmailBox;
         private Label AuthFeedback;
+        private Panel ServersPanel;
+        private Label label1;
+        private ListBox ServerListBox;
     }
 }

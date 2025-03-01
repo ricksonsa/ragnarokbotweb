@@ -3,7 +3,7 @@
     public class Guild : BaseEntity
     {
         public bool RunTemplate { get; set; } = false;
-        public Tenant Tenant { get; set; }
+        public ulong DiscordId { get; set; }
         public bool Enabled { get; set; }
     }
 }

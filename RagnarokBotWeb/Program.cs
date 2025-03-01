@@ -1,7 +1,9 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Quartz;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Discord.Handlers;
+using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Application.Tasks.Jobs;
+using RagnarokBotWeb.Configuration;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -9,7 +11,6 @@ using RagnarokBotWeb.HostedServices;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
-using System.Text;
 
 namespace RagnarokBotWeb
 {
@@ -19,25 +20,16 @@ namespace RagnarokBotWeb
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddQuartz(q =>
+            {
+                q.UseMicrosoftDependencyInjectionJobFactory();
+            });
+            builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+            builder.Services.AddTransient<CustomJob>();
+
+            builder.Services.AddAuthenticationModule();
+
             // Add services to the container.
-
-            var keyBytes = Encoding.UTF8.GetBytes("p2tfCQNn6FJrM7XmdAsW5zKc4DHyYbELwuPV93BRv8xeqkSjZa\r\nVhN64mSPatj9H5FqfU2rCTEWvpskKQy3eZwLGXnb8RudD7zBYM\r\nwRJXr2b6tsQZWNLUDV4C8nmpKyc7fagGqh5MFux39kASvPEdBz\r\nZd7wKDnsq8j9WTHaGmbAkeYN4RPJrEp3UXS5LCvQy6hzxBVMcF\r\nsDh3SGNHjf7qARkxzMe2VpyPncmbvJCKTX4ruZWtB86dLQ9YF5");
-            var textKey = Convert.ToBase64String(keyBytes);
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-             .AddJwtBearer(options =>
-             {
-                 options.TokenValidationParameters = new TokenValidationParameters
-                 {
-                     ValidateIssuer = true,
-                     ValidateAudience = true,
-                     ValidateLifetime = true,
-                     ValidateIssuerSigningKey = true,
-                     ValidIssuer = "ragnarokbotowner",
-                     ValidAudience = "ragnarokbotowner",
-                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(textKey))
-                 };
-             });
-
 
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
@@ -87,6 +79,8 @@ namespace RagnarokBotWeb
 
             builder.Services.AddSingleton<IFtpService, FtpService>();
             builder.Services.AddSingleton<ICacheService, CacheService>();
+
+            builder.Services.AddScoped<ITokenIssuer, TokenIssuer>();
 
             builder.Services.AddHealthChecks();
 

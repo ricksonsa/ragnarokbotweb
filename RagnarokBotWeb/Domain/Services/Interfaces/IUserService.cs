@@ -1,11 +1,12 @@
-﻿using RagnarokBotWeb.Domain.Services.Dto;
-using Shared.Security;
+﻿using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Services.Dto;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
     public interface IUserService
     {
-        Task<TokenResult?> Authenticate(AuthenticateDto authenticateDto);
+        Task<AuthResponse?> PreAuthenticate(AuthenticateDto authenticateDto);
+        Task<AuthResponse?> Authenticate(long serverId);
         Task<UserDto> Register(RegisterUserDto register);
     }
 }

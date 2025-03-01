@@ -1,6 +1,7 @@
 ﻿using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
+using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices
 {
@@ -12,7 +13,7 @@ namespace RagnarokBotWeb.HostedServices
         public EconomyHostedService(
             ILogger<EconomyHostedService> logger,
             IFtpService ftpService,
-            IServiceProvider services) : base(services, ftpService.GetClient(), "economy_", TimeSpan.FromMinutes(5))
+            IServiceProvider services) : base(services, ftpService, "economy_", TimeSpan.FromMinutes(5))
         {
             _logger = logger;
             _services = services;
@@ -24,15 +25,19 @@ namespace RagnarokBotWeb.HostedServices
             {
                 _logger.LogInformation("Triggered EconomyHostedService->Process at: {time}", DateTimeOffset.Now);
 
-                using (var scope = _services.CreateScope())
-                {
-                    var playerService = scope.ServiceProvider.GetRequiredService<IPlayerService>();
+                using var scope = _services.CreateScope();
+                var playerService = scope.ServiceProvider.GetRequiredService<IPlayerService>();
 
-                    foreach (var fileName in GetLogFiles())
+                var serverRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
+                var servers = await serverRepository.GetActiveServersWithFtp();
+
+                foreach (var server in servers)
+                {
+                    foreach (var fileName in GetLogFiles(server.Ftp!))
                     {
                         _logger.LogInformation("EconomyHostedService->Process Reading file: " + fileName);
 
-                        foreach (var line in GetUnreadFileLines(fileName))
+                        foreach (var line in GetUnreadFileLines(server.Ftp!, fileName))
                         {
                             if (string.IsNullOrEmpty(line.Value)) continue;
                             if (line.Value.Contains("Game version")) continue;
@@ -40,7 +45,7 @@ namespace RagnarokBotWeb.HostedServices
                             if (line.Value.Contains("changed their name"))
                             {
                                 var (steamId64, scumId, changedName) = new ChangeNameLogParser().Parse(line.Value);
-                                await playerService.PlayerConnected(steamId64, scumId, changedName);
+                                await playerService.PlayerConnected(server, steamId64, scumId, changedName);
                             }
                         }
                     }

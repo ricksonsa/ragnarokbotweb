@@ -25,6 +25,9 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Guild> Guilds { get; set; }
+        public DbSet<ScumServer> ScumServers { get; set; }
+        public DbSet<Ftp> Ftps { get; set; }
+        public DbSet<ScheduledTask> ScheduledTasks { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {

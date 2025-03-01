@@ -14,6 +14,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<Reader> Readings { get; }
         public DbSet<Kill> Kills { get; }
         public DbSet<Bot> Bots { get; }
+        public DbSet<Tenant> Tenants { get; }
+        public DbSet<ScumServer> ScumServers { get; }
+        public DbSet<ScheduledTask> ScheduledTasks { get; }
+        public DbSet<Ftp> Ftps { get; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -24,6 +28,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             Readings = context.Readings;
             Kills = context.Kills;
             Bots = context.Bots;
+            Tenants = context.Tenants;
+            ScumServers = context.ScumServers;
+            Ftps = context.Ftps;
+            ScheduledTasks = context.ScheduledTasks;
         }
 
         public async Task SaveAsync()

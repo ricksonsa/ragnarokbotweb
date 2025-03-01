@@ -4,7 +4,7 @@ namespace RagnarokBotWeb.Domain.Entities
 {
     public class User : BaseEntity
     {
-        public Tenant? Tenant { get; set; }
+        public Tenant Tenant { get; set; }
         public string Email { get; set; }
         public string PasswordHash { get; private set; }
         public byte[] PasswordSalt { get; private set; }

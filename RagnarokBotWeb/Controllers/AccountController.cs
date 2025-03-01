@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
@@ -17,15 +19,25 @@ namespace RagnarokBotWeb.Controllers
             _logger = logger;
         }
 
+        [AllowAnonymous]
         [HttpPost("authenticate")]
         public async Task<IActionResult> Authenticate(AuthenticateDto auth)
         {
-            _logger.LogInformation("Post request for authenticating user: " + auth.Email);
-            var token = await _userService.Authenticate(auth);
-            if (token is null) return Unauthorized();
+            _logger.LogInformation("Post request for pre-authenticating user: " + auth.Email);
+            var token = await _userService.PreAuthenticate(auth);
             return Ok(token);
         }
 
+        [Authorize(AuthenticationSchemes = AuthorizationPolicyConstants.IdTokenPolicy)]
+        [HttpGet("login")]
+        public async Task<IActionResult> Authenticate(long serverId)
+        {
+            _logger.LogInformation("Post request for authenticating user for serverId: " + serverId);
+            var token = await _userService.Authenticate(serverId);
+            return Ok(token);
+        }
+
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterUserDto register)
         {

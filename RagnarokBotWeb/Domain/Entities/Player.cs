@@ -7,6 +7,7 @@
         public string? SteamId64 { get; set; }
         public string? SteamName { get; set; }
         public string? DiscordId { get; set; }
+        public ScumServer ScumServer { get; set; }
         public long? Money { get; set; }
         public long? Gold { get; set; }
         public long? Fame { get; set; }

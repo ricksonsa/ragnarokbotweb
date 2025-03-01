@@ -2,19 +2,20 @@
 using FluentFTP;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.HostedServices.Base
 {
     public abstract class TimedFtpHostedService : TimedHostedService
     {
-        private readonly FtpClient _ftpClient;
+        private readonly IFtpService _ftpService;
         private readonly string _baseFileName;
         private readonly Dictionary<string, Line> _processedLines = [];
         private readonly IServiceProvider _services;
-        public TimedFtpHostedService(IServiceProvider serviceProvider, FtpClient ftpClient, string baseFileName, TimeSpan time) : base(time)
+        public TimedFtpHostedService(IServiceProvider serviceProvider, IFtpService ftpService, string baseFileName, TimeSpan time) : base(time)
         {
-            _ftpClient = ftpClient;
+            _ftpService = ftpService;
             _baseFileName = baseFileName;
             _services = serviceProvider;
 
@@ -42,21 +43,24 @@ namespace RagnarokBotWeb.HostedServices.Base
             }
         }
 
-        public IEnumerable<string> GetLogFiles()
+        public IEnumerable<string> GetLogFiles(Ftp ftp)
         {
             var timeStampYesterday = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
             var timeStampToday = DateTime.Now.ToString("yyyyMMdd");
             var timeStampTomorrow = DateTime.Now.AddDays(1).ToString("yyyyMMdd");
-            var files = _ftpClient.GetNameListing("/189.1.169.132_7000/");
+            var client = _ftpService.GetClient(ftp);
+
+            var files = client.GetNameListing("/189.1.169.132_7000/");
             return files.ToList()
                 .Where(fileName =>
                 fileName.StartsWith(_baseFileName + timeStampYesterday) || fileName.StartsWith(_baseFileName + timeStampToday) || fileName.StartsWith(_baseFileName + timeStampTomorrow))
                 .OrderBy(x => DateTime.ParseExact(x.Split("_")[1].Replace(".log", string.Empty), "yyyyMMddHHmmss", null));
         }
 
-        public IList<Line> GetUnreadFileLines(string fileName)
+        public IList<Line> GetUnreadFileLines(Ftp ftp, string fileName)
         {
-            using (var stream = _ftpClient.OpenRead("/189.1.169.132_7000/" + fileName, FtpDataType.ASCII))
+            var client = _ftpService.GetClient(ftp);
+            using (var stream = client.OpenRead("/189.1.169.132_7000/" + fileName, FtpDataType.ASCII))
             using (var reader = new StreamReader(stream))
             {
                 string line;

@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Shared.Enums;
+using Shared.Models;
 using Shared.Security;
 using System.Diagnostics;
 using System.Reflection;
@@ -17,8 +18,10 @@ namespace RagnarokBotClient
 
         Queue<Command> _commandQueue = [];
         private CancellationTokenSource _cancellationTokenSource;
-        private string _accessToken;
+        private string _token;
         private string _exePath;
+        private List<ScumServer> _scumServers = [];
+        private long _serverId = 0;
 
         public Form1()
         {
@@ -28,7 +31,7 @@ namespace RagnarokBotClient
             _identifier = Environment.UserName;
             PasswordBox.UseSystemPasswordChar = true;
             _exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-
+            ServersPanel.Size = new Size(776, 429);
             LoadCredentials();
         }
 
@@ -48,20 +51,58 @@ namespace RagnarokBotClient
             }
         }
 
-        public Task Login()
+        public async Task Authenticate()
         {
-            if (Loading) return Task.CompletedTask;
+            if (Loading) return;
             UpdateStatus("Connecting to the server...");
             Loading = true;
-            TokenResult? tokenResult = null;
+            AuthResponse? tokenResult = null;
             try
             {
-                tokenResult = _remote.PostAsync<TokenResult>($"api/authenticate", new
+                tokenResult = await _remote.PostAsync<AuthResponse>($"api/authenticate", new
                 {
                     Email = EmailBox.Text,
                     Password = PasswordBox.Text,
                     ConfirmPassword = PasswordBox.Text
-                }).Result;
+                });
+            }
+            catch (Exception ex)
+            {
+                Loading = false;
+                AuthFeedback.Invoke(new Action(() => AuthFeedback.Visible = true));
+                tokenResult = null;
+                Debug.WriteLine(ex.Message);
+                UpdateStatus("Failed to connect.");
+            }
+
+            if (tokenResult is not null)
+            {
+                _token = tokenResult.IdToken;
+                _remote.SetAuthToken(tokenResult.IdToken);
+                _scumServers = tokenResult.ScumServers;
+                foreach (var server in _scumServers)
+                {
+                    ServerListBox.Invoke(new Action(() => ServerListBox.Items.Add($"{server.Id} - {server.Name}")));
+                }
+                AuthPanel.Invoke(new Action(() => AuthPanel.Visible = false));
+                AuthPanel.Invoke(new Action(() => AuthPanel.Enabled = false));
+                ServersPanel.Invoke(new Action(() => ServersPanel.Visible = true));
+                ServersPanel.Invoke(new Action(() => ServersPanel.Enabled = true));
+                File.WriteAllText(Path.Combine(_exePath, "credentials"), $"{EmailBox.Text}{Environment.NewLine}{PasswordBox.Text}");
+            }
+            Loading = false;
+
+            return;
+        }
+
+        public async Task Login()
+        {
+
+            if (_token is null) return;
+            AuthResponse? tokenResult = null;
+            try
+            {
+                tokenResult = await _remote.GetAsync<AuthResponse>($"api/login?serverId={_serverId}");
             }
             catch (Exception ex)
             {
@@ -76,23 +117,22 @@ namespace RagnarokBotClient
             {
                 UpdateStatus("Connected.");
                 UpdateStatus("Waiting...");
-                _accessToken = tokenResult.AccessToken;
-                AuthPanel.Invoke(new Action(() => AuthPanel.Visible = false));
-                AuthPanel.Invoke(new Action(() => AuthPanel.Enabled = false));
+                _token = tokenResult.AccessToken;
                 _remote.SetAuthToken(tokenResult.AccessToken);
-                File.WriteAllText(Path.Combine(_exePath, "credentials"), $"{EmailBox.Text}{Environment.NewLine}{PasswordBox.Text}");
+                ServersPanel.Invoke(new Action(() => ServersPanel.Visible = false));
+                ServersPanel.Invoke(new Action(() => ServersPanel.Enabled = false));
             }
             Loading = false;
 
-            return Task.CompletedTask;
+            return;
         }
 
         private void LoginButton_Click(object sender, EventArgs e)
         {
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                Login();
-
+                await Authenticate();
+                await Login();
             });
         }
 
@@ -144,7 +184,7 @@ namespace RagnarokBotClient
                 {
                     if (val.Result == "Healthy")
                     {
-                        _remote.PostAsync($"api/bots/register?identifier={_identifier}", null).Wait();
+                        _remote.PostAsync($"api/bots/register", null).Wait();
                         return true;
                     }
                     else
@@ -271,14 +311,16 @@ namespace RagnarokBotClient
             _commandQueue.Enqueue(command);
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void Form1_Load(object sender, EventArgs e) { }
+
+        private void EmailBox_TextChanged(object sender, EventArgs e) { }
+
+        private void label1_Click(object sender, EventArgs e) { }
+
+        private void ServerListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-
-        }
-
-        private void EmailBox_TextChanged(object sender, EventArgs e)
-        {
-
+            var test = sender;
+            _serverId = long.Parse(sender.ToString()!.Split(" - ")[0]);
         }
     }
 }
