@@ -10,5 +10,10 @@
         {
             Tenant = tenant;
         }
+
+        public ScumServer()
+        {
+            
+        }
     }
 }

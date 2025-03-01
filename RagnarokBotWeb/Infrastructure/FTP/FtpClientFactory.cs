@@ -27,6 +27,7 @@ namespace RagnarokBotWeb.Infrastructure.FTP
             ftpConfig.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
             ftpConfig.ConnectTimeout = 50000;
             ftpConfig.DataConnectionType = FtpDataConnectionType.AutoPassive;
+            // ftpConfig.LogToConsole = false;
             client.Config = ftpConfig;
             client.AutoConnect();
             return client;

@@ -1,4 +1,6 @@
 using Quartz;
+using Discord;
+using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Application.Security;
@@ -41,6 +43,18 @@ namespace RagnarokBotWeb
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<AppDbContext>();
+            builder.Services.AddHttpContextAccessor();
+            
+            builder.Services.AddSingleton<DiscordSocketClient>(_ =>
+            {
+                var config = new DiscordSocketConfig
+                {
+                    GatewayIntents = GatewayIntents.Guilds | 
+                                     GatewayIntents.GuildMessages |
+                                     GatewayIntents.MessageContent
+                };
+                return new DiscordSocketClient(config);
+            });
 
             builder.Services.AddHostedService<LoginHostedService>();
             builder.Services.AddHostedService<GameplayHostedService>();
@@ -52,6 +66,8 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<BotAliveHostedService>();
 
             builder.Services.AddHostedService<DiscordBotService>();
+            // uncomment this to run the template creation test
+            // builder.Services.AddHostedService<TestDiscordTemplate>();
 
             builder.Services.AddSingleton<IMessageEventHandlerFactory, MessageEventHandlerFactory>();
 
@@ -67,6 +83,10 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IPackRepository, PackRepository>();
             builder.Services.AddScoped<IPackItemRepository, PackItemRepository>();
+            builder.Services.AddScoped<IChannelTemplateRepository, ChannelTemplateRepository>();
+            builder.Services.AddScoped<IChannelRepository, ChannelRepository>();
+            builder.Services.AddScoped<IGuildRepository, GuildRepository>();
+            builder.Services.AddScoped<IScumServerRepository, ScumServerRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
@@ -76,6 +96,11 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IPackService, PackService>();
             builder.Services.AddScoped<IPlayerService, PlayerService>();
             builder.Services.AddScoped<IBotService, BotService>();
+            builder.Services.AddScoped<IChannelTemplateService, ChannelTemplateService>();
+            builder.Services.AddScoped<IChannelService, ChannelService>();
+            builder.Services.AddScoped<IGuildService, GuildService>();
+            
+            builder.Services.AddScoped<StartupDiscordTemplate>();
 
             builder.Services.AddSingleton<IFtpService, FtpService>();
             builder.Services.AddSingleton<ICacheService, CacheService>();

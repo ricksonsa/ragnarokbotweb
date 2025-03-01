@@ -1,38 +1,32 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using RagnarokBotWeb.Application.Discord.Handlers;
 
 namespace RagnarokBotWeb.Application.Discord;
 
 public class DiscordBotService : BackgroundService
 {
+    public static DiscordBotService Instance;
     private readonly DiscordSocketClient _client;
-    private readonly ILogger<DiscordBotService> _logger;
-    private readonly IMessageEventHandlerFactory _messageEventHandlerFactory;
-    private readonly string _token;
 
-    public DiscordBotService(ILogger<DiscordBotService> logger, IMessageEventHandlerFactory messageEventHandlerFactory)
+    private readonly ILogger<DiscordBotService> _logger;
+
+    // private readonly string? _token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
+    private readonly string? _token = "MTM0MDE3NjI0MTA5NzE4MzM0Mw.Gj_E-C.cP30r5RLRLnXwE6bAzWBfCrN2dVXn52J21MHoY";
+
+
+    public DiscordBotService(ILogger<DiscordBotService> logger, DiscordSocketClient client)
     {
         _logger = logger;
-        _messageEventHandlerFactory = messageEventHandlerFactory;
+        _client = client;
 
-        var config = new DiscordSocketConfig
-        {
-            GatewayIntents = GatewayIntents.Guilds |
-                             GatewayIntents.GuildMessages |
-                             GatewayIntents.MessageContent
-        };
-        _client = new DiscordSocketClient(config);
-
-        // _token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
-        _token = "MTM0MDE3NjI0MTA5NzE4MzM0Mw.Gj_E-C.cP30r5RLRLnXwE6bAzWBfCrN2dVXn52J21MHoY";
+        Instance = this;
     }
+
+    public bool IsReady { get; private set; }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _client.Log += LogAsync;
-        _client.MessageReceived += MessageReceivedAsync;
-        _client.InteractionCreated += InteractionCreated;
 
         if (string.IsNullOrEmpty(_token))
         {
@@ -45,6 +39,17 @@ public class DiscordBotService : BackgroundService
 
         _logger.LogInformation("Discord bot started.");
 
+        _client.Ready += () =>
+        {
+            _logger.LogInformation("Discord bot ready.");
+            _logger.LogInformation("Discord bot has the following Guilds:");
+            foreach (var guild in _client.Guilds)
+                _logger.LogInformation(
+                    $"Guild Id: {guild.Id}, Guild Name: {guild.Name}, Guild Created: {guild.CreatedAt}");
+            IsReady = true;
+            return Task.CompletedTask;
+        };
+
         try
         {
             await Task.Delay(-1, stoppingToken);
@@ -54,68 +59,16 @@ public class DiscordBotService : BackgroundService
         }
     }
 
-    private async Task InteractionCreated(SocketInteraction interaction)
+    public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Interaction comming from discord.");
-
-        if (interaction is SocketMessageComponent component)
-        {
-            if (component.Data.CustomId == "welcome_pack")
-            {
-                var user = component.User as SocketGuildUser;
-
-                try
-                {
-                    // Tenta enviar a DM
-                    var dmChannel = await user.CreateDMChannelAsync();
-                    await dmChannel.SendMessageAsync("🎁 Você recebeu seu Welcome Pack! Seja bem-vindo ao servidor!");
-
-                    // Responde no canal para confirmar o envio
-                    await component.RespondAsync("📩 Seu Welcome Pack foi enviado na sua DM!", ephemeral: true);
-                }
-                catch (Exception)
-                {
-                    await component.RespondAsync("⚠️ Não consegui enviar sua DM. Certifique-se de que suas mensagens diretas estão ativadas!", ephemeral: true);
-                }
-            }
-        }
+        await _client.LogoutAsync();
+        await _client.StopAsync();
+        await base.StopAsync(cancellationToken);
     }
 
     private Task LogAsync(LogMessage log)
     {
         _logger.LogInformation(log.ToString());
         return Task.CompletedTask;
-    }
-
-    private Task MessageReceivedAsync(SocketMessage message)
-    {
-        if (message.Author.IsBot)
-            return Task.CompletedTask;
-
-        // Isso aqui para pegar o tenant do usuário
-        if (message.Channel is SocketTextChannel textChannel)
-        {
-            ulong guildId = textChannel.Guild.Id;
-            Console.WriteLine($"Guild ID: {guildId}");
-        }
-        else
-        {
-            Console.WriteLine("Mensagem recebida em DM.");
-        }
-
-        var handler = _messageEventHandlerFactory.GetHandler(message);
-        if (handler != null)
-            _ = handler.HandleAsync(message);
-        else
-            _ = message.Channel.SendMessageAsync($"Event with name = {message.Content} not found.");
-
-        return Task.CompletedTask;
-    }
-
-    public override async Task StopAsync(CancellationToken cancellationToken)
-    {
-        await _client.LogoutAsync();
-        await _client.StopAsync();
-        await base.StopAsync(cancellationToken);
     }
 }
