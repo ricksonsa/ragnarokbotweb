@@ -6,8 +6,9 @@ namespace RagnarokBotWeb.Domain.Entities
     {
         public Pack? Pack { get; set; }
         public EOrderStatus Status { get; set; }
-        public Player? User { get; set; }
+        public Player? Player { get; set; }
         public DateTime CreateDate { get; set; }
+        public ScumServer ScumServer { get; set; }
 
         public Order()
         {

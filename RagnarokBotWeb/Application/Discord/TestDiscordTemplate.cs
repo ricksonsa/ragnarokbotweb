@@ -17,6 +17,12 @@ public class TestDiscordTemplate(ILogger<TestDiscordTemplate> logger, IServicePr
         var template = scope.ServiceProvider.GetRequiredService<StartupDiscordTemplate>();
         var guildService = scope.ServiceProvider.GetRequiredService<IGuildService>();
         var guild = await guildService.FindByGuildIdAsync(1L);
+        if (guild is null)
+        {
+            logger.LogWarning("No guild found.");
+            return;
+        }
+
         await template.Run(guild);
         guild.RunTemplate = true;
         await guildService.Update(guild);

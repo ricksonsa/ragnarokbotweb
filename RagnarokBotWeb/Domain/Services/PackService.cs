@@ -50,7 +50,7 @@ namespace RagnarokBotWeb.Domain.Services
                 var packItem = new PackItem
                 {
                     Amount = item.Amount,
-                    Item = await _itemRepository.GetByIdAsync(item.ItemId),
+                    Item = await _itemRepository.FindByIdAsync(item.ItemId),
                     Pack = pack
                 };
 
@@ -65,7 +65,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<PackDto> FetchPackById(long id)
         {
-            var pack = await _packRepository.GetByIdAsync(id);
+            var pack = await _packRepository.FindByIdAsync(id);
             if (pack is null) return null;
             var packDto = new PackDto
             {
@@ -88,7 +88,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<PackDto> UpdatePackAsync(long id, CreatePackDto createPack)
         {
-            var pack = await _packRepository.GetByIdAsync(id);
+            var pack = await _packRepository.FindByIdAsync(id);
             if (pack is null) return null;
 
             pack.Description = createPack.Description;
@@ -110,7 +110,7 @@ namespace RagnarokBotWeb.Domain.Services
                 var packItem = new PackItem
                 {
                     Amount = item.Amount,
-                    Item = await _itemRepository.GetByIdAsync(item.ItemId),
+                    Item = await _itemRepository.FindByIdAsync(item.ItemId),
                     Pack = pack
                 };
 
@@ -123,7 +123,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<Pack> DeletePackAsync(long id)
         {
-            var pack = await _packRepository.GetByIdAsync(id);
+            var pack = await _packRepository.FindByIdAsync(id);
             if (pack is null) return null;
 
             foreach (var packItem in pack.PackItems)

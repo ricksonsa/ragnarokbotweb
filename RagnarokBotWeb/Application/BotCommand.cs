@@ -19,5 +19,25 @@ namespace RagnarokBotWeb.Application
                 Type = ECommandType.ListPlayers
             };
         }
+
+        public static BotCommand Command(string command)
+        {
+            return new BotCommand
+            {
+                Value = command,
+                Type = ECommandType.Command
+            };
+        }
+
+        public static BotCommand Delivery(string target, string value, int amount)
+        {
+            return new BotCommand
+            {
+                Target = target,
+                Value = value,
+                Amount = amount,
+                Type = ECommandType.Delivery
+            };
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Text;
 
 namespace RagnarokBotClient
@@ -16,16 +17,29 @@ namespace RagnarokBotClient
             };
         }
 
+        public void SetAuthToken(string token)
+        {
+            _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+        }
+
         public async Task<T> PostAsync<T>(string url, object body)
         {
-            using StringContent jsonContent = new(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-            var response = await HttpClient.PostAsync(url, jsonContent);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync())!;
-            }
+                using StringContent jsonContent = new(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+                var response = await HttpClient.PostAsync(url, jsonContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync())!;
+                }
 
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
             return default!;
+
         }
 
         public async Task<string> PostAsync(string url, object body)

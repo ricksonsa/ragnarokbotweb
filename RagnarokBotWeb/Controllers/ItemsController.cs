@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -6,6 +7,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/admin/items")]
     public class ItemsController : ControllerBase
     {

@@ -6,9 +6,9 @@ namespace RagnarokBotWeb.Domain.Services;
 
 public class GuildService(IGuildRepository guildRepository) : IGuildService
 {
-    public Task<Guild> FindByGuildIdAsync(long guildId)
+    public Task<Guild?> FindByGuildIdAsync(long guildId)
     {
-        return guildRepository.GetByIdAsync(guildId);
+        return guildRepository.FindByIdAsync(guildId);
     }
 
     public async Task Update(Guild guild)

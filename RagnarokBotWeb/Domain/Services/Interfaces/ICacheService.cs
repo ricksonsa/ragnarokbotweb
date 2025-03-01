@@ -5,9 +5,9 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
     public interface ICacheService
     {
-        void ClearConnectedPlayers();
-        Queue<BotCommand> GetCommandQueue();
-        Dictionary<string, ScumPlayer> GetConnectedPlayers();
-        void SetConnectedPlayers(List<ScumPlayer> players);
+        void ClearConnectedPlayers(long serverId);
+        Queue<BotCommand> GetCommandQueue(long serverId);
+        List<ScumPlayer> GetConnectedPlayers(long serverId);
+        void SetConnectedPlayers(long serverId, List<ScumPlayer> players);
     }
 }

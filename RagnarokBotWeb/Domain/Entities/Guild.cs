@@ -1,9 +1,9 @@
-﻿namespace RagnarokBotWeb.Domain.Entities;
-
-public class Guild : BaseEntity
+﻿namespace RagnarokBotWeb.Domain.Entities
 {
-    public bool RunTemplate { get; set; } = false;
-    public Tenant Tenant { get; set; }
-    public bool Enabled { get; set; }
-    public ulong DiscordId { get; set; }
+    public class Guild : BaseEntity
+    {
+        public bool RunTemplate { get; set; } = false;
+        public ulong DiscordId { get; set; }
+        public bool Enabled { get; set; }
+    }
 }

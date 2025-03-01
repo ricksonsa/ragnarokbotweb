@@ -1,7 +1,11 @@
+using Quartz;
 using Discord;
 using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Discord.Handlers;
+using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Application.Tasks.Jobs;
+using RagnarokBotWeb.Configuration;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -18,16 +22,28 @@ namespace RagnarokBotWeb
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddQuartz(q =>
+            {
+                q.UseMicrosoftDependencyInjectionJobFactory();
+            });
+            builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+            builder.Services.AddTransient<CustomJob>();
+
+            builder.Services.AddAuthenticationModule();
+
             // Add services to the container.
 
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 //options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
             });
+            builder.Services.AddAuthorization();
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<AppDbContext>();
+            builder.Services.AddHttpContextAccessor();
             
             builder.Services.AddSingleton<DiscordSocketClient>(_ =>
             {
@@ -47,6 +63,8 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<KillHostedService>();
             builder.Services.AddHostedService<OrderCommandHostedService>();
             builder.Services.AddHostedService<ListPlayersHostedService>();
+            builder.Services.AddHostedService<BotAliveHostedService>();
+
             builder.Services.AddHostedService<DiscordBotService>();
             // uncomment this to run the template creation test
             // builder.Services.AddHostedService<TestDiscordTemplate>();
@@ -58,14 +76,17 @@ namespace RagnarokBotWeb
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IPlayerRepository, PlayerRepository>();
+            builder.Services.AddScoped<ITenantRepository, TenantRepository>();
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IBotRepository, BotRepository>();
             builder.Services.AddScoped<IItemRepository, ItemRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IPackRepository, PackRepository>();
             builder.Services.AddScoped<IPackItemRepository, PackItemRepository>();
             builder.Services.AddScoped<IChannelTemplateRepository, ChannelTemplateRepository>();
             builder.Services.AddScoped<IChannelRepository, ChannelRepository>();
             builder.Services.AddScoped<IGuildRepository, GuildRepository>();
+            builder.Services.AddScoped<IScumServerRepository, ScumServerRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
@@ -83,6 +104,8 @@ namespace RagnarokBotWeb
 
             builder.Services.AddSingleton<IFtpService, FtpService>();
             builder.Services.AddSingleton<ICacheService, CacheService>();
+
+            builder.Services.AddScoped<ITokenIssuer, TokenIssuer>();
 
             builder.Services.AddHealthChecks();
 
@@ -109,7 +132,7 @@ namespace RagnarokBotWeb
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
+            app.UseAuthentication();
 
             app.MapControllers();
 

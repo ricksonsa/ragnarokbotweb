@@ -11,7 +11,7 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250301211306_initial")]
+    [Migration("20250301224137_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -53,17 +53,18 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Identifier")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime?>("LastInteracted")
                         .HasColumnType("TEXT");
+
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("State")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ScumServerId");
 
                     b.ToTable("Bots");
                 });
@@ -215,6 +216,32 @@ namespace RagnarokBotWeb.Migrations
                     b.ToTable("Commands");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Ftp", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Port")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Ftps");
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Guild", b =>
                 {
                     b.Property<long>("Id")
@@ -230,12 +257,7 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<bool>("RunTemplate")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("TenantId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("TenantId");
 
                     b.ToTable("Guilds");
                 });
@@ -359,17 +381,22 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<long?>("PackId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Status")
+                    b.Property<long?>("PlayerId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("UserId")
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PackId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("PlayerId");
+
+                    b.HasIndex("ScumServerId");
 
                     b.ToTable("Orders");
                 });
@@ -452,6 +479,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<string>("ScumId")
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("SteamId64")
                         .HasColumnType("TEXT");
 
@@ -468,6 +498,8 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("REAL");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ScumServerId");
 
                     b.ToTable("Players");
                 });
@@ -498,6 +530,59 @@ namespace RagnarokBotWeb.Migrations
                     b.ToTable("Readings");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ScheduledTask", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CronExpression")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScumServerId");
+
+                    b.ToTable("ScheduledTasks");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ScumServer", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("FtpId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("GuildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TenantId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FtpId");
+
+                    b.HasIndex("GuildId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ScumServers");
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Tenant", b =>
                 {
                     b.Property<long>("Id")
@@ -506,6 +591,9 @@ namespace RagnarokBotWeb.Migrations
 
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -551,6 +639,10 @@ namespace RagnarokBotWeb.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<byte[]>("PasswordSalt")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
                     b.Property<long>("TenantId")
                         .HasColumnType("INTEGER");
 
@@ -559,6 +651,17 @@ namespace RagnarokBotWeb.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Bot", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
+                        .WithMany()
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ScumServer");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Button", b =>
@@ -603,17 +706,6 @@ namespace RagnarokBotWeb.Migrations
                     b.Navigation("Bot");
                 });
 
-            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Guild", b =>
-                {
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Tenant");
-                });
-
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Kill", b =>
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "Killer")
@@ -644,13 +736,21 @@ namespace RagnarokBotWeb.Migrations
                         .WithMany()
                         .HasForeignKey("PackId");
 
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "User")
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "Player")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("PlayerId");
+
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
+                        .WithMany()
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Pack");
 
-                    b.Navigation("User");
+                    b.Navigation("Player");
+
+                    b.Navigation("ScumServer");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.PackItem", b =>
@@ -670,6 +770,51 @@ namespace RagnarokBotWeb.Migrations
                     b.Navigation("Item");
 
                     b.Navigation("Pack");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Player", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
+                        .WithMany()
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ScumServer");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ScheduledTask", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
+                        .WithMany()
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ScumServer");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ScumServer", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Ftp", "Ftp")
+                        .WithMany()
+                        .HasForeignKey("FtpId");
+
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Guild", "Guild")
+                        .WithMany()
+                        .HasForeignKey("GuildId");
+
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("ScumServers")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ftp");
+
+                    b.Navigation("Guild");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Transaction", b =>
@@ -697,6 +842,11 @@ namespace RagnarokBotWeb.Migrations
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Pack", b =>
                 {
                     b.Navigation("PackItems");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Tenant", b =>
+                {
+                    b.Navigation("ScumServers");
                 });
 #pragma warning restore 612, 618
         }

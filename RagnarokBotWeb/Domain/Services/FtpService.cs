@@ -1,6 +1,7 @@
 ﻿using FluentFTP;
 using Microsoft.Extensions.Options;
 using RagnarokBotWeb.Configuration.Data;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.FTP;
 
@@ -19,5 +20,11 @@ namespace RagnarokBotWeb.Domain.Services
         {
             return _ftpClientFactory.CreateClient();
         }
+
+        public FtpClient GetClient(Ftp ftp)
+        {
+            return _ftpClientFactory.CreateClient(ftp);
+        }
+
     }
 }

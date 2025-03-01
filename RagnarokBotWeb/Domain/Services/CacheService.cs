@@ -6,33 +6,33 @@ namespace RagnarokBotWeb.Domain.Services
 {
     public class CacheService : ICacheService
     {
-        private Dictionary<string, ScumPlayer> _connectedUsers;
-        private readonly Queue<BotCommand> _commandQueue;
+        private Dictionary<long, List<ScumPlayer>> _connectedPlayers;
+        private readonly Dictionary<long, Queue<BotCommand>> _queue;
 
         public CacheService()
         {
-            _connectedUsers = [];
-            _commandQueue = [];
+            _connectedPlayers = [];
+            _queue = [];
         }
 
-        public Dictionary<string, ScumPlayer> GetConnectedPlayers()
+        public List<ScumPlayer> GetConnectedPlayers(long serverId)
         {
-            return _connectedUsers;
+            return _connectedPlayers[serverId];
         }
 
-        public Queue<BotCommand> GetCommandQueue()
+        public Queue<BotCommand> GetCommandQueue(long serverId)
         {
-            return _commandQueue;
+            return _queue[serverId];
         }
 
-        public void ClearConnectedPlayers()
+        public void ClearConnectedPlayers(long serverId)
         {
-            _connectedUsers = [];
+            _connectedPlayers[serverId] = [];
         }
 
-        public void SetConnectedPlayers(List<ScumPlayer> players)
+        public void SetConnectedPlayers(long serverId, List<ScumPlayer> players)
         {
-            _connectedUsers = players.DistinctBy(player => player.SteamID).ToDictionary(value => value.SteamID);
+            _connectedPlayers[serverId] = players.DistinctBy(player => player.SteamID).ToList();
         }
     }
 }

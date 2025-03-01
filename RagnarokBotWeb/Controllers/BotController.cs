@@ -1,63 +1,55 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/bots")]
     public class BotController : ControllerBase
     {
         private readonly ILogger<BotController> _logger;
-        private readonly ICacheService _cacheService;
         private readonly IBotService _botService;
 
-        public BotController(ILogger<BotController> logger, ICacheService cacheService, IBotService botService)
+        public BotController(ILogger<BotController> logger, IBotService botService)
         {
             _logger = logger;
-            _cacheService = cacheService;
             _botService = botService;
         }
 
         [HttpGet("commands")]
-        public async Task<IActionResult> GetReadyCommands(string identifier)
+        public async Task<IActionResult> GetReadyCommands()
         {
-            await _botService.UpdateInteraction(identifier);
-            if (_cacheService.GetCommandQueue().TryDequeue(out var command))
-            {
-                return Ok(command);
-            }
-
-            return Ok(null);
+            return Ok(await _botService.GetCommand());
         }
 
         [HttpGet("players")]
-        public IActionResult UpdatePlayers([FromQuery] string input, [FromQuery] string identifier)
+        public IActionResult UpdatePlayers([FromQuery] string input)
         {
-            _botService.UpdatePlayersOnline(input, identifier);
+            _botService.UpdatePlayersOnline(input);
             return Ok();
         }
 
         [HttpPost("commands")]
-        public IActionResult CreateCommand(BotCommand command)
+        public async Task<IActionResult> CreateCommand(BotCommand command)
         {
-            _cacheService.GetCommandQueue().Enqueue(command);
-            return Ok(command);
+            await _botService.PutCommand(command);
+            return Ok();
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterBot(string identifier)
+        public async Task<IActionResult> RegisterBot()
         {
-            _logger.LogInformation($"Bot with identifier {identifier} registered");
-            var bot = await _botService.RegisterBot(identifier);
+            var bot = await _botService.RegisterBot();
             return Ok(bot);
         }
 
         [HttpDelete("unregister")]
-        public async Task<IActionResult> UnregisterBot(string identifier)
+        public async Task<IActionResult> UnregisterBot()
         {
-            _logger.LogInformation($"Bot with identifier {identifier} unregistered");
-            var bot = await _botService.UnregisterBot(identifier);
+            var bot = await _botService.UnregisterBot();
             return Ok(bot);
         }
     }

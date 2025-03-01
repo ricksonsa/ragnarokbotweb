@@ -10,7 +10,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         private readonly AppDbContext _appDbContext;
         public PackRepository(AppDbContext context) : base(context) { _appDbContext = context; }
 
-        public override async Task<Pack> GetByIdAsync(long id)
+        public override async Task<Pack> FindByIdAsync(long id)
         {
             return await _appDbContext.Packs
                 .Include(pack => pack.PackItems)

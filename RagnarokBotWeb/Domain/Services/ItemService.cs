@@ -69,7 +69,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<Item?> FindItemByIdAsync(long id)
         {
-            return await _itemRepository.GetByIdAsync(id);
+            return await _itemRepository.FindByIdAsync(id);
         }
 
         public async Task<IEnumerable<Item>> FetchAllItemsAsync()

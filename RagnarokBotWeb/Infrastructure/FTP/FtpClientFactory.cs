@@ -1,4 +1,5 @@
 ﻿using FluentFTP;
+using RagnarokBotWeb.Domain.Entities;
 
 namespace RagnarokBotWeb.Infrastructure.FTP
 {
@@ -27,6 +28,20 @@ namespace RagnarokBotWeb.Infrastructure.FTP
             ftpConfig.ConnectTimeout = 50000;
             ftpConfig.DataConnectionType = FtpDataConnectionType.AutoPassive;
             // ftpConfig.LogToConsole = false;
+            client.Config = ftpConfig;
+            client.AutoConnect();
+            return client;
+        }
+
+        public FtpClient CreateClient(Ftp ftp)
+        {
+            var client = new FtpClient(ftp.Address, port: (int)ftp.Port, user: ftp.UserName, pass: ftp.Password);
+            var ftpConfig = new FtpConfig();
+            ftpConfig.LogHost = true;
+            ftpConfig.LogToConsole = true;
+            ftpConfig.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+            ftpConfig.ConnectTimeout = 50000;
+            ftpConfig.DataConnectionType = FtpDataConnectionType.AutoPassive;
             client.Config = ftpConfig;
             client.AutoConnect();
             return client;

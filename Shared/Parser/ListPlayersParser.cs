@@ -34,7 +34,6 @@ namespace Shared.Parser
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
 
