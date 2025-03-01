@@ -29,7 +29,7 @@ namespace RagnarokBotWeb
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<AppDbContext>();
             
-            builder.Services.AddSingleton(_ =>
+            builder.Services.AddSingleton<DiscordSocketClient>(_ =>
             {
                 var config = new DiscordSocketConfig
                 {
@@ -65,6 +65,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IPackItemRepository, PackItemRepository>();
             builder.Services.AddScoped<IChannelTemplateRepository, ChannelTemplateRepository>();
             builder.Services.AddScoped<IChannelRepository, ChannelRepository>();
+            builder.Services.AddScoped<IGuildRepository, GuildRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
@@ -76,6 +77,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IBotService, BotService>();
             builder.Services.AddScoped<IChannelTemplateService, ChannelTemplateService>();
             builder.Services.AddScoped<IChannelService, ChannelService>();
+            builder.Services.AddScoped<IGuildService, GuildService>();
             
             builder.Services.AddScoped<StartupDiscordTemplate>();
 

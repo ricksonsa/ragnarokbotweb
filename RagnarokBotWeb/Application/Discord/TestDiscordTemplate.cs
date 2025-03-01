@@ -1,20 +1,24 @@
-using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord;
 
-public class TestDiscordTemplate(IServiceProvider serviceProvider) : BackgroundService
+public class TestDiscordTemplate(ILogger<TestDiscordTemplate> logger, IServiceProvider serviceProvider)
+    : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        while (DiscordBotService.Instance is null || !DiscordBotService.Instance.IsReady)
+        {
+            logger.LogInformation("DiscordBotService is not ready yet.");
+            await Task.Delay(1000, stoppingToken);
+        }
+
         using var scope = serviceProvider.CreateScope();
         var template = scope.ServiceProvider.GetRequiredService<StartupDiscordTemplate>();
-        var guild = new Guild
-        {
-            Id = 1,
-            Enabled = true,
-            RunTemplate = false,
-            DiscordId = 1343235141136552099
-        };
+        var guildService = scope.ServiceProvider.GetRequiredService<IGuildService>();
+        var guild = await guildService.FindByGuildIdAsync(1L);
         await template.Run(guild);
+        guild.RunTemplate = true;
+        await guildService.Update(guild);
     }
 }

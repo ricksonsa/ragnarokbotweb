@@ -8,11 +8,11 @@ namespace RagnarokBotWeb.Application.Discord;
 
 public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider serviceProvider)
 {
-    public async Task<List<ChannelDto>> CreateAsync(ulong externalGuildId)
+    public async Task<List<ChannelDto>> CreateAsync(ulong guildDiscordId)
     {
         var channels = new List<ChannelDto>();
 
-        var guild = client.GetGuild(externalGuildId);
+        var guild = client.GetGuild(guildDiscordId);
         var templates = await GetChannelTemplates();
         var categories = new Dictionary<string, RestCategoryChannel>();
 

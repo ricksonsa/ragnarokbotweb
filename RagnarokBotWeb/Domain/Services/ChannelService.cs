@@ -12,8 +12,9 @@ public class ChannelService(IChannelRepository channelRepository) : IChannelServ
         return channelRepository.FindOneAsync(x => x.ChannelType == channelType && x.Guild.Id == guildId);
     }
 
-    public Task CreateChannelAsync(Channel channel)
+    public async Task CreateChannelAsync(Channel channel)
     {
-        return channelRepository.AddAsync(channel);
+        await channelRepository.AddAsync(channel);
+        await channelRepository.SaveAsync();
     }
 }

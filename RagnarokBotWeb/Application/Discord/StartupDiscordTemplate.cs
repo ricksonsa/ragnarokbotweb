@@ -13,15 +13,15 @@ public class StartupDiscordTemplate(
     {
         if (guild.RunTemplate)
         {
-            logger.LogWarning(
-                $"Template already executed in GuildId: {guild.Id} and External GuildId {guild.DiscordId}");
+            logger.LogWarning("Template already executed in GuildId: {} and DiscordId {}", guild.Id, guild.DiscordId);
             return;
         }
 
         using var scope = serviceProvider.CreateScope();
         var channelService = scope.ServiceProvider.GetRequiredService<IChannelService>();
 
-        var channels = await new DiscordCreateChannel(client, serviceProvider).CreateAsync(guild.DiscordId);
+        var discordCreateChannel = new DiscordCreateChannel(client, serviceProvider);
+        var channels = await discordCreateChannel.CreateAsync(guild.DiscordId);
 
         foreach (var channel in channels.Select(dto => new Channel
                  {
