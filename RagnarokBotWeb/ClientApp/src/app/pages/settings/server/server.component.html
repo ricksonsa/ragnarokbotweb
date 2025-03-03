@@ -1,0 +1,75 @@
+<div class="main">
+
+  <ng-template #ftp>
+    <nz-icon nzType="file-sync" nzTheme="outline"
+      style="font-size: 20px; color: #9D8342;" /><span>&nbsp;&nbsp;FTP</span>
+  </ng-template>
+  <nz-card [nzTitle]="ftp">
+    <form nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="email">Provider</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="gender" nzPlaceHolder="Select a game hosting service provider">
+            <nz-option nzValue="PingPerfect" nzLabel="PingPerfect"></nz-option>
+            <nz-option nzValue="GGHosting" nzLabel="GGHosting"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="email">IP Address</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input nz-input name="ipAddress" type="text" id="ipAddress" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="email">Port</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input nz-input name="port" type="text" id="port" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="email">Username</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input nz-input name="username" type="text" id="username" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="email">Password</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input nz-input name="password" type="password" id="password" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </nz-card>
+
+  <ng-template #server>
+    <nz-icon nzType="sliders" nzTheme="outline"
+      style="font-size: 20px;" /><span>&nbsp;&nbsp;Server Settings</span>
+  </ng-template>
+  <nz-card [nzTitle]="server">
+    <form nz-form>
+      <nz-form-item>
+        <p>Server Name: <b>RAGNAROK BR/LATAM</b></p>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="email">Server Name</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input nz-input name="name" type="text" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #discordLink>
+        <p>Players can do !discord in global chat and the bot will respond with your Discord Link</p>
+      </ng-template>
+    </form>
+  </nz-card>
+
+ 
+
+  <!-- <div class="last"></div> -->
+
+</div>

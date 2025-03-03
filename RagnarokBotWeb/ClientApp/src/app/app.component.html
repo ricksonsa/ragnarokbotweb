@@ -1,0 +1,132 @@
+<nz-layout class="app-layout">
+  <nz-sider class="menu-sidebar"
+    nzCollapsible
+    nzWidth="256px"
+    nzBreakpoint="md"
+    [(nzCollapsed)]="isCollapsed"
+    [nzTrigger]="null"
+  >
+    <div class="sidebar-logo">
+      <a href="https://ng.ant.design/" target="_blank">
+        <img src="https://ng.ant.design/assets/img/logo.svg" alt="logo">
+        <h1>Ant Design of Angular</h1>
+      </a>
+    </div>
+    <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+
+      <li nz-submenu nzOpen nzTitle="Dashboard" nzIcon="dashboard">
+        <ul>
+          <li nz-menu-item nzMatchRouter>
+            <a>Home</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Console</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Chat</a>
+          </li>
+        </ul>
+      </li>
+
+      <li nz-submenu nzOpen nzTitle="Settings" nzIcon="form">
+        <ul>
+          <li nz-menu-item nzMatchRouter>
+            <a routerLink="servers/1/settings/server">Server</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a routerLink="servers/1/settings/discord">Discord</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a routerLink="servers/1/settings/pvp">PvP</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a routerLink="servers/1/settings/rankings">Rankings</a>
+          </li>
+        </ul>
+      </li>
+
+      <li nz-submenu nzOpen nzTitle="Management" nzIcon="user">
+        <ul>
+          <li nz-menu-item nzMatchRouter>
+            <a>Players</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>VIPs</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Tickets</a>
+          </li>
+      
+        </ul>
+      </li>
+
+      <li nz-submenu nzOpen nzTitle="Shop" nzIcon="dollar-circle">
+        <ul>
+          <li nz-menu-item nzMatchRouter>
+            <a>Bank</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Orders</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Packages</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Items</a>
+          </li>
+        </ul>
+      </li>
+
+      <li nz-submenu nzOpen nzTitle="Events" nzIcon="star">
+        <ul>
+     
+          <li nz-menu-item nzMatchRouter>
+            <a>Lucky Wheel</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Air Drops</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>PvP Events</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Taxi</a>
+          </li>
+        </ul>
+      </li>
+
+      <li nz-submenu nzOpen nzTitle="Scheduled Tasks" nzIcon="clock-circle">
+        <ul>
+          <li nz-menu-item nzMatchRouter>
+            <a>Default</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>Custom</a>
+          </li>
+        </ul>
+      </li>
+
+      <!-- <li nz-submenu nzOpen nzTitle="ESCAPE FROM SCUM BR/LATAM" nzIcon="form">
+        <ul>
+          <li nz-menu-item nzMatchRouter>
+            <a>Scheduled Tasks</a>
+          </li>
+        </ul>
+      </li> -->
+    </ul>
+  </nz-sider>
+  <nz-layout>
+    <nz-header>
+      <div class="app-header">
+        <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+          <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
+        </span>
+      </div>
+    </nz-header>
+    <nz-content>
+      <div class="inner-content">
+        <router-outlet></router-outlet>
+      </div>
+    </nz-content>
+  </nz-layout>
+</nz-layout>
