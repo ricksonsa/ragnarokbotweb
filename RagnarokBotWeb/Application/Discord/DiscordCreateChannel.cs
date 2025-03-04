@@ -49,7 +49,7 @@ public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider s
         });
     }
 
-    private Task<RestUserMessage> CreateButtonAsync(RestTextChannel channel, ButtonTemplate buttonTemplate)
+    private static Task<RestUserMessage> CreateButtonAsync(RestTextChannel channel, ButtonTemplate buttonTemplate)
     {
         var button = new ButtonBuilder()
             .WithLabel(buttonTemplate.Name)

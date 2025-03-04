@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -141,6 +142,11 @@ namespace RagnarokBotWeb.Domain.Services
         public Task<Player?> FindBySteamId64Async(string steamId64)
         {
             return _playerRepository.FindOneAsync(user => user.SteamId64 == steamId64);
+        }
+
+        public Task<Player?> FindByGuildIdAndDiscordIdAsync(long guildId, ulong discordId)
+        {
+            return _playerRepository.FindByGuildIdAndDiscordIdAsync(guildId, discordId);
         }
 
         public async Task AddPlayerAsync(Player user)

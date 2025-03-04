@@ -1,14 +1,14 @@
 using Discord.WebSocket;
-using RagnarokBotWeb.Application.Discord.Events.Interaction;
+using RagnarokBotWeb.Application.Discord.Events.Interactions;
 
 namespace RagnarokBotWeb.Application.Discord.Handlers;
 
-public class InteractionEventHandlerFactory : IInteractionEventHandlerFactory
+public class InteractionEventHandlerFactory(IServiceProvider serviceProvider) : IInteractionEventHandlerFactory
 {
     private readonly Dictionary<string, Func<IInteractionEventHandler>> _handlers =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            { "!welcome_pack", () => new WelcomePackEvent() }
+            { "!welcome_pack", () => new WelcomePackEvent(serviceProvider) }
         };
 
     public IInteractionEventHandler? GetHandler(SocketInteraction interaction)

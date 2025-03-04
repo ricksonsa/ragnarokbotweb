@@ -1,3 +1,5 @@
+using Discord.WebSocket;
+
 namespace RagnarokBotWeb.Application.Discord;
 
 public class DiscordSocketClientUtils
@@ -17,5 +19,11 @@ public class DiscordSocketClientUtils
             Logger.LogInformation("DiscordBotService is not ready yet.");
             await Task.Delay(1000, stoppingToken);
         }
+    }
+    
+    public static ulong? GetGuildDiscordId(SocketMessage message)
+    {
+        if (message.Channel is SocketGuildChannel channel) return channel.Guild.Id;
+        return null;
     }
 }

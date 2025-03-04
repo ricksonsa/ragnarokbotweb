@@ -9,7 +9,8 @@ public class DiscordEventService(
     DiscordSocketClient client,
     IMessageEventHandlerFactory messageHandlerFactory,
     IInteractionEventHandlerFactory interactionHandlerFactory,
-    IServiceProvider serviceProvider)
+    IServiceProvider serviceProvider
+)
     : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -32,7 +33,7 @@ public class DiscordEventService(
     {
         if (message.Author.IsBot) return;
 
-        var discordId = GetGuildDiscordId(message);
+        var discordId = DiscordSocketClientUtils.GetGuildDiscordId(message);
 
         try
         {
@@ -56,7 +57,7 @@ public class DiscordEventService(
         try
         {
             await ValidateGuildIsActiveAsync(interaction.GuildId ?? 0L);
-            
+
             var handler = interactionHandlerFactory.GetHandler(interaction);
             handler?.HandleAsync(interaction);
         }
@@ -66,12 +67,6 @@ public class DiscordEventService(
                 "Error when try process InteractionCreated Action. Discord guild id = '{}', SocketInteraction = '{}', ChannelType = '{}'",
                 interaction.GuildId, interaction.GetType().FullName, interaction.Channel.GetType().FullName);
         }
-    }
-
-    private static ulong? GetGuildDiscordId(SocketMessage message)
-    {
-        if (message.Channel is SocketGuildChannel channel) return channel.Guild.Id;
-        return null;
     }
 
     private async Task ValidateGuildIsActiveAsync(ulong discordId)

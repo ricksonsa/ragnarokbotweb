@@ -328,7 +328,7 @@ namespace RagnarokBotWeb.Migrations
                     ScumId = table.Column<string>(type: "TEXT", nullable: true),
                     SteamId64 = table.Column<string>(type: "TEXT", nullable: true),
                     SteamName = table.Column<string>(type: "TEXT", nullable: true),
-                    DiscordId = table.Column<string>(type: "TEXT", nullable: true),
+                    DiscordId = table.Column<ulong>(type: "INTEGER", nullable: true),
                     ScumServerId = table.Column<long>(type: "INTEGER", nullable: false),
                     Money = table.Column<long>(type: "INTEGER", nullable: true),
                     Gold = table.Column<long>(type: "INTEGER", nullable: true),
@@ -337,7 +337,9 @@ namespace RagnarokBotWeb.Migrations
                     Y = table.Column<float>(type: "REAL", nullable: true),
                     Z = table.Column<float>(type: "REAL", nullable: true),
                     Coin = table.Column<long>(type: "INTEGER", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    RegisterId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -610,7 +612,8 @@ namespace RagnarokBotWeb.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ScumServers_GuildId",
                 table: "ScumServers",
-                column: "GuildId");
+                column: "GuildId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ScumServers_TenantId",

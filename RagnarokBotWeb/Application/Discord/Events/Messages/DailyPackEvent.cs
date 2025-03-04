@@ -1,7 +1,7 @@
 using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord.Handlers;
 
-namespace RagnarokBotWeb.Application.Discord.Events.Message;
+namespace RagnarokBotWeb.Application.Discord.Events.Messages;
 
 public class DailyPackEvent : IMessageEventHandler
 {

@@ -467,8 +467,8 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DiscordId")
-                        .HasColumnType("TEXT");
+                    b.Property<ulong?>("DiscordId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<long?>("Fame")
                         .HasColumnType("INTEGER");
@@ -482,10 +482,16 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("RegisterId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ScumId")
                         .HasColumnType("TEXT");
 
                     b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("Status")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SteamId64")
@@ -582,7 +588,8 @@ namespace RagnarokBotWeb.Migrations
 
                     b.HasIndex("FtpId");
 
-                    b.HasIndex("GuildId");
+                    b.HasIndex("GuildId")
+                        .IsUnique();
 
                     b.HasIndex("TenantId");
 
@@ -807,8 +814,8 @@ namespace RagnarokBotWeb.Migrations
                         .HasForeignKey("FtpId");
 
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Guild", "Guild")
-                        .WithMany()
-                        .HasForeignKey("GuildId");
+                        .WithOne("ScumServer")
+                        .HasForeignKey("RagnarokBotWeb.Domain.Entities.ScumServer", "GuildId");
 
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Tenant", "Tenant")
                         .WithMany("ScumServers")
@@ -853,6 +860,12 @@ namespace RagnarokBotWeb.Migrations
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ChannelTemplate", b =>
                 {
                     b.Navigation("Buttons");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Guild", b =>
+                {
+                    b.Navigation("ScumServer")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Pack", b =>

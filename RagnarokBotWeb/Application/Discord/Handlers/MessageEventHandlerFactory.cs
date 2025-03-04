@@ -1,5 +1,5 @@
 using Discord.WebSocket;
-using RagnarokBotWeb.Application.Discord.Events.Message;
+using RagnarokBotWeb.Application.Discord.Events.Messages;
 
 namespace RagnarokBotWeb.Application.Discord.Handlers;
 

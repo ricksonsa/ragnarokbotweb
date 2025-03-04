@@ -12,6 +12,13 @@ public class GuildService(IGuildRepository guildRepository) : IGuildService
         return guildRepository.FindByIdAsync(guildId);
     }
 
+    public async Task<Guild> FindByDiscordIdAsync(ulong discordId)
+    {
+        var guild = await guildRepository.FindOneWithScumServerAsync(guild => guild.DiscordId == discordId);
+        if (guild is null) throw new GuildNotFoundException(discordId);
+        return guild;
+    }
+
     public async Task Update(Guild guild)
     {
         guildRepository.Update(guild);
@@ -21,7 +28,7 @@ public class GuildService(IGuildRepository guildRepository) : IGuildService
     public async Task<bool> IsActiveAsync(ulong discordId)
     {
         var guild = await guildRepository.FindOneAsync(x => x.DiscordId == discordId);
-        if (guild == null) throw new GuildNotFoundException($"Guild with DiscordId: '{discordId}' not found.");
+        if (guild == null) throw new GuildNotFoundException(discordId);
         return guild is { Enabled: true };
     }
 

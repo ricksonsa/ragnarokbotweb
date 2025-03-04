@@ -1,3 +1,3 @@
 namespace RagnarokBotWeb.Domain.Exceptions;
 
-public class GuildNotFoundException(string message) : Exception(message);
+public class GuildNotFoundException(ulong discordId) : Exception($"Guild with DiscordId: '{discordId}' not found.");
