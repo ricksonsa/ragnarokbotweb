@@ -1,3 +1,4 @@
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord;
@@ -7,11 +8,7 @@ public class TestDiscordTemplate(ILogger<TestDiscordTemplate> logger, IServicePr
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (DiscordBotService.Instance is null || !DiscordBotService.Instance.IsReady)
-        {
-            logger.LogInformation("DiscordBotService is not ready yet.");
-            await Task.Delay(1000, stoppingToken);
-        }
+        await DiscordSocketClientUtils.AwaitDiscordSocketClientIsReady(stoppingToken);
 
         using var scope = serviceProvider.CreateScope();
         var template = scope.ServiceProvider.GetRequiredService<StartupDiscordTemplate>();
@@ -23,8 +20,17 @@ public class TestDiscordTemplate(ILogger<TestDiscordTemplate> logger, IServicePr
             return;
         }
 
+        // FIXME: temporally mark as false
+        await MarkRunTemplateAsFalse(guild, guildService);
+
         await template.Run(guild);
         guild.RunTemplate = true;
+        await guildService.Update(guild);
+    }
+
+    private static async Task MarkRunTemplateAsFalse(Guild guild, IGuildService guildService)
+    {
+        guild.RunTemplate = false;
         await guildService.Update(guild);
     }
 }

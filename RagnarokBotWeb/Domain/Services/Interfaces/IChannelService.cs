@@ -8,4 +8,6 @@ public interface IChannelService
     Task<Channel> FindByGuildIdAndChannelTypeAsync(long guildId, EChannelType channelType);
     
     Task CreateChannelAsync(Channel channel);
+    
+    Task DeleteAllAsync();
 }

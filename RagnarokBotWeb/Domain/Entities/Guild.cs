@@ -1,9 +1,11 @@
-﻿namespace RagnarokBotWeb.Domain.Entities
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace RagnarokBotWeb.Domain.Entities;
+
+[Index(nameof(DiscordId), IsUnique = true)]
+public class Guild : BaseEntity
 {
-    public class Guild : BaseEntity
-    {
-        public bool RunTemplate { get; set; } = false;
-        public ulong DiscordId { get; set; }
-        public bool Enabled { get; set; }
-    }
+    public bool RunTemplate { get; set; } = false;
+    public ulong DiscordId { get; set; }
+    public bool Enabled { get; set; }
 }

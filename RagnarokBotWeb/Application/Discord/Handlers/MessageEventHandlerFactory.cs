@@ -1,5 +1,5 @@
 using Discord.WebSocket;
-using RagnarokBotWeb.Application.Discord.Events;
+using RagnarokBotWeb.Application.Discord.Events.Message;
 
 namespace RagnarokBotWeb.Application.Discord.Handlers;
 
@@ -7,7 +7,6 @@ public class MessageEventHandlerFactory : IMessageEventHandlerFactory
 {
     private readonly Dictionary<string, Func<IMessageEventHandler>> _handlers = new(StringComparer.OrdinalIgnoreCase)
     {
-        //{ "!welcomepack", () => new DailyPackEvent() },
         { "!dailypack", () => new DailyPackEvent() }
     };
 

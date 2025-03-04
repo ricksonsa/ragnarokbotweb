@@ -68,8 +68,10 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<DiscordBotService>();
             // uncomment this to run the template creation test
             // builder.Services.AddHostedService<TestDiscordTemplate>();
+            builder.Services.AddHostedService<DiscordEventService>();
 
             builder.Services.AddSingleton<IMessageEventHandlerFactory, MessageEventHandlerFactory>();
+            builder.Services.AddSingleton<IInteractionEventHandlerFactory, InteractionEventHandlerFactory>();
 
             builder.Configuration.AddJsonFile("appsettings.json");
             builder.Services.Configure<AppSettings>(options => builder.Configuration.GetSection(nameof(AppSettings)).Bind(options));

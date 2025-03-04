@@ -282,7 +282,6 @@ namespace RagnarokBotWeb.Migrations
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Label = table.Column<string>(type: "TEXT", nullable: false),
-                    DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false),
                     Command = table.Column<string>(type: "TEXT", nullable: false),
                     ChannelId = table.Column<long>(type: "INTEGER", nullable: false)
                 },
@@ -520,14 +519,38 @@ namespace RagnarokBotWeb.Migrations
                 column: "ChannelTemplateId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Channels_ChannelType",
+                table: "Channels",
+                column: "ChannelType",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Channels_DiscordId",
+                table: "Channels",
+                column: "DiscordId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Channels_GuildId",
                 table: "Channels",
                 column: "GuildId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChannelTemplates_ChannelType",
+                table: "ChannelTemplates",
+                column: "ChannelType",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Commands_BotId",
                 table: "Commands",
                 column: "BotId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Guilds_DiscordId",
+                table: "Guilds",
+                column: "DiscordId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Kills_KillerId",

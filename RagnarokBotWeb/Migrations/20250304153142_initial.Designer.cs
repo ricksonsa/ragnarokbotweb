@@ -11,7 +11,7 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250301224137_initial")]
+    [Migration("20250304153142_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -103,9 +103,6 @@ namespace RagnarokBotWeb.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<ulong>("DiscordId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -161,6 +158,12 @@ namespace RagnarokBotWeb.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ChannelType")
+                        .IsUnique();
+
+                    b.HasIndex("DiscordId")
+                        .IsUnique();
+
                     b.HasIndex("GuildId");
 
                     b.ToTable("Channels");
@@ -186,6 +189,9 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChannelType")
+                        .IsUnique();
 
                     b.ToTable("ChannelTemplates");
                 });
@@ -258,6 +264,9 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DiscordId")
+                        .IsUnique();
 
                     b.ToTable("Guilds");
                 });
@@ -667,7 +676,7 @@ namespace RagnarokBotWeb.Migrations
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Button", b =>
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Channel", "Channel")
-                        .WithMany()
+                        .WithMany("Buttons")
                         .HasForeignKey("ChannelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -678,7 +687,7 @@ namespace RagnarokBotWeb.Migrations
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ButtonTemplate", b =>
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.ChannelTemplate", "ChannelTemplate")
-                        .WithMany()
+                        .WithMany("Buttons")
                         .HasForeignKey("ChannelTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -837,6 +846,16 @@ namespace RagnarokBotWeb.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Channel", b =>
+                {
+                    b.Navigation("Buttons");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ChannelTemplate", b =>
+                {
+                    b.Navigation("Buttons");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Pack", b =>
