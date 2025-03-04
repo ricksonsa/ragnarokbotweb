@@ -11,7 +11,7 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250304153142_initial")]
+    [Migration("20250304163912_initial")]
     partial class initial
     {
         /// <inheritdoc />
