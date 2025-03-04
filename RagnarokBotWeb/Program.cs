@@ -1,6 +1,6 @@
-using Quartz;
 using Discord;
 using Discord.WebSocket;
+using Quartz;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Application.Security;
@@ -44,12 +44,12 @@ namespace RagnarokBotWeb
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<AppDbContext>();
             builder.Services.AddHttpContextAccessor();
-            
-            builder.Services.AddSingleton<DiscordSocketClient>(_ =>
+
+            builder.Services.AddSingleton(_ =>
             {
                 var config = new DiscordSocketConfig
                 {
-                    GatewayIntents = GatewayIntents.Guilds | 
+                    GatewayIntents = GatewayIntents.Guilds |
                                      GatewayIntents.GuildMessages |
                                      GatewayIntents.MessageContent
                 };
@@ -101,7 +101,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IChannelTemplateService, ChannelTemplateService>();
             builder.Services.AddScoped<IChannelService, ChannelService>();
             builder.Services.AddScoped<IGuildService, GuildService>();
-            
+
             builder.Services.AddScoped<StartupDiscordTemplate>();
 
             builder.Services.AddSingleton<IFtpService, FtpService>();
@@ -114,6 +114,10 @@ namespace RagnarokBotWeb
             builder.Services.AddMvc();
 
             var app = builder.Build();
+
+            // Serve Angular static files
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.MapHealthChecks("/healthz");
 
@@ -137,6 +141,9 @@ namespace RagnarokBotWeb
             app.UseAuthentication();
 
             app.MapControllers();
+
+            // Redirect to Angular for non-API requests
+            app.MapFallbackToFile("index.html");
 
             app.Run();
         }
