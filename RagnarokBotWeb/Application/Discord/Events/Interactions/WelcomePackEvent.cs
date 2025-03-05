@@ -34,16 +34,16 @@ public class WelcomePackEvent : IInteractionEventHandler
 
             using var scope = _serviceProvider.CreateScope();
             var guildService = scope.ServiceProvider.GetRequiredService<IGuildService>();
-            var playerService = scope.ServiceProvider.GetRequiredService<IPlayerService>();
+            var playerRegisterService = scope.ServiceProvider.GetRequiredService<IPlayerRegisterService>();
 
             var guild = await guildService.FindByDiscordIdAsync(guildDiscordId);
-            var player = await playerService.FindByGuildIdAndDiscordIdAsync(guild.Id, userDiscordId);
+            var playerRegister = await playerRegisterService.FindByGuildIdAndDiscordIdAsync(guild.Id, userDiscordId);
 
             var dmChannel = await user.CreateDMChannelAsync();
 
-            if (player != null && AlreadyReceived(player))
+            if (playerRegister != null)
             {
-                var dmWarningMessage = GetDmWarningMessage(player);
+                var dmWarningMessage = GetDmWarningMessage(playerRegister);
                 await dmChannel.SendMessageAsync(dmWarningMessage);
                 await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} Você já solicitou seu Welcome Pack!",
                     ephemeral: true);
@@ -52,23 +52,14 @@ public class WelcomePackEvent : IInteractionEventHandler
 
             var registerId = Guid.NewGuid();
 
-            if (player is not null)
+            var newPlayerRegister = new PlayerRegister
             {
-                player.RegisterId = registerId;
-                player.Status = EPlayerStatus.Registering;
-                await playerService.UpdatePlayerAsync(player);
-            }
-            else
-            {
-                var newPlayer = new Player
-                {
-                    DiscordId = userDiscordId,
-                    RegisterId = registerId,
-                    ScumServer = guild.ScumServer,
-                    Status = EPlayerStatus.Registering
-                };
-                await playerService.AddPlayerAsync(newPlayer);
-            }
+                WelcomePackId = registerId,
+                DiscordId = userDiscordId,
+                ScumServer = guild.ScumServer,
+                Status = EPlayerRegisterStatus.Registering
+            };
+            await playerRegisterService.SaveAsync(newPlayerRegister);
 
             await dmChannel.SendMessageAsync(
                 $"{DiscordEmoji.Gift} Para receber seu Welcome Pack copie e cole o código {BuildWelcomePackCommand(registerId)} no chat do jogo!");
@@ -86,22 +77,21 @@ public class WelcomePackEvent : IInteractionEventHandler
         }
     }
 
-    private static bool AlreadyReceived(Player player)
+    private static string GetDmWarningMessage(PlayerRegister playerRegister)
     {
-        return player.Status is not (EPlayerStatus.Unregistered or null);
+        var status = playerRegister.Status;
+        return status switch
+        {
+            EPlayerRegisterStatus.Registering =>
+                "Vi que você já pediu o Welcome Pack e ainda não colou o código no chat do jogo. " +
+                $"Copie e cole o código {BuildWelcomePackCommand(playerRegister.WelcomePackId)} no chat do jogo!",
+            EPlayerRegisterStatus.Registered =>
+                $"Vi que você pediu um novo Welcome Pack, infelizmente nao posso te ajudar {DiscordEmoji.Pensive}.",
+            _ => throw new ArgumentOutOfRangeException(nameof(status), $"Unexpected player register status: {status}.")
+        };
     }
 
-    private static string GetDmWarningMessage(Player player)
-    {
-        var message =
-            $"Vi que você pediu um novo Welcome Pack, infelizmente nao posso te ajudar {DiscordEmoji.Pensive}.";
-        if (player.RegisterId is not null)
-            message += $" Caso precise, o primeiro código gerado foi {BuildWelcomePackCommand(player.RegisterId)}";
-
-        return message;
-    }
-
-    private static string BuildWelcomePackCommand(Guid? registerId)
+    private static string BuildWelcomePackCommand(Guid registerId)
     {
         return "!WelcomePack_" + registerId;
     }

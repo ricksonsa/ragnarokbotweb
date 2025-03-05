@@ -482,16 +482,10 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("RegisterId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("ScumId")
                         .HasColumnType("TEXT");
 
                     b.Property<long>("ScumServerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("Status")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SteamId64")
@@ -514,6 +508,31 @@ namespace RagnarokBotWeb.Migrations
                     b.HasIndex("ScumServerId");
 
                     b.ToTable("Players");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.PlayerRegister", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong>("DiscordId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("WelcomePackId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScumServerId");
+
+                    b.ToTable("PlayerRegisters");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Reader", b =>
@@ -786,6 +805,17 @@ namespace RagnarokBotWeb.Migrations
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Player", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
+                        .WithMany()
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ScumServer");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.PlayerRegister", b =>
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
                         .WithMany()

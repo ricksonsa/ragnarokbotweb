@@ -1,6 +1,4 @@
-﻿using RagnarokBotWeb.Domain.Enums;
-
-namespace RagnarokBotWeb.Domain.Entities;
+﻿namespace RagnarokBotWeb.Domain.Entities;
 
 public class Player : BaseEntity
 {
@@ -23,7 +21,4 @@ public class Player : BaseEntity
     public float? Z { get; set; }
     public long Coin { get; set; } = 0;
     public DateTime CreateDate { get; set; }
-    public Guid? RegisterId { get; set; }
-    // FIXME: set status to not null
-    public EPlayerStatus? Status { get; set; }
 }

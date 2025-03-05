@@ -89,6 +89,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IChannelRepository, ChannelRepository>();
             builder.Services.AddScoped<IGuildRepository, GuildRepository>();
             builder.Services.AddScoped<IScumServerRepository, ScumServerRepository>();
+            builder.Services.AddScoped<IPlayerRegisterRepository, PlayerRegisterRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
@@ -101,6 +102,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IChannelTemplateService, ChannelTemplateService>();
             builder.Services.AddScoped<IChannelService, ChannelService>();
             builder.Services.AddScoped<IGuildService, GuildService>();
+            builder.Services.AddScoped<IPlayerRegisterService, PlayerRegisterService>();
 
             builder.Services.AddScoped<StartupDiscordTemplate>();
 

@@ -28,6 +28,7 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<ScumServer> ScumServers { get; set; }
         public DbSet<Ftp> Ftps { get; set; }
         public DbSet<ScheduledTask> ScheduledTasks { get; set; }
+        public DbSet<PlayerRegister> PlayerRegisters { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {

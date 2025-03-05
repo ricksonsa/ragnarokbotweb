@@ -319,6 +319,28 @@ namespace RagnarokBotWeb.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PlayerRegisters",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    WelcomePackId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false),
+                    ScumServerId = table.Column<long>(type: "INTEGER", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlayerRegisters", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PlayerRegisters_ScumServers_ScumServerId",
+                        column: x => x.ScumServerId,
+                        principalTable: "ScumServers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Players",
                 columns: table => new
                 {
@@ -337,9 +359,7 @@ namespace RagnarokBotWeb.Migrations
                     Y = table.Column<float>(type: "REAL", nullable: true),
                     Z = table.Column<float>(type: "REAL", nullable: true),
                     Coin = table.Column<long>(type: "INTEGER", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    RegisterId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    Status = table.Column<int>(type: "INTEGER", nullable: true)
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -595,6 +615,11 @@ namespace RagnarokBotWeb.Migrations
                 column: "PackId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PlayerRegisters_ScumServerId",
+                table: "PlayerRegisters",
+                column: "ScumServerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Players_ScumServerId",
                 table: "Players",
                 column: "ScumServerId");
@@ -660,6 +685,9 @@ namespace RagnarokBotWeb.Migrations
 
             migrationBuilder.DropTable(
                 name: "PackItems");
+
+            migrationBuilder.DropTable(
+                name: "PlayerRegisters");
 
             migrationBuilder.DropTable(
                 name: "Readings");
