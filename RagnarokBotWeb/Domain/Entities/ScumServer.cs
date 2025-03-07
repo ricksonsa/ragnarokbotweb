@@ -1,10 +1,12 @@
-﻿
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
 namespace RagnarokBotWeb.Domain.Entities
 {
     public class ScumServer : BaseEntity
     {
         public string? Name { get; set; }
         public Tenant Tenant { get; set; }
+        [ForeignKey("GuildId")]
         public Guild? Guild { get; set; }
         public Ftp? Ftp { get; set; }
         public string? RestartTimes { get; private set; }

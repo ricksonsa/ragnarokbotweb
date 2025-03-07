@@ -1,4 +1,5 @@
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -11,9 +12,30 @@ public class GuildService(IGuildRepository guildRepository) : IGuildService
         return guildRepository.FindByIdAsync(guildId);
     }
 
+    public async Task<Guild> FindByDiscordIdAsync(ulong discordId)
+    {
+        var guild = await guildRepository.FindOneWithScumServerAsync(guild => guild.DiscordId == discordId);
+        if (guild is null) throw new GuildNotFoundException(discordId);
+        return guild;
+    }
+
     public async Task Update(Guild guild)
     {
         guildRepository.Update(guild);
         await guildRepository.SaveAsync();
+    }
+
+    public async Task<bool> IsActiveAsync(ulong discordId)
+    {
+        var guild = await guildRepository.FindOneAsync(x => x.DiscordId == discordId);
+        if (guild == null) throw new GuildNotFoundException(discordId);
+        return guild is { Enabled: true };
+    }
+
+    public Task ValidateGuildIsActiveAsync(ulong discordId)
+    {
+        if (IsActiveAsync(discordId).Result) return Task.CompletedTask;
+
+        throw new GuildDisabledException($"Guild with DiscordId: '{discordId}' is disabled.");
     }
 }

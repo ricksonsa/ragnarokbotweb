@@ -17,4 +17,13 @@ public class ChannelService(IChannelRepository channelRepository) : IChannelServ
         await channelRepository.AddAsync(channel);
         await channelRepository.SaveAsync();
     }
+
+    public Task DeleteAllAsync()
+    {
+        foreach (var channel in channelRepository.GetAllAsync().Result)
+        {
+            channelRepository.Delete(channel);
+        }
+        return channelRepository.SaveAsync();
+    }
 }

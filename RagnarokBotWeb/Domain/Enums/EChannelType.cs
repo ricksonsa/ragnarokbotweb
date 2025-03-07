@@ -10,6 +10,7 @@
         TopKillerGeneral = 3,
         NoAdminAbusePublic = 4,
         DailyPack = 5,
+        WelcomePack = 6,
         
         // Admin
         NoAdminAbusePrivate = 100,

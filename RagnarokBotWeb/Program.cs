@@ -74,8 +74,10 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<DiscordBotService>();
             // uncomment this to run the template creation test
             // builder.Services.AddHostedService<TestDiscordTemplate>();
+            builder.Services.AddHostedService<DiscordEventService>();
 
             builder.Services.AddSingleton<IMessageEventHandlerFactory, MessageEventHandlerFactory>();
+            builder.Services.AddSingleton<IInteractionEventHandlerFactory, InteractionEventHandlerFactory>();
 
             builder.Configuration.AddJsonFile("appsettings.json");
             builder.Services.Configure<AppSettings>(options => builder.Configuration.GetSection(nameof(AppSettings)).Bind(options));
@@ -93,6 +95,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IChannelRepository, ChannelRepository>();
             builder.Services.AddScoped<IGuildRepository, GuildRepository>();
             builder.Services.AddScoped<IScumServerRepository, ScumServerRepository>();
+            builder.Services.AddScoped<IPlayerRegisterRepository, PlayerRegisterRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
@@ -106,6 +109,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IChannelService, ChannelService>();
             builder.Services.AddScoped<IGuildService, GuildService>();
             builder.Services.AddScoped<IServerService, ServerService>();
+            builder.Services.AddScoped<IPlayerRegisterService, PlayerRegisterService>();
 
             builder.Services.AddScoped<StartupDiscordTemplate>();
 
