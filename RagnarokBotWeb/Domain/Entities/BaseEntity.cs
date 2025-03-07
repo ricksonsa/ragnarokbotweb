@@ -9,6 +9,12 @@ namespace RagnarokBotWeb.Domain.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long Id { get; set; }
 
+        public DateTime CreateDate { get; set; }
+
+        protected BaseEntity()
+        {
+            CreateDate = DateTime.Now;
+        }
 
         public bool IsTransitory()
         {

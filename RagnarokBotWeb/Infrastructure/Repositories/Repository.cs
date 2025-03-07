@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -30,6 +31,14 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
         {
             return await _dbSet.Where(predicate).ToListAsync();
+        }
+
+        public virtual async Task<Page<T>> GetPageAsync(Paginator paginator, IQueryable<T> query)
+        {
+            var count = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(count / (double)paginator.PageSize);
+            var result = await query.Skip((paginator.PageNumber - 1) * paginator.PageSize).Take(paginator.PageSize).ToListAsync();
+            return new Page<T>(result, totalPages, count, paginator.PageNumber, paginator.PageSize);
         }
 
         public virtual async Task<T?> FindOneAsync(Expression<Func<T, bool>> predicate)

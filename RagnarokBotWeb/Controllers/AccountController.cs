@@ -7,6 +7,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
+    [Authorize(AuthenticationSchemes = AuthorizationPolicyConstants.AccessTokenPolicy)]
     [Route("api")]
     public class AccountController : ControllerBase
     {
@@ -17,6 +18,14 @@ namespace RagnarokBotWeb.Controllers
         {
             _userService = userService;
             _logger = logger;
+        }
+
+        [HttpGet("account")]
+        public async Task<IActionResult> Account()
+        {
+            _logger.LogInformation("Get request to retrieve authenticated user information");
+            var account = await _userService.GetAccount();
+            return Ok(account);
         }
 
         [AllowAnonymous]

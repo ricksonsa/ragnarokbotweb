@@ -1,0 +1,156 @@
+<nz-space nzSize="middle">
+  <button (click)="goBack()" *nzSpaceItem nz-button nzType="default">
+    <nz-icon nzType="arrow-left"></nz-icon>
+    Packages
+  </button>
+  <button *nzSpaceItem nz-button nzType="primary" (click)="save()">
+    Save Package
+  </button>
+</nz-space>
+<br>
+<br>
+<div class="main">
+  <nz-card nzTitle="Package">
+    <form nz-form [formGroup]="packageForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Name</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the package name!">
+          <input formControlName="name" nz-input name="name" type="text" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="description">Description</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input formControlName="description" nz-input name="description" type="text" id="description" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="enabled">Enabled</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="enabled"></label>
+        </nz-form-control>
+        <p nz-typography style="margin: 0; color:#8f8f8fc2;">Determine whether this package will be available for
+          purchase. Disabled packages won't show up in the Discord Channel</p>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="price">Price</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the package price!">
+          <input formControlName="price" nz-input name="price" type="number" id="price" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="vipPrice">VIP Price</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input formControlName="vipPrice" nz-input name="vipPrice" type="number" id="vipPrice" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="isVipOnly">VIP Only</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="isVipOnly"></label>
+        </nz-form-control>
+        <p nz-typography style="margin: 0; color:#8f8f8fc2;">Determine whether this package will only be available for
+          VIP Players.</p>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="discordChannelId">Discord Channel</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="discordChannelExtra">
+          <nz-select formControlName="discordChannelId" id="discordChannelId"
+            nzPlaceHolder="Select the discord channel in which this package will be displayed for purchase">
+            <nz-option [nzValue]="0" nzLabel="PingPerfect"></nz-option>
+            <nz-option [nzValue]="1" nzLabel="GGHosting"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #discordChannelExtra>
+        <p>The discord channel in which this package will be displayed for
+          purchase.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="purchaseCooldownSeconds">Purchase Cooldown (seconds)</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="purchaseCooldownExtra">
+          <input formControlName="purchaseCooldownSeconds" nz-input name="purchaseCooldownSeconds" type="number"
+            id="purchaseCooldownSeconds" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #purchaseCooldownExtra>
+        <p>Set a time in seconds to block the package after a purchase by the player. The player will be able to buy
+          the package again once this time passes.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="stockPerPlayer">Stock Per Player</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="dailyPackageExtra">
+          <input formControlName="stockPerPlayer" nz-input name="stockPerPlayer" type="number" id="stockPerPlayer" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #dailyPackageExtra>
+        <p>You can set how many times a player can buy this package per day.</p>
+      </ng-template>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="isBlockPurchaseRaidTime">Block Purchase During Raid Times</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="isBlockPurchaseRaidTime"></label>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="deliveryText">Package Delivery Text</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="packageDeliveryExtra">
+          <input formControlName="deliveryText" nz-input name="deliveryText" type="text" id="deliveryText" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #packageDeliveryExtra>
+        <p style="margin: 0">Text that the bot will send in global chat after the package is delivered. Leave it blank for no text.</p>
+        <p>You can use fixed variables for data reference like {{'{orderId}'}} {{'{playerName}'}} {{'{packageName}'}}.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="commands">Commands</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="commandsExtra">
+
+          <nz-input-group nzSearch nzSize="large" [nzAddOnAfter]="suffixButton">
+            <input #command type="text" nz-input placeholder="Command or text" />
+          </nz-input-group>
+          <ng-template #suffixButton>
+            <button nz-button nzType="primary" nzSize="large" nzSearch
+              (click)="addComand(command.value); command.value = ''">
+              Add
+            </button>
+          </ng-template>
+
+          <div *ngIf="commands.length > 0">
+            <nz-list style="margin-top: 20px;" nzBordered="true">
+              @for (time of commands; track $index) {
+              <nz-list-item>
+                <p style="margin: 0;">{{time}}</p>
+                <button style="height: 20px; width: 20px;" nz-button nzType="default" (click)="removeCommand($index)">
+                  <nz-icon style="font-size: 10px;" nzType="close" />
+                </button>
+              </nz-list-item>
+              }
+            </nz-list>
+          </div>
+
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #commandsExtra>
+        <p>You can add commands like #Announce to be executed or just a text. Text added here will be sent in the global
+          chat. <span nz-typography nzType="danger">DO NOT USE IT TO SPAWN ITEMS.</span></p>
+      </ng-template>
+
+    </form>
+  </nz-card>
+
+  <nz-card nzTitle="Package Items">
+
+  </nz-card>
+</div>

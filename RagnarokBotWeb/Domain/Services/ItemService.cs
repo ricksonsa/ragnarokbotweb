@@ -1,4 +1,6 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using AutoMapper;
+using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -9,11 +11,13 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly ILogger<ItemService> _logger;
         private readonly IItemRepository _itemRepository;
+        private readonly IMapper _mapper;
 
-        public ItemService(IItemRepository itemRepository, ILogger<ItemService> logger)
+        public ItemService(IItemRepository itemRepository, ILogger<ItemService> logger, IMapper mapper)
         {
             _itemRepository = itemRepository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public async Task<Item> CreateItemAsync(ItemDto createItem)
@@ -84,6 +88,12 @@ namespace RagnarokBotWeb.Domain.Services
             _itemRepository.Delete(item);
             await _itemRepository.SaveAsync();
             return item;
+        }
+
+        public async Task<Page<ItemDto>> GetItemsPageByFilterAsync(Paginator paginator, string? filter)
+        {
+            var page = await _itemRepository.GetPageByFilter(paginator, filter);
+            return new Page<ItemDto>(page.Content.Select(_mapper.Map<ItemDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
     }
 }

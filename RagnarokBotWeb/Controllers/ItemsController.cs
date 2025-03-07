@@ -1,14 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
-    [Authorize]
-    [Route("api/admin/items")]
+    [Authorize(AuthenticationSchemes = AuthorizationPolicyConstants.AccessTokenPolicy)]
+    [Route("api/items")]
     public class ItemsController : ControllerBase
     {
         private readonly ILogger<ItemsController> _logger;
@@ -55,10 +57,10 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetItems()
+        public async Task<IActionResult> GetItems([FromQuery] Paginator paginator, string? filter)
         {
-            _logger.Log(LogLevel.Information, "REST Request to fetch all items");
-            var items = await _itemService.FetchAllItemsAsync();
+            _logger.Log(LogLevel.Information, "REST Request to fetch all items by filter");
+            var items = await _itemService.GetItemsPageByFilterAsync(paginator, filter);
             return Ok(items);
         }
 
@@ -71,14 +73,6 @@ namespace RagnarokBotWeb.Controllers
             return Ok(item);
         }
 
-        [HttpGet("name/{name}")]
-        public async Task<IActionResult> GetItemById(string name)
-        {
-            _logger.Log(LogLevel.Information, "REST Request to fetch with name: " + name);
-            var item = await _itemService.FindItemByNameAsync(name);
-            if (item is null) return NotFound("Item not found");
-            return Ok(item);
-        }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteItem(long id)

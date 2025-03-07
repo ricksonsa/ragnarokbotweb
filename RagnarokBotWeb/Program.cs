@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Quartz;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Discord.Handlers;
+using RagnarokBotWeb.Application.Mapping;
 using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Configuration;
@@ -13,6 +14,7 @@ using RagnarokBotWeb.HostedServices;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using RagnarokBotWeb.Middlewares;
 
 namespace RagnarokBotWeb
 {
@@ -22,6 +24,10 @@ namespace RagnarokBotWeb
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var DefaultCorsPolicy = "_defaultCorsPolicy";
+
+            Environment.SetEnvironmentVariable("jwt_secret", "p2tfCQNn6FJrM7XmdAsW5zKc4DHyYbELwuPV93BRv8xeqkSjZaVhN64mSPatj9H5FqfU2rCTEWvpskKQy3eZwLGXnb8RudD7zBYMwRJXr2b6tsQZWNLUDV4C8nmpKyc7fagGqh5MFux39kASvPEdBzZd7wKDnsq8j9WTHaGmbAkeYN4RPJrEp3UXS5LCvQy6hzxBVMcFsDh3SGNHjf7qARkxzMe2VpyPncmbvJCKTX4ruZWtB86dLQ9YF5");
+
             builder.Services.AddQuartz(q =>
             {
                 q.UseMicrosoftDependencyInjectionJobFactory();
@@ -30,7 +36,7 @@ namespace RagnarokBotWeb
             builder.Services.AddTransient<CustomJob>();
 
             builder.Services.AddAuthenticationModule();
-
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
             // Add services to the container.
 
             builder.Services.AddControllers().AddJsonOptions(options =>
@@ -99,6 +105,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IChannelTemplateService, ChannelTemplateService>();
             builder.Services.AddScoped<IChannelService, ChannelService>();
             builder.Services.AddScoped<IGuildService, GuildService>();
+            builder.Services.AddScoped<IServerService, ServerService>();
 
             builder.Services.AddScoped<StartupDiscordTemplate>();
 
@@ -109,9 +116,23 @@ namespace RagnarokBotWeb
 
             builder.Services.AddHealthChecks();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(name: DefaultCorsPolicy,
+                    policy =>
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyMethod()
+                              .AllowAnyHeader();
+                    });
+            });
+
             builder.Services.AddMvc();
 
             var app = builder.Build();
+            app.UseCors(DefaultCorsPolicy);
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             // Serve Angular static files
             app.UseDefaultFiles();
@@ -133,7 +154,7 @@ namespace RagnarokBotWeb
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseAuthorization();
             app.UseAuthentication();

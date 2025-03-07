@@ -3,6 +3,7 @@
     public class ClaimConstants
     {
         public const string TenantId = "tid";
+        public const string User = "usr";
         public const string ServerId = "ss";
         public const string TokenType = "typ";
     }

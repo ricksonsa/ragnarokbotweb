@@ -5,6 +5,8 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
 {
     public class AppDbContext : DbContext
     {
+        private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _hostingEnvironment;
+
         public DbSet<Player> Players { get; set; }
         public DbSet<Lockpick> Lockpicks { get; set; }
         public DbSet<Bunker> Bunkers { get; set; }
@@ -29,10 +31,26 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Ftp> Ftps { get; set; }
         public DbSet<ScheduledTask> ScheduledTasks { get; set; }
 
+        public AppDbContext(Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment)
+        {
+            _hostingEnvironment = hostingEnvironment;
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             //options.UseNpgsql("Host=localhost;Database=ragnarokbot;Username=myuser;Password=mypassword");
             options.UseSqlite("Data Source=app.db");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var sqlFilePath = Path.Combine(_hostingEnvironment.ContentRootPath, "Sql", "items.sql");
+
+            if (File.Exists(sqlFilePath))
+            {
+                string sqlScript = File.ReadAllText(sqlFilePath);
+                modelBuilder.HasAnnotation("SeedItems", sqlScript);
+            }
         }
 
         public void MigrateDatabase()

@@ -8,5 +8,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<AuthResponse?> PreAuthenticate(AuthenticateDto authenticateDto);
         Task<AuthResponse?> Authenticate(long serverId);
         Task<UserDto> Register(RegisterUserDto register);
+        Task<AccountDto> GetAccount();
     }
 }

@@ -1,5 +1,4 @@
 ﻿using RagnarokBotWeb.Application.Security;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -14,7 +13,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public long? TenantId()
         {
-            var tenantIdString = GetClaimValue(ClaimConstants.TenantId);
+            var tenantIdString = GetClaimValue("http://schemas.microsoft.com/identity/claims/tenantid");
             try { return long.Parse(tenantIdString!); }
             catch (Exception) { return null; }
         }
@@ -28,7 +27,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public string? UserName()
         {
-            var username = GetClaimValue(JwtRegisteredClaimNames.Sub);
+            var username = GetClaimValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
             return username;
         }
 

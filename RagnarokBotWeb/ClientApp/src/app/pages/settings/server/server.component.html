@@ -1,74 +1,99 @@
 <div class="main">
-
   <ng-template #ftp>
     <nz-icon nzType="file-sync" nzTheme="outline"
       style="font-size: 20px; color: #9D8342;" /><span>&nbsp;&nbsp;FTP</span>
   </ng-template>
-  <nz-card [nzTitle]="ftp">
-    <form nz-form>
+  <nz-card [nzTitle]="ftp" [nzExtra]="saveFtpTemplate">
+    <form nz-form [formGroup]="ftpForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Provider</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <nz-select id="gender" nzPlaceHolder="Select a game hosting service provider">
-            <nz-option nzValue="PingPerfect" nzLabel="PingPerfect"></nz-option>
-            <nz-option nzValue="GGHosting" nzLabel="GGHosting"></nz-option>
+        <nz-form-label [nzSpan]="0" nzFor="provider">Provider</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please select your FTP Provider!">
+          <nz-select formControlName="provider" id="provider" nzPlaceHolder="Select a game hosting service provider">
+            <nz-option [nzValue]="0" nzLabel="PingPerfect"></nz-option>
+            <nz-option [nzValue]="1" nzLabel="GGHosting"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">IP Address</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <input nz-input name="ipAddress" type="text" id="ipAddress" />
+        <nz-form-label [nzSpan]="0" nzFor="address">IP Address</nz-form-label>
+        <nz-form-control nzErrorTip="Please input your FTP IP Address!" [nzSpan]="24">
+          <input formControlName="address" nz-input name="address" type="text" id="address" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Port</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <input nz-input name="port" type="text" id="port" />
+        <nz-form-label [nzSpan]="0" nzFor="port">Port</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input your FTP Port!">
+          <input nz-input formControlName="port" name="port" type="text" id="port" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Username</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <input nz-input name="username" type="text" id="username" />
+        <nz-form-label [nzSpan]="0" nzFor="username">Username</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input your FTP Username!">
+          <input nz-input formControlName="userName" name="username" type="text" id="username" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Password</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <input nz-input name="password" type="password" id="password" />
+        <nz-form-label [nzSpan]="0" nzFor="password">Password</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input your FTP Password!">
+          <input nz-input formControlName="password" name="password" type="password" id="password" />
         </nz-form-control>
       </nz-form-item>
     </form>
   </nz-card>
+  <ng-template #saveFtpTemplate>
+    <button nz-button nzType="primary" (click)="saveFtp()" [nzLoading]="savingFtp">Save</button>
+  </ng-template>
 
   <ng-template #server>
-    <nz-icon nzType="sliders" nzTheme="outline"
-      style="font-size: 20px;" /><span>&nbsp;&nbsp;Server Settings</span>
+    <nz-icon nzType="sliders" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Server Settings</span>
   </ng-template>
-  <nz-card [nzTitle]="server">
-    <form nz-form>
+  <nz-card [nzTitle]="server" [nzExtra]="saveSettings">
+    <ng-template #noFtp>
+      <nz-alert nzMessage="Valid FTP configuration is required." nzType="error"></nz-alert>
+    </ng-template>
+    <form nz-form *ngIf="accountDto?.server?.ftp; else noFtp">
       <nz-form-item>
-        <p>Server Name: <b>RAGNAROK BR/LATAM</b></p>
+        <p>Server Name: <b>{{accountDto?.server?.name}}</b></p>
       </nz-form-item>
-
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Server Name</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <input nz-input name="name" type="text" id="name" />
+        <nz-form-label [nzSpan]="0" nzFor="email">Server Restart Times</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="serverRestart">
+          @for (time of getTimes(); track $index) {
+          <div>
+            <nz-space>
+              <p *nzSpaceItem style="margin: 0;">{{time}}</p>
+              <button style="height: 20px; width: 20px;" *nzSpaceItem nz-button nzType="default"
+                (click)="removeTime($index)">
+                <nz-icon style="font-size: 10px;" nzType="close" />
+              </button>
+            </nz-space>
+          </div>
+          }
+          <button style="margin-top: 10px;" *ngIf="!cronEditor" (click)="cronEditor = true" nz-button
+            nzType="default">Add times</button>
+
+          <div *ngIf="cronEditor" style="margin-top: 10px;">
+            <cron-editor [formControl]="cron" [options]="cronOptions"></cron-editor>
+            <nz-space>
+              <button *nzSpaceItem nz-button nzType="default" (click)="cronEditor = false">Close</button>
+              <button *nzSpaceItem nz-button nzType="primary" (click)="addTime()">Add time</button>
+            </nz-space>
+          </div>
         </nz-form-control>
       </nz-form-item>
-      <ng-template #discordLink>
-        <p>Players can do !discord in global chat and the bot will respond with your Discord Link</p>
+      <ng-template #serverRestart>
+        <p>Informational only. Bot does not control server restarts.</p>
       </ng-template>
     </form>
   </nz-card>
+  <ng-template #saveSettings>
+    <button [disabled]="!accountDto?.server?.ftp" nz-button nzType="primary">Save</button>
+  </ng-template>
 
- 
 
   <!-- <div class="last"></div> -->
 

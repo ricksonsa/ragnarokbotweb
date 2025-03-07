@@ -50,7 +50,7 @@ namespace RagnarokBotWeb.HostedServices.Base
             var timeStampTomorrow = DateTime.Now.AddDays(1).ToString("yyyyMMdd");
             var client = _ftpService.GetClient(ftp);
 
-            var files = client.GetNameListing("/189.1.169.132_7000/");
+            var files = client.GetNameListing(ftp.RootFolder);
             return files.ToList()
                 .Where(fileName =>
                 fileName.StartsWith(_baseFileName + timeStampYesterday) || fileName.StartsWith(_baseFileName + timeStampToday) || fileName.StartsWith(_baseFileName + timeStampTomorrow))
@@ -60,7 +60,7 @@ namespace RagnarokBotWeb.HostedServices.Base
         public IList<Line> GetUnreadFileLines(Ftp ftp, string fileName)
         {
             var client = _ftpService.GetClient(ftp);
-            using (var stream = client.OpenRead("/189.1.169.132_7000/" + fileName, FtpDataType.ASCII))
+            using (var stream = client.OpenRead(ftp.RootFolder + fileName, FtpDataType.ASCII))
             using (var reader = new StreamReader(stream))
             {
                 string line;

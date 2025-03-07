@@ -1,21 +1,161 @@
-import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
+import { NzTypographyModule } from 'ng-zorro-antd/typography';
+import { AuthenticationService } from './services/authentication.service';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { debounceTime, switchMap } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzAvatarModule } from 'ng-zorro-antd/avatar';
+import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
+import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { NzAffixModule } from 'ng-zorro-antd/affix';
+import { NzListModule } from 'ng-zorro-antd/list';
+import { EventManager, EventWithContent } from './services/event-manager.service';
+import { Alert } from './models/alert';
+import { AccountDto } from './models/account.dto';
 
 @Component({
   selector: 'app-root',
   imports: [
-    RouterLink, 
-    RouterOutlet, 
-    NzIconModule, 
-    NzLayoutModule, 
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterLink,
+    RouterOutlet,
+    NzIconModule,
+    NzLayoutModule,
+    NzButtonModule,
+    NzInputModule,
+    NzSpaceModule,
+    NzFormModule,
+    NzTypographyModule,
+    NzAlertModule,
+    NzCardModule,
+    NzPopconfirmModule,
+    NzListModule,
+    NzAvatarModule,
+    NzBreadCrumbModule,
+    NzAffixModule,
     NzMenuModule
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   isCollapsed = true;
+  logged = false;
+  register = false;
+  loginForm!: FormGroup;
+  registerForm!: FormGroup;
+  errorMessage?: string;
+  showAlert = true;
+  alert?: Alert;
+  account?: AccountDto;
+
+  constructor(
+    private readonly authenticationService: AuthenticationService,
+    private readonly route: ActivatedRoute,
+    private router: Router,
+    private readonly eventManager: EventManager,
+    fb: FormBuilder
+  ) {
+    this.loginForm = fb.group({
+      email: [null, Validators.required],
+      password: [null, Validators.required]
+    });
+
+    this.registerForm = fb.group({
+      email: [null, Validators.required],
+      password: [null, Validators.required],
+      confirmPassword: [null, Validators.required]
+    });
+
+
+    router.events.pipe(
+      debounceTime(800),
+      switchMap(value => {
+        return this.authenticationService.account(true)
+      }))
+      .subscribe({
+        next: (account) => {
+          if (this.authenticationService.isAuthenticated()) {
+            this.logged = true;
+          }
+        }
+      })
+  }
+
+  ngOnInit(): void {
+    this.authenticationService.account(true)
+      .subscribe({
+        next: (account) => {
+          if (this.authenticationService.isAuthenticated()) {
+            this.logged = true;
+            this.account = account;
+          }
+        }
+      });
+
+    this.authenticationService.logoutEvent.asObservable().subscribe({
+      next: (value: boolean) => {
+        this.logged = false;
+      }
+    });
+
+    this.eventManager.subscribe('alert', ((event) => {
+      var value = event as EventWithContent<Alert>;
+      this.alert = value.content;
+      this.showAlert = true;
+      setTimeout(() => this.showAlert = false, 5000);
+    }));
+  }
+
+  getFirstLetter(input?: string) {
+    if (!input) return 'A';
+    return input[0].toUpperCase();
+  }
+
+  public login() {
+    this.authenticationService.authenticate(this.loginForm!.value)
+      .pipe(
+        (switchMap((value) => {
+          return this.authenticationService.login(value.scumServers[0]!.id);
+        })),
+        switchMap(authResponse => {
+          return this.authenticationService.account()
+        })
+      )
+      .subscribe({
+        next: (account) => {
+          this.logged = true;
+          this.account = account;
+        },
+        error: (err) => {
+          this.errorMessage = err.error.details
+        }
+      })
+  }
+
+  signup() {
+    this.authenticationService.register(this.registerForm.value)
+      .subscribe({
+        next: (value: any) => {
+          this.register = false;
+        }
+      });
+  }
+
+  logout() {
+    this.authenticationService.logout();
+    this.logged = false;
+  }
 }

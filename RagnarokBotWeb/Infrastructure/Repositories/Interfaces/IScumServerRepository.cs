@@ -4,7 +4,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
     public interface IScumServerRepository : IRepository<ScumServer>
     {
-        Task<List<ScumServer>> FindByTenantIdAsync(long id);
+        Task<ScumServer?> FindActiveById(long id);
+        Task<List<ScumServer>> FindManyByTenantIdAsync(long id);
+        Task<ScumServer?> FindOneByTenantIdAsync(long id);
         Task<List<ScumServer>> GetActiveServersWithFtp();
     }
 }

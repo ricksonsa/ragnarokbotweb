@@ -1,4 +1,4 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Domain.Services.Dto;
 
 namespace RagnarokBotWeb.Application.Security
 {
@@ -6,7 +6,7 @@ namespace RagnarokBotWeb.Application.Security
     {
         public string IdToken { get; set; }
         public string AccessToken { get; set; }
-        public IEnumerable<ScumServer> ScumServers { get; set; }
+        public IEnumerable<ScumServerDto> ScumServers { get; set; }
 
         public AuthResponse() { }
 

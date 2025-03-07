@@ -1,11 +1,6 @@
-<nz-layout class="app-layout">
-  <nz-sider class="menu-sidebar"
-    nzCollapsible
-    nzWidth="256px"
-    nzBreakpoint="md"
-    [(nzCollapsed)]="isCollapsed"
-    [nzTrigger]="null"
-  >
+<nz-layout class="app-layout" *ngIf="logged">
+  <nz-sider class="menu-sidebar" nzCollapsible nzWidth="256px" nzBreakpoint="md" [(nzCollapsed)]="isCollapsed"
+    [nzTrigger]="null">
     <div class="sidebar-logo">
       <a href="https://ng.ant.design/" target="_blank">
         <img src="https://ng.ant.design/assets/img/logo.svg" alt="logo">
@@ -17,13 +12,13 @@
       <li nz-submenu nzOpen nzTitle="Dashboard" nzIcon="dashboard">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a>Home</a>
+            <a routerLink="servers/1/dashboard/home">Home</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Console</a>
+            <a routerLink="servers/1/dashboard/console">Console</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Chat</a>
+            <a routerLink="servers/1/dashboard/chat">Chat</a>
           </li>
         </ul>
       </li>
@@ -48,38 +43,38 @@
       <li nz-submenu nzOpen nzTitle="Management" nzIcon="user">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a>Players</a>
+            <a routerLink="servers/1/management/players">Players</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>VIPs</a>
+            <a routerLink="servers/1/management/vips">VIPs</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Tickets</a>
+            <a routerLink="servers/1/management/tickets">Tickets</a>
           </li>
-      
+
         </ul>
       </li>
 
       <li nz-submenu nzOpen nzTitle="Shop" nzIcon="dollar-circle">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a>Bank</a>
+            <a routerLink="servers/1/shop/bank">Bank</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Orders</a>
+            <a routerLink="servers/1/shop/orders">Orders</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Packages</a>
+            <a routerLink="servers/1/shop/packages">Packages</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Items</a>
+            <a routerLink="servers/1/shop/items">Items</a>
           </li>
         </ul>
       </li>
 
       <li nz-submenu nzOpen nzTitle="Events" nzIcon="star">
         <ul>
-     
+
           <li nz-menu-item nzMatchRouter>
             <a>Lucky Wheel</a>
           </li>
@@ -98,21 +93,13 @@
       <li nz-submenu nzOpen nzTitle="Scheduled Tasks" nzIcon="clock-circle">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a>Default</a>
+            <a routerLink="servers/1/scheduled-tasks/default">Default</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Custom</a>
+            <a routerLink="servers/1/scheduled-tasks/custom">Custom</a>
           </li>
         </ul>
       </li>
-
-      <!-- <li nz-submenu nzOpen nzTitle="ESCAPE FROM SCUM BR/LATAM" nzIcon="form">
-        <ul>
-          <li nz-menu-item nzMatchRouter>
-            <a>Scheduled Tasks</a>
-          </li>
-        </ul>
-      </li> -->
     </ul>
   </nz-sider>
   <nz-layout>
@@ -122,11 +109,127 @@
           <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
         </span>
       </div>
+      <div class="top-actions">
+        <button nz-popconfirm [nzPopconfirmTitle]="topActions" nzPopconfirmOverlayClassName="top-actions-popconfirm"
+          nz-button nzType="link" style="height: 40px;">
+          <nz-space nzAlign="center">
+            <nz-avatar *nzSpaceItem [nzText]="getFirstLetter(account?.email)"
+              style="color:#f56a00; background-color:#fde3cf;"></nz-avatar>
+            <p *nzSpaceItem nz-typography style="margin: 0">{{account?.email}}</p>
+          </nz-space>
+          <ng-template #topActions>
+            <nz-space nzDirection="vertical" nzAlign="start">
+              <button *nzSpaceItem nz-button nzType="link" class="top-action">
+                <nz-icon nzType="user" nzTheme="outline" /> Profile
+              </button>
+              <button *nzSpaceItem nz-button nzType="link" [nzDanger]="true" class="top-action" (click)="logout()">
+                <nz-icon nzType="logout" nzTheme="outline" /> Logout
+              </button>
+            </nz-space>
+          </ng-template>
+        </button>
+      </div>
     </nz-header>
     <nz-content>
       <div class="inner-content">
+        <div class="alert-holder" *ngIf="showAlert">
+          <nz-affix [nzOffsetTop]="10">
+            <nz-alert *ngIf="alert" [nzDescription]="alert.message" [nzMessage]="alert.title"
+              [nzType]="alert.type!"></nz-alert>
+          </nz-affix>
+        </div>
+        <nz-affix [nzOffsetBottom]="5" [nzOffsetTop]="10">
+          <nz-breadcrumb style="margin-bottom: 20px;">
+            <nz-breadcrumb-item>Home</nz-breadcrumb-item>
+            <nz-breadcrumb-item>
+              <a>Application List</a>
+            </nz-breadcrumb-item>
+            <nz-breadcrumb-item>An Application</nz-breadcrumb-item>
+          </nz-breadcrumb>
+        </nz-affix>
+
         <router-outlet></router-outlet>
       </div>
     </nz-content>
   </nz-layout>
 </nz-layout>
+
+<div class="login" *ngIf="!logged && !register">
+  <div class="login-container">
+    <h4 nz-typography>Ragnarok Bot Login</h4>
+    <br>
+    <form nz-form [formGroup]="loginForm">
+      <nz-space style="width: 100%;" nzDirection="vertical">
+        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>E-mail</p>
+        <nz-form-item *nzSpaceItem>
+          <nz-form-control [nzSpan]="24">
+            <input formControlName="email" nz-input name="email" type="email" id="email" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>Password</p>
+        <nz-form-item *nzSpaceItem>
+          <nz-form-control [nzSpan]="24">
+            <input nz-input formControlName="password" name="password" type="password" id="password" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <div *nzSpaceItem>
+          <ng-container *ngTemplateOutlet="error"></ng-container>
+        </div>
+
+        <button *nzSpaceItem nz-button type="button" nzType="link" (click)="register = true">Don't have an account?
+          Create your account.</button>
+        <button *nzSpaceItem (click)="login()" [nzBlock]="true" nz-button nzType="primary" nzSize="large">Login</button>
+      </nz-space>
+    </form>
+  </div>
+</div>
+
+<div class="login" *ngIf="!logged && register">
+  <div class="login-container">
+    <h4 nz-typography>Ragnarok Bot Register</h4>
+    <br>
+    <form nz-form [formGroup]="registerForm" (action)="signup()">
+      <nz-space style="width: 100%;" nzDirection="vertical">
+        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>E-mail</p>
+        <nz-form-item *nzSpaceItem>
+          <nz-form-control [nzSpan]="24">
+            <input formControlName="email" nz-input name="email" type="email" id="email" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>Password</p>
+        <nz-form-item *nzSpaceItem>
+          <nz-form-control [nzSpan]="24">
+            <input formControlName="password" nz-input name="password" type="password" id="password" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>Confirm password</p>
+        <nz-form-item *nzSpaceItem>
+          <nz-form-control [nzSpan]="24">
+            <input formControlName="confirmPassword" nz-input name="confirmPassword" type="password"
+              id="confirmPassword" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <div *nzSpaceItem>
+          <ng-container *ngTemplateOutlet="error"></ng-container>
+        </div>
+
+        <nz-space style="width: 100%;" *nzSpaceItem>
+          <button *nzSpaceItem [nzBlock]="true" nz-button nzType="default" nzSize="large"
+            (click)="register = false">Cancel</button>
+          <button *nzSpaceItem (click)="signup()" [nzBlock]="true" nz-button nzType="primary"
+            nzSize="large">Register</button>
+        </nz-space>
+      </nz-space>
+    </form>
+  </div>
+</div>
+
+<ng-template #error>
+  <nz-alert *ngIf="errorMessage" nzType="error" nzCloseable [nzMessage]="errorMessage"
+    (nzOnClose)="errorMessage = undefined"></nz-alert>
+</ng-template>

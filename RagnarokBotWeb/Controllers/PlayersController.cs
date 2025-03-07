@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
-    [Route("api/public/players")]
+    [Authorize(AuthenticationSchemes = AuthorizationPolicyConstants.AccessTokenPolicy)]
+    [Route("api/players")]
     public class PlayersController : ControllerBase
     {
         private readonly IPlayerService _playerService;
@@ -14,17 +18,24 @@ namespace RagnarokBotWeb.Controllers
             _playerService = playerService;
         }
 
-        [HttpGet("state")]
-        public IActionResult IsConnected(string steamid)
-        {
-            return Ok(new { state = _playerService.IsPlayerConnected(steamid) ? "online" : "offline" });
-        }
+        //[HttpGet("state")]
+        //public IActionResult IsConnected(string steamid)
+        //{
+        //    return Ok(new { state = _playerService.IsPlayerConnected(steamid) ? "online" : "offline" });
+        //}
 
-        [HttpGet("state/reset")]
-        public IActionResult ResetPlayersState()
+        //[HttpGet("state/reset")]
+        //public IActionResult ResetPlayersState()
+        //{
+        //    _playerService.ResetPlayersConnection();
+        //    return Ok();
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> GetPlayers([FromQuery] Paginator paginator)
         {
-            _playerService.ResetPlayersConnection();
-            return Ok();
+            var players = await _playerService.GetPlayers(paginator);
+            return Ok(players);
         }
     }
 }

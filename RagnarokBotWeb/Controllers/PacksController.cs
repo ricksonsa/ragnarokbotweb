@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
-    [Route("api/admin/packs")]
+    [Authorize(AuthenticationSchemes = AuthorizationPolicyConstants.AccessTokenPolicy)]
+    [Route("api/packs")]
     public class PacksController : ControllerBase
     {
         private readonly ILogger<PacksController> _logger;
@@ -32,14 +35,14 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePack(CreatePackDto createPack)
+        public async Task<IActionResult> CreatePack(PackDto createPack)
         {
             var pack = await _packService.CreatePackAsync(createPack);
             return Ok(pack);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePack(long id, CreatePackDto createPack)
+        public async Task<IActionResult> UpdatePack(long id, PackDto createPack)
         {
             var pack = await _packService.UpdatePackAsync(id, createPack);
             return Ok(pack);

@@ -8,7 +8,6 @@ namespace RagnarokBotWeb.Domain.Entities
         public string Email { get; set; }
         public string PasswordHash { get; private set; }
         public byte[] PasswordSalt { get; private set; }
-        public DateTime CreateDate { get; set; }
         public bool Active { get; set; }
 
         public User()

@@ -19,14 +19,23 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .FirstOrDefaultAsync(server => server.Id == id);
         }
 
-        public Task<List<ScumServer>> FindByTenantIdAsync(long id)
+        public Task<List<ScumServer>> FindManyByTenantIdAsync(long id)
         {
             return _appDbContext.ScumServers
                 .Include(server => server.Guild)
                 .Include(server => server.Tenant)
                 .Include(server => server.Ftp)
-                .Where(server => server.Tenant.Id == id)
+                .Where(server => server.Tenant.Id == id && server.Tenant.Enabled)
                 .ToListAsync();
+        }
+
+        public Task<ScumServer?> FindOneByTenantIdAsync(long id)
+        {
+            return _appDbContext.ScumServers
+               .Include(server => server.Guild)
+               .Include(server => server.Tenant)
+               .Include(server => server.Ftp)
+               .FirstOrDefaultAsync(server => server.Tenant.Id == id && server.Tenant.Enabled);
         }
 
         public override Task CreateOrUpdateAsync(ScumServer entity)
@@ -43,6 +52,15 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
               .Include(server => server.Ftp)
               .Where(server => server.Tenant.Enabled && server.Ftp != null)
               .ToListAsync();
+        }
+
+        public Task<ScumServer?> FindActiveById(long id)
+        {
+            return _appDbContext.ScumServers
+              .Include(server => server.Guild)
+              .Include(server => server.Tenant)
+              .Include(server => server.Ftp)
+              .FirstOrDefaultAsync(server => server.Id == id && server.Tenant.Enabled);
         }
     }
 }

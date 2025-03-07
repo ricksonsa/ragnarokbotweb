@@ -15,7 +15,6 @@
         public float? Y { get; set; }
         public float? Z { get; set; }
         public long Coin { get; set; } = 0;
-        public DateTime CreateDate { get; set; }
 
         public Player()
         {

@@ -1,7 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application;
+using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
+using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Models;
@@ -14,17 +17,29 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ILogger<PlayerService> _logger;
         private readonly ICacheService _cacheService;
         private readonly IPlayerRepository _playerRepository;
+        private readonly IMapper _mapper;
 
         public PlayerService(
             IHttpContextAccessor contextAccessor,
             IUnitOfWork uow,
             ILogger<PlayerService> logger,
-            ICacheService cacheService, IPlayerRepository playerRepository) : base(contextAccessor)
+            ICacheService cacheService,
+            IPlayerRepository playerRepository,
+            IMapper mapper) : base(contextAccessor)
         {
             _uow = uow;
             _logger = logger;
             _cacheService = cacheService;
             _playerRepository = playerRepository;
+            _mapper = mapper;
+        }
+
+        public async Task<Page<PlayerDto>> GetPlayers(Paginator paginator)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+            var page = await _playerRepository.GetPageByServerId(paginator, serverId.Value);
+            return new Page<PlayerDto>(page.Content.Select(_mapper.Map<PlayerDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 
         public bool IsPlayerConnected(string steamId64, long? serverId)

@@ -7,8 +7,8 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     {
         Task<IEnumerable<PackDto>> FetchAllPacksAsync();
         Task<PackDto> FetchPackById(long id);
-        Task<PackDto> CreatePackAsync(CreatePackDto createPack);
-        Task<PackDto> UpdatePackAsync(long id, CreatePackDto createPack);
+        Task<PackDto> CreatePackAsync(PackDto createPack);
+        Task<PackDto> UpdatePackAsync(long id, PackDto createPack);
         Task<Pack> DeletePackAsync(long id);
     }
 }

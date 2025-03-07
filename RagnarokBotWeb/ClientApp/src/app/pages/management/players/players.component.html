@@ -1,0 +1,34 @@
+<div class="main">
+  <nz-card>
+    <nz-table #basicTable [nzData]="dataSource" [nzFrontPagination]="false" nzShowSizeChanger [nzTotal]="total"
+      [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)" (nzPageSizeChange)="pageSizeChange($event)">
+      <thead>
+        <tr>
+          <th>Scum Name</th>
+          <th>Steam Name</th>
+          <th>Steam ID</th>
+          <th>DiscordId</th>
+          <th>Bot Coin</th>
+          <th>Scum Money</th>
+          <th>Scum Gold</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of basicTable.data">
+          <td>{{data.name}}</td>
+          <td>{{data.steamName}}</td>
+          <td>{{data.steamId64}}</td>
+          <td>{{data.discordId}}</td>
+          <td>{{data.coin}}</td>
+          <td>{{data.money}}</td>
+          <td>{{data.gold}}</td>
+          <td>
+            <a>Action 一 {{data.name}}</a>
+            <nz-divider nzType="vertical"></nz-divider>
+            <a>Delete</a>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>

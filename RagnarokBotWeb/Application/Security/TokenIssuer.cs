@@ -9,12 +9,17 @@ namespace RagnarokBotWeb.Application.Security
 {
     public class TokenIssuer : ITokenIssuer
     {
+        private readonly string _secretKey;
+
+        public TokenIssuer()
+        {
+            _secretKey = Environment.GetEnvironmentVariable("jwt_secret")!;
+        }
+
         public string GenerateIdToken(User user)
         {
             // TODO: Guardar chave em config
-            var keyBytes = Encoding.UTF8.GetBytes("p2tfCQNn6FJrM7XmdAsW5zKc4DHyYbELwuPV93BRv8xeqkSjZa\r\nVhN64mSPatj9H5FqfU2rCTEWvpskKQy3eZwLGXnb8RudD7zBYM\r\nwRJXr2b6tsQZWNLUDV4C8nmpKyc7fagGqh5MFux39kASvPEdBz\r\nZd7wKDnsq8j9WTHaGmbAkeYN4RPJrEp3UXS5LCvQy6hzxBVMcF\r\nsDh3SGNHjf7qARkxzMe2VpyPncmbvJCKTX4ruZWtB86dLQ9YF5");
-            var textKey = Convert.ToBase64String(keyBytes);
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(textKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -26,8 +31,8 @@ namespace RagnarokBotWeb.Application.Security
             };
 
             var token = new JwtSecurityToken(
-                issuer: "ragnarokbotowner",
-                audience: "ragnarokbotowner",
+                issuer: "ragnarokbot.com",
+                audience: "ragnarokbot.com",
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(30),
                 signingCredentials: credentials);
@@ -38,9 +43,7 @@ namespace RagnarokBotWeb.Application.Security
         public string GenerateAccessToken(User user, long serverId)
         {
             // TODO: Guardar chave em config
-            var keyBytes = Encoding.UTF8.GetBytes("p2tfCQNn6FJrM7XmdAsW5zKc4DHyYbELwuPV93BRv8xeqkSjZa\r\nVhN64mSPatj9H5FqfU2rCTEWvpskKQy3eZwLGXnb8RudD7zBYM\r\nwRJXr2b6tsQZWNLUDV4C8nmpKyc7fagGqh5MFux39kASvPEdBz\r\nZd7wKDnsq8j9WTHaGmbAkeYN4RPJrEp3UXS5LCvQy6hzxBVMcF\r\nsDh3SGNHjf7qARkxzMe2VpyPncmbvJCKTX4ruZWtB86dLQ9YF5");
-            var textKey = Convert.ToBase64String(keyBytes);
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(textKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -53,8 +56,8 @@ namespace RagnarokBotWeb.Application.Security
             };
 
             var token = new JwtSecurityToken(
-                issuer: "ragnarokbotowner",
-                audience: "ragnarokbotowner",
+                issuer: "ragnarokbot.com",
+                audience: "ragnarokbot.com",
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(30),
                 signingCredentials: credentials);

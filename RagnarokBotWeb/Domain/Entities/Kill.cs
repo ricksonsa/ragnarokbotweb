@@ -11,7 +11,6 @@
         public string? Weapon { get; set; }
         public float? Distance { get; set; }
         public string? Sector { get; set; }
-        public DateTime CreateDate { get; set; }
 
         public Kill()
         {

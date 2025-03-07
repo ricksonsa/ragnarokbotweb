@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -20,7 +19,8 @@ namespace RagnarokBotWeb.Migrations
                     EntityType = table.Column<int>(type: "INTEGER", nullable: false),
                     BlockDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Active = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: false)
+                    Value = table.Column<string>(type: "TEXT", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -35,7 +35,8 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Sector = table.Column<string>(type: "TEXT", nullable: false),
                     Locked = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Available = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    Available = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -51,7 +52,8 @@ namespace RagnarokBotWeb.Migrations
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     CategoryName = table.Column<string>(type: "TEXT", nullable: true),
                     ChannelType = table.Column<int>(type: "INTEGER", nullable: false),
-                    Admin = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Admin = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -64,10 +66,13 @@ namespace RagnarokBotWeb.Migrations
                 {
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    Provider = table.Column<int>(type: "INTEGER", nullable: false),
                     UserName = table.Column<string>(type: "TEXT", nullable: false),
                     Password = table.Column<string>(type: "TEXT", nullable: false),
                     Address = table.Column<string>(type: "TEXT", nullable: false),
-                    Port = table.Column<long>(type: "INTEGER", nullable: false)
+                    Port = table.Column<long>(type: "INTEGER", nullable: false),
+                    RootFolder = table.Column<string>(type: "TEXT", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -82,7 +87,8 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     RunTemplate = table.Column<bool>(type: "INTEGER", nullable: false),
                     DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false),
-                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -97,27 +103,12 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Code = table.Column<string>(type: "TEXT", nullable: false),
-                    Active = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Active = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Items", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Packs",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    Price = table.Column<decimal>(type: "TEXT", nullable: false),
-                    VipPrice = table.Column<decimal>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Packs", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -143,7 +134,8 @@ namespace RagnarokBotWeb.Migrations
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
-                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -159,7 +151,8 @@ namespace RagnarokBotWeb.Migrations
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Command = table.Column<string>(type: "TEXT", nullable: false),
                     Public = table.Column<bool>(type: "INTEGER", nullable: false),
-                    ChannelTemplateId = table.Column<long>(type: "INTEGER", nullable: false)
+                    ChannelTemplateId = table.Column<long>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -180,7 +173,8 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     GuildId = table.Column<long>(type: "INTEGER", nullable: false),
                     ChannelType = table.Column<int>(type: "INTEGER", nullable: false),
-                    DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false)
+                    DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -194,41 +188,17 @@ namespace RagnarokBotWeb.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PackItems",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ItemId = table.Column<long>(type: "INTEGER", nullable: false),
-                    PackId = table.Column<long>(type: "INTEGER", nullable: false),
-                    Amount = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PackItems", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PackItems_Items_ItemId",
-                        column: x => x.ItemId,
-                        principalTable: "Items",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PackItems_Packs_PackId",
-                        column: x => x.PackId,
-                        principalTable: "Packs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ScumServers",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
                     TenantId = table.Column<long>(type: "INTEGER", nullable: false),
                     GuildId = table.Column<long>(type: "INTEGER", nullable: true),
-                    FtpId = table.Column<long>(type: "INTEGER", nullable: true)
+                    FtpId = table.Column<long>(type: "INTEGER", nullable: true),
+                    RestartTimes = table.Column<string>(type: "TEXT", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -261,8 +231,8 @@ namespace RagnarokBotWeb.Migrations
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
                     PasswordSalt = table.Column<byte[]>(type: "BLOB", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Active = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Active = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -284,7 +254,8 @@ namespace RagnarokBotWeb.Migrations
                     Label = table.Column<string>(type: "TEXT", nullable: false),
                     DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false),
                     Command = table.Column<string>(type: "TEXT", nullable: false),
-                    ChannelId = table.Column<long>(type: "INTEGER", nullable: false)
+                    ChannelId = table.Column<long>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -306,13 +277,47 @@ namespace RagnarokBotWeb.Migrations
                     Active = table.Column<bool>(type: "INTEGER", nullable: false),
                     State = table.Column<int>(type: "INTEGER", nullable: false),
                     LastInteracted = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    ScumServerId = table.Column<long>(type: "INTEGER", nullable: false)
+                    ScumServerId = table.Column<long>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Bots", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Bots_ScumServers_ScumServerId",
+                        column: x => x.ScumServerId,
+                        principalTable: "ScumServers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Packs",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    Price = table.Column<decimal>(type: "TEXT", nullable: false),
+                    VipPrice = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Commands = table.Column<string>(type: "TEXT", nullable: true),
+                    ImageUrl = table.Column<string>(type: "TEXT", nullable: true),
+                    DiscordChannelId = table.Column<string>(type: "TEXT", nullable: true),
+                    PurchaseCooldownSeconds = table.Column<long>(type: "INTEGER", nullable: true),
+                    StockPerPlayer = table.Column<long>(type: "INTEGER", nullable: true),
+                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsBlockPurchaseRaidTime = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsVipOnly = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsDailyPackage = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ScumServerId = table.Column<long>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Packs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Packs_ScumServers_ScumServerId",
                         column: x => x.ScumServerId,
                         principalTable: "ScumServers",
                         principalColumn: "Id",
@@ -360,7 +365,8 @@ namespace RagnarokBotWeb.Migrations
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     CronExpression = table.Column<string>(type: "TEXT", nullable: false),
                     ScumServerId = table.Column<long>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -382,7 +388,8 @@ namespace RagnarokBotWeb.Migrations
                     Value = table.Column<string>(type: "TEXT", nullable: false),
                     BotId = table.Column<long>(type: "INTEGER", nullable: true),
                     Executed = table.Column<bool>(type: "INTEGER", nullable: false),
-                    ExecuteDate = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    ExecuteDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -392,6 +399,34 @@ namespace RagnarokBotWeb.Migrations
                         column: x => x.BotId,
                         principalTable: "Bots",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PackItems",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ItemId = table.Column<long>(type: "INTEGER", nullable: false),
+                    PackId = table.Column<long>(type: "INTEGER", nullable: false),
+                    Amount = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PackItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PackItems_Items_ItemId",
+                        column: x => x.ItemId,
+                        principalTable: "Items",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PackItems_Packs_PackId",
+                        column: x => x.PackId,
+                        principalTable: "Packs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -439,7 +474,8 @@ namespace RagnarokBotWeb.Migrations
                     AttemptDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Success = table.Column<bool>(type: "INTEGER", nullable: false),
                     Attempts = table.Column<int>(type: "INTEGER", nullable: false),
-                    UserId = table.Column<long>(type: "INTEGER", nullable: true)
+                    UserId = table.Column<long>(type: "INTEGER", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -491,7 +527,8 @@ namespace RagnarokBotWeb.Migrations
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Amount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    UserId = table.Column<long>(type: "INTEGER", nullable: false)
+                    UserId = table.Column<long>(type: "INTEGER", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -570,6 +607,11 @@ namespace RagnarokBotWeb.Migrations
                 column: "PackId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Packs_ScumServerId",
+                table: "Packs",
+                column: "ScumServerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Players_ScumServerId",
                 table: "Players",
                 column: "ScumServerId");
@@ -603,6 +645,16 @@ namespace RagnarokBotWeb.Migrations
                 name: "IX_Users_TenantId",
                 table: "Users",
                 column: "TenantId");
+
+
+            string contentRootPath = Directory.GetCurrentDirectory();
+            var sqlFilePath = Path.Combine(contentRootPath, "Sql", "items.sql");
+
+            if (File.Exists(sqlFilePath))
+            {
+                string sqlScript = File.ReadAllText(sqlFilePath);
+                migrationBuilder.Sql(sqlScript);
+            }
         }
 
         /// <inheritdoc />

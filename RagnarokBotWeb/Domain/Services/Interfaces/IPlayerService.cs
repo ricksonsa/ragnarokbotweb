@@ -1,4 +1,6 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Services.Dto;
 using Shared.Models;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
@@ -17,5 +19,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task UpdatePlayerAsync(Player user);
         Task UpdatePlayerNameAsync(string steamId64, string name);
         Task UpdateFromScumPlayers(long serverId, List<ScumPlayer>? players);
+
+        Task<Page<PlayerDto>> GetPlayers(Paginator paginator);
     }
 }

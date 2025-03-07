@@ -1,7 +1,10 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: '/welcome' },
-  { path: 'welcome', loadChildren: () => import('./pages/dashboard/welcome/welcome.routes').then(m => m.WELCOME_ROUTES) },
+  // { path: '', pathMatch: 'full' },
+  { path: 'servers/:id/dashboard', loadChildren: () => import('./pages/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES) },
   { path: 'servers/:id/settings', loadChildren: () => import('./pages/settings/settings.routes').then(m => m.SETTINGS_ROUTES) },
+  { path: 'servers/:id/management', loadChildren: () => import('./pages/management/management.routes').then(m => m.MANAGEMENT_ROUTES) },
+  { path: 'servers/:id/shop', loadChildren: () => import('./pages/shop/shop.routes').then(m => m.SHOP_ROUTES) },
+  { path: 'servers/:id/scheduled-tasks', loadChildren: () => import('./pages/scheduled-tasks/scheduled-tasks.routes').then(m => m.SCHEDULEDTASKS_ROUTES) },
 ];

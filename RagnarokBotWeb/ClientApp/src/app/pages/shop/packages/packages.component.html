@@ -1,0 +1,49 @@
+<div class="main">
+  <ng-template #newPack>
+    <button [routerLink]="['new']" nz-button nzType="primary" >
+      <nz-icon nzType="plus" style="color: #fff;" nzTheme="outline" />
+      New Pack
+    </button>
+  </ng-template>
+  <nz-card nzTitle="Packages" [nzExtra]="newPack">
+    <nz-table #basicTable [nzData]="dataSource" [nzFrontPagination]="false" nzShowSizeChanger [nzTotal]="total"
+      [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)"
+      (nzPageSizeChange)="pageSizeChange($event)">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Discord Channel</th>
+          <th>Enabled</th>
+          <th>Raid Blocked</th>
+          <th>Daily Pack</th>
+          <th>VIP Only</th>
+          <th>Price</th>
+          <th>VIP Price</th>
+          <th>Created Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of basicTable.data">
+          <td>{{data.id}}</td>
+          <td>{{data.name}}</td>
+          <td>{{data.description}}</td>
+          <td>{{data.discordChannelName}}</td>
+          <td>{{data.enabled}}</td>
+          <td>{{data.isBlockPurchaseRaidTime}}</td>
+          <td>{{data.isDailyPackage}}</td>
+          <td>{{data.isVipOnly}}</td>
+          <td>{{data.price}}</td>
+          <td>{{data.vipPrice}}</td>
+          <td>{{data.createDate}}</td>
+          <td>
+            <button nz-button nzType="link">
+              <nz-icon nzType="edit"></nz-icon>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>
