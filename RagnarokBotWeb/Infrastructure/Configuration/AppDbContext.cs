@@ -43,17 +43,6 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
             options.UseSqlite("Data Source=app.db");
         }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            var sqlFilePath = Path.Combine(_hostingEnvironment.ContentRootPath, "Sql", "items.sql");
-
-            if (File.Exists(sqlFilePath))
-            {
-                string sqlScript = File.ReadAllText(sqlFilePath);
-                modelBuilder.HasAnnotation("SeedItems", sqlScript);
-            }
-        }
-
         public void MigrateDatabase()
         {
             Database.Migrate(); // Apply pending migrations automatically
