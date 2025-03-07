@@ -8,22 +8,13 @@ namespace RagnarokBotWeb.Infrastructure.Repositories;
 
 public class PlayerRepository(AppDbContext appDbContext) : Repository<Player>(appDbContext), IPlayerRepository
 {
-    public class PlayerRepository : Repository<Player>, IPlayerRepository
+    public Task<Page<Player>> GetPageByServerId(Paginator paginator, long serverId)
     {
-        private readonly AppDbContext _appDbContext;
+        var query = appDbContext.Players
+            .Include(player => player.ScumServer)
+            .Where(player => player.ScumServer.Id == serverId);
 
-        public PlayerRepository(AppDbContext context) : base(context)
-        {
-            _appDbContext = context;
-        }
-
-        public Task<Page<Player>> GetPageByServerId(Paginator paginator, long serverId)
-        {
-            var query = _appDbContext.Players
-                .Include(player => player.ScumServer)
-                .Where(player => player.ScumServer.Id == serverId);
-
-            return base.GetPageAsync(paginator, query);
-        }
+        return base.GetPageAsync(paginator, query);
     }
+
 }
