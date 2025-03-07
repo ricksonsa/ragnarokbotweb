@@ -5,8 +5,6 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
 {
     public class AppDbContext : DbContext
     {
-        private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _hostingEnvironment;
-
         public DbSet<Player> Players { get; set; }
         public DbSet<Lockpick> Lockpicks { get; set; }
         public DbSet<Bunker> Bunkers { get; set; }
@@ -31,11 +29,6 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Ftp> Ftps { get; set; }
         public DbSet<ScheduledTask> ScheduledTasks { get; set; }
         public DbSet<PlayerRegister> PlayerRegisters { get; set; }
-
-        public AppDbContext(Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment)
-        {
-            _hostingEnvironment = hostingEnvironment;
-        }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
