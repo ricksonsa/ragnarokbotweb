@@ -31,7 +31,11 @@ namespace RagnarokBotWeb.Application.Mapping
                    .ForPath((packItem) => packItem.Pack.Id, opt => opt.MapFrom(dto => dto.PackId))
                    .ForPath((packItem) => packItem.Item.Code, opt => opt.MapFrom(dto => dto.ItemCode));
 
-            CreateMap<Pack, PackDto>();
+            CreateMap<Pack, PackDto>()
+                .ForMember(dto => dto.Items, opt => opt.MapFrom(source => source.PackItems))
+                .ReverseMap()
+                    .ForMember(source => source.PackItems, opt => opt.MapFrom(dto => dto.Items));
+
             CreateMap<Player, PlayerDto>();
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -19,6 +20,16 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .FirstOrDefaultAsync(pack => pack.Id == id);
         }
 
+        public async Task<Pack?> FindByIdAsNoTrackingAsync(long id)
+        {
+            return await _appDbContext.Packs
+                .AsNoTracking()
+                .Include(pack => pack.ScumServer)
+                .Include(pack => pack.PackItems)
+                .ThenInclude(packItem => packItem.Item)
+                .FirstOrDefaultAsync(pack => pack.Id == id);
+        }
+
         public override async Task<IEnumerable<Pack>> GetAllAsync()
         {
             return await _appDbContext.Packs
@@ -26,6 +37,21 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                .Include(pack => pack.PackItems)
                .ThenInclude(packItem => packItem.Item)
                .ToListAsync();
+        }
+
+        public Task<Page<Pack>> GetPageByFilter(Paginator paginator, string? filter)
+        {
+            var query = _appDbContext.Packs
+                .Include(pack => pack.PackItems)
+                .ThenInclude(packItem => packItem.Item);
+
+            if (!string.IsNullOrEmpty(filter))
+            {
+                filter = filter.ToLower();
+                return base.GetPageAsync(paginator, query.Where(pack => pack.Name.ToLower().Contains(filter) || pack.Description.ToLower().Contains(filter)));
+            }
+
+            return base.GetPageAsync(paginator, query);
         }
 
         public override Task CreateOrUpdateAsync(Pack entity)

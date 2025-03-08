@@ -20,3 +20,6 @@ export class PackageDto {
     items?: ItemDto[];
 }
 
+export class PackageItemDto {
+    constructor(public itemId: number, public itemName: string, public amount: number, public ammoCount: number) { }
+}

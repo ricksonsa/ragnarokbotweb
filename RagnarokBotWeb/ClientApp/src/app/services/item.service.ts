@@ -8,7 +8,6 @@ import { Page } from '../core/pagination/pager';
   providedIn: 'root'
 })
 export class ItemService {
-
   constructor(private readonly http: HttpClient) { }
 
   getItems(pageSize: number, pageNumber: number, filter: string | null = null) {
@@ -17,5 +16,21 @@ export class ItemService {
       url += `&filter=${filter}`;
     }
     return this.http.get<Page<ItemDto>>(url);
+  }
+
+  getItemById(id: number) {
+    return this.http.get<ItemDto>(`${WEB_API.baseUrl}/api/items/${id}`);
+  }
+
+  deleteItem(id: number) {
+    return this.http.delete<ItemDto>(`${WEB_API.baseUrl}/api/items/${id}`);
+  }
+
+  saveItem(itemForm: any) {
+    if (itemForm.id) {
+      return this.http.put<ItemDto>(`${WEB_API.baseUrl}/api/items/${itemForm.id}`, itemForm);
+    } else {
+      return this.http.post<ItemDto>(`${WEB_API.baseUrl}/api/items`, itemForm);
+    }
   }
 }

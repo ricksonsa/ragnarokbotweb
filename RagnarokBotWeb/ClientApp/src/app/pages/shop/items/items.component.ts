@@ -13,6 +13,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { debounceTime, distinctUntilChanged, Observable, of, startWith, switchMap, tap } from 'rxjs';
 import { Page } from '../../../core/pagination/pager';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 
 @Component({
   selector: 'app-items',
@@ -27,6 +28,7 @@ import { Page } from '../../../core/pagination/pager';
     NzInputModule,
     NzSpaceModule,
     NzIconModule,
+    NzPopconfirmModule,
     NzTableModule,
     NzButtonModule,
     NzDividerModule
@@ -38,7 +40,6 @@ export class ItemsComponent implements OnInit {
   total = 0;
   pageIndex = 1;
   pageSize = 10;
-  filter: string | null = null;
   searchControl = new FormControl();
   suggestions$: Observable<ItemDto[]> = of([]);
   isLoading = false;
@@ -91,13 +92,16 @@ export class ItemsComponent implements OnInit {
       ); // Hide loading indicator
   }
 
-  onSearchClick() {
-
+  confirmDelete(id: number) {
+    this.itemService.deleteItem(id)
+      .subscribe({
+        next: () => {
+          this.pageSizeChange(this.pageSize);
+        }
+      });
   }
 
-  addNewPack() {
-    // this.router.navigateByUrl('/').;
-  }
+  cancelDelete() { }
 
   pageIndexChange(index: number) {
     this.pageIndex = index;

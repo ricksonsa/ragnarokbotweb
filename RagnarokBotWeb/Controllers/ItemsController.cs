@@ -23,10 +23,10 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateItem(ItemDto createItem)
+        public async Task<IActionResult> CreateItem([FromBody] ItemDto item)
         {
-            _logger.Log(LogLevel.Information, "REST Request for creating a new Item with Data: " + JsonConvert.SerializeObject(createItem));
-            return Ok(await _itemService.CreateItemAsync(createItem));
+            _logger.Log(LogLevel.Information, "REST Request for creating a new Item with Data: " + JsonConvert.SerializeObject(item));
+            return Ok(await _itemService.CreateItemAsync(item));
         }
 
         [HttpPut("{id}")]

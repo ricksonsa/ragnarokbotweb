@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
@@ -45,6 +46,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var pack = _mapper.Map<Pack>(createPack);
             pack.ScumServer = server;
+            pack.PackItems = null;
             await _packRepository.AddAsync(pack);
             await _packRepository.SaveAsync();
 
@@ -67,24 +69,9 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<PackDto> FetchPackById(long id)
         {
             var pack = await _packRepository.FindByIdAsync(id);
-            if (pack is null) return null;
-            var packDto = new PackDto
-            {
-                Id = id,
-                Description = pack.Description,
-                Name = pack.Name,
-                Price = pack.Price,
-                VipPrice = pack.VipPrice,
-                Items = pack.PackItems.Select(packItem => new ItemToPackDto
-                {
-                    Amount = packItem.Amount,
-                    ItemCode = packItem.Item.Code,
-                    ItemId = packItem.Item.Id,
-                    ItemName = packItem.Item.Name
-                }).ToList()
-            };
+            if (pack is null) throw new NotFoundException("Package not found");
 
-            return packDto;
+            return _mapper.Map<PackDto>(pack);
         }
 
         public async Task<PackDto> UpdatePackAsync(long id, PackDto packDto)
@@ -92,25 +79,33 @@ namespace RagnarokBotWeb.Domain.Services
             var packEntity = await _packRepository.FindByIdAsync(id);
             if (packEntity is null) throw new NotFoundException("Pack not found");
 
-            var pack = _mapper.Map<Pack>(packEntity);
-            pack.ScumServer = packEntity.ScumServer;
+            packEntity.StockPerPlayer = packDto.StockPerPlayer;
+            packEntity.VipPrice = packDto.VipPrice ?? 0;
+            packEntity.Price = packDto.Price ?? 0;
+            packEntity.IsVipOnly = packDto.IsVipOnly ?? false;
+            packEntity.DeliveryText = packDto.DeliveryText;
+            packEntity.Description = packDto.Description;
+            packEntity.Name = packDto.Name;
+            packEntity.Enabled = packDto.Enabled ?? false;
+            packEntity.ImageUrl = packDto.ImageUrl;
+            packEntity.IsBlockPurchaseRaidTime = packDto.IsBlockPurchaseRaidTime ?? false;
 
-            await _packRepository.CreateOrUpdateAsync(pack);
+            await _packRepository.CreateOrUpdateAsync(packEntity);
             await _packRepository.SaveAsync();
 
-            foreach (var packItem in pack.PackItems)
+            foreach (var packItem in packEntity.PackItems)
             {
                 _packItemRepository.Delete(packItem);
             }
             await _packItemRepository.SaveAsync();
 
-            packDto.Items.ForEach(async item =>
+            packDto.Items!.ForEach(async item =>
             {
                 var packItem = new PackItem
                 {
                     Amount = item.Amount,
                     Item = await _itemRepository.FindByIdAsync(item.ItemId),
-                    Pack = pack
+                    Pack = packEntity
                 };
 
                 await _packItemRepository.CreateOrUpdateAsync(packItem);
@@ -157,6 +152,12 @@ namespace RagnarokBotWeb.Domain.Services
                     }).ToList()
                 };
             });
+        }
+
+        public async Task<Page<PackDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter)
+        {
+            var page = await _packRepository.GetPageByFilter(paginator, filter);
+            return new Page<PackDto>(page.Content.Select(_mapper.Map<PackDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
     }
 }

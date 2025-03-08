@@ -1,3 +1,40 @@
-<p>
-  item works!
-</p>
+<nz-space nzSize="middle">
+  <button (click)="goBack()" *nzSpaceItem nz-button nzType="default">
+    <nz-icon nzType="arrow-left"></nz-icon>
+    Items
+  </button>
+  <button *nzSpaceItem [disabled]="!itemForm.value.id" nz-popconfirm nz-button nzType="default" nzDanger="true"
+    nzPopconfirmTitle="Are you sure you want to delete this item?" (nzOnConfirm)="confirmDelete(itemForm.value.id)"
+    (nzOnCancel)="cancelDelete()" nzPopconfirmPlacement="topLeft" [nzOkText]="'Yes'" nzCancelText="No"
+    [nzOkDanger]="true">
+    <nz-icon nzType="delete"></nz-icon>
+    Delete
+  </button>
+  <button *nzSpaceItem nz-button nzType="primary" (click)="save()">
+    Save Item
+  </button>
+</nz-space>
+<br>
+<br>
+<div class="main single">
+  <nz-card nzTitle="Item">
+    <form nz-form [formGroup]="itemForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Name</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the item name!">
+          <input formControlName="name" nz-input name="name" type="text" id="name" placeholder="Ak 74" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="code">Code</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the item code!">
+          <input formControlName="code" nz-input name="code" type="text" id="code" placeholder="Weapon_Ak47" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #codeExtra>
+        <p nz-typography>Code used by the bot to spawn the item. Ex: Weapon_AKM</p>
+      </ng-template>
+    </form>
+  </nz-card>
+</div>

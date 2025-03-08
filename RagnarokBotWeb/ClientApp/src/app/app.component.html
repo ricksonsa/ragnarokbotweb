@@ -35,6 +35,9 @@
             <a routerLink="servers/1/settings/pvp">PvP</a>
           </li>
           <li nz-menu-item nzMatchRouter>
+            <a routerLink="servers/1/management/players">Quests</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
             <a routerLink="servers/1/settings/rankings">Rankings</a>
           </li>
         </ul>
@@ -51,7 +54,6 @@
           <li nz-menu-item nzMatchRouter>
             <a routerLink="servers/1/management/tickets">Tickets</a>
           </li>
-
         </ul>
       </li>
 
@@ -134,7 +136,7 @@
       <div class="inner-content">
         <div class="alert-holder" *ngIf="showAlert">
           <nz-affix [nzOffsetTop]="10">
-            <nz-alert *ngIf="alert" [nzDescription]="alert.message" [nzMessage]="alert.title"
+            <nz-alert *ngIf="showAlert && alert" [nzDescription]="alert.message" [nzMessage]="alert.title"
               [nzType]="alert.type!"></nz-alert>
           </nz-affix>
         </div>

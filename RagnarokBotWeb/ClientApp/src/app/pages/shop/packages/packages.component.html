@@ -1,14 +1,23 @@
 <div class="main">
   <ng-template #newPack>
-    <button [routerLink]="['new']" nz-button nzType="primary" >
-      <nz-icon nzType="plus" style="color: #fff;" nzTheme="outline" />
-      New Pack
-    </button>
+    <nz-space>
+      <nz-input-group *nzSpaceItem [nzSuffix]="suffixIconSearch">
+        <input type="text" nz-input placeholder="input search text" [formControl]="searchControl" />
+      </nz-input-group>
+      <ng-template #suffixIconSearch>
+        <nz-icon nzType="search" />
+      </ng-template>
+
+      <button *nzSpaceItem [routerLink]="['new']" nz-button nzType="primary">
+        <nz-icon nzType="plus" style="color: #fff;" nzTheme="outline" />
+        New Package
+      </button>
+    </nz-space>
   </ng-template>
   <nz-card nzTitle="Packages" [nzExtra]="newPack">
-    <nz-table #basicTable [nzData]="dataSource" [nzFrontPagination]="false" nzShowSizeChanger [nzTotal]="total"
-      [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)"
-      (nzPageSizeChange)="pageSizeChange($event)">
+    <nz-table #basicTable [nzData]="suggestions$ | async" [nzFrontPagination]="false" nzShowSizeChanger
+      [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)"
+      [nzLoading]="isLoading" (nzPageSizeChange)="pageSizeChange($event)">
       <thead>
         <tr>
           <th>Id</th>
@@ -17,11 +26,10 @@
           <th>Discord Channel</th>
           <th>Enabled</th>
           <th>Raid Blocked</th>
-          <th>Daily Pack</th>
           <th>VIP Only</th>
           <th>Price</th>
           <th>VIP Price</th>
-          <th>Created Date</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -30,16 +38,27 @@
           <td>{{data.name}}</td>
           <td>{{data.description}}</td>
           <td>{{data.discordChannelName}}</td>
-          <td>{{data.enabled}}</td>
-          <td>{{data.isBlockPurchaseRaidTime}}</td>
-          <td>{{data.isDailyPackage}}</td>
-          <td>{{data.isVipOnly}}</td>
+          <td><nz-icon [nzType]="data.enabled ? 'check' : 'close'"
+              [ngClass]="{ 'success': data.enabled, 'danger': !data.enabled}"></nz-icon></td>
+          <td><nz-icon [nzType]="data.isBlockPurchaseRaidTime ? 'check' : 'close'"
+              [ngClass]="{ 'success': data.isBlockPurchaseRaidTime, 'danger': !data.isBlockPurchaseRaidTime}"></nz-icon>
+          </td>
+          <td><nz-icon [nzType]="data.isVipOnly ? 'check' : 'close'"
+              [ngClass]="{ 'success': data.isVipOnly, 'danger': !data.isVipOnly}"></nz-icon></td>
           <td>{{data.price}}</td>
           <td>{{data.vipPrice}}</td>
-          <td>{{data.createDate}}</td>
           <td>
-            <button nz-button nzType="link">
+            <button nz-button nzType="link" [routerLink]="[data.id]">
               <nz-icon nzType="edit"></nz-icon>
+              Edit
+            </button>
+            <nz-divider nzType="vertical"></nz-divider>
+            <button nz-popconfirm nz-button nzType="link" nzDanger="true"
+              nzPopconfirmTitle="Are you sure you want to delete this item?" (nzOnConfirm)="confirmDelete(data.id)"
+              (nzOnCancel)="cancelDelete()" nzPopconfirmPlacement="topLeft" [nzOkText]="'Yes'" nzCancelText="No"
+              [nzOkDanger]="true">
+              <nz-icon nzType="delete"></nz-icon>
+              Delete
             </button>
           </td>
         </tr>

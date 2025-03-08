@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -21,9 +22,9 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllPacks()
+        public async Task<IActionResult> GetAllPacks([FromQuery] Paginator paginator, string? filter)
         {
-            return Ok(await _packService.FetchAllPacksAsync());
+            return Ok(await _packService.GetPacksPageByFilterAsync(paginator, filter));
         }
 
         [HttpGet("{id}")]

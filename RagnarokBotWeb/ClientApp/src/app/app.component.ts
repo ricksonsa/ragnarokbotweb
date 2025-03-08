@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -22,6 +22,8 @@ import { NzListModule } from 'ng-zorro-antd/list';
 import { EventManager, EventWithContent } from './services/event-manager.service';
 import { Alert } from './models/alert';
 import { AccountDto } from './models/account.dto';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+
 
 @Component({
   selector: 'app-root',
@@ -61,6 +63,9 @@ export class AppComponent implements OnInit {
   alert?: Alert;
   account?: AccountDto;
 
+  private readonly notification = inject(NzNotificationService);
+
+
   constructor(
     private readonly authenticationService: AuthenticationService,
     private readonly route: ActivatedRoute,
@@ -78,8 +83,6 @@ export class AppComponent implements OnInit {
       password: [null, Validators.required],
       confirmPassword: [null, Validators.required]
     });
-
-
     router.events.pipe(
       debounceTime(800),
       switchMap(value => {
@@ -114,8 +117,15 @@ export class AppComponent implements OnInit {
     this.eventManager.subscribe('alert', ((event) => {
       var value = event as EventWithContent<Alert>;
       this.alert = value.content;
-      this.showAlert = true;
-      setTimeout(() => this.showAlert = false, 5000);
+      this.showAlert = false;
+
+      setTimeout(() => this.notification.create(
+        this.alert.type,
+        this.alert.title,
+        this.alert.message
+      ), 800);
+      // this.showAlert = true;
+      // setTimeout(() => this.showAlert = false, 5000);
     }));
   }
 
