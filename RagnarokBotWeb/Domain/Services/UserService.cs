@@ -55,7 +55,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<AuthResponse?> Authenticate(long serverId)
         {
-            var user = await _userRepository.FindOneWithTenantAsync(u => u.Email == UserName());
+            var user = await _userRepository.FindOneWithTenantAsync(u => u.Email == UserLogin());
 
             if (user is null) throw new UnauthorizedException("User not registered");
             if (!user.Active) throw new UnauthorizedException("User not active");
@@ -71,9 +71,11 @@ namespace RagnarokBotWeb.Domain.Services
 
             var user = new User
             {
+                Name = register.Name,
                 Email = register.Email,
                 Active = true
             };
+
             user.SetPassword(register.Password);
 
             if (register.TenantId.HasValue)
@@ -120,13 +122,18 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<AccountDto> GetAccount()
         {
             var scumServers = await _scumServerRepository.FindManyByTenantIdAsync(TenantId()!.Value);
+            var user = await _userRepository.FindOneAsync(u => u.Email == UserLogin()!);
+            if (user is null) throw new UnauthorizedException("Invalid user!");
+
             var serverId = ServerId()!.Value;
             return new AccountDto
             {
-                Email = UserName()!,
+                Name = user.Name,
+                Email = UserLogin()!,
                 ServerId = serverId,
                 Server = _mapper.Map<ScumServerDto>(scumServers.FirstOrDefault(server => server.Id == serverId)),
                 Servers = scumServers.Select(_mapper.Map<ScumServerDto>),
+                AccessLevel = user.AccessLevel
             };
         }
     }

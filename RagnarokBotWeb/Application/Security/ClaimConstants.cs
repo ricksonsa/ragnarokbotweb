@@ -6,5 +6,6 @@
         public const string User = "usr";
         public const string ServerId = "ss";
         public const string TokenType = "typ";
+        public const string AccessLevel = "al";
     }
 }

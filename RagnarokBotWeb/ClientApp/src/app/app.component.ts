@@ -89,6 +89,7 @@ export class AppComponent implements OnInit {
     });
 
     this.registerForm = fb.group({
+      name: [null, Validators.required],
       email: [null, Validators.required],
       password: [null, Validators.required],
       confirmPassword: [null, Validators.required]
@@ -160,6 +161,16 @@ export class AppComponent implements OnInit {
   }
 
   public login() {
+    if (this.loginForm.invalid) {
+      Object.values(this.loginForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
+
     this.authenticationService.authenticate(this.loginForm!.value)
       .pipe(
         (switchMap((value) => {
@@ -181,6 +192,16 @@ export class AppComponent implements OnInit {
   }
 
   signup() {
+    if (this.registerForm.invalid) {
+      Object.values(this.registerForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
+
     this.authenticationService.register(this.registerForm.value)
       .subscribe({
         next: (value: any) => {

@@ -25,7 +25,7 @@ namespace RagnarokBotWeb.Domain.Services
             catch (Exception) { return null; }
         }
 
-        public string? UserName()
+        public string? UserLogin()
         {
             var username = GetClaimValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
             return username;

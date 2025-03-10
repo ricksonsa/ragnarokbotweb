@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.JSInterop.Infrastructure;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Dto;
 
@@ -14,7 +13,7 @@ namespace RagnarokBotWeb.Application.Mapping
 
             CreateMap<ScumServer, ScumServerDto>()
                 .ForMember((dto) => dto.RestartTimes, opt => opt.MapFrom(server => server.GetRestartTimesList()))
-                .ForMember((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild != null ? new DiscordDto { Id = server.Guild.DiscordId, Name = server.Guild.DiscordName} : null))
+                .ForMember((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild != null ? new DiscordDto { Id = server.Guild.DiscordId, Name = server.Guild.DiscordName } : null))
                 .ReverseMap()
                     .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
 

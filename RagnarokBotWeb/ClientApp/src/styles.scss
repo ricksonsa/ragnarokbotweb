@@ -102,7 +102,7 @@
 
 .cron-editor-tab-content {
     display: flex;
-    row-gap: 20px;
+    row-gap: 40px;
     flex-direction: column;
 }
 
@@ -114,4 +114,8 @@
     .top-action {
         display: block !important;
     }
+}
+
+mat-option {
+    color: black !important;
 }

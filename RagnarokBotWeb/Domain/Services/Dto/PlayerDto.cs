@@ -2,6 +2,7 @@
 {
     public class PlayerDto
     {
+        public long Id { get; set; }
         public string? Name { get; set; }
         public string? ScumId { get; set; }
         public string? SteamId64 { get; set; }

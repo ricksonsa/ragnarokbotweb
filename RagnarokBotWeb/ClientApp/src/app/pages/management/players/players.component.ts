@@ -6,6 +6,9 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { PlayerService } from '../../../services/player.service';
 import { PlayerDto } from '../../../models/player.dto';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { RouterModule } from '@angular/router';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 
 @Component({
   selector: 'app-players',
@@ -13,7 +16,10 @@ import { PlayerDto } from '../../../models/player.dto';
   styleUrls: ['./players.component.scss'],
   imports: [
     CommonModule,
+    RouterModule,
     FormsModule,
+    NzButtonModule,
+    NzIconModule,
     NzCardModule,
     NzDividerModule,
     NzTableModule

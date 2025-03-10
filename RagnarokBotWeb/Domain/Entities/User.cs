@@ -1,14 +1,17 @@
 ﻿using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Enums;
 
 namespace RagnarokBotWeb.Domain.Entities
 {
     public class User : BaseEntity
     {
         public Tenant Tenant { get; set; }
+        public string Name { get; set; }
         public string Email { get; set; }
         public string PasswordHash { get; private set; }
         public byte[] PasswordSalt { get; private set; }
         public bool Active { get; set; }
+        public AccessLevel AccessLevel { get; set; } = AccessLevel.Default;
 
         public User()
         {

@@ -7,7 +7,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { AuthenticationService } from '../../../../services/authentication.service';
 import { AccountDto } from '../../../../models/account.dto';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
@@ -24,6 +24,7 @@ import { Observable, of, debounceTime, distinctUntilChanged, tap, switchMap } fr
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { PackageItemDto } from '../../../../models/package.dto';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 
 @Component({
   selector: 'app-package',
@@ -32,6 +33,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
   imports: [
     CommonModule,
     FormsModule,
+    RouterModule,
     ReactiveFormsModule,
     NzCardModule,
     NzFormModule,
@@ -42,6 +44,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
     NzCheckboxModule,
     NzListModule,
     NzAutocompleteModule,
+    NzAlertModule,
     NzTypographyModule,
     NzTableModule,
     NzPopconfirmModule,
@@ -149,6 +152,7 @@ export class PackageComponent implements OnInit {
       .subscribe({
         next: (account) => {
           this.account = account;
+          if (!account.server.discord) this.packageForm.controls['discordChannelId'].disable();
         }
       });
   }

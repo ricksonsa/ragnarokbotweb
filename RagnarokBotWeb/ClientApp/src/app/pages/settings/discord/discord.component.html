@@ -1,35 +1,63 @@
+<nz-space nzSize="middle">
+  <button *nzSpaceItem nz-button nzType="primary" (click)="save()">Save</button>
+</nz-space>
+<br>
+<br>
+
 <div class="main">
   <ng-template #discord>
-    <nz-icon nzType="discord" nzTheme="fill" style="font-size: 20px; color: #7289da;" /><span>&nbsp;&nbsp;Discord Server</span>
+    <nz-icon nzType="discord" nzTheme="fill" style="font-size: 20px; color: #7289da;" /><span>&nbsp;&nbsp;Discord
+      Server</span>
   </ng-template>
+
   <nz-card [nzTitle]="discord">
     <form nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="email">App Installation Link</nz-form-label>
         <nz-form-control [nzSpan]="24">
-         <button nz-button nzType="dashed" href="https://discord.com/oauth2/authorize?client_id=1340176241097183343">
-          <a style="color: #7289da;" href="https://discord.com/oauth2/authorize?client_id=1340176241097183343">https://discord.com/oauth2/authorize?client_id=1340176241097183343</a>
-        </button>
+          <button nz-button nzType="dashed" href="https://discord.com/oauth2/authorize?client_id=1340176241097183343">
+            <a style="color: #7289da;"
+              href="https://discord.com/oauth2/authorize?client_id=1340176241097183343">https://discord.com/oauth2/authorize?client_id=1340176241097183343</a>
+          </button>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="email">Discord Server Id</nz-form-label>
-        <nz-form-control [nzSpan]="24" [nzExtra]="discordInstalled">
-          <input nzStatus="error" [disabled]="true" nz-input name="name" value="312342141" type="text" id="name" />
+        <nz-form-control [nzSpan]="24" [nzExtra]="discordAlert">
+          <input nzStatus="error" nz-input name="name" placeholder="Your discord server id" type="text" id="name" />
         </nz-form-control>
       </nz-form-item>
-      <ng-template #discordInstalled>
-        <nz-alert nzType="success" [nzMessage]="discordInstalledMessage"></nz-alert>
-        <ng-template #discordInstalledMessage>
-          <div class="discord-success">
-            <nz-icon nzType="discord" nzTheme="fill" style="font-size: 40px; color: #7289da;" />
-            <div>
-              <p style="margin: 0;">Discord server is configured</p>
-              <p style="margin: 0;">Discord server: <b style="text-transform: uppercase;">Ragnarok Black Market</b></p>
+      <ng-template #discordAlert>
+        <span *ngIf="account.server.discord">
+          <nz-alert nzType="success" [nzMessage]="discordInstalledMessage"></nz-alert>
+          <ng-template #discordInstalledMessage>
+            <div class="discord-success">
+              <nz-icon nzType="discord" nzTheme="fill" style="font-size: 40px; color: #7289da;" />
+              <div>
+                <p style="margin: 0;">Discord server is configured</p>
+                <p style="margin: 0;">Discord server: <b style="text-transform: uppercase;">Ragnarok Black Market</b>
+                </p>
+              </div>
             </div>
-          </div>
-        </ng-template>
+          </ng-template>
+        </span>
+
+        <span *ngIf="!account.server.discord">
+          <nz-alert nzType="warning" [nzMessage]="discordInstalledMessage"></nz-alert>
+          <ng-template #discordInstalledMessage>
+            <div class="discord-success">
+              <nz-icon nzType="discord" nzTheme="fill" style="font-size: 40px; color: #7289da;" />
+              <div>
+                <p style="margin: 0;">Discord server is not configured.</p>
+                <p style="margin: 0;">Please input the id of your discord server. Use the installation link above to
+                  install the discord bot. Once configured we will automatically create all channels needed for logs and
+                  interactions.</p>
+              </div>
+            </div>
+          </ng-template>
+        </span>
+
       </ng-template>
 
       <nz-form-item>
@@ -38,17 +66,19 @@
           <input nz-input name="discordLink" type="text" id="discordLink" />
         </nz-form-control>
         <ng-template #discordLink>
-          <p>Players can type !discord inside the game and the bot will respond with your Discord Link. Leave blank if not needed</p>
+          <p>Players can type !discord inside the game and the bot will respond with your Discord Link. Leave blank if
+            not needed</p>
         </ng-template>
       </nz-form-item>
     </form>
   </nz-card>
 
   <ng-template #channelSelections>
-    <nz-icon nzType="discord" nzTheme="fill" style="font-size: 20px; color: #7289da;" /><span>&nbsp;&nbsp;Discord Channels</span>
+    <nz-icon nzType="discord" nzTheme="fill" style="font-size: 20px; color: #7289da;" /><span>&nbsp;&nbsp;Discord
+      Channels</span>
   </ng-template>
   <nz-card [nzTitle]="channelSelections">
-    <form nz-form>
+    <form nz-form *ngIf="account?.server.discord; else noDiscord">
       <nz-divider nzText="Interactable Channels"></nz-divider>
       <br>
       <nz-form-item>
@@ -109,25 +139,25 @@
     </form>
   </nz-card>
   <ng-template #killfeed>
-    <nz-icon nzType="aim" nzTheme="outline"
-      style="font-size: 20px;" /><span>&nbsp;&nbsp;Kill Feed</span>
+    <nz-icon nzType="aim" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Kill Feed</span>
   </ng-template>
   <nz-card [nzTitle]="killfeed">
-    <form nz-form>
+    <form nz-form *ngIf="account?.server.discord; else noDiscord" [formGroup]="killfeedForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Post Kills in Discord</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="useKillFeed">Post Kills in Discord</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="discordLink">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="useKillFeed"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #discordLink>
-        <p>Notify kills in the selected Kill Feed Discord channel, <a routerLink="/servers/1/settings/discord">here.</a></p>
+        <p>Notify kills in the selected Kill Feed Discord channel, <a routerLink="/servers/1/settings/discord">here.</a>
+        </p>
       </ng-template>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Show distance</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="showKillDistance">Show distance</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="distance">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="showKillDistance"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #distance>
@@ -135,9 +165,9 @@
       </ng-template>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Show sector</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="showKillSector">Show sector</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="sector">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="showKillSector"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #sector>
@@ -145,9 +175,9 @@
       </ng-template>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Show weapon</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="showKillWeapon">Show weapon</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="weapon">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="showKillWeapon"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #weapon>
@@ -155,20 +185,20 @@
       </ng-template>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Hide Killer Name</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="hideKillerName">Hide Killer Name</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="hideKiller">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="hideKillerName"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #hideKiller>
         <p>Hide the killer name in Kill Feed</p>
       </ng-template>
 
-      
+
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Hide Mines in Kill Feed</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="HideMineKill">Hide Mines in Kill Feed</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="hideMine">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="hideMineKill"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #hideMine>
@@ -176,9 +206,9 @@
       </ng-template>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Count Same Squad</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="showSameSquadKill">Count Same Squad</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="sameSquad">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="showSameSquadKill"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #sameSquad>
@@ -188,25 +218,29 @@
   </nz-card>
 
   <ng-template #lock>
-    <nz-icon nzType="lock" nzTheme="outline"
-      style="font-size: 20px;" /><span>&nbsp;&nbsp;Lockpick Feed</span>
+    <nz-icon nzType="lock" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Lockpick Feed</span>
   </ng-template>
   <nz-card [nzTitle]="lock">
-    <form nz-form>
+    <ng-template #noDiscord>
+      <nz-alert nzMessage="Discord configuration is required." nzType="error"></nz-alert>
+    </ng-template>
+    <form nz-form *ngIf="account?.server.discord; else noDiscord" [formGroup]="lockpickFeed">
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Post Lockpick Attempt in Discord</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="useLockpickFeed">Post Lockpick Attempt in Discord</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="lockpickAttempt">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="useLockpickFeed"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #lockpickAttempt>
-        <p>Notify when someone is attempting to lockpick a player lock in the selected Lockpick Alert Discord channel, <a routerLink="/servers/1/settings/discord">here.</a></p>
+        <p>Notify when someone is attempting to lockpick a player lock in the selected Lockpick Alert Discord channel,
+          <a routerLink="/servers/1/settings/discord">here.</a>
+        </p>
       </ng-template>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Show sector</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="showLockpickSector">Show sector</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="lockpickSector">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="showLockpickSector"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #lockpickSector>
@@ -214,9 +248,19 @@
       </ng-template>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="email">Send alert to vip players</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="showLockpickContainerName">Show locked container</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="lockContainer">
+          <nz-switch formControlName="showLockpickContainerName"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #lockContainer>
+        <p>Displays the type of container that is being unlocked.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="sendVipLockpickAlert">Send alert to vip players</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="vipPlayerLockAlert">
-          <nz-switch></nz-switch>
+          <nz-switch formControlName="sendVipLockpickAlert"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <ng-template #vipPlayerLockAlert>

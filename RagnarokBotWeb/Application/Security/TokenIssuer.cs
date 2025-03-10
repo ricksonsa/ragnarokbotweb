@@ -27,6 +27,7 @@ namespace RagnarokBotWeb.Application.Security
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                 new Claim(ClaimConstants.TenantId, user.Tenant?.Id.ToString() ?? string.Empty),
                 new Claim(ClaimConstants.TokenType, ETokenType.IdToken.ToString()),
+                new Claim(ClaimConstants.AccessLevel, user.AccessLevel.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
@@ -52,6 +53,7 @@ namespace RagnarokBotWeb.Application.Security
                 new Claim(ClaimConstants.TenantId, user.Tenant?.Id.ToString() ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimConstants.TokenType, ETokenType.AccessToken.ToString()),
+                new Claim(ClaimConstants.AccessLevel, user.AccessLevel.ToString()),
                 new Claim(ClaimConstants.ServerId, serverId.ToString())
             };
 
