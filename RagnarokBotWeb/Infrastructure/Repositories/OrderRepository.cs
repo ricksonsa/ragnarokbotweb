@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -34,6 +35,25 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .ThenInclude(packItems => packItems.Item)
                 .OrderBy(order => order.CreateDate)
                 .FirstOrDefaultAsync(order => order.Status == EOrderStatus.Created);
+        }
+
+        public Task<Page<Order>> GetPageByFilter(Paginator paginator, string? filter)
+        {
+            var query = _appDbContext.Orders
+               .Include(pack => pack.Pack)
+               .Include(pack => pack.ScumServer)
+               .Include(pack => pack.Player);
+
+            if (!string.IsNullOrEmpty(filter))
+            {
+                filter = filter.ToLower();
+                return base.GetPageAsync(paginator, query.Where(
+                    order =>
+                    order.Pack != null && (order.Pack.Name.ToLower().Contains(filter) || order.Pack.Description.ToLower().Contains(filter))
+                    || order.Id.ToString() == filter));
+            }
+
+            return base.GetPageAsync(paginator, query);
         }
     }
 }

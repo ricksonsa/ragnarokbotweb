@@ -704,6 +704,13 @@ namespace RagnarokBotWeb.Migrations
                 string sqlScript = File.ReadAllText(sqlFilePath);
                 migrationBuilder.Sql(sqlScript);
             }
+
+            sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sql", "bunkers.sql");
+            if (File.Exists(sqlFilePath))
+            {
+                string sqlScript = File.ReadAllText(sqlFilePath);
+                migrationBuilder.Sql(sqlScript);
+            }
         }
 
         /// <inheritdoc />

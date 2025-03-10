@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, Renderer2 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -23,6 +23,8 @@ import { EventManager, EventWithContent } from './services/event-manager.service
 import { Alert } from './models/alert';
 import { AccountDto } from './models/account.dto';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { ThemeService } from './services/theme.service';
 
 
 @Component({
@@ -43,6 +45,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
     NzAlertModule,
     NzCardModule,
     NzPopconfirmModule,
+    NzSwitchModule,
     NzListModule,
     NzAvatarModule,
     NzBreadCrumbModule,
@@ -62,17 +65,24 @@ export class AppComponent implements OnInit {
   showAlert = true;
   alert?: Alert;
   account?: AccountDto;
+  darkMode = false;
+  theme: string | null;
 
   private readonly notification = inject(NzNotificationService);
-
 
   constructor(
     private readonly authenticationService: AuthenticationService,
     private readonly route: ActivatedRoute,
+    private readonly themeService: ThemeService,
     private router: Router,
     private readonly eventManager: EventManager,
+    private renderer: Renderer2,
     fb: FormBuilder
   ) {
+    this.theme = localStorage.getItem("theme");
+    themeService.setTheme(this.theme || 'light', renderer);
+    this.darkMode = this.theme != 'light';
+
     this.loginForm = fb.group({
       email: [null, Validators.required],
       password: [null, Validators.required]
@@ -94,10 +104,25 @@ export class AppComponent implements OnInit {
             this.logged = true;
           }
         }
-      })
+      });
+  }
+
+  changeTheme(value: boolean) {
+    this.setTheme(value ? 'dark' : 'light');
+  }
+
+  setTheme(theme: string) {
+    this.themeService.setTheme(theme, this.renderer);
+    localStorage.setItem("theme", theme);
   }
 
   ngOnInit(): void {
+    this.themeService.onThemeChange().subscribe({
+      next: (theme) => {
+        this.setTheme(theme);
+      }
+    });
+
     this.authenticationService.account(true)
       .subscribe({
         next: (account) => {

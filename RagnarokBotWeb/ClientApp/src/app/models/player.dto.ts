@@ -6,6 +6,7 @@ export class PlayerDto {
     steamId64?: string;
     steamName?: string;
     discordId?: string;
+    discordName?: string;
     scumServer?: ScumServer;
     money?: number;
     gold?: number;

@@ -1,13 +1,13 @@
 <nz-layout class="app-layout" *ngIf="logged">
-  <nz-sider class="menu-sidebar" nzCollapsible nzWidth="256px" nzBreakpoint="md" [(nzCollapsed)]="isCollapsed"
+  <nz-sider [nzTheme]="darkMode ? 'dark': 'light'" class="menu-sidebar" nzCollapsible nzWidth="256px" nzBreakpoint="md" [(nzCollapsed)]="isCollapsed"
     [nzTrigger]="null">
     <div class="sidebar-logo">
       <a href="https://ng.ant.design/" target="_blank">
         <img src="https://ng.ant.design/assets/img/logo.svg" alt="logo">
-        <h1>Ant Design of Angular</h1>
+        <h1 [ngClass]="{'top-actions-button-light': !darkMode}" nz-typography>{{ account?.server?.name ?? 'Ragnarok Bot' }}</h1>
       </a>
     </div>
-    <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+    <ul nz-menu [nzTheme]="darkMode ? 'dark': 'light'" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
 
       <li nz-submenu nzOpen nzTitle="Dashboard" nzIcon="dashboard">
         <ul>
@@ -30,9 +30,6 @@
           </li>
           <li nz-menu-item nzMatchRouter>
             <a routerLink="servers/1/settings/discord">Discord</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/settings/pvp">PvP</a>
           </li>
           <li nz-menu-item nzMatchRouter>
             <a routerLink="servers/1/management/players">Quests</a>
@@ -105,19 +102,30 @@
     </ul>
   </nz-sider>
   <nz-layout>
-    <nz-header>
+    <nz-header [ngClass]="{'header-light': !darkMode}" >
       <div class="app-header">
         <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
           <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
         </span>
       </div>
       <div class="top-actions">
+        <ng-template #light>
+          <nz-icon nzType="sun" nzTheme="outline" />
+        </ng-template>
+        <ng-template #dark>
+          <nz-icon nzType="moon" nzTheme="outline" />
+        </ng-template>
+
+        <nz-switch style="margin-right: 10px;" [(ngModel)]="darkMode" (ngModelChange)="changeTheme($event)"
+          [nzCheckedChildren]="dark" [nzUnCheckedChildren]="light"></nz-switch>
+
         <button nz-popconfirm [nzPopconfirmTitle]="topActions" nzPopconfirmOverlayClassName="top-actions-popconfirm"
           nz-button nzType="link" style="height: 40px;">
           <nz-space nzAlign="center">
             <nz-avatar *nzSpaceItem [nzText]="getFirstLetter(account?.email)"
               style="color:#f56a00; background-color:#fde3cf;"></nz-avatar>
-            <p *nzSpaceItem nz-typography style="margin: 0">{{account?.email}}</p>
+            <p *nzSpaceItem style="margin: 0" class="top-actions-button"
+              [ngClass]="{'top-actions-button-dark': darkMode}">{{account?.email}}</p>
           </nz-space>
           <ng-template #topActions>
             <nz-space nzDirection="vertical" nzAlign="start">

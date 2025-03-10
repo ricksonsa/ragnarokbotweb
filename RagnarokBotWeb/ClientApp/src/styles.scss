@@ -1,6 +1,51 @@
-// @import "~ng-zorro-antd/ng-zorro-antd.variable.min.css";
-
 /* You can add global styles to this file, and also import other style files */
+
+// /* Default Light Theme */
+// :root {
+//     --primary-color: #1890ff;
+//     --background-color: #ffffff;
+//     --text-color: #000000;
+//     --card-background: #ffffff;
+//     --border-color: #d9d9d9;
+//   }
+  
+//   /* Dark Mode */
+//   .dark-mode {
+//     --primary-color: #177ddc;
+//     --background-color: #141414;
+//     --text-color: #ffffff;
+//     --card-background: #1f1f1f;
+//     --border-color: #303030;
+//   }
+  
+//   /* Apply to NG-ZORRO Components */
+//   body {
+//     background-color: var(--background-color);
+//     color: var(--text-color);
+//     transition: background-color 0.3s ease, color 0.3s ease;
+//   }
+  
+//   /* Override NG-ZORRO Component Styles */
+//   .ant-layout,
+//   .ant-card,
+//   .ant-modal,
+//   .ant-dropdown-menu {
+//     background-color: var(--card-background) !important;
+//     color: var(--text-color) !important;
+//   }
+  
+//   .ant-btn-primary {
+//     background-color: var(--primary-color) !important;
+//     border-color: var(--primary-color) !important;
+//   }
+  
+//   .ant-input,
+//   .ant-select-selector {
+//     background-color: var(--background-color) !important;
+//     color: var(--text-color) !important;
+//     border-color: var(--border-color) !important;
+//   }
+  
 .main {
     display: flex;
     justify-content: space-between;
@@ -32,11 +77,11 @@
 
 .success {
     color: #22bb33 !important;
-  }
-  
-  .danger {
+}
+
+.danger {
     color: #ff4d4f !important;
-  }
+}
 
 .discord-success {
     display: flex;

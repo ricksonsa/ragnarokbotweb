@@ -1,5 +1,8 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using AutoMapper;
+using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
+using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Enums;
@@ -13,6 +16,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IPackRepository _packRepository;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly IPlayerRepository _playerRepository;
+        private readonly IMapper _mapper;
 
         public OrderService(
             IHttpContextAccessor contextAccessor,
@@ -20,18 +24,26 @@ namespace RagnarokBotWeb.Domain.Services
             IOrderRepository orderRepository,
             IPackRepository packRepository,
             IPlayerRepository userRepository,
-            IScumServerRepository scumServerRepository) : base(contextAccessor)
+            IScumServerRepository scumServerRepository,
+            IMapper mapper) : base(contextAccessor)
         {
             _logger = logger;
             _orderRepository = orderRepository;
             _packRepository = packRepository;
             _playerRepository = userRepository;
             _scumServerRepository = scumServerRepository;
+            _mapper = mapper;
         }
 
         public Task<IEnumerable<Order>> GetCreatedOrders()
         {
             return _orderRepository.FindAsync(order => order.Status == EOrderStatus.Created);
+        }
+
+        public async Task<Page<OrderDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter)
+        {
+            Page<Order> page = await _orderRepository.GetPageByFilter(paginator, filter);
+            return new Page<OrderDto>(page.Content.Select(_mapper.Map<OrderDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 
         public async Task<Order?> PlaceOrder(string steamId64, long packId)

@@ -1,13 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
-    [Authorize]
-    [Route("api/public/orders")]
+    [Authorize(AuthenticationSchemes = AuthorizationPolicyConstants.AccessTokenPolicy)]
+    [Route("api/orders")]
     public class OrdersController : ControllerBase
     {
         private readonly ILogger<OrdersController> _logger;
@@ -25,6 +27,14 @@ namespace RagnarokBotWeb.Controllers
             var order = await _orderService.PlaceOrder(createOrder.SteamId, createOrder.PackId);
             if (order is null) return BadRequest("Invalid payload");
             return Ok(order);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPage([FromQuery] Paginator paginator, string? filter)
+        {
+            _logger.LogInformation("Get request to fetch a page of orders");
+            var page = await _orderService.GetPacksPageByFilterAsync(paginator, filter);
+            return Ok(page);
         }
     }
 }

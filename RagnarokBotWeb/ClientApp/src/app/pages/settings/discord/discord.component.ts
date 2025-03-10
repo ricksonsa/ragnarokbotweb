@@ -8,6 +8,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 
 @Component({
   selector: 'app-discord',
@@ -22,6 +23,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
     NzSelectModule,
     NzAlertModule,
     NzDividerModule,
+    NzSwitchModule,
     NzIconModule
   ]
 })

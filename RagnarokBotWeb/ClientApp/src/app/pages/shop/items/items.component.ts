@@ -114,8 +114,5 @@ export class ItemsComponent implements OnInit {
     this.pageSize = size;
     this.loadPage();
     this.setUpFilter();
-
   }
-
-
 }

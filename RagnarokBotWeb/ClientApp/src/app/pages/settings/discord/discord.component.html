@@ -108,7 +108,123 @@
 
     </form>
   </nz-card>
+  <ng-template #killfeed>
+    <nz-icon nzType="aim" nzTheme="outline"
+      style="font-size: 20px;" /><span>&nbsp;&nbsp;Kill Feed</span>
+  </ng-template>
+  <nz-card [nzTitle]="killfeed">
+    <form nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Post Kills in Discord</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="discordLink">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #discordLink>
+        <p>Notify kills in the selected Kill Feed Discord channel, <a routerLink="/servers/1/settings/discord">here.</a></p>
+      </ng-template>
 
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Show distance</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="distance">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #distance>
+        <p>Displays the distance of the kill</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Show sector</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="sector">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #sector>
+        <p>Displays sector of the kill</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Show weapon</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="weapon">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #weapon>
+        <p>Displays the weapon used</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Hide Killer Name</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="hideKiller">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #hideKiller>
+        <p>Hide the killer name in Kill Feed</p>
+      </ng-template>
+
+      
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Hide Mines in Kill Feed</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="hideMine">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #hideMine>
+        <p>Hide mine kill in Kill Feed</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Count Same Squad</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="sameSquad">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #sameSquad>
+        <p>Computes same squad kill in Kill Feed</p>
+      </ng-template>
+    </form>
+  </nz-card>
+
+  <ng-template #lock>
+    <nz-icon nzType="lock" nzTheme="outline"
+      style="font-size: 20px;" /><span>&nbsp;&nbsp;Lockpick Feed</span>
+  </ng-template>
+  <nz-card [nzTitle]="lock">
+    <form nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Post Lockpick Attempt in Discord</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="lockpickAttempt">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #lockpickAttempt>
+        <p>Notify when someone is attempting to lockpick a player lock in the selected Lockpick Alert Discord channel, <a routerLink="/servers/1/settings/discord">here.</a></p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Show sector</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="lockpickSector">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #lockpickSector>
+        <p>Displays sector of the lockpick attempt</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="null" nzFor="email">Send alert to vip players</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="vipPlayerLockAlert">
+          <nz-switch></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #vipPlayerLockAlert>
+        <p>Send message to the lock owner's discord if they are vip</p>
+      </ng-template>
+
+    </form>
+  </nz-card>
   <!-- <div class="last"></div> -->
 
 </div>

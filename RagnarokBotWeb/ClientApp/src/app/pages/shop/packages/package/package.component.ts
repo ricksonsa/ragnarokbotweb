@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -20,7 +20,7 @@ import { EventManager, EventWithContent } from '../../../../services/event-manag
 import { Alert } from '../../../../models/alert';
 import { ItemDto } from '../../../../models/item.dto';
 import { ItemService } from '../../../../services/item.service';
-import { Observable, of, startWith, debounceTime, distinctUntilChanged, tap, switchMap } from 'rxjs';
+import { Observable, of, debounceTime, distinctUntilChanged, tap, switchMap } from 'rxjs';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { PackageItemDto } from '../../../../models/package.dto';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
