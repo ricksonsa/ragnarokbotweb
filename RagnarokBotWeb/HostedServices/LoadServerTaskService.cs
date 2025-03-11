@@ -20,7 +20,7 @@ namespace RagnarokBotWeb.HostedServices
             _logger.Log(LogLevel.Information, "Loading Ftp Tasks");
             using var scope = _services.CreateScope();
             var taskService = scope.ServiceProvider.GetRequiredService<ITaskService>();
-            await taskService.LoadServerTasks(stoppingToken);
+            await taskService.LoadAllServersTasks(stoppingToken);
         }
     }
 }

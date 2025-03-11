@@ -61,15 +61,15 @@ namespace RagnarokBotWeb.Domain.Services
                             .Build();
         }
 
-        public async Task NewServerAddedAsync(ScumServer server)
+        private async Task ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken = default)
         {
-            var scheduler = await _schedulerFactory.GetScheduler();
-
+            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
             var job = JobBuilder.Create<BotAliveJob>()
                    .WithIdentity($"BotAliveJob({server.Id})")
                    .UsingJobData("server_id", server.Id)
                    .Build();
             await scheduler.ScheduleJob(job, DefaultTrigger());
+
 
             job = JobBuilder.Create<ListPlayersJob>()
                 .WithIdentity($"ListPlayersJob({server.Id})")
@@ -82,7 +82,41 @@ namespace RagnarokBotWeb.Domain.Services
                  .UsingJobData("server_id", server.Id)
                  .Build();
             await scheduler.ScheduleJob(job, TwentySecondsTrigger());
+        }
 
+        private async Task ScheduleFtpServerTasks(ScumServer server, CancellationToken cancellationToken = default)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
+
+            var job = JobBuilder.Create<KillLogJob>()
+                   .WithIdentity($"KillLogJob({server.Id})")
+                   .UsingJobData("server_id", server.Id)
+                   .Build();
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
+
+            job = JobBuilder.Create<EconomyJob>()
+                .WithIdentity($"EconomyJob({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
+
+            job = JobBuilder.Create<GamePlayJob>()
+                .WithIdentity($"GamePlayJob({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
+
+            job = JobBuilder.Create<LoginJob>()
+                .WithIdentity($"LoginJob({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, DefaultTrigger());
+        }
+
+
+        public async Task NewServerAddedAsync(ScumServer server)
+        {
+            await ScheduleServerTasks(server);
             _cacheService.AddServers([server]);
         }
 
@@ -102,91 +136,25 @@ namespace RagnarokBotWeb.Domain.Services
                 _logger.LogError(ex.Message);
             }
 
-            var job = JobBuilder.Create<KillLogJob>()
-                  .WithIdentity($"KillLogJob({server.Id})")
-                  .UsingJobData("server_id", server.Id)
-            .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
-
-            job = JobBuilder.Create<EconomyJob>()
-                .WithIdentity($"EconomyJob({server.Id})")
-                .UsingJobData("server_id", server.Id)
-            .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
-
-            job = JobBuilder.Create<GamePlayJob>()
-                .WithIdentity($"GamePlayJob({server.Id})")
-                .UsingJobData("server_id", server.Id)
-            .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
-
-            job = JobBuilder.Create<LoginJob>()
-                .WithIdentity($"LoginJob({server.Id})")
-                .UsingJobData("server_id", server.Id)
-            .Build();
-            await scheduler.ScheduleJob(job, DefaultTrigger());
-
+            await ScheduleFtpServerTasks(server);
             _cacheService.AddServers([server]);
-
         }
 
-        public async Task LoadServerTasks(CancellationToken cancellationToken)
+        public async Task LoadAllServersTasks(CancellationToken cancellationToken)
         {
-            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
             var servers = await _scumServerRepository.FindActive();
             _cacheService.AddServers(servers);
             foreach (var server in servers)
             {
-                var job = JobBuilder.Create<BotAliveJob>()
-                    .WithIdentity($"BotAliveJob({server.Id})")
-                    .UsingJobData("server_id", server.Id)
-                    .Build();
-                await scheduler.ScheduleJob(job, DefaultTrigger());
-
-
-                job = JobBuilder.Create<ListPlayersJob>()
-                    .WithIdentity($"ListPlayersJob({server.Id})")
-                    .UsingJobData("server_id", server.Id)
-                    .Build();
-                await scheduler.ScheduleJob(job, TenMinTrigger());
-
-                job = JobBuilder.Create<OrderCommandJob>()
-                     .WithIdentity($"OrderCommandJob({server.Id})")
-                     .UsingJobData("server_id", server.Id)
-                     .Build();
-                await scheduler.ScheduleJob(job, TwentySecondsTrigger());
+                await ScheduleServerTasks(server, cancellationToken);
             }
         }
 
-        public async Task LoadFtpServerTasks(CancellationToken cancellationToken)
+        public async Task LoadFtpAllServersTasks(CancellationToken cancellationToken)
         {
-            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
-
             foreach (var server in await _scumServerRepository.GetActiveServersWithFtp())
             {
-                var job = JobBuilder.Create<KillLogJob>()
-                    .WithIdentity($"KillLogJob({server.Id})")
-                    .UsingJobData("server_id", server.Id)
-                    .Build();
-                await scheduler.ScheduleJob(job, FiveMinTrigger());
-
-                job = JobBuilder.Create<EconomyJob>()
-                    .WithIdentity($"EconomyJob({server.Id})")
-                    .UsingJobData("server_id", server.Id)
-                    .Build();
-                await scheduler.ScheduleJob(job, FiveMinTrigger());
-
-                job = JobBuilder.Create<GamePlayJob>()
-                    .WithIdentity($"GamePlayJob({server.Id})")
-                    .UsingJobData("server_id", server.Id)
-                    .Build();
-                await scheduler.ScheduleJob(job, FiveMinTrigger());
-
-                job = JobBuilder.Create<LoginJob>()
-                    .WithIdentity($"LoginJob({server.Id})")
-                    .UsingJobData("server_id", server.Id)
-                    .Build();
-                await scheduler.ScheduleJob(job, DefaultTrigger());
+                await ScheduleFtpServerTasks(server, cancellationToken);
             }
         }
     }
