@@ -62,5 +62,13 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
               .Include(server => server.Ftp)
               .FirstOrDefaultAsync(server => server.Id == id && server.Tenant.Enabled);
         }
+
+        public Task<List<ScumServer>> FindActive()
+        {
+            return _appDbContext.ScumServers
+               .Include(server => server.Tenant)
+               .Where(server => server.Tenant.Enabled)
+               .ToListAsync();
+        }
     }
 }

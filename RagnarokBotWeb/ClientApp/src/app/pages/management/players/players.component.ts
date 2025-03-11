@@ -28,7 +28,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 export class PlayersComponent implements OnInit {
   dataSource: PlayerDto[] = [];
   total = 0;
-  pageIndex = 0;
+  pageIndex = 1;
   pageSize = 10;
 
   constructor(private readonly playerService: PlayerService) { }

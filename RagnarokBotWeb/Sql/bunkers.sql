@@ -1,4 +1,4 @@
-insert into Bunkers (Sctor, Locked, Available, CreateDate) values
+insert into Bunkers (Sector, Locked, Available, CreateDate) values
 	('B3', 1, NULL, date('now')),
 	('Z2', 1, NULL, date('now')),
 	('B2', 1, NULL, date('now')),

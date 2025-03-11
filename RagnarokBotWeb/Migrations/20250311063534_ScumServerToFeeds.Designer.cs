@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RagnarokBotWeb.Infrastructure.Configuration;
 
@@ -10,9 +11,11 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250311063534_ScumServerToFeeds")]
+    partial class ScumServerToFeeds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
@@ -692,46 +695,13 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<long?>("GuildId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("HideKillerName")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("HideMineKill")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RestartTimes")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("SendVipLockpickAlert")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowKillDistance")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowKillSector")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowKillWeapon")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowLockpickContainerName")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowLockpickSector")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowSameSquadKill")
-                        .HasColumnType("INTEGER");
-
                     b.Property<long>("TenantId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("UseKillFeed")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("UseLockpickFeed")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

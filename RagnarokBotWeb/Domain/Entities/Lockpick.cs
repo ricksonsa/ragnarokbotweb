@@ -9,7 +9,7 @@
         public DateTime AttemptDate { get; set; }
         public bool Success { get; set; }
         public int Attempts { get; set; }
-        public Player? User { get; set; }
+        public ScumServer ScumServer { get; set; }
 
     }
 }

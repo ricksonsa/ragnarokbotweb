@@ -14,6 +14,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ILogger<ServerService> _logger;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly ITenantRepository _tenantRepository;
+        private readonly ITaskService _taskService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFtpService _ftpService;
         private readonly IMapper _mapper;
@@ -25,7 +26,8 @@ namespace RagnarokBotWeb.Domain.Services
             ITenantRepository tenantRepository,
             IUnitOfWork unitOfWork,
             IFtpService ftpService,
-            IMapper mapper) : base(httpContext)
+            IMapper mapper,
+            ITaskService taskService) : base(httpContext)
         {
             _logger = logger;
             _scumServerRepository = scumServerRepository;
@@ -33,6 +35,7 @@ namespace RagnarokBotWeb.Domain.Services
             _unitOfWork = unitOfWork;
             _ftpService = ftpService;
             _mapper = mapper;
+            _taskService = taskService;
         }
 
         public async Task<ScumServerDto> ChangeFtp(FtpDto ftpDto)
@@ -68,6 +71,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();
+
+            await _taskService.FtpConfigAddedAsync(server);
 
             return _mapper.Map<ScumServerDto>(server);
         }
