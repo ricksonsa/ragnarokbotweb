@@ -34,11 +34,23 @@ namespace RagnarokBotWeb.Domain.Services
             _mapper = mapper;
         }
 
-        public async Task<Page<PlayerDto>> GetPlayers(Paginator paginator)
+        public async Task<PlayerDto> GetPlayer(long id)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
-            var page = await _playerRepository.GetPageByServerId(paginator, serverId.Value);
+
+            var player = await _playerRepository.FindByIdAsync(id);
+            if (player is null) throw new NotFoundException("Player not found");
+            if (player.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Unauthorized server");
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<Page<PlayerDto>> GetPlayers(Paginator paginator, string? filter)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+            var page = await _playerRepository.GetPageByServerId(paginator, serverId.Value, filter);
             return new Page<PlayerDto>(page.Content.Select(_mapper.Map<PlayerDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 
@@ -113,7 +125,10 @@ namespace RagnarokBotWeb.Domain.Services
                 _logger.Log(LogLevel.Information, $"Registered User Connected {steamId64} {name}({scumId})");
             }
 
-            _cacheService.GetCommandQueue(server.Id).Enqueue(BotCommand.ListPlayers());
+            if (!_cacheService.GetCommandQueue(server.Id).Any(command => command.Type == Shared.Enums.ECommandType.ListPlayers))
+            {
+                _cacheService.GetCommandQueue(server.Id).Enqueue(BotCommand.ListPlayers());
+            }
         }
 
         public ScumPlayer? PlayerDisconnected(long serverId, string steamId64)

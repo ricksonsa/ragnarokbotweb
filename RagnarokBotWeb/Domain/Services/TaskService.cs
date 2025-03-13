@@ -26,40 +26,25 @@ namespace RagnarokBotWeb.Domain.Services
             _logger = logger;
         }
 
-        private static ITrigger TwoMinTrigger()
-        {
-            return TriggerBuilder.Create()
+        private static ITrigger TwoMinTrigger() => TriggerBuilder.Create()
                             .WithCronSchedule(AppSettingsStatic.TwoMinCron)
                             .Build();
-        }
 
-        private static ITrigger DefaultTrigger()
-        {
-            return TriggerBuilder.Create()
+        private static ITrigger DefaultTrigger() => TriggerBuilder.Create()
                             .WithCronSchedule(AppSettingsStatic.DefaultCron)
                             .Build();
-        }
 
-        private static ITrigger FiveMinTrigger()
-        {
-            return TriggerBuilder.Create()
+        private static ITrigger FiveMinTrigger() => TriggerBuilder.Create()
                             .WithCronSchedule(AppSettingsStatic.FiveMinCron)
                             .Build();
-        }
 
-        private static ITrigger TenMinTrigger()
-        {
-            return TriggerBuilder.Create()
+        private static ITrigger TenMinTrigger() => TriggerBuilder.Create()
                             .WithCronSchedule(AppSettingsStatic.TenMinCron)
                             .Build();
-        }
 
-        private static ITrigger TwentySecondsTrigger()
-        {
-            return TriggerBuilder.Create()
+        private static ITrigger TwentySecondsTrigger() => TriggerBuilder.Create()
                             .WithCronSchedule(AppSettingsStatic.TwentySecondsCron)
                             .Build();
-        }
 
         private async Task ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken = default)
         {

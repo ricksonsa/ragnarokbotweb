@@ -8,6 +8,7 @@ import { PackageComponent } from './packages/package/package.component';
 import { ItemComponent } from './items/item/item.component';
 import { ItemResolver } from './items/resolvers/item.resolver';
 import { AdminGuard } from '../../core/guards/admin.guard';
+import { WelcomePackComponent } from './welcome-pack/welcome-pack.component';
 
 export const SHOP_ROUTES: Routes = [
   { path: 'bank', component: BankComponent },
@@ -16,4 +17,5 @@ export const SHOP_ROUTES: Routes = [
   { path: 'packages', component: PackagesComponent, pathMatch: 'full' },
   { path: 'packages/:id', component: PackageComponent, resolve: { package: PackageResolver } },
   { path: 'orders', component: OrdersComponent },
+  { path: 'welcome-pack', component: WelcomePackComponent },
 ];

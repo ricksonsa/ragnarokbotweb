@@ -5,7 +5,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
     public interface IPlayerRepository : IRepository<Player>
     {
-        Task<Page<Player>> GetPageByServerId(Paginator paginator, long serverId);
+        Task<Page<Player>> GetPageByServerId(Paginator paginator, long serverId, string? filter);
         Task<List<Player>> GetAllByServerId(long serverId);
     }
 }

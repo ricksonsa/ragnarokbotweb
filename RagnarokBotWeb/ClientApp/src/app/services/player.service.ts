@@ -11,8 +11,16 @@ export class PlayerService {
 
   constructor(private readonly http: HttpClient) { }
 
-  getPlayers(pageSize: number, pageNumber: number) {
-    return this.http.get<Page<PlayerDto>>(`${WEB_API.baseUrl}/api/players?pageSize=${pageSize}&pageNumber=${pageNumber}`);
+  getPlayers(pageSize: number, pageNumber: number, filter: string = null) {
+    var url = `${WEB_API.baseUrl}/api/players?pageSize=${pageSize}&pageNumber=${pageNumber}`;
+    if (filter) {
+      url += `&filter=${filter}`;
+    }
+    return this.http.get<Page<PlayerDto>>(url);
+  }
+
+  getPlayerById(id: number) {
+    return this.http.get<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}`);
   }
 
 }

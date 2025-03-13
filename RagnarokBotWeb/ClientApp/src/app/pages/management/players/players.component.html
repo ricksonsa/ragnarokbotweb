@@ -1,8 +1,18 @@
 <div class="main">
-  <nz-card>
-    <nz-table #basicTable [nzData]="dataSource" [nzFrontPagination]="false" nzShowSizeChanger [nzTotal]="total"
-      [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)"
-      (nzPageSizeChange)="pageSizeChange($event)">
+  <ng-template #newItem>
+    <nz-space>
+      <nz-input-group *nzSpaceItem [nzSuffix]="suffixIconSearch">
+        <input type="text" nz-input placeholder="input search text" [formControl]="searchControl" />
+      </nz-input-group>
+      <ng-template #suffixIconSearch>
+        <nz-icon nzType="search" />
+      </ng-template>
+    </nz-space>
+  </ng-template>
+  <nz-card nzTitle="Players" [nzExtra]="newItem">
+    <nz-table #basicTable [nzData]="suggestions$ | async" [nzFrontPagination]="false" nzShowSizeChanger
+      [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)"
+      [nzLoading]="isLoading" (nzPageSizeChange)="pageSizeChange($event)">
       <thead>
         <tr>
           <th>Id</th>
@@ -39,5 +49,6 @@
         </tr>
       </tbody>
     </nz-table>
+
   </nz-card>
 </div>

@@ -38,7 +38,6 @@ import { EventManager, EventWithContent } from '../../services/event-manager.ser
     NzPopconfirmModule,
     NzButtonModule
   ]
-
 })
 export class ProfileComponent implements OnInit {
   account?: AccountDto;
