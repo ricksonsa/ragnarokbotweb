@@ -17,9 +17,6 @@ public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider s
         var channelTemplates = await GetChannelTemplates();
         var categories = new Dictionary<string, RestCategoryChannel>();
 
-        // FIXME: method temporally to delete channels before create new
-        await DeleteChannelsAsync(guild);
-
         foreach (var channelTemplate in channelTemplates)
         {
             var category = await GetOrCreateCategoryChannelAsync(guild, channelTemplate, categories);
@@ -98,11 +95,5 @@ public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider s
         using var scope = serviceProvider.CreateScope();
         var channelTemplateService = scope.ServiceProvider.GetRequiredService<IChannelTemplateService>();
         return await channelTemplateService.GetAllAsync();
-    }
-
-    private static async Task DeleteChannelsAsync(SocketGuild guild)
-    {
-        foreach (var channel in guild.Channels) await channel.DeleteAsync();
-        foreach (var category in guild.CategoryChannels) await category.DeleteAsync();
     }
 }

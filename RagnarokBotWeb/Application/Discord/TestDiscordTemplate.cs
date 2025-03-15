@@ -1,9 +1,14 @@
+using Discord.WebSocket;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord;
 
-public class TestDiscordTemplate(ILogger<TestDiscordTemplate> logger, IServiceProvider serviceProvider)
+public class TestDiscordTemplate(
+    ILogger<TestDiscordTemplate> logger,
+    IServiceProvider serviceProvider,
+    DiscordSocketClient client
+)
     : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -20,17 +25,23 @@ public class TestDiscordTemplate(ILogger<TestDiscordTemplate> logger, IServicePr
             return;
         }
 
-        // FIXME: temporally mark as false
-        await MarkRunTemplateAsFalse(guild, guildService);
+        await ClearBefore(guild);
 
         await template.Run(guild);
         guild.RunTemplate = true;
         await guildService.Update(guild);
     }
 
-    private static async Task MarkRunTemplateAsFalse(Guild guild, IGuildService guildService)
+    private async Task ClearBefore(Guild guild)
     {
         guild.RunTemplate = false;
-        await guildService.Update(guild);
+
+        using var scope = serviceProvider.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IGuildService>().Update(guild);
+        await scope.ServiceProvider.GetRequiredService<IChannelService>().DeleteAllAsync();
+
+        var socketGuild = client.GetGuild(guild.DiscordId);
+        foreach (var channel in socketGuild.Channels) await channel.DeleteAsync();
+        foreach (var category in socketGuild.CategoryChannels) await category.DeleteAsync();
     }
 }

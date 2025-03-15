@@ -24,9 +24,6 @@ public class StartupDiscordTemplate(
         var discordCreateChannel = new DiscordCreateChannel(client, serviceProvider);
         var channels = await discordCreateChannel.CreateAsync(guild.DiscordId);
 
-        // FIXME: method temporally to delete channels before create new
-        await DeleteChannelsAsync(channelService, guild);
-
         foreach (var channel in channels.Select(ToChannelEntity(guild)))
             await channelService.CreateChannelAsync(channel);
     }
@@ -45,10 +42,5 @@ public class StartupDiscordTemplate(
                 }
             ).ToList()
         };
-    }
-
-    private async Task DeleteChannelsAsync(IChannelService channelService, Guild guild)
-    {
-        await channelService.DeleteAllAsync();
     }
 }
