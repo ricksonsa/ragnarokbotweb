@@ -1,0 +1,18 @@
+insert into Bunkers (Sector, Locked, Available, CreateDate) values
+	('B3', 1, NULL, date('now')),
+	('Z2', 1, NULL, date('now')),
+	('B2', 1, NULL, date('now')),
+	('B0', 1, NULL, date('now')),
+	('A4', 1, NULL, date('now')),
+	('B1', 1, NULL, date('now')),
+	('A3', 1, NULL, date('now')),
+	('C4', 1, NULL, date('now')),
+	('C1', 1, NULL, date('now')),
+	('C3', 1, NULL, date('now')),
+	('D4', 1, NULL, date('now')),
+	('D2', 1, NULL, date('now')),
+	('A1', 1, NULL, date('now')),
+	('D1', 1, NULL, date('now')),
+	('Z3', 1, NULL, date('now')),
+	('Z1', 1, NULL, date('now')),
+	('C0', 1, NULL, date('now'));

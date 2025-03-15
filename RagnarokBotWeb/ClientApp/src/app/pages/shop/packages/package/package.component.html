@@ -53,8 +53,21 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #discordChannelExtra>
-        <p>The discord channel in which this package will be displayed for
+        <p *ngIf="account.server.discord">The discord channel in which this package will be displayed for
           purchase.</p>
+        <span *ngIf="!account.server.discord">
+          <nz-alert nzType="warning" [nzMessage]="discordInstalledMessage"></nz-alert>
+          <ng-template #discordInstalledMessage>
+            <div class="discord-success">
+              <nz-icon nzType="discord" nzTheme="fill" style="font-size: 40px; color: #7289da;" />
+              <div>
+                <p style="margin: 0;">Discord server is not configured.</p>
+                <p style="margin: 0;"><a [routerLink]="'/servers/' + account.serverId + '/settings/discord'">Click
+                    here</a> and follow the instructions to set up the discord server.</p>
+              </div>
+            </div>
+          </ng-template>
+        </span>
       </ng-template>
 
       <nz-form-item>
@@ -150,7 +163,8 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #commandsExtra>
-        <p>You can add commands like #Announce to be executed or just a text. Text added here will be sent in the global
+        <p>You can add commands like #Announce to be executed or just a text. Text added here will be sent in the
+          global
           chat. <span nz-typography nzType="danger">DO NOT USE IT TO SPAWN ITEMS.</span></p>
       </ng-template>
     </form>

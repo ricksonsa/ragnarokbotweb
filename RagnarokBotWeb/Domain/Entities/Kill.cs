@@ -2,8 +2,6 @@
 {
     public class Kill : BaseEntity
     {
-        public Player? Killer { get; set; }
-        public Player? Target { get; set; }
         public string? KillerSteamId64 { get; set; }
         public string? TargetSteamId64 { get; set; }
         public string? KillerName { get; set; }
@@ -11,10 +9,6 @@
         public string? Weapon { get; set; }
         public float? Distance { get; set; }
         public string? Sector { get; set; }
-
-        public Kill()
-        {
-            CreateDate = DateTime.Now;
-        }
+        public ScumServer ScumServer { get; set; }
     }
 }

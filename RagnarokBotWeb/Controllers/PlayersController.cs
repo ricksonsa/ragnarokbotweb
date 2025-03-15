@@ -32,10 +32,17 @@ namespace RagnarokBotWeb.Controllers
         //}
 
         [HttpGet]
-        public async Task<IActionResult> GetPlayers([FromQuery] Paginator paginator)
+        public async Task<IActionResult> GetPlayers([FromQuery] Paginator paginator, string? filter)
         {
-            var players = await _playerService.GetPlayers(paginator);
+            var players = await _playerService.GetPlayers(paginator, filter);
             return Ok(players);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPlayer(long id)
+        {
+            var player = await _playerService.GetPlayer(id);
+            return Ok(player);
         }
     }
 }

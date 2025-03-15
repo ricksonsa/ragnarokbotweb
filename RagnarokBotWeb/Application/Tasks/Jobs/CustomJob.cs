@@ -18,22 +18,21 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         {
             var jobName = context.JobDetail.Key.Name;
 
-            var serverIdObject = context.Get("server_id");
-            if (serverIdObject is null) return Task.CompletedTask;
+            JobDataMap dataMap = context.JobDetail.JobDataMap;
+            long? serverId = dataMap.GetLong("server_id");
+            string? commandsString = dataMap.GetString("commands");
 
-            var commandsObject = context.Get("commands");
-            if (commandsObject is null) return Task.CompletedTask;
+            if (serverId is null) return Task.CompletedTask;
+            if (commandsString is null) return Task.CompletedTask;
 
-            IEnumerable<string> commands = commandsObject.ToString()!.Split(";");
+            IEnumerable<string> commands = commandsString.ToString()!.Split(";");
 
-            _logger.LogInformation($"Executing job: {jobName} from serverId: {serverIdObject} at {DateTime.Now}");
+            _logger.LogInformation($"Executing job: {jobName} from serverId: {serverId.Value} at {DateTime.Now}");
 
-            if (long.TryParse(serverIdObject.ToString(), out long serverId))
+
+            foreach (var command in commands)
             {
-                foreach (var command in commands)
-                {
-                    _cacheService.GetCommandQueue(serverId).Enqueue(BotCommand.Command(command));
-                }
+                _cacheService.GetCommandQueue(serverId.Value).Enqueue(BotCommand.Command(command));
             }
 
             return Task.CompletedTask;

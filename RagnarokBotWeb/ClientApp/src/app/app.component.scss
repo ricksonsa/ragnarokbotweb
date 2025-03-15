@@ -1,8 +1,17 @@
+$primary-color: #3498db;
+$secondary-color: #2980b9;
+$background-color: #ecf0f1;
+$border-radius: 10px;
+
 :host {
   display: flex;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.header-light {
+  background-color: #fff;
 }
 
 .alert-holder {
@@ -69,7 +78,7 @@ nz-sider {
   padding-left: 24px;
   overflow: hidden;
   line-height: 64px;
-  background: #001529;
+  // background: #001529;
   transition: all .3s;
 }
 
@@ -95,7 +104,6 @@ nz-header {
   width: 100%;
   display: flex;
   justify-content: space-between;
-  background: #fff;
   z-index: 2;
 }
 
@@ -103,11 +111,22 @@ nz-header {
   margin-right: 30px;
 }
 
+.top-actions-button {
+  color: #000;
+}
+
+.top-actions-button-dark {
+  color: #fff;
+}
+
+.top-actions-button-light {
+  color: #070F2B !important;
+}
+
 .app-header {
   position: relative;
   height: 64px;
   padding: 0;
-  background: #fff;
   box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
 }
 
@@ -118,15 +137,31 @@ nz-content {
 .inner-content {
   overflow-y: auto;
   padding: 24px;
-  background: #fff;
   height: 100%;
+
+  overflow-y: auto;
+
+  /* width */
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  /* Track */
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  /* Handle */
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+  }
+
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
 }
-
-
-$primary-color: #3498db;
-$secondary-color: #2980b9;
-$background-color: #ecf0f1;
-$border-radius: 10px;
 
 body {
   display: flex;
@@ -149,12 +184,11 @@ body {
 }
 
 .login-container {
-  background: white;
   padding: 20px;
   border-radius: $border-radius;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
-  width: 350px;
+  min-width: 380px;
 }
 
 .login-form {

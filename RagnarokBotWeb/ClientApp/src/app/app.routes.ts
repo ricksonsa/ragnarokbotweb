@@ -1,7 +1,9 @@
 import { Routes } from '@angular/router';
+import { ProfileComponent } from './pages/profile/profile.component';
 
 export const routes: Routes = [
   // { path: '', pathMatch: 'full' },
+  { path: 'profile', component: ProfileComponent },
   { path: 'servers/:id/dashboard', loadChildren: () => import('./pages/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES) },
   { path: 'servers/:id/settings', loadChildren: () => import('./pages/settings/settings.routes').then(m => m.SETTINGS_ROUTES) },
   { path: 'servers/:id/management', loadChildren: () => import('./pages/management/management.routes').then(m => m.MANAGEMENT_ROUTES) },

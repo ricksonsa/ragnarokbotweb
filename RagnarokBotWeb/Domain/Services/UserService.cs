@@ -16,6 +16,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ITenantRepository _tenantRepository;
         private readonly ITokenIssuer _tokenIssuer;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ITaskService _taskService;
         private readonly IMapper _mapper;
 
         public UserService(IHttpContextAccessor contextAccessor,
@@ -25,7 +26,8 @@ namespace RagnarokBotWeb.Domain.Services
             IScumServerRepository scumServerRepository,
             ITenantRepository tenantRepository,
             ITokenIssuer tokenIssuer,
-            IMapper mapper) : base(contextAccessor)
+            IMapper mapper,
+            ITaskService taskService) : base(contextAccessor)
         {
             _logger = logger;
             _userRepository = userRepository;
@@ -34,6 +36,7 @@ namespace RagnarokBotWeb.Domain.Services
             _tenantRepository = tenantRepository;
             _tokenIssuer = tokenIssuer;
             _mapper = mapper;
+            _taskService = taskService;
         }
 
         public async Task<AuthResponse?> PreAuthenticate(AuthenticateDto authenticateDto)
@@ -55,7 +58,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<AuthResponse?> Authenticate(long serverId)
         {
-            var user = await _userRepository.FindOneWithTenantAsync(u => u.Email == UserName());
+            var user = await _userRepository.FindOneWithTenantAsync(u => u.Email == UserLogin());
 
             if (user is null) throw new UnauthorizedException("User not registered");
             if (!user.Active) throw new UnauthorizedException("User not active");
@@ -71,22 +74,14 @@ namespace RagnarokBotWeb.Domain.Services
 
             var user = new User
             {
+                Name = register.Name,
                 Email = register.Email,
                 Active = true
             };
-            user.SetPassword(register.Password);
 
-            if (register.TenantId.HasValue)
-            {
-                var tenant = await _tenantRepository.FindByIdAsync(register.TenantId.Value);
-                if (tenant is null) throw new DomainException("Tenant not found");
-                user.Tenant = tenant;
-            }
-            else
-            {
-                user.Tenant = await CreateTenant(user.Email);
-                await CreateServer(user.Tenant);
-            }
+            user.SetPassword(register.Password);
+            user.Tenant = await CreateTenant(user.Email);
+            await CreateServer(user.Tenant);
 
             await _userRepository.AddAsync(user);
             await _userRepository.SaveAsync();
@@ -97,10 +92,13 @@ namespace RagnarokBotWeb.Domain.Services
             };
         }
 
-        public async Task CreateServer(Tenant tenant)
+        public async Task<ScumServer> CreateServer(Tenant tenant)
         {
-            await _scumServerRepository.CreateOrUpdateAsync(new ScumServer(tenant));
+            var server = new ScumServer(tenant);
+            await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();
+            await _taskService.NewServerAddedAsync(server);
+            return server;
         }
 
         public async Task<Tenant> CreateTenant(string name)
@@ -120,13 +118,18 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<AccountDto> GetAccount()
         {
             var scumServers = await _scumServerRepository.FindManyByTenantIdAsync(TenantId()!.Value);
+            var user = await _userRepository.FindOneAsync(u => u.Email == UserLogin()!);
+            if (user is null) throw new UnauthorizedException("Invalid user!");
+
             var serverId = ServerId()!.Value;
             return new AccountDto
             {
-                Email = UserName()!,
+                Name = user.Name,
+                Email = UserLogin()!,
                 ServerId = serverId,
                 Server = _mapper.Map<ScumServerDto>(scumServers.FirstOrDefault(server => server.Id == serverId)),
                 Servers = scumServers.Select(_mapper.Map<ScumServerDto>),
+                AccessLevel = user.AccessLevel
             };
         }
     }

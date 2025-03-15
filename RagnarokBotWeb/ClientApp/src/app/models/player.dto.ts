@@ -1,11 +1,13 @@
 import { ScumServer } from "./scum-server";
 
 export class PlayerDto {
+    id!: number;
     name?: string;
     scumId?: string;
     steamId64?: string;
     steamName?: string;
     discordId?: string;
+    discordName?: string;
     scumServer?: ScumServer;
     money?: number;
     gold?: number;

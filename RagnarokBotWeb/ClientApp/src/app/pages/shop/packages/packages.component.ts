@@ -13,6 +13,7 @@ import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilChanged } from 'rxjs';
+import { NzPopoverModule } from 'ng-zorro-antd/popover';
 
 @Component({
   selector: 'app-packages',
@@ -23,6 +24,7 @@ import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilC
     ReactiveFormsModule,
     RouterModule,
     FormsModule,
+    NzPopoverModule,
     NzCardModule,
     NzIconModule,
     NzInputModule,

@@ -11,6 +11,7 @@ public class Player : BaseEntity
     public string? SteamId64 { get; set; }
     public string? SteamName { get; set; }
     public ulong? DiscordId { get; set; }
+    public string? DiscordName { get; set; }
     public ScumServer ScumServer { get; set; }
     public long? Money { get; set; }
     public long? Gold { get; set; }

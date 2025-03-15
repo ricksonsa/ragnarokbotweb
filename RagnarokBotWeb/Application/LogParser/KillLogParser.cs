@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
 using System.Globalization;
@@ -9,10 +8,10 @@ namespace RagnarokBotWeb.Application.LogParser
 {
     public class KillLogParser
     {
-        private readonly DbSet<Player> _users;
-        public KillLogParser(DbSet<Player> users)
+        private readonly List<Player> _players;
+        public KillLogParser(List<Player> players)
         {
-            _users = users;
+            _players = players;
         }
 
         public Kill Parse(string line1, string line2)
@@ -37,8 +36,6 @@ namespace RagnarokBotWeb.Application.LogParser
             {
                 CreateDate = date,
                 Distance = distance,
-                Killer = _users.FirstOrDefault(user => user.SteamId64 == preParseKill.Killer.UserId),
-                Target = _users.FirstOrDefault(user => user.SteamId64 == preParseKill.Victim.UserId),
                 KillerSteamId64 = preParseKill.Killer.UserId,
                 TargetSteamId64 = preParseKill.Victim.UserId,
                 KillerName = preParseKill.Killer.ProfileName,

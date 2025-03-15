@@ -34,5 +34,21 @@ namespace RagnarokBotWeb.Domain.Services
         {
             _connectedPlayers[serverId] = players.DistinctBy(player => player.SteamID).ToList();
         }
+
+        public void AddServers(List<Entities.ScumServer> servers)
+        {
+            foreach (var server in servers)
+            {
+                if (!_connectedPlayers.ContainsKey(server.Id))
+                {
+                    _connectedPlayers.Add(server.Id, []);
+                }
+
+                if (!_queue.ContainsKey(server.Id))
+                {
+                    _queue.Add(server.Id, []);
+                }
+            }
+        }
     }
 }

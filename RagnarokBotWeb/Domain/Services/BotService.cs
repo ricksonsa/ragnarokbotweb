@@ -79,10 +79,9 @@ namespace RagnarokBotWeb.Domain.Services
             return bot;
         }
 
-        public async Task CheckBotState()
+        public async Task CheckBotState(long serverId)
         {
-            var date = DateTime.Now.AddMinutes(-2);
-            var bots = await _botRepository.FindAsync(bot => bot.State == EBotState.Online && bot.LastInteracted <= date);
+            var bots = await _botRepository.FindByServerIdOnlineAndLastInteraction(serverId);
             foreach (var bot in bots)
             {
                 bot.State = EBotState.Offline;
@@ -112,6 +111,11 @@ namespace RagnarokBotWeb.Domain.Services
 
             await UpdateInteraction();
             _cacheService.GetCommandQueue(serverId.Value).Enqueue(command);
+        }
+
+        public Task<List<Bot>> FindActiveBotsByServerId(long serverId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

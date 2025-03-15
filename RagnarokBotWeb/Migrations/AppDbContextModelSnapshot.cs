@@ -345,20 +345,17 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<float?>("Distance")
                         .HasColumnType("REAL");
 
-                    b.Property<long?>("KillerId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("KillerName")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("KillerSteamId64")
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Sector")
                         .HasColumnType("TEXT");
-
-                    b.Property<long?>("TargetId")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("TargetName")
                         .HasColumnType("TEXT");
@@ -371,9 +368,7 @@ namespace RagnarokBotWeb.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("KillerId");
-
-                    b.HasIndex("TargetId");
+                    b.HasIndex("ScumServerId");
 
                     b.ToTable("Kills");
                 });
@@ -404,6 +399,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<long>("ScumId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("SteamId64")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -411,12 +409,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<bool>("Success")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("UserId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ScumServerId");
 
                     b.ToTable("Lockpicks");
                 });
@@ -558,6 +553,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<ulong?>("DiscordId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("DiscordName")
+                        .HasColumnType("TEXT");
+
                     b.Property<long?>("Fame")
                         .HasColumnType("INTEGER");
 
@@ -697,13 +695,46 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<long?>("GuildId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("HideKillerName")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("HideMineKill")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RestartTimes")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("SendVipLockpickAlert")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ShowKillDistance")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ShowKillSector")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ShowKillWeapon")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ShowLockpickContainerName")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ShowLockpickSector")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ShowSameSquadKill")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long>("TenantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("UseKillFeed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("UseLockpickFeed")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -766,6 +797,9 @@ namespace RagnarokBotWeb.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("AccessLevel")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("Active")
                         .HasColumnType("INTEGER");
 
@@ -773,6 +807,10 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -849,26 +887,24 @@ namespace RagnarokBotWeb.Migrations
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Kill", b =>
                 {
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "Killer")
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
                         .WithMany()
-                        .HasForeignKey("KillerId");
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "Target")
-                        .WithMany()
-                        .HasForeignKey("TargetId");
-
-                    b.Navigation("Killer");
-
-                    b.Navigation("Target");
+                    b.Navigation("ScumServer");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Lockpick", b =>
                 {
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", "User")
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("ScumServer");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Order", b =>
