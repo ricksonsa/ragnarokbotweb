@@ -30,10 +30,10 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 foreach (var fileName in GetLogFiles(server.Ftp!))
                 {
-                    _logger.LogInformation("LoginJob->Execute Reading file: " + fileName);
-
                     foreach (var line in await GetUnreadFileLinesAsync(server.Ftp!, fileName))
                     {
+                        _logger.LogInformation("LoginJob->Execute Reading file: {}", fileName);
+
                         if (string.IsNullOrEmpty(line.Value)) continue;
 
                         var (steamId64, scumId, name, loggedIn) = new LoginLogParser().Parse(line.Value);

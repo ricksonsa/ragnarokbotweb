@@ -29,6 +29,14 @@ namespace RagnarokBotWeb.Controllers
             return Ok(server);
         }
 
+        [HttpPatch("settings/discord")]
+        public async Task<IActionResult> ConfirmDiscord(SaveDiscordSettingsDto settings)
+        {
+            _logger.LogInformation("Patch request to confirm discord settings");
+            GuildDto guild = await _serverService.ConfirmDiscordToken(settings);
+            return Ok(guild);
+        }
+
         [HttpPatch("settings/ftp")]
         public async Task<IActionResult> UpdateServerFtp(FtpDto ftp)
         {

@@ -14,6 +14,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ILogger<ServerService> _logger;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly ITenantRepository _tenantRepository;
+        private readonly IGuildRepository _guildRepository;
         private readonly ITaskService _taskService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFtpService _ftpService;
@@ -27,7 +28,8 @@ namespace RagnarokBotWeb.Domain.Services
             IUnitOfWork unitOfWork,
             IFtpService ftpService,
             IMapper mapper,
-            ITaskService taskService) : base(httpContext)
+            ITaskService taskService,
+            IGuildRepository guildRepository) : base(httpContext)
         {
             _logger = logger;
             _scumServerRepository = scumServerRepository;
@@ -36,6 +38,7 @@ namespace RagnarokBotWeb.Domain.Services
             _ftpService = ftpService;
             _mapper = mapper;
             _taskService = taskService;
+            _guildRepository = guildRepository;
         }
 
         public async Task<ScumServerDto> ChangeFtp(FtpDto ftpDto)
@@ -164,7 +167,7 @@ namespace RagnarokBotWeb.Domain.Services
             var tenant = await _tenantRepository.FindByIdAsync(tenantId.Value);
             if (tenant is null) throw new DomainException("Tenant not found");
 
-            var server = await _scumServerRepository.FindByIdAsync(tenantId.Value);
+            var server = await _scumServerRepository.FindOneByTenantIdAsync(tenantId.Value);
             if (server is null) throw new DomainException("ScumServer not found");
 
             if (server.Guild is not null) throw new DomainException("Server already has a guild");
@@ -185,6 +188,29 @@ namespace RagnarokBotWeb.Domain.Services
             if (server is null) throw new NotFoundException("Server not found");
             if (!server.Tenant.Enabled) throw new DomainException("Server tenant is not avaiable");
             return server;
+        }
+
+        public async Task<GuildDto> ConfirmDiscordToken(SaveDiscordSettingsDto settings)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            var guild = await _guildRepository.FindOneWithScumServerAsync(g => g.Token == settings.Token);
+            if (guild is null) throw new NotFoundException("The token provided is invalid");
+
+            guild.Confirmed = true;
+
+            if (guild.ScumServer is null) guild.ScumServer = server;
+
+            if (settings.DiscordLink is not null) guild.DiscordLink = settings.DiscordLink;
+
+            await _guildRepository.CreateOrUpdateAsync(guild);
+            await _guildRepository.SaveAsync();
+
+            return _mapper.Map<GuildDto>(guild);
         }
     }
 }

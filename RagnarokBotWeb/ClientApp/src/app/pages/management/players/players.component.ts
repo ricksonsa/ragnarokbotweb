@@ -36,7 +36,7 @@ export class PlayersComponent implements OnInit {
   dataSource: PlayerDto[] = [];
   searchControl = new FormControl();
   suggestions$: Observable<PlayerDto[]> = of([]);
-  isLoading = false;
+  isLoading = true;
   total = 0;
   pageIndex = 1;
   pageSize = 10;

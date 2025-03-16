@@ -43,7 +43,7 @@ export class PackagesComponent implements OnInit {
   pageSize = 10;
   searchControl = new FormControl();
   suggestions$: Observable<PackageDto[]> = of([]);
-  isLoading = false;
+  isLoading = true;
 
   constructor(private readonly packageService: PackageService, private readonly router: Router) { }
 

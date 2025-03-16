@@ -1,3 +1,4 @@
+using Discord.WebSocket;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -32,10 +33,26 @@ public class GuildService(IGuildRepository guildRepository) : IGuildService
         return guild is { Enabled: true };
     }
 
-    public Task ValidateGuildIsActiveAsync(ulong discordId)
+    public async Task ValidateGuildIsActiveAsync(ulong discordId)
     {
-        if (IsActiveAsync(discordId).Result) return Task.CompletedTask;
+        if (await IsActiveAsync(discordId)) return;
 
         throw new GuildDisabledException($"Guild with DiscordId: '{discordId}' is disabled.");
+    }
+
+    public async Task<Guild> CreateGuildIfNotExistent(SocketGuild socketGuild)
+    {
+        var guild = await guildRepository.FindOneAsync(g => g.DiscordId == socketGuild.Id);
+        if (guild is null)
+        {
+            guild = new Guild
+            {
+                DiscordId = socketGuild.Id,
+                DiscordName = socketGuild.Name
+            };
+            await guildRepository.CreateOrUpdateAsync(guild);
+            await guildRepository.SaveAsync();
+        }
+        return guild;
     }
 }

@@ -1,8 +1,8 @@
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories;
 
@@ -16,5 +16,11 @@ public class GuildRepository(AppDbContext appDbContext) : Repository<Guild>(appD
             .Include(guild => guild.ScumServer)
             .Where(predicate)
             .FirstOrDefaultAsync();
+    }
+
+    public override Task CreateOrUpdateAsync(Guild entity)
+    {
+        if (entity.ScumServer is not null) _appDbContext.ScumServers.Attach(entity.ScumServer);
+        return base.CreateOrUpdateAsync(entity);
     }
 }

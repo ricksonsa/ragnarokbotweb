@@ -42,7 +42,7 @@ export class ItemsComponent implements OnInit {
   pageSize = 10;
   searchControl = new FormControl();
   suggestions$: Observable<ItemDto[]> = of([]);
-  isLoading = false;
+  isLoading = true;
 
   constructor(private readonly itemService: ItemService, private readonly router: Router) { }
 

@@ -1,5 +1,7 @@
+using Discord;
 using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord.Handlers;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord;
@@ -19,15 +21,37 @@ public class DiscordEventService(
 
         client.MessageReceived += MessageReceivedAsync;
         client.InteractionCreated += InteractionCreatedAsync;
+        client.JoinedGuild += OnJoinedGuildAsync;
 
         try
         {
             await Task.Delay(-1, stoppingToken);
         }
-        catch (TaskCanceledException)
-        {
-        }
+        catch (TaskCanceledException) { }
     }
+
+    private async Task OnJoinedGuildAsync(SocketGuild socketGuild)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var guildService = scope.ServiceProvider.GetRequiredService<IGuildService>();
+        Guild guild = await guildService.CreateGuildIfNotExistent(socketGuild);
+
+        var channel = await socketGuild.CreateTextChannelAsync("Token", props =>
+        {
+            props.PermissionOverwrites = DiscordSocketClientUtils.BuildPermissionOverwrites(socketGuild, adminOnly: true);
+        });
+
+        // Create an embed with the confirmation token
+        var embed = new EmbedBuilder()
+            .WithTitle("Ragnarok Bot Discord Server Confirmation")
+            .WithDescription($"Here is your confirmation token: `{guild.Token}`.")
+            .WithColor(Color.Green)
+            .WithTimestamp(DateTimeOffset.UtcNow)
+            .Build();
+
+        await channel.SendMessageAsync(embed: embed);
+    }
+
 
     private async Task MessageReceivedAsync(SocketMessage message)
     {

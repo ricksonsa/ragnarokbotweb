@@ -13,7 +13,15 @@ namespace RagnarokBotWeb.Application.Mapping
 
             CreateMap<ScumServer, ScumServerDto>()
                 .ForMember((dto) => dto.RestartTimes, opt => opt.MapFrom(server => server.GetRestartTimesList()))
-                .ForMember((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild != null ? new DiscordDto { Id = server.Guild.DiscordId, Name = server.Guild.DiscordName } : null))
+                .ForMember((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild != null ?
+                    new DiscordDto
+                    {
+                        Id = server.Guild.DiscordId,
+                        DiscordLink = server.Guild.DiscordLink,
+                        Token = server.Guild.Token,
+                        Confirmed = server.Guild.Confirmed,
+                        Name = server.Guild.DiscordName
+                    } : null))
                 .ReverseMap()
                     .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
 
@@ -38,6 +46,9 @@ namespace RagnarokBotWeb.Application.Mapping
                     .ForMember(source => source.PackItems, opt => opt.MapFrom(dto => dto.Items));
 
             CreateMap<Player, PlayerDto>();
+
+            CreateMap<Guild, GuildDto>()
+                .ForMember((dto) => dto.ServerId, opt => opt.MapFrom(server => server.ScumServer.Id));
         }
     }
 }

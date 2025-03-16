@@ -1,3 +1,4 @@
+using Discord.WebSocket;
 using RagnarokBotWeb.Domain.Entities;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces;
@@ -12,4 +13,5 @@ public interface IGuildService
     Task<bool> IsActiveAsync(ulong discordId);
 
     Task ValidateGuildIsActiveAsync(ulong discordId);
+    Task<Guild> CreateGuildIfNotExistent(SocketGuild guild);
 }

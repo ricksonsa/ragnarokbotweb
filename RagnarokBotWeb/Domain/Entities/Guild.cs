@@ -8,6 +8,14 @@ public class Guild : BaseEntity
     public bool RunTemplate { get; set; } = false;
     public ulong DiscordId { get; set; }
     public string DiscordName { get; set; }
+    public string Token { get; set; }
+    public bool Confirmed { get; set; }
     public bool Enabled { get; set; }
     public ScumServer ScumServer { get; set; }
+    public string? DiscordLink { get; internal set; }
+
+    public Guild()
+    {
+        Token = Guid.NewGuid().ToString();
+    }
 }

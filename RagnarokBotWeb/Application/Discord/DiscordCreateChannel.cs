@@ -3,6 +3,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord.Dto;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord;
@@ -14,6 +15,9 @@ public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider s
         var channels = new List<ChannelDto>();
 
         var guild = client.GetGuild(guildDiscordId);
+
+        if (!guild.IsConnected) throw new AppNotInstalledException(guildDiscordId);
+
         var channelTemplates = await GetChannelTemplates();
         var categories = new Dictionary<string, RestCategoryChannel>();
 
@@ -42,7 +46,7 @@ public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider s
         return guild.CreateTextChannelAsync(template.Name, props =>
         {
             props.CategoryId = category?.Id;
-            props.PermissionOverwrites = BuildPermissionOverwrites(guild, template.Admin);
+            props.PermissionOverwrites = DiscordSocketClientUtils.BuildPermissionOverwrites(guild, template.Admin);
         });
     }
 
@@ -69,25 +73,6 @@ public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider s
         var category = await guild.CreateCategoryChannelAsync(template.CategoryName);
         categories[template.CategoryName] = category;
         return category;
-    }
-
-    private static Optional<IEnumerable<Overwrite>> BuildPermissionOverwrites(SocketGuild guild, bool adminOnly = false)
-    {
-        var allAdminRoles = guild.Roles.Where(x => x.Permissions.Administrator).ToList();
-
-        var everyonePerms = new OverwritePermissions(
-            viewChannel: adminOnly ? PermValue.Deny : PermValue.Allow,
-            sendMessages: PermValue.Deny
-        );
-
-        var adminPerms = new OverwritePermissions(
-            viewChannel: PermValue.Allow,
-            sendMessages: PermValue.Allow
-        );
-
-        var overwrites = allAdminRoles.Select(x => new Overwrite(x.Id, PermissionTarget.Role, adminPerms)).ToList();
-        overwrites.Add(new Overwrite(guild.EveryoneRole.Id, PermissionTarget.Role, everyonePerms));
-        return overwrites;
     }
 
     private async Task<IEnumerable<ChannelTemplate>> GetChannelTemplates()
