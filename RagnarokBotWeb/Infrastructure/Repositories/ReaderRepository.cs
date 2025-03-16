@@ -14,10 +14,22 @@ public class ReaderRepository : Repository<Reader>, IReaderRepository
         _dbContext = context;
     }
 
-    public override Task AddAsync(Reader entity)
+    public override Task AddRangeAsync(IList<Reader> entities)
     {
-        _dbContext.Entry(entity.ScumServer).State = EntityState.Detached;
-        _dbContext.ScumServers.Attach(entity.ScumServer);
-        return base.AddAsync(entity);
+        foreach (var entity in entities)
+        {
+            var existingServer = _dbContext.ScumServers.Local.FirstOrDefault(s => s.Id == entity.ScumServer.Id);
+
+            if (existingServer != null)
+            {
+                entity.ScumServer = existingServer;
+            }
+            else
+            {
+                _dbContext.Attach(entity.ScumServer);
+            }
+        }
+        
+        return base.AddRangeAsync(entities);
     }
 }

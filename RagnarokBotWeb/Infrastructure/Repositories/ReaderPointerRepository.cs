@@ -17,11 +17,4 @@ public class ReaderPointerRepository(AppDbContext appDbContext)
             .Include(x => x.ScumServer)
             .FirstOrDefaultAsync(predicate);
     }
-
-    public override Task CreateOrUpdateAsync(ReaderPointer entity)
-    {
-        _appDbContext.Entry(entity.ScumServer).State = EntityState.Detached;
-        _appDbContext.ScumServers.Attach(entity.ScumServer);
-        return base.CreateOrUpdateAsync(entity);
-    }
 }

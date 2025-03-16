@@ -5,5 +5,5 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces;
 
 public interface IReaderPointerService
 {
-    Task<ReaderPointer?> GetReaderPointer(DateTime datetime, long scumServerId, EFileType fileType);
+    Task<ReaderPointer?> GetReaderPointer(long scumServerId, EFileType fileType);
 }

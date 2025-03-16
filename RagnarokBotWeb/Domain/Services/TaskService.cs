@@ -73,8 +73,15 @@ namespace RagnarokBotWeb.Domain.Services
         private async Task ScheduleFtpServerTasks(ScumServer server, CancellationToken cancellationToken = default)
         {
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
-
+            
             var job = JobBuilder.Create<SaveFileLogJob>()
+                .WithIdentity($"ChatJob({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .UsingJobData("file_type", EFileType.Chat.ToString())
+                .Build();
+            await scheduler.ScheduleJob(job, TwentySecondsTrigger());
+
+            /*var job = JobBuilder.Create<SaveFileLogJob>()
                    .WithIdentity($"KillLogJob({server.Id})")
                    .UsingJobData("server_id", server.Id)
                    .UsingJobData("file_type", EFileType.Kill.ToString())
@@ -100,7 +107,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Login.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, DefaultTrigger());
+            await scheduler.ScheduleJob(job, DefaultTrigger());*/
         }
 
 
@@ -142,7 +149,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task LoadFtpAllServersTasks(CancellationToken cancellationToken)
         {
-            foreach (var server in await _scumServerRepository.GetActiveServersWithFtpAsNoTracking())
+            foreach (var server in await _scumServerRepository.GetActiveServersWithFtp())
             {
                 await ScheduleFtpServerTasks(server, cancellationToken);
             }

@@ -14,13 +14,12 @@ public class ReaderPointerService : IReaderPointerService
         _repository = repository;
     }
 
-    public Task<ReaderPointer?> GetReaderPointer(DateTime datetime, long scumServerId, EFileType fileType)
+    public Task<ReaderPointer?> GetReaderPointer(long scumServerId, EFileType fileType)
     {
         return _repository
             .FindOneAsync(pointer =>
                 pointer.ScumServer.Id == scumServerId
                 && pointer.FileType == fileType
-                && pointer.FileDate.Date == datetime.Date
             );
     }
 }

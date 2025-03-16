@@ -23,8 +23,14 @@ namespace RagnarokBotWeb.Domain.Services
 
         public FtpClient GetClient(Ftp ftp)
         {
+            // TODO: criar connection pool
             return _ftpClientFactory.CreateClient(ftp);
         }
 
+        public void CopyFiles(FtpClient client, string targetFolder, IList<string> remoteFilePaths)
+        {
+            var states = client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw);
+            if (states.Any(result => result.IsFailed)) throw new Exception("Error while copying files from FTP");
+        }
     }
 }

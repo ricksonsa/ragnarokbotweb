@@ -33,15 +33,14 @@ public class SaveFileLogJob : IJob
         var fileType = GetFileTypeFromContext(context);
         _logger.LogInformation("Triggered SaveLogFileJob to ScumServer: {} and FileType: {}->Execute at: {time}", server.Id, fileType.ToString(), DateTimeOffset.Now);
         
-        var processor = new ScumFileProcessor(_serviceProvide, _ftpService);
-        await processor.SaveUnreadFileLines(server, fileType);
+        await new ScumFileProcessor(_serviceProvide, _ftpService, server, fileType).ProcessUnreadFileLines();
     }
 
     private async Task<ScumServer> GetServerAsync(IJobExecutionContext context)
     {
         var serverId = GetServerIdFromContext(context);
 
-        var server = await _scumServerRepository.FindByIdAsync(serverId);
+        var server = await _scumServerRepository.FindByIdAsNoTrackingAsync(serverId);
         if (server?.Ftp is null)
             throw new Exception("Invalid server: the server is non existent or does not have a ftp configuration");
 

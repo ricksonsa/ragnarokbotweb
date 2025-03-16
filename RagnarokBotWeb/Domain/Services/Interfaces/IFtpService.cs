@@ -7,5 +7,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     {
         FtpClient GetClient();
         FtpClient GetClient(Ftp ftp);
+        void CopyFiles(FtpClient client, string targetFolder, IList<string> remoteFilePaths);
     }
 }

@@ -44,10 +44,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return base.CreateOrUpdateAsync(entity);
         }
 
-        public Task<List<ScumServer>> GetActiveServersWithFtpAsNoTracking()
+        public Task<List<ScumServer>> GetActiveServersWithFtp()
         {
             return _appDbContext.ScumServers
-                .AsNoTracking()
                 .Include(server => server.Guild)
                 .Include(server => server.Tenant)
                 .Include(server => server.Ftp)
