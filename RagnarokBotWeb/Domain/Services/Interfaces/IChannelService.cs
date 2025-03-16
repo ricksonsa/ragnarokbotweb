@@ -5,9 +5,10 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces;
 
 public interface IChannelService
 {
-    Task<Channel> FindByGuildIdAndChannelTypeAsync(long guildId, EChannelType channelType);
+    Task<Channel?> FindByGuildIdAndChannelTypeAsync(long guildId, EChannelType channelType);
     
     Task CreateChannelAsync(Channel channel);
     
+    // TODO: remove when end tests
     Task DeleteAllAsync();
 }

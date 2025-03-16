@@ -12,6 +12,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<Lockpick> Lockpicks { get; }
         public DbSet<Bunker> Bunkers { get; }
         public DbSet<Reader> Readings { get; }
+        public DbSet<ReaderPointer> ReaderPointers { get; }
         public DbSet<Kill> Kills { get; }
         public DbSet<Bot> Bots { get; }
         public DbSet<Tenant> Tenants { get; }
@@ -26,6 +27,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             Lockpicks = context.Lockpicks;
             Bunkers = context.Bunkers;
             Readings = context.Readings;
+            ReaderPointers = context.ReaderPointers;
             Kills = context.Kills;
             Bots = context.Bots;
             Tenants = context.Tenants;

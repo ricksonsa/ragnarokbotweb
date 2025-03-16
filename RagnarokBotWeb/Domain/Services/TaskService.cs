@@ -2,6 +2,7 @@
 using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -73,27 +74,31 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
 
-            var job = JobBuilder.Create<KillLogJob>()
+            var job = JobBuilder.Create<SaveFileLogJob>()
                    .WithIdentity($"KillLogJob({server.Id})")
                    .UsingJobData("server_id", server.Id)
+                   .UsingJobData("file_type", EFileType.Kill.ToString())
                    .Build();
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<EconomyJob>()
+            job = JobBuilder.Create<SaveFileLogJob>()
                 .WithIdentity($"EconomyJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
+                .UsingJobData("file_type", EFileType.Economy.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<GamePlayJob>()
+            job = JobBuilder.Create<SaveFileLogJob>()
                 .WithIdentity($"GamePlayJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
+                .UsingJobData("file_type", EFileType.Gameplay.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<LoginJob>()
+            job = JobBuilder.Create<SaveFileLogJob>()
                 .WithIdentity($"LoginJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
+                .UsingJobData("file_type", EFileType.Login.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, DefaultTrigger());
         }
@@ -137,7 +142,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task LoadFtpAllServersTasks(CancellationToken cancellationToken)
         {
-            foreach (var server in await _scumServerRepository.GetActiveServersWithFtp())
+            foreach (var server in await _scumServerRepository.GetActiveServersWithFtpAsNoTracking())
             {
                 await ScheduleFtpServerTasks(server, cancellationToken);
             }

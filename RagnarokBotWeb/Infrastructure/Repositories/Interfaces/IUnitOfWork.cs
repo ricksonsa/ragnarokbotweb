@@ -9,6 +9,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         DbSet<Lockpick> Lockpicks { get; }
         DbSet<Bunker> Bunkers { get; }
         DbSet<Reader> Readings { get; }
+        DbSet<ReaderPointer> ReaderPointers { get; }
         DbSet<Kill> Kills { get; }
         DbSet<Bot> Bots { get; }
         DbSet<Tenant> Tenants { get; }

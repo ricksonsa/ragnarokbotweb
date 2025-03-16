@@ -49,7 +49,7 @@ namespace RagnarokBotWeb.Domain.Services
             var tenant = await _tenantRepository.FindByIdAsync(tenantId.Value);
             if (tenant is null) throw new DomainException("Tenant not found");
 
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindByIdAsNoTrackingAsync(serverId.Value);
             if (server is null) throw new DomainException("ScumServer not found");
 
             var newFtp = new Ftp();

@@ -635,19 +635,57 @@ namespace RagnarokBotWeb.Migrations
 
                     b.Property<string>("FileName")
                         .IsRequired()
+                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Hash")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<bool>("Processed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Value")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ScumServerId");
+
                     b.ToTable("Readings");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ReaderPointer", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FileDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FileType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ScumServerId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScumServerId");
+
+                    b.ToTable("ReaderPointers");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ScheduledTask", b =>
@@ -730,6 +768,9 @@ namespace RagnarokBotWeb.Migrations
 
                     b.Property<long>("TenantId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("TimeZoneId")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("UseKillFeed")
                         .HasColumnType("INTEGER");
@@ -972,6 +1013,28 @@ namespace RagnarokBotWeb.Migrations
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.PlayerRegister", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
+                        .WithMany()
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ScumServer");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Reader", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
+                        .WithMany()
+                        .HasForeignKey("ScumServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ScumServer");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ReaderPointer", b =>
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
                         .WithMany()

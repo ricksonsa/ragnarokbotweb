@@ -12,6 +12,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         Task<bool> HasAny(Expression<Func<T, bool>> predicate);
         Task CreateOrUpdateAsync(T entity);
         Task AddAsync(T entity);
+        Task AddRangeAsync(IList<T> entity);
         void Update(T entity);
         void Delete(T entity);
         Task SaveAsync();

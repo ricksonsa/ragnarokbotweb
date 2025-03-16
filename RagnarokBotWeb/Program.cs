@@ -118,7 +118,6 @@ namespace RagnarokBotWeb
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IPlayerRepository, PlayerRepository>();
-            builder.Services.AddScoped<IReaderRepository, ReaderRepository>();
             builder.Services.AddScoped<ITenantRepository, TenantRepository>();
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IBotRepository, BotRepository>();
@@ -131,6 +130,8 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IGuildRepository, GuildRepository>();
             builder.Services.AddScoped<IScumServerRepository, ScumServerRepository>();
             builder.Services.AddScoped<IPlayerRegisterRepository, PlayerRegisterRepository>();
+            builder.Services.AddScoped<IReaderRepository, ReaderRepository>();
+            builder.Services.AddScoped<IReaderPointerRepository, ReaderPointerRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
@@ -146,6 +147,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IServerService, ServerService>();
             builder.Services.AddScoped<ITaskService, TaskService>();
             builder.Services.AddScoped<IPlayerRegisterService, PlayerRegisterService>();
+            builder.Services.AddScoped<IReaderPointerService, ReaderPointerService>();
 
             builder.Services.AddScoped<StartupDiscordTemplate>();
 

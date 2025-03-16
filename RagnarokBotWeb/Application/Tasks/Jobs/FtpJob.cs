@@ -14,7 +14,6 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         private readonly IReaderRepository _readerRepository;
         private readonly IScumServerRepository _scumServerRepository;
 
-
         public FtpJob(
             IReaderRepository readerRepository,
             IFtpService ftpService,
@@ -29,8 +28,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         private async Task SaveLine(Line line)
         {
-            await _readerRepository.AddAsync(new Reader(line.File, line.Value, line.Hash));
-            await _readerRepository.SaveAsync();
+            /*await _readerRepository.AddAsync(new Reader(line.File, line.Value, line.Hash));
+            await _readerRepository.SaveAsync();*/
         }
 
         private long GetServerIdFromContext(IJobExecutionContext context)
@@ -48,7 +47,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public IEnumerable<string> GetLogFiles(Ftp ftp)
         {
-            var timeStampYesterday = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
+            /*var timeStampYesterday = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
             var timeStampToday = DateTime.Now.ToString("yyyyMMdd");
             var timeStampTomorrow = DateTime.Now.AddDays(1).ToString("yyyyMMdd");
             var client = _ftpService.GetClient(ftp);
@@ -57,12 +56,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             return files.ToList()
                 .Where(fileName =>
                 fileName.StartsWith(_baseFileName + timeStampYesterday) || fileName.StartsWith(_baseFileName + timeStampToday) || fileName.StartsWith(_baseFileName + timeStampTomorrow))
-                .OrderBy(x => DateTime.ParseExact(x.Split("_")[1].Replace(".log", string.Empty), "yyyyMMddHHmmss", null));
+                .OrderBy(x => DateTime.ParseExact(x.Split("_")[1].Replace(".log", string.Empty), "yyyyMMddHHmmss", null));*/
+            return [];
         }
 
         public async Task<ScumServer> GetServerAsync(IJobExecutionContext context)
         {
-            var serverId = GetServerIdFromContext(context);
+            /*var serverId = GetServerIdFromContext(context);
 
             var server = await _scumServerRepository.FindByIdAsync(serverId);
             if (server?.Ftp is null)
@@ -70,12 +70,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 throw new Exception("Invalid server: the server is non existent or does not have a ftp configuration");
             }
 
-            return server;
+            return server;*/
+            return null;
         }
 
         public async Task<IList<Line>> GetUnreadFileLinesAsync(Ftp ftp, string fileName)
         {
-            var readings = await _readerRepository.FindAsync(reader => reader.CreateDate.Date == DateTime.Now.Date);
+            /*var readings = await _readerRepository.FindAsync(reader => reader.CreateDate.Date == DateTime.Now.Date);
             List<Line> lines = [];
             if (readings.Any())
             {
@@ -102,7 +103,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 }
 
                 return lines;
-            }
+            }*/
+            return null;
         }
     }
 }
