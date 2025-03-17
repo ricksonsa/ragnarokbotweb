@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -21,15 +20,11 @@ public class ReaderRepository : Repository<Reader>, IReaderRepository
             var existingServer = _dbContext.ScumServers.Local.FirstOrDefault(s => s.Id == entity.ScumServer.Id);
 
             if (existingServer != null)
-            {
                 entity.ScumServer = existingServer;
-            }
             else
-            {
                 _dbContext.Attach(entity.ScumServer);
-            }
         }
-        
+
         return base.AddRangeAsync(entities);
     }
 }

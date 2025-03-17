@@ -74,42 +74,41 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
             
-            var job = JobBuilder.Create<SaveFileLogJob>()
+            var job = JobBuilder.Create<ChatJob>()
                 .WithIdentity($"ChatJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Chat.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, TwentySecondsTrigger());
 
-            /*var job = JobBuilder.Create<SaveFileLogJob>()
+            job = JobBuilder.Create<KillLogJob>()
                    .WithIdentity($"KillLogJob({server.Id})")
                    .UsingJobData("server_id", server.Id)
                    .UsingJobData("file_type", EFileType.Kill.ToString())
                    .Build();
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<SaveFileLogJob>()
+            job = JobBuilder.Create<EconomyJob>()
                 .WithIdentity($"EconomyJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Economy.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<SaveFileLogJob>()
+            job = JobBuilder.Create<GamePlayJob>()
                 .WithIdentity($"GamePlayJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Gameplay.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<SaveFileLogJob>()
+            job = JobBuilder.Create<LoginJob>()
                 .WithIdentity($"LoginJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Login.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, DefaultTrigger());*/
+            await scheduler.ScheduleJob(job, DefaultTrigger());
         }
-
 
         public async Task NewServerAddedAsync(ScumServer server)
         {
@@ -123,6 +122,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             try
             {
+                await scheduler.DeleteJob(new JobKey($"ChatJob({server.Id})"));
                 await scheduler.DeleteJob(new JobKey($"KillLogJob({server.Id})"));
                 await scheduler.DeleteJob(new JobKey($"EconomyJob({server.Id})"));
                 await scheduler.DeleteJob(new JobKey($"GamePlayJob({server.Id})"));

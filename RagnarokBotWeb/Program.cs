@@ -12,6 +12,7 @@ using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices;
 using RagnarokBotWeb.Infrastructure.Configuration;
+using RagnarokBotWeb.Infrastructure.FTP;
 using RagnarokBotWeb.Infrastructure.Repositories;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using RagnarokBotWeb.Middlewares;
@@ -153,6 +154,8 @@ namespace RagnarokBotWeb
 
             builder.Services.AddSingleton<IFtpService, FtpService>();
             builder.Services.AddSingleton<ICacheService, CacheService>();
+            builder.Services.AddSingleton<FtpConnectionPool>();
+            builder.Services.AddSingleton<DiscordChannelPublisher>();
 
             builder.Services.AddScoped<ITokenIssuer, TokenIssuer>();
 

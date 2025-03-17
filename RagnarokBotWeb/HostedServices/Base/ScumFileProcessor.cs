@@ -38,7 +38,7 @@ public class ScumFileProcessor
         _ftp = server.Ftp!;
     }
 
-    public async Task ProcessUnreadFileLines()
+    public async Task<IList<string>> ProcessUnreadFileLines()
     {
         _logger.LogInformation("{}->Execute ProcessUnreadFileLines for server: {}", _fileType, _scumServer.Id);
 
@@ -49,7 +49,7 @@ public class ScumFileProcessor
         if (ftpFileNames.Count == 0)
         {
             _logger.LogWarning("No files found, ignoring ProcessUnreadFileLines process.");
-            return;
+            return [];
         }
 
         var localPath = GetLocalPath();
@@ -61,11 +61,13 @@ public class ScumFileProcessor
         if (ftpUnreadFileNames.Count == 0)
         {
             _logger.LogWarning("No files unread found, ignoring ProcessUnreadFileLines process.");
-            return;
+            return [];
         }
 
         _ftpService.CopyFiles(client, localPath, GetFilePaths(_ftp.RootFolder, ftpUnreadFileNames));
 
+        List<string> allLines = [];
+        
         var index = 0;
         do
         {
@@ -80,13 +82,16 @@ public class ScumFileProcessor
                 pointer.LineNumber = 0;
                 pointer.FileDate = ScumUtils.ParseDateTime(filename);
             }
-
-            await ConsumeFileLines(pointer, filepath);
-
+            
+            var lines = await ReadFileLines(pointer, filepath);
+            allLines.AddRange(lines);
+            
             index++;
 
             pointer = await GetReaderPointer();
         } while (ftpUnreadFileNames.Count > index);
+
+        return allLines;
     }
 
     private string GetLocalPath()
@@ -94,7 +99,7 @@ public class ScumFileProcessor
         return LocalPathFunc.Invoke($"server_{_scumServer.Id}");
     }
 
-    private async Task ConsumeFileLines(ReaderPointer pointer, string filepath)
+    private async Task<IList<string>> ReadFileLines(ReaderPointer pointer, string filepath)
     {
         var filename = Path.GetFileName(filepath);
 
@@ -119,6 +124,8 @@ public class ScumFileProcessor
             pointer.LineNumber = lineNumber;
             await SaveLines(pointer, filename, lines);
         };
+
+        return lines;
     }
 
     private ReaderPointer BuildReaderPointer(string filepath)
