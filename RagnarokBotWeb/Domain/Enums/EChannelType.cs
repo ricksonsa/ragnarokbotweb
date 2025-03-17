@@ -6,6 +6,7 @@
 
         // Public
         Chat = 1,
+        GameChat = 13,
         NoAdminAbusePublic = 2,
         KillFeed = 3,
         BunkerActivation = 12,

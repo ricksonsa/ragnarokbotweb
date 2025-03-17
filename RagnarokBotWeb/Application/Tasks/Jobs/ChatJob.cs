@@ -26,7 +26,7 @@ public class ChatJob(
         foreach (var line in lines)
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
-            await publisher.Publish(server, new ChannelPublishDto { Content = line }, EChannelType.Chat);
+            await publisher.Publish(server, new ChannelPublishDto { Content = line }, EChannelType.GameChat);
         }
     }
 }

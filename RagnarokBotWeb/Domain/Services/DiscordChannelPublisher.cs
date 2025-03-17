@@ -16,7 +16,7 @@ public class DiscordChannelPublisher(
     {
         if (server.Guild == null)
         {
-            logger.LogWarning("ScumServer = '{}' not have a Guild yet.", server);
+            logger.LogWarning("ScumServer = '{}' does not have a Guild yet.", server);
             return;
         }
 
@@ -28,7 +28,7 @@ public class DiscordChannelPublisher(
         var channel = await channelService.FindByGuildIdAndChannelTypeAsync(guild.Id, channelType);
         if (channel == null)
         {
-            logger.LogWarning("Guild = '{}' not have a channel with ChannelType = '{}'.", guild, channelType);
+            logger.LogWarning("Guild = '{}' does not have a channel with ChannelType = '{}'.", guild, channelType);
             return;
         }
 
