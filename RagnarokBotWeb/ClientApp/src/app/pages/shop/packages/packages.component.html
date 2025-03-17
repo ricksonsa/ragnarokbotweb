@@ -23,7 +23,6 @@
           <th>Id</th>
           <th>Name</th>
           <th>Description</th>
-          <th>Discord Channel</th>
           <th>Enabled</th>
           <th>Raid Blocked</th>
           <th>VIP Only</th>
@@ -37,7 +36,6 @@
           <td>{{data.id}}</td>
           <td>{{data.name}}</td>
           <td>{{data.description}}</td>
-          <td>{{data.discordChannelName}}</td>
           <td><nz-icon [nzType]="data.enabled ? 'check' : 'close'" nz-popover
               [nzPopoverContent]="data.enabled ? 'Yes' : 'No'"
               [ngClass]="{ 'success': data.enabled, 'danger': !data.enabled}"></nz-icon>

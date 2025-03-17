@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RagnarokBotWeb.Infrastructure.Configuration;
 
@@ -10,9 +11,11 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250315222920_reader")]
+    partial class reader
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
@@ -284,17 +287,11 @@ namespace RagnarokBotWeb.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("Confirmed")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("TEXT");
 
                     b.Property<ulong>("DiscordId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("DiscordLink")
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("DiscordName")
                         .IsRequired()
@@ -305,10 +302,6 @@ namespace RagnarokBotWeb.Migrations
 
                     b.Property<bool>("RunTemplate")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -570,9 +563,6 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<long?>("Gold")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("HideAdminCommands")
                         .HasColumnType("INTEGER");
 
                     b.Property<long?>("Money")

@@ -3,23 +3,33 @@
     public enum EChannelType
     {
         None = 0,
-        
+
         // Public
-        KillFeed = 1,
-        TopKillerDay = 2,
-        TopKillerGeneral = 3,
-        NoAdminAbusePublic = 4,
-        DailyPack = 5,
-        WelcomePack = 6,
-        
+        Chat = 1,
+        NoAdminAbusePublic = 2,
+        KillFeed = 3,
+        BunkerActivation = 12,
+
+        // Shop
+        DailyPack = 4,
+        WelcomePack = 5,
+        Taxi = 6,
+
+        // Ranks
+        KillRank = 7,
+        SniperRank = 8,
+        TopKillerDay = 9,
+        LockPickRank = 10,
+        TopLockpickDay = 11,
+
+
         // Admin
         NoAdminAbusePrivate = 100,
-        Chat = 101,
-        PublicAdminLog = 102,
-        PublicChat = 103,
-        Login = 104,
-        BuriedChest = 105,
-        MineKill = 106,
+        AdminAlert = 102,
+        Login = 103,
+        BuriedChest = 104,
+        MineKill = 105,
+        LockpickAlert = 106,
         AdminKill = 107,
     }
 }

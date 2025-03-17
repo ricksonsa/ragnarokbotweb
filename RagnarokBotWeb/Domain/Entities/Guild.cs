@@ -14,8 +14,11 @@ public class Guild : BaseEntity
     public ScumServer ScumServer { get; set; }
     public string? DiscordLink { get; internal set; }
 
-    public Guild()
+    public Guild() { }
+
+    public Guild(ulong discordId)
     {
-        Token = Guid.NewGuid().ToString();
+        DiscordId = discordId;
+        Token = $"{Guid.NewGuid()}-{discordId}";
     }
 }

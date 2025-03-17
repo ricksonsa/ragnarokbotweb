@@ -5,7 +5,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
     public interface IPackRepository : IRepository<Pack>
     {
-        Task<Page<Pack>> GetPageByFilter(Paginator paginator, string? filter);
+        Task<Page<Pack>> GetPageByServerAndFilter(Paginator paginator, long id, string? filter);
         Task<Pack?> FindByIdAsNoTrackingAsync(long id);
     }
 }

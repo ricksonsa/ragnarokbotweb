@@ -68,16 +68,29 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<PackDto> FetchPackById(long id)
         {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+
+            var server = await _scumServerRepository.FindActiveById(id);
+            if (server is null) throw new UnauthorizedException("Invalid server");
+
             var pack = await _packRepository.FindByIdAsync(id);
             if (pack is null) throw new NotFoundException("Package not found");
+
+            if (pack.ScumServer.Id != server.Id) throw new UnauthorizedException("Invalid package");
 
             return _mapper.Map<PackDto>(pack);
         }
 
         public async Task<PackDto> UpdatePackAsync(long id, PackDto packDto)
         {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+
             var packEntity = await _packRepository.FindByIdAsync(id);
             if (packEntity is null) throw new NotFoundException("Pack not found");
+
+            if (packEntity.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
 
             packEntity.StockPerPlayer = packDto.StockPerPlayer;
             packEntity.VipPrice = packDto.VipPrice ?? 0;
@@ -117,8 +130,13 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<Pack> DeletePackAsync(long id)
         {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+
             var pack = await _packRepository.FindByIdAsync(id);
-            if (pack is null) return null;
+            if (pack is null) throw new NotFoundException("Package not found");
+
+            if (pack.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
 
             foreach (var packItem in pack.PackItems)
             {
@@ -132,31 +150,12 @@ namespace RagnarokBotWeb.Domain.Services
             return pack;
         }
 
-        public async Task<IEnumerable<PackDto>> FetchAllPacksAsync()
-        {
-            return (await _packRepository.GetAllAsync()).Select(pack =>
-            {
-                return new PackDto
-                {
-                    Id = pack.Id,
-                    Description = pack.Description,
-                    Name = pack.Name,
-                    Price = pack.Price,
-                    VipPrice = pack.VipPrice,
-                    Items = pack.PackItems.Select(packItem => new ItemToPackDto
-                    {
-                        Amount = packItem.Amount,
-                        ItemCode = packItem.Item.Code,
-                        ItemId = packItem.Item.Id,
-                        ItemName = packItem.Item.Name
-                    }).ToList()
-                };
-            });
-        }
-
         public async Task<Page<PackDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter)
         {
-            var page = await _packRepository.GetPageByFilter(paginator, filter);
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+
+            var page = await _packRepository.GetPageByServerAndFilter(paginator, serverId.Value, filter);
             return new Page<PackDto>(page.Content.Select(_mapper.Map<PackDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
     }

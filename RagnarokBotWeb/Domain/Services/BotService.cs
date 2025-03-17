@@ -115,7 +115,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public Task<List<Bot>> FindActiveBotsByServerId(long serverId)
         {
-            throw new NotImplementedException();
+            return _botRepository.FindActiveBotsByServerId(serverId);
         }
     }
 }

@@ -39,11 +39,13 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                .ToListAsync();
         }
 
-        public Task<Page<Pack>> GetPageByFilter(Paginator paginator, string? filter)
+        public Task<Page<Pack>> GetPageByServerAndFilter(Paginator paginator, long id, string? filter)
         {
             var query = _appDbContext.Packs
+                .Include(pack => pack.ScumServer)
                 .Include(pack => pack.PackItems)
-                .ThenInclude(packItem => packItem.Item);
+                .ThenInclude(packItem => packItem.Item)
+                .Where(pack => pack.ScumServer.Id == id);
 
             if (!string.IsNullOrEmpty(filter))
             {
@@ -59,6 +61,5 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             _appDbContext.ScumServers.Attach(entity.ScumServer);
             return base.CreateOrUpdateAsync(entity);
         }
-
     }
 }

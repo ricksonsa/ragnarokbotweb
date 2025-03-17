@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Discord.WebSocket;
 using FluentFTP;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -19,6 +20,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFtpService _ftpService;
         private readonly IMapper _mapper;
+        private readonly DiscordSocketClient _discordClient;
 
         public ServerService(
             IHttpContextAccessor httpContext,
@@ -29,7 +31,8 @@ namespace RagnarokBotWeb.Domain.Services
             IFtpService ftpService,
             IMapper mapper,
             ITaskService taskService,
-            IGuildRepository guildRepository) : base(httpContext)
+            IGuildRepository guildRepository,
+            DiscordSocketClient discordClient) : base(httpContext)
         {
             _logger = logger;
             _scumServerRepository = scumServerRepository;
@@ -39,6 +42,7 @@ namespace RagnarokBotWeb.Domain.Services
             _mapper = mapper;
             _taskService = taskService;
             _guildRepository = guildRepository;
+            _discordClient = discordClient;
         }
 
         public async Task<ScumServerDto> ChangeFtp(FtpDto ftpDto)
@@ -192,6 +196,8 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<GuildDto> ConfirmDiscordToken(SaveDiscordSettingsDto settings)
         {
+            if (settings.Token is null) throw new DomainException("Invalid discord confirmation token");
+
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
 
@@ -199,18 +205,56 @@ namespace RagnarokBotWeb.Domain.Services
             if (server is null) throw new NotFoundException("Server not found");
 
             var guild = await _guildRepository.FindOneWithScumServerAsync(g => g.Token == settings.Token);
-            if (guild is null) throw new NotFoundException("The token provided is invalid");
+            if (guild is null)
+            {
+                string discordId = settings.Token[(settings.Token.LastIndexOf('-') + 1)..];
+
+                if (!ulong.TryParse(discordId, out ulong id))
+                    throw new NotFoundException("The token provided is invalid");
+
+                var socketGuild = _discordClient.Guilds.FirstOrDefault(g => g.Id == id);
+
+                if (socketGuild is null)
+                    throw new NotFoundException("The token provided is invalid");
+
+                guild = new Guild()
+                {
+                    Token = settings.Token,
+                    DiscordId = id,
+                    DiscordName = socketGuild.Name,
+                    Enabled = true
+                };
+
+                await _guildRepository.CreateOrUpdateAsync(guild);
+                await _guildRepository.SaveAsync();
+            }
 
             guild.Confirmed = true;
 
             if (guild.ScumServer is null) guild.ScumServer = server;
-
             if (settings.DiscordLink is not null) guild.DiscordLink = settings.DiscordLink;
 
             await _guildRepository.CreateOrUpdateAsync(guild);
             await _guildRepository.SaveAsync();
 
             return _mapper.Map<GuildDto>(guild);
+        }
+
+        public async Task<GuildDto> GetServerDiscord()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+
+            var guild = await _guildRepository.FindOneWithScumServerAsync(g => g.ScumServer.Id == serverId.Value);
+            if (guild is null) throw new DomainException("Server does not have a discord configured");
+
+            var channels = _discordClient.GetGuild(guild.DiscordId).Channels;
+
+            var guildDto = _mapper.Map<GuildDto>(guild);
+
+            guildDto.Channels = channels.Select(channel => new ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name }).Reverse().ToList();
+
+            return guildDto;
         }
     }
 }

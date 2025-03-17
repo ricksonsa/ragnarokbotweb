@@ -1,17 +1,27 @@
-﻿namespace RagnarokBotWeb.Domain.Entities
-{
-    public class Reader : BaseEntity
-    {
-        public string FileName { get; set; }
-        public string Value { get; set; }
-        public string Hash { get; set; }
+﻿using System.ComponentModel.DataAnnotations;
 
-        public Reader(string fileName, string value, string hash)
-        {
-            FileName = fileName;
-            Value = value;
-            Hash = hash;
-            CreateDate = DateTime.Now;
-        }
+namespace RagnarokBotWeb.Domain.Entities;
+
+public class Reader : BaseEntity
+{
+    [MaxLength(50)]
+    public string FileName { get; set; }
+    [MaxLength(255)]
+    public string Value { get; set; }
+    public ScumServer ScumServer { get; set; }
+    public bool Processed { get; set; }
+    
+    public Reader(string fileName, string value, ScumServer scumServer)
+    {
+        FileName = fileName;
+        Value = value;
+        ScumServer = scumServer;
+        CreateDate = DateTime.Now;
+        Processed = false;
+    }
+
+    public Reader()
+    {
+        
     }
 }

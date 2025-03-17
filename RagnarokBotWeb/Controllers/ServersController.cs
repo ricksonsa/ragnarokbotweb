@@ -29,7 +29,7 @@ namespace RagnarokBotWeb.Controllers
             return Ok(server);
         }
 
-        [HttpPatch("settings/discord")]
+        [HttpPatch("discord")]
         public async Task<IActionResult> ConfirmDiscord(SaveDiscordSettingsDto settings)
         {
             _logger.LogInformation("Patch request to confirm discord settings");
@@ -37,7 +37,15 @@ namespace RagnarokBotWeb.Controllers
             return Ok(guild);
         }
 
-        [HttpPatch("settings/ftp")]
+        [HttpGet("discord")]
+        public async Task<IActionResult> GetDiscord()
+        {
+            _logger.LogInformation("Patch request to confirm discord settings");
+            GuildDto guild = await _serverService.GetServerDiscord();
+            return Ok(guild);
+        }
+
+        [HttpPatch("ftp")]
         public async Task<IActionResult> UpdateServerFtp(FtpDto ftp)
         {
             _logger.LogInformation("Patch request to update ftp data");

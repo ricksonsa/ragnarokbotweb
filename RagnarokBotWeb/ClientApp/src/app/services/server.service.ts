@@ -13,11 +13,15 @@ export class ServerService {
   constructor(private readonly http: HttpClient, private readonly authService: AuthenticationService) { }
 
   updateFtp(updateForm: any) {
-    return this.http.patch<ScumServer>(`${WEB_API.baseUrl}/api/servers/settings/ftp`, updateForm);
+    return this.http.patch<ScumServer>(`${WEB_API.baseUrl}/api/servers/ftp`, updateForm);
   }
 
   updateDiscordSettings(updateForm: any) {
-    return this.http.patch<GuildDto>(`${WEB_API.baseUrl}/api/servers/settings/discord`, updateForm);
+    return this.http.patch<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord`, updateForm);
+  }
+
+  getDiscordServer() {
+    return this.http.get<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord`);
   }
 
 }

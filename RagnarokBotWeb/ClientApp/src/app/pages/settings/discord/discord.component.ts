@@ -16,6 +16,7 @@ import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { ServerService } from '../../../services/server.service';
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { Alert } from '../../../models/alert';
+import { ChannelDto } from '../../../models/channel.dto';
 
 @Component({
   selector: 'app-discord',
@@ -45,6 +46,7 @@ export class DiscordComponent implements OnInit {
   lockpickFeed!: FormGroup;
   discordForm!: FormGroup;
   tokenErrorMessage: string;
+  channels: ChannelDto[] = [];
 
   isDiscordSettingsSaving = false;
 
@@ -86,6 +88,17 @@ export class DiscordComponent implements OnInit {
             this.discordForm.controls['token'].disable();
             this.discordForm.patchValue(this.account.server.discord);
           }
+        }
+      });
+
+    this.loadDiscordChannels();
+  }
+
+  loadDiscordChannels() {
+    this.serverService.getDiscordServer()
+      .subscribe({
+        next: (guild) => {
+          this.channels = guild.channels;
         }
       });
   }

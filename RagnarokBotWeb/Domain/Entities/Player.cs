@@ -13,6 +13,7 @@ public class Player : BaseEntity
     public ulong? DiscordId { get; set; }
     public string? DiscordName { get; set; }
     public ScumServer ScumServer { get; set; }
+    public bool HideAdminCommands { get; set; }
     public long? Money { get; set; }
     public long? Gold { get; set; }
     public long? Fame { get; set; }

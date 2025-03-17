@@ -1,3 +1,5 @@
+import { ChannelDto } from "./channel.dto";
+
 export class GuildDto {
     discordName?: string;
     discordId?: string;
@@ -6,4 +8,5 @@ export class GuildDto {
     enabled: boolean;
     serverId: number;
     discordLink?: string;
+    channels: ChannelDto[];
 }

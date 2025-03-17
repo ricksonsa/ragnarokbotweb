@@ -47,11 +47,21 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public Task<List<ScumServer>> GetActiveServersWithFtp()
         {
             return _appDbContext.ScumServers
-              .Include(server => server.Guild)
-              .Include(server => server.Tenant)
-              .Include(server => server.Ftp)
-              .Where(server => server.Tenant.Enabled && server.Ftp != null)
-              .ToListAsync();
+                .Include(server => server.Guild)
+                .Include(server => server.Tenant)
+                .Include(server => server.Ftp)
+                .Where(server => server.Tenant.Enabled && server.Ftp != null)
+                .ToListAsync();
+        }
+
+        public Task<ScumServer?> FindByIdAsNoTrackingAsync(long id)
+        {
+            return _appDbContext.ScumServers
+                .AsNoTracking()
+                .Include(server => server.Guild)
+                .Include(server => server.Tenant)
+                .Include(server => server.Ftp)
+                .FirstOrDefaultAsync(server => server.Id == id);
         }
 
         public Task<ScumServer?> FindActiveById(long id)

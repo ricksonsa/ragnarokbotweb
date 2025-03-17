@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using RagnarokBotWeb.Infrastructure.Seed;
 
 #nullable disable
 
@@ -698,19 +699,7 @@ namespace RagnarokBotWeb.Migrations
                 table: "Users",
                 column: "TenantId");
 
-            var sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sql", "items.sql");
-            if (File.Exists(sqlFilePath))
-            {
-                string sqlScript = File.ReadAllText(sqlFilePath);
-                migrationBuilder.Sql(sqlScript);
-            }
-
-            sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sql", "bunkers.sql");
-            if (File.Exists(sqlFilePath))
-            {
-                string sqlScript = File.ReadAllText(sqlFilePath);
-                migrationBuilder.Sql(sqlScript);
-            }
+            Seeder.Seed(migrationBuilder);
         }
 
         /// <inheritdoc />

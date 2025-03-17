@@ -9,5 +9,6 @@
         public bool Enabled { get; set; }
         public long ServerId { get; set; }
         public string? DiscordLink { get; internal set; }
+        public List<ChannelDto> Channels { get; set; }
     }
 }

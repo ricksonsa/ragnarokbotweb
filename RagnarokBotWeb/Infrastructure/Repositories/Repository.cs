@@ -51,6 +51,11 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             await _dbSet.AddAsync(entity);
         }
 
+        public virtual async Task AddRangeAsync(IList<T> entity)
+        {
+            await _dbSet.AddRangeAsync(entity);
+        }
+
         public virtual void Update(T entity)
         {
             _dbSet.Update(entity);

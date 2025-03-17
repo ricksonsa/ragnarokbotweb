@@ -45,24 +45,24 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="discordChannelId">Discord Channel</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="discordChannelExtra">
-          <nz-select formControlName="discordChannelId" id="discordChannelId"
+          <nz-select formControlName="discordChannelId" id="discordChannelId" formControlName="discordChannelId"
             nzPlaceHolder="Select the discord channel in which this package will be displayed for purchase">
-            <nz-option [nzValue]="0" nzLabel="PingPerfect"></nz-option>
-            <nz-option [nzValue]="1" nzLabel="GGHosting"></nz-option>
+            <nz-option *ngFor="let ch of channels" [nzValue]="ch.discordId" [nzLabel]="ch.name"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
+
       <ng-template #discordChannelExtra>
-        <p *ngIf="account.server.discord">The discord channel in which this package will be displayed for
+        <p *ngIf="account?.server?.discord">The discord channel in which this package will be displayed for
           purchase.</p>
-        <span *ngIf="!account.server.discord">
+        <span *ngIf="!account?.server?.discord">
           <nz-alert nzType="warning" [nzMessage]="discordInstalledMessage"></nz-alert>
           <ng-template #discordInstalledMessage>
             <div class="discord-success">
               <nz-icon nzType="discord" nzTheme="fill" style="font-size: 40px; color: #7289da;" />
               <div>
                 <p style="margin: 0;">Discord server is not configured.</p>
-                <p style="margin: 0;"><a [routerLink]="'/servers/' + account.serverId + '/settings/discord'">Click
+                <p style="margin: 0;"><a [routerLink]="'/servers/' + account?.serverId + '/settings/discord'">Click
                     here</a> and follow the instructions to set up the discord server.</p>
               </div>
             </div>
@@ -109,7 +109,7 @@
       </nz-form-item>
       <ng-template #purchaseCooldownExtra>
         <p>Set a time in seconds to block the package after a purchase by the player. The player will be able to buy
-          the package again once this time passes.</p>
+          this package again once this time passes. Leave it blank if not needed.</p>
       </ng-template>
 
       <nz-form-item>

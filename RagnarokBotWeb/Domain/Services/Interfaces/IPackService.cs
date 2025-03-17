@@ -6,7 +6,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
     public interface IPackService
     {
-        Task<IEnumerable<PackDto>> FetchAllPacksAsync();
         Task<Page<PackDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter);
         Task<PackDto> FetchPackById(long id);
         Task<PackDto> CreatePackAsync(PackDto createPack);

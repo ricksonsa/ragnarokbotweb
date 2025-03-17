@@ -10,6 +10,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public Guild? Guild { get; set; }
         public Ftp? Ftp { get; set; }
         public string? RestartTimes { get; private set; }
+        public string? TimeZoneId { get; set; }
 
         #region Kill Feed
         public bool UseKillFeed { get; set; }
@@ -43,6 +44,11 @@ namespace RagnarokBotWeb.Domain.Entities
         public List<string> GetRestartTimesList()
         {
             return string.IsNullOrEmpty(RestartTimes) ? new List<string>() : RestartTimes.Split(";").ToList();
+        }
+        
+        public TimeZoneInfo GetTimeZoneOrDefault()
+        {
+            return TimeZoneId == null ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
         }
     }
 }

@@ -25,6 +25,8 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { PackageItemDto } from '../../../../models/package.dto';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { ServerService } from '../../../../services/server.service';
+import { ChannelDto } from '../../../../models/channel.dto';
 
 @Component({
   selector: 'app-package',
@@ -64,6 +66,7 @@ export class PackageComponent implements OnInit {
   autocompleteItems: string[] = [];
   selectedItem?: ItemDto;
   filter = '';
+  channels: ChannelDto[] = [];
 
   get searchControl() {
     return this.packageItemForm.controls['searchControl'];
@@ -73,6 +76,7 @@ export class PackageComponent implements OnInit {
     private readonly authService: AuthenticationService,
     private readonly packageService: PackageService,
     private readonly itemService: ItemService,
+    private readonly serverService: ServerService,
     private route: ActivatedRoute,
     private readonly eventManager: EventManager,
     private readonly router: Router) {
@@ -101,6 +105,7 @@ export class PackageComponent implements OnInit {
   ngOnInit() {
     this.loadAccount();
     this.setUpFilter();
+    this.loadDiscordChannels();
 
     this.route.data.subscribe(data => {
       var item = data['package'];
@@ -109,6 +114,15 @@ export class PackageComponent implements OnInit {
         this.items = item.items;
       }
     });
+  }
+
+  loadDiscordChannels() {
+    this.serverService.getDiscordServer()
+      .subscribe({
+        next: (guild) => {
+          this.channels = guild.channels;
+        }
+      });
   }
 
   confirmDelete(id: number) {
