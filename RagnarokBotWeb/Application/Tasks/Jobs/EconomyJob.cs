@@ -1,54 +1,59 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
-namespace RagnarokBotWeb.Application.Tasks.Jobs
+namespace RagnarokBotWeb.Application.Tasks.Jobs;
+
+public class EconomyJob : AbstractJob, IJob
 {
-    public class EconomyJob : FtpJob, IJob
+    private readonly IFtpService _ftpService;
+    private readonly ILogger<EconomyJob> _logger;
+    private readonly IPlayerService _playerService;
+    private readonly IServiceProvider _serviceProvider;
+
+    public EconomyJob(
+        ILogger<EconomyJob> logger,
+        IPlayerService playerService,
+        IFtpService ftpService,
+        IServiceProvider serviceProvider,
+        IScumServerRepository scumServerRepository
+    ) : base(scumServerRepository)
     {
-        private readonly ILogger<EconomyJob> _logger;
-        private readonly IPlayerService _playerService;
+        _logger = logger;
+        _playerService = playerService;
+        _ftpService = ftpService;
+        _serviceProvider = serviceProvider;
+    }
 
-        public EconomyJob(
-            ILogger<EconomyJob> logger,
-            IFtpService ftpService,
-            IReaderRepository reader,
-            IScumServerRepository scumServerRepository,
-            IPlayerService playerService) : base(reader, ftpService, scumServerRepository, "economy_")
+    public async Task Execute(IJobExecutionContext context)
+    {
+        try
         {
-            _logger = logger;
-            _playerService = playerService;
-        }
+            _logger.LogInformation("Triggered EconomyJob->Execute at: {time}", DateTimeOffset.Now);
 
-        public async Task Execute(IJobExecutionContext context)
-        {
-            try
+            var server = await GetServerAsync(context);
+            var fileType = GetFileTypeFromContext(context);
+
+            var processor = new ScumFileProcessor(_serviceProvider, _ftpService, server, fileType);
+            var lines = await processor.ProcessUnreadFileLines();
+
+            foreach (var line in lines)
             {
-                _logger.LogInformation("Triggered EconomyJob->Execute at: {time}", DateTimeOffset.Now);
-                var server = await GetServerAsync(context);
+                if (string.IsNullOrEmpty(line)) continue;
+                if (line.Contains("Game version")) continue;
 
-                foreach (var fileName in GetLogFiles(server.Ftp!))
+                if (line.Contains("changed their name"))
                 {
-                    _logger.LogInformation("EconomyJob->Execute Reading file: " + fileName);
-
-                    foreach (var line in await GetUnreadFileLinesAsync(server.Ftp!, fileName))
-                    {
-                        if (string.IsNullOrEmpty(line.Value)) continue;
-                        if (line.Value.Contains("Game version")) continue;
-
-                        if (line.Value.Contains("changed their name"))
-                        {
-                            var (steamId64, scumId, changedName) = new ChangeNameLogParser().Parse(line.Value);
-                            await _playerService.PlayerConnected(server, steamId64, scumId, changedName);
-                        }
-                    }
+                    var (steamId64, scumId, changedName) = new ChangeNameLogParser().Parse(line);
+                    await _playerService.PlayerConnected(server, steamId64, scumId, changedName);
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
         }
     }
 }

@@ -1,63 +1,66 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
-namespace RagnarokBotWeb.Application.Tasks.Jobs
+namespace RagnarokBotWeb.Application.Tasks.Jobs;
+
+public class KillLogJob : AbstractJob, IJob
 {
-    public class KillLogJob : FtpJob, IJob
+    private readonly IFtpService _ftpService;
+    private readonly ILogger<KillLogJob> _logger;
+    private readonly IPlayerRepository _playerRepository;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public KillLogJob(
+        ILogger<KillLogJob> logger,
+        IFtpService ftpService,
+        IScumServerRepository scumServerRepository,
+        IPlayerRepository playerRepository,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider) : base(scumServerRepository)
     {
-        private readonly ILogger<KillLogJob> _logger;
-        private readonly IPlayerRepository _playerRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        _logger = logger;
+        _playerRepository = playerRepository;
+        _unitOfWork = unitOfWork;
+        _ftpService = ftpService;
+        _serviceProvider = serviceProvider;
+    }
 
-        public KillLogJob(
-            ILogger<KillLogJob> logger,
-            IFtpService ftpService,
-            IReaderRepository reader,
-            IScumServerRepository scumServerRepository,
-            IPlayerRepository playerRepository,
-            IUnitOfWork unitOfWork) : base(reader, ftpService, scumServerRepository, "kill_")
+    public async Task Execute(IJobExecutionContext context)
+    {
+        try
         {
-            _logger = logger;
-            _playerRepository = playerRepository;
-            _unitOfWork = unitOfWork;
+            _logger.LogInformation("Triggered KillLogJob->Execute at: {time}", DateTimeOffset.Now);
+
+            var server = await GetServerAsync(context);
+            var fileType = GetFileTypeFromContext(context);
+
+            var processor = new ScumFileProcessor(_serviceProvider, _ftpService, server, fileType);
+            var lines = await processor.ProcessUnreadFileLines();
+
+            var resolvedLines = lines
+                .Where(line => !line.Contains("Game version") || !string.IsNullOrWhiteSpace(line));
+
+            using var enumerator = resolvedLines.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                var first = enumerator.Current;
+                if (!enumerator.MoveNext()) break;
+                var second = enumerator.Current;
+
+                var players = await _playerRepository.GetAllByServerId(server.Id);
+                var kill = new KillLogParser(players).Parse(first, second);
+                _unitOfWork.ScumServers.Attach(server);
+                await _unitOfWork.Kills.AddAsync(kill);
+                await _unitOfWork.SaveAsync();
+            }
         }
-
-        public async Task Execute(IJobExecutionContext context)
+        catch (Exception ex)
         {
-            try
-            {
-                _logger.LogInformation("Triggered KillLogJob->Execute at: {time}", DateTimeOffset.Now);
-
-                var server = await GetServerAsync(context);
-                foreach (var fileName in GetLogFiles(server.Ftp!))
-                {
-                    _logger.LogInformation("KillLogJob->Execute Reading file: {}", fileName);
-                    var resolvedLines = (await GetUnreadFileLinesAsync(server.Ftp!, fileName))
-                        .Where(line => !line.Value.Contains("Game version") || !string.IsNullOrWhiteSpace(line.Value));
-
-                    using (var enumerator = resolvedLines.GetEnumerator())
-                    {
-                        while (enumerator.MoveNext())
-                        {
-                            var first = enumerator.Current;
-                            if (!enumerator.MoveNext()) break;
-                            var second = enumerator.Current;
-
-                            var players = await _playerRepository.GetAllByServerId(server.Id);
-                            var kill = new KillLogParser(players).Parse(first.Value, second.Value);
-                            _unitOfWork.ScumServers.Attach(server);
-                            await _unitOfWork.Kills.AddAsync(kill);
-                            await _unitOfWork.SaveAsync();
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-            }
+            _logger.LogError(ex.Message);
         }
     }
 }
