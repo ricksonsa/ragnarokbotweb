@@ -18,7 +18,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<Lockpick> AddLockpickAttemptAsync(Lockpick lockpick)
         {
-            _logger.Log(LogLevel.Information, "Adding new lockpick attempt from steamId: " + lockpick.SteamId64);
+            _logger.Log(LogLevel.Information, "Adding new lockpick attempt from steamId: {}", lockpick.SteamId64);
             var user = await _uow.Players.FirstOrDefaultAsync(user => user.SteamId64 == lockpick.SteamId64);
             _uow.ScumServers.Attach(lockpick.ScumServer);
             await _uow.Lockpicks.AddAsync(lockpick);

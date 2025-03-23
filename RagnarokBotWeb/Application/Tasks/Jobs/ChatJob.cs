@@ -9,6 +9,7 @@ using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 namespace RagnarokBotWeb.Application.Tasks.Jobs;
 
 public class ChatJob(
+    ILogger<ChatJob> logger,
     IScumServerRepository scumServerRepository,
     IFtpService ftpService,
     IServiceProvider serviceProvider,
@@ -18,6 +19,10 @@ public class ChatJob(
     public async Task Execute(IJobExecutionContext context)
     {
         var server = await GetServerAsync(context);
+
+        var jobName = context.JobDetail.Key.Name;
+        logger.LogInformation($"Executing job: {jobName} from serverId: {server.Id} at {DateTime.Now}");
+
         var fileType = GetFileTypeFromContext(context);
 
         var processor = new ScumFileProcessor(serviceProvider, ftpService, server, fileType);
@@ -26,7 +31,7 @@ public class ChatJob(
         foreach (var line in lines)
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
-            await publisher.Publish(server, new ChannelPublishDto { Content = line }, EChannelType.GameChat);
+            await publisher.Publish(server, new ChannelPublishDto { Content = line }, ChannelTemplateValues.GameChat);
         }
     }
 }

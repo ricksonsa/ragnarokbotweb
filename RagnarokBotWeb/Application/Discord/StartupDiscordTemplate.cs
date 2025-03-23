@@ -7,7 +7,8 @@ namespace RagnarokBotWeb.Application.Discord;
 
 public class StartupDiscordTemplate(
     ILogger<StartupDiscordTemplate> logger,
-    IServiceProvider serviceProvider,
+    IChannelService channelService,
+    IChannelTemplateService channelTemplateService,
     DiscordSocketClient client)
 {
     public async Task Run(Guild guild)
@@ -18,10 +19,7 @@ public class StartupDiscordTemplate(
             return;
         }
 
-        using var scope = serviceProvider.CreateScope();
-        var channelService = scope.ServiceProvider.GetRequiredService<IChannelService>();
-
-        var discordCreateChannel = new DiscordCreateChannel(client, serviceProvider);
+        var discordCreateChannel = new DiscordCreateChannel(client, channelTemplateService);
         var channels = await discordCreateChannel.CreateAsync(guild.DiscordId);
 
         foreach (var channel in channels.Select(ToChannelEntity(guild)))
@@ -33,13 +31,13 @@ public class StartupDiscordTemplate(
         return dto => new Channel
         {
             Guild = guild,
-            ChannelType = dto.ChannelType,
+            ChannelType = dto.ChannelType.ToString(),
             DiscordId = dto.DiscordId,
             Buttons = dto.Buttons.Select(x => new Button
-                {
-                    Label = x.Label,
-                    Command = x.Command
-                }
+            {
+                Label = x.Label,
+                Command = x.Command
+            }
             ).ToList()
         };
     }

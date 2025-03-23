@@ -29,11 +29,19 @@ namespace RagnarokBotWeb.Controllers
             return Ok(server);
         }
 
-        [HttpPatch("discord")]
+        [HttpPatch("discord/config")]
         public async Task<IActionResult> ConfirmDiscord(SaveDiscordSettingsDto settings)
         {
             _logger.LogInformation("Patch request to confirm discord settings");
             GuildDto guild = await _serverService.ConfirmDiscordToken(settings);
+            return Ok(guild);
+        }
+
+        [HttpPatch("discord/channels")]
+        public async Task<IActionResult> UpdateDiscordChannels(SaveDiscordChannelsDto settings)
+        {
+            _logger.LogInformation("Patch request to confirm discord settings");
+            GuildDto guild = await _serverService.UpdateDiscordChannels(settings);
             return Ok(guild);
         }
 

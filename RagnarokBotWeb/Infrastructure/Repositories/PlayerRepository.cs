@@ -3,6 +3,7 @@ using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories;
 
@@ -13,6 +14,13 @@ public class PlayerRepository(AppDbContext appDbContext) : Repository<Player>(ap
         return appDbContext.Players
             .Include(player => player.ScumServer)
             .FirstOrDefaultAsync(player => player.Id == id);
+    }
+
+    public Task<Player?> FindOneWithServerAsync(Expression<Func<Player, bool>> predicate)
+    {
+        return appDbContext.Players
+          .Include(player => player.ScumServer)
+          .FirstOrDefaultAsync(predicate);
     }
 
     public Task<List<Player>> GetAllByServerId(long serverId)
@@ -39,6 +47,12 @@ public class PlayerRepository(AppDbContext appDbContext) : Repository<Player>(ap
         }
 
         return base.GetPageAsync(paginator, query);
+    }
+
+    public override Task CreateOrUpdateAsync(Player entity)
+    {
+        if (entity.ScumServer is not null) appDbContext.ScumServers.Attach(entity.ScumServer);
+        return base.CreateOrUpdateAsync(entity);
     }
 
 }

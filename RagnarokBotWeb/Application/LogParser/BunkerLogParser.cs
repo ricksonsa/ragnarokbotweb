@@ -22,7 +22,7 @@ namespace RagnarokBotWeb.Application.LogParser
             int minutes = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
             int seconds = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) : 0;
 
-            TimeSpan timeSpan = new TimeSpan(hours, minutes, seconds);
+            TimeSpan timeSpan = new(hours, minutes, seconds);
 
             var sector = bunkerIdMatch.Value;
             var locked = stateMatch.Value == "Locked";

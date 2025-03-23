@@ -1,7 +1,9 @@
-﻿namespace RagnarokBotWeb.Domain.Services.Interfaces
+﻿using RagnarokBotWeb.Domain.Entities;
+
+namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
     public interface IBunkerService
     {
-        Task UpdateBunkerState(string sector, bool locked, TimeSpan activation);
+        Task UpdateBunkerState(ScumServer server, string sector, bool locked, TimeSpan activation);
     }
 }

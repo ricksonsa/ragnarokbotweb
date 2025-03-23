@@ -8,11 +8,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{41987653-FC1E-4E8D-A68D-1CCD30EA4B63}"
 	ProjectSection(SolutionItems) = preProject
 		.Dockerfile = .Dockerfile
+		compose.yml = compose.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RagnarokBotClient", "RagnarokBotClient\RagnarokBotClient.csproj", "{6E121485-756C-402F-B57B-3637CEFA2291}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{570C706C-7A13-4FE3-B963-ADDEE57E5BC1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{570C706C-7A13-4FE3-B963-ADDEE57E5BC1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

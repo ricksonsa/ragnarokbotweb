@@ -13,6 +13,11 @@ public class GuildService(IGuildRepository guildRepository) : IGuildService
         return guildRepository.FindByIdAsync(guildId);
     }
 
+    public Task<Guild?> FindByServerIdAsync(long serverId)
+    {
+        return guildRepository.FindByServerIdAsync(serverId);
+    }
+
     public async Task<Guild> FindByDiscordIdAsync(ulong discordId)
     {
         var guild = await guildRepository.FindOneWithScumServerAsync(guild => guild.DiscordId == discordId);

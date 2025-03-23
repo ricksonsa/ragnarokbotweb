@@ -6,17 +6,16 @@ namespace RagnarokBotWeb.Infrastructure.Seed
     {
         public static void Seed(MigrationBuilder migrationBuilder)
         {
-            var sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sql", "items.sql");
-            if (File.Exists(sqlFilePath))
+            var sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sql");
+            if (File.Exists(Path.Combine(sqlFilePath, "items.sql")))
             {
-                string sqlScript = File.ReadAllText(sqlFilePath);
+                string sqlScript = File.ReadAllText(Path.Combine(sqlFilePath, "items.sql"));
                 migrationBuilder.Sql(sqlScript);
             }
 
-            sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Sql", "bunkers.sql");
-            if (File.Exists(sqlFilePath))
+            if (File.Exists(Path.Combine(sqlFilePath, "channel_templates.sql")))
             {
-                string sqlScript = File.ReadAllText(sqlFilePath);
+                string sqlScript = File.ReadAllText(Path.Combine(sqlFilePath, "channel_templates.sql"));
                 migrationBuilder.Sql(sqlScript);
             }
         }

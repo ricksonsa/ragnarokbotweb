@@ -48,15 +48,14 @@ public class GamePlayJob : AbstractJob, IJob
                 if (line.Contains("[LogBunkerLock]") && line.Contains(" is "))
                 {
                     var (sector, state, time) = new BunkerLogParser().Parse(line);
-                    await _bunkerService.UpdateBunkerState(sector, state, time);
+                    await _bunkerService.UpdateBunkerState(server, sector, state, time);
                 }
 
                 if (line.Contains("[LogMinigame] [LockpickingMinigame_C]") ||
                     line.Contains("[LogMinigame] [BP_DialLockMinigame_C]"))
                 {
-                    var lockpick = new LockpickLogParser().Parse(line);
+                    var lockpick = new LockpickLogParser(server).Parse(line);
                     if (lockpick is null) continue;
-                    lockpick.ScumServer = server;
                     await _lockpickService.AddLockpickAttemptAsync(lockpick);
                 }
             }

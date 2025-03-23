@@ -33,8 +33,9 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            //options.UseNpgsql("Host=localhost;Database=ragnarokbot;Username=myuser;Password=mypassword");
-            options.UseSqlite("Data Source=app.db");
+            // TODO: Load from env config
+            options.UseNpgsql("Host=localhost;Database=ragnarokbot;Username=postgres;Password=ragnarokbot");
+            //options.UseSqlite("Data Source=app.db");
         }
 
         public void MigrateDatabase()

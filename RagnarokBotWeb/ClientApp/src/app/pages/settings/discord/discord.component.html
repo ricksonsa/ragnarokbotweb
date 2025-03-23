@@ -39,7 +39,7 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #discordAlert>
-        <span *ngIf="account.server.discord">
+        <span *ngIf="account?.server.discord">
           <nz-alert nzType="success" [nzMessage]="discordInstalledMessage"></nz-alert>
           <ng-template #discordInstalledMessage>
             <div class="discord-success">
@@ -215,9 +215,8 @@
         <p>Hide the killer name in Kill Feed</p>
       </ng-template>
 
-
       <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="HideMineKill">Hide Mines in Kill Feed</nz-form-label>
+        <nz-form-label [nzSpan]="null" nzFor="hideMineKill">Hide Mines in Kill Feed</nz-form-label>
         <nz-form-control [nzSpan]="null" [nzExtra]="hideMine">
           <nz-switch formControlName="hideMineKill"></nz-switch>
         </nz-form-control>

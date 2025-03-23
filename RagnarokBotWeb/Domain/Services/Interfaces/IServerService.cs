@@ -9,6 +9,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task AddGuild(ChangeGuildDto guildDto);
         Task<ScumServer> GetServer(long serverId);
         Task<GuildDto> ConfirmDiscordToken(SaveDiscordSettingsDto settings);
+        Task<GuildDto> UpdateDiscordChannels(SaveDiscordChannelsDto settings);
         Task<GuildDto> GetServerDiscord();
     }
 }

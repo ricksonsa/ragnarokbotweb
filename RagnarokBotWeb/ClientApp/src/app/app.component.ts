@@ -149,7 +149,7 @@ export class AppComponent implements OnInit {
         this.alert.type,
         this.alert.title,
         this.alert.message
-      ), 800);
+      ), 600);
       // this.showAlert = true;
       // setTimeout(() => this.showAlert = false, 5000);
     }));

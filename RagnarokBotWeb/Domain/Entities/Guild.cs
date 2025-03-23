@@ -13,6 +13,7 @@ public class Guild : BaseEntity
     public bool Enabled { get; set; }
     public ScumServer ScumServer { get; set; }
     public string? DiscordLink { get; internal set; }
+    public List<Channel> Channels { get; set; }
 
     public Guild() { }
 

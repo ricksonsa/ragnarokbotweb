@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using FluentFTP;
 using RagnarokBotWeb.Domain.Entities;
+using System.Collections.Concurrent;
 
 namespace RagnarokBotWeb.Infrastructure.FTP;
 
@@ -86,14 +86,16 @@ public class FtpConnectionPool : IDisposable
     {
         try
         {
-            bag.TryTake(out var expiredConnection);
-            expiredConnection.Client.Disconnect();
-            expiredConnection.Client.Dispose();
-            _logger.LogInformation("Expired FTP connection for key '{}' removed.", key);
+            if (bag.TryTake(out var expiredConnection))
+            {
+                expiredConnection.Client?.Disconnect();
+                expiredConnection.Client?.Dispose();
+                _logger.LogInformation("Expired FTP connection for key '{}' removed.", key);
+            }
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error while disconnecting client.");
+            _logger.LogError(e, "Error while disconnecting ftp client.");
         }
     }
 

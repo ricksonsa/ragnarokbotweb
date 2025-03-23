@@ -51,8 +51,11 @@ public class KillLogJob : AbstractJob, IJob
                 if (!enumerator.MoveNext()) break;
                 var second = enumerator.Current;
 
+                if (string.IsNullOrWhiteSpace(first) && second.Contains("Game version")) continue;
+
                 var players = await _playerRepository.GetAllByServerId(server.Id);
-                var kill = new KillLogParser(players).Parse(first, second);
+                var kill = new KillLogParser(server).Parse(first, second);
+                _logger.Log(LogLevel.Information, "Adding new kill entry: {} -> {}", kill.KillerName, kill.TargetName);
                 _unitOfWork.ScumServers.Attach(server);
                 await _unitOfWork.Kills.AddAsync(kill);
                 await _unitOfWork.SaveAsync();

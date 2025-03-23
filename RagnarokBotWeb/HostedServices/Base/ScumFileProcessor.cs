@@ -67,7 +67,7 @@ public class ScumFileProcessor
         _ftpService.CopyFiles(client, localPath, GetFilePaths(_ftp.RootFolder, ftpUnreadFileNames));
 
         List<string> allLines = [];
-        
+
         var index = 0;
         do
         {
@@ -82,10 +82,10 @@ public class ScumFileProcessor
                 pointer.LineNumber = 0;
                 pointer.FileDate = ScumUtils.ParseDateTime(filename);
             }
-            
+
             var lines = await ReadFileLines(pointer, filepath);
             allLines.AddRange(lines);
-            
+
             index++;
 
             pointer = await GetReaderPointer();
@@ -174,10 +174,12 @@ public class ScumFileProcessor
         using var scope = _serviceProvider.CreateScope();
 
         var readerPointerRepository = scope.ServiceProvider.GetRequiredService<IReaderPointerRepository>();
+        var scumServerRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
         await readerPointerRepository.CreateOrUpdateAsync(pointer);
 
         var readerRepository = scope.ServiceProvider.GetRequiredService<IReaderRepository>();
-        await readerRepository.AddRangeAsync(lines.Select(line => new Reader(filename, line, _scumServer)).ToList());
+        var server = await scumServerRepository.FindByIdAsync(_scumServer.Id);
+        await readerRepository.AddRangeAsync(lines.Select(line => new Reader(filename, line, server!)).ToList());
 
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveAsync();
     }

@@ -92,13 +92,6 @@ namespace RagnarokBotWeb
                 return new DiscordSocketClient(config);
             });
 
-            //builder.Services.AddHostedService<LoginHostedService>();
-            //builder.Services.AddHostedService<GameplayHostedService>();
-            //builder.Services.AddHostedService<EconomyHostedService>();
-            //builder.Services.AddHostedService<KillHostedService>();
-            //builder.Services.AddHostedService<OrderCommandHostedService>();
-            //builder.Services.AddHostedService<ListPlayersHostedService>();
-            //builder.Services.AddHostedService<BotAliveHostedService>();
             builder.Services.AddHostedService<LoadServerTaskService>();
             builder.Services.AddHostedService<LoadFtpTaskService>();
 
@@ -133,6 +126,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IPlayerRegisterRepository, PlayerRegisterRepository>();
             builder.Services.AddScoped<IReaderRepository, ReaderRepository>();
             builder.Services.AddScoped<IReaderPointerRepository, ReaderPointerRepository>();
+            builder.Services.AddScoped<IBunkerRepository, BunkerRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
@@ -141,6 +135,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IItemService, ItemService>();
             builder.Services.AddScoped<IPackService, PackService>();
             builder.Services.AddScoped<IPlayerService, PlayerService>();
+            builder.Services.AddScoped<IDiscordService, DiscordService>();
             builder.Services.AddScoped<IBotService, BotService>();
             builder.Services.AddScoped<IChannelTemplateService, ChannelTemplateService>();
             builder.Services.AddScoped<IChannelService, ChannelService>();

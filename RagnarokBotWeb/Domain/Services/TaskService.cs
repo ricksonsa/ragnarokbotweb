@@ -73,13 +73,13 @@ namespace RagnarokBotWeb.Domain.Services
         private async Task ScheduleFtpServerTasks(ScumServer server, CancellationToken cancellationToken = default)
         {
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
-            
+
             var job = JobBuilder.Create<ChatJob>()
                 .WithIdentity($"ChatJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Chat.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, TwentySecondsTrigger());
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
 
             job = JobBuilder.Create<KillLogJob>()
                    .WithIdentity($"KillLogJob({server.Id})")

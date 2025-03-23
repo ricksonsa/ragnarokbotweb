@@ -65,9 +65,8 @@ export class DiscordComponent implements OnInit {
       showKillDistance: [false],
       showKillSector: [false],
       showKillWeapon: [false],
-      sideKillerName: [false],
-      sideMineKill: [false],
       hideKillerName: [false],
+      hideMineKill: [false],
       showSameSquadKill: [false]
     });
 
@@ -80,7 +79,12 @@ export class DiscordComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.authService.account()
+    this.loadAccount();
+    this.loadDiscordChannels();
+  }
+
+  loadAccount(force = false) {
+    this.authService.account(force)
       .subscribe({
         next: (account) => {
           this.account = account;
@@ -90,8 +94,6 @@ export class DiscordComponent implements OnInit {
           }
         }
       });
-
-    this.loadDiscordChannels();
   }
 
   loadDiscordChannels() {
@@ -124,6 +126,8 @@ export class DiscordComponent implements OnInit {
           this.isDiscordSettingsSaving = false;
           this.discordForm.patchValue(value);
           this.discordForm.controls['token'].disable();
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Discord Settings', 'Discord server successfully configured.', 'success')));
+          setTimeout(() => this.loadAccount(true), 1000);
         },
         error: (err) => {
           this.isDiscordSettingsSaving = false;

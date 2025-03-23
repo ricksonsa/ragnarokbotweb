@@ -13,7 +13,7 @@ public class DiscordSocketClientUtils
         Logger = factory.CreateLogger<DiscordSocketClientUtils>();
     }
 
-    public static async Task AwaitDiscordSocketClientIsReady(CancellationToken stoppingToken)
+    public static async Task AwaitDiscordSocketClientIsReady(CancellationToken stoppingToken = default)
     {
         while (DiscordBotService.Instance is null || !DiscordBotService.Instance.IsReady)
         {

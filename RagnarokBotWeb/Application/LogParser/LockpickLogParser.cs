@@ -6,7 +6,15 @@ namespace RagnarokBotWeb.Application.LogParser
 {
     public class LockpickLogParser
     {
-        public Lockpick Parse(string line)
+
+        private readonly ScumServer _scumServer;
+
+        public LockpickLogParser(ScumServer scumServer)
+        {
+            _scumServer = scumServer;
+        }
+
+        public Lockpick? Parse(string line)
         {
             string pattern = @"User:\s*(.*?)\s*\((\d+),\s*(\d+)\)";
 
@@ -42,7 +50,8 @@ namespace RagnarokBotWeb.Application.LogParser
                     ScumId = scumId,
                     AttemptDate = date,
                     Attempts = attempts,
-                    Success = succes
+                    Success = succes,
+                    ScumServer = _scumServer
                 };
             }
 

@@ -15,10 +15,10 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         ScumPlayer? PlayerDisconnected(long serverId, string steamId64);
 
         // FIXME: pass guild id, because user can be in multiples guilds with same steam id
-        Task<Player?> FindBySteamId64Async(string steamId);
+        Task<Player?> FindBySteamId64Async(string steamId, long serverId);
         Task AddPlayerAsync(Player user);
         Task UpdatePlayerAsync(Player user);
-        Task UpdatePlayerNameAsync(string steamId64, string name);
+        Task UpdatePlayerNameAsync(Entities.ScumServer server, string steamId64, string scumId, string name);
         Task UpdateFromScumPlayers(long serverId, List<ScumPlayer>? players);
 
         Task<Page<PlayerDto>> GetPlayers(Paginator paginator, string? filter);

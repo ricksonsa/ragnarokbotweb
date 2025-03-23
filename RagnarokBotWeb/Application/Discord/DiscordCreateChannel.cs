@@ -3,12 +3,13 @@ using Discord.Rest;
 using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord.Dto;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord;
 
-public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider serviceProvider)
+public class DiscordCreateChannel(DiscordSocketClient client, IChannelTemplateService channelTemplateService)
 {
     public async Task<List<ChannelDto>> CreateAsync(ulong guildDiscordId)
     {
@@ -25,7 +26,7 @@ public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider s
         {
             var category = await GetOrCreateCategoryChannelAsync(guild, channelTemplate, categories);
             var channel = await CreateTextChannelAsync(guild, channelTemplate, category);
-            var channelDto = new ChannelDto(channel.Id, channelTemplate.ChannelType);
+            var channelDto = new ChannelDto(channel.Id, ChannelTemplateValue.FromValue(channelTemplate.ChannelType));
 
             if (channelTemplate.Buttons is not null)
                 foreach (var buttonTemplate in channelTemplate.Buttons)
@@ -77,8 +78,6 @@ public class DiscordCreateChannel(DiscordSocketClient client, IServiceProvider s
 
     private async Task<IEnumerable<ChannelTemplate>> GetChannelTemplates()
     {
-        using var scope = serviceProvider.CreateScope();
-        var channelTemplateService = scope.ServiceProvider.GetRequiredService<IChannelTemplateService>();
         return await channelTemplateService.GetAllAsync();
     }
 }

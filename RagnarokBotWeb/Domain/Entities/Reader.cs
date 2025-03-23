@@ -10,7 +10,7 @@ public class Reader : BaseEntity
     public string Value { get; set; }
     public ScumServer ScumServer { get; set; }
     public bool Processed { get; set; }
-    
+
     public Reader(string fileName, string value, ScumServer scumServer)
     {
         FileName = fileName;
@@ -20,8 +20,5 @@ public class Reader : BaseEntity
         Processed = false;
     }
 
-    public Reader()
-    {
-        
-    }
+    public Reader() { }
 }

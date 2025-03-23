@@ -11,19 +11,34 @@ namespace RagnarokBotWeb.Application.Mapping
             // Define mappings
             CreateMap<Ftp, FtpDto>();
 
+            //CreateMap<ScumServer, ScumServerDto>()
+            //    .ForMember((dto) => dto.RestartTimes, opt => opt.MapFrom(server => server.GetRestartTimesList()))
+            //    .ForMember((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild != null ?
+            //        new DiscordDto
+            //        {
+            //            Id = server.Guild.DiscordId,
+            //            DiscordLink = server.Guild.DiscordLink,
+            //            Token = server.Guild.Token,
+            //            Confirmed = server.Guild.Confirmed,
+            //            Name = server.Guild.DiscordName
+            //        } : null))
+            //    .ReverseMap()
+            //        .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
+
             CreateMap<ScumServer, ScumServerDto>()
-                .ForMember((dto) => dto.RestartTimes, opt => opt.MapFrom(server => server.GetRestartTimesList()))
-                .ForMember((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild != null ?
-                    new DiscordDto
-                    {
-                        Id = server.Guild.DiscordId,
-                        DiscordLink = server.Guild.DiscordLink,
-                        Token = server.Guild.Token,
-                        Confirmed = server.Guild.Confirmed,
-                        Name = server.Guild.DiscordName
-                    } : null))
-                .ReverseMap()
-                    .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
+             .ForMember((dto) => dto.RestartTimes, opt => opt.MapFrom(server => server.GetRestartTimesList()))
+             .ForPath((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild))
+             //.ForPath((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild != null ?
+             //    new DiscordDto
+             //    {
+             //        Id = server.Guild.DiscordId,
+             //        DiscordLink = server.Guild.DiscordLink,
+             //        Token = server.Guild.Token,
+             //        Confirmed = server.Guild.Confirmed,
+             //        Name = server.Guild.DiscordName
+             //    } : null))
+             .ReverseMap()
+                 .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
 
             CreateMap<Item, ItemDto>();
 

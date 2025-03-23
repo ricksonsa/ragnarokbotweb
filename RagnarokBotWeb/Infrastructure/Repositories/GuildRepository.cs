@@ -23,4 +23,14 @@ public class GuildRepository(AppDbContext appDbContext) : Repository<Guild>(appD
         if (entity.ScumServer is not null) _appDbContext.ScumServers.Attach(entity.ScumServer);
         return base.CreateOrUpdateAsync(entity);
     }
+
+    public Task<Guild?> FindByServerIdAsync(long id)
+    {
+        return _appDbContext.Guilds
+         .Include(guild => guild.ScumServer)
+         .Include(guild => guild.Channels)
+            .ThenInclude(guildChannels => guildChannels.Buttons)
+         .Where(guild => guild.ScumServer.Id == id)
+         .FirstOrDefaultAsync();
+    }
 }

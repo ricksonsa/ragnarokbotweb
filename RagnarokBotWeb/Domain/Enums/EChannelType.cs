@@ -1,36 +1,43 @@
-﻿namespace RagnarokBotWeb.Domain.Enums
+﻿
+namespace RagnarokBotWeb.Domain.Enums
 {
-    public enum EChannelType
+    public static class ChannelTemplateValues
     {
-        None = 0,
+        public static readonly ChannelTemplateValue None = new("none");
+        public static readonly ChannelTemplateValue Chat = new("chat");
+        public static readonly ChannelTemplateValue GameChat = new("game-chat");
+        public static readonly ChannelTemplateValue NoAdminAbusePublic = new("no-admin-abuse-public");
+        public static readonly ChannelTemplateValue KillFeed = new("kill-feed");
+        public static readonly ChannelTemplateValue BunkerActivation = new("bunker-states");
+        public static readonly ChannelTemplateValue WelcomePack = new("register");
+        public static readonly ChannelTemplateValue Taxi = new("taxi");
+        public static readonly ChannelTemplateValue KillRank = new("kill-rank");
+        public static readonly ChannelTemplateValue SniperRank = new("sniper-rank");
+        public static readonly ChannelTemplateValue TopKillerDay = new("top-killer-rank");
+        public static readonly ChannelTemplateValue LockPickRank = new("lockpick-rank");
+        public static readonly ChannelTemplateValue TopLockpickDay = new("top-lockpick-rank");
+        public static readonly ChannelTemplateValue NoAdminAbusePrivate = new("no-admin-abuse-private");
+        public static readonly ChannelTemplateValue AdminAlert = new("admin-alert");
+        public static readonly ChannelTemplateValue Login = new("login");
+        public static readonly ChannelTemplateValue BuriedChest = new("buried-chest");
+        public static readonly ChannelTemplateValue MineKill = new("mine-kill");
+        public static readonly ChannelTemplateValue LockpickAlert = new("lockpick-alert");
+        public static readonly ChannelTemplateValue AdminKill = new("admin-kill");
+    }
 
-        // Public
-        Chat = 1,
-        GameChat = 13,
-        NoAdminAbusePublic = 2,
-        KillFeed = 3,
-        BunkerActivation = 12,
+    public class ChannelTemplateValue
+    {
+        private readonly string _value;
+        public ChannelTemplateValue(string value) => _value = value;
 
-        // Shop
-        DailyPack = 4,
-        WelcomePack = 5,
-        Taxi = 6,
+        public static ChannelTemplateValue FromValue(string channelType)
+        {
+            return new ChannelTemplateValue(channelType);
+        }
 
-        // Ranks
-        KillRank = 7,
-        SniperRank = 8,
-        TopKillerDay = 9,
-        LockPickRank = 10,
-        TopLockpickDay = 11,
-
-
-        // Admin
-        NoAdminAbusePrivate = 100,
-        AdminAlert = 102,
-        Login = 103,
-        BuriedChest = 104,
-        MineKill = 105,
-        LockpickAlert = 106,
-        AdminKill = 107,
+        public override string ToString()
+        {
+            return _value;
+        }
     }
 }

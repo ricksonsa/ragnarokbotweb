@@ -8,10 +8,10 @@ namespace RagnarokBotWeb.Application.LogParser
 {
     public class KillLogParser
     {
-        private readonly List<Player> _players;
-        public KillLogParser(List<Player> players)
+        private readonly ScumServer _server;
+        public KillLogParser(ScumServer server)
         {
-            _players = players;
+            _server = server;
         }
 
         public Kill Parse(string line1, string line2)
@@ -40,8 +40,16 @@ namespace RagnarokBotWeb.Application.LogParser
                 TargetSteamId64 = preParseKill.Victim.UserId,
                 KillerName = preParseKill.Killer.ProfileName,
                 TargetName = preParseKill.Victim.ProfileName,
-                Weapon = preParseKill.Weapon
+                Weapon = preParseKill.Weapon,
+                ScumServer = _server,
+                KillerX = preParseKill.Killer.ClientLocation.X,
+                KillerY = preParseKill.Killer.ClientLocation.Y,
+                KillerZ = preParseKill.Killer.ClientLocation.Z,
+                VictimX = preParseKill.Victim.ClientLocation.X,
+                VictimY = preParseKill.Victim.ClientLocation.Y,
+                VictimZ = preParseKill.Victim.ClientLocation.Z
             };
         }
+
     }
 }

@@ -12,7 +12,7 @@ public class DiscordChannelPublisher(
     ILogger<DiscordChannelPublisher> logger,
     IServiceProvider serviceProvider)
 {
-    public async Task Publish(ScumServer server, ChannelPublishDto dto, EChannelType channelType)
+    public async Task Publish(ScumServer server, ChannelPublishDto dto, ChannelTemplateValue channelType)
     {
         if (server.Guild == null)
         {
