@@ -17,6 +17,8 @@ import { ServerService } from '../../../services/server.service';
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { Alert } from '../../../models/alert';
 import { ChannelDto } from '../../../models/channel.dto';
+import { NzTypographyModule } from 'ng-zorro-antd/typography';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 
 @Component({
   selector: 'app-discord',
@@ -32,7 +34,9 @@ import { ChannelDto } from '../../../models/channel.dto';
     NzButtonModule,
     NzInputModule,
     NzSelectModule,
+    NzPopconfirmModule,
     NzAlertModule,
+    NzTypographyModule,
     NzDividerModule,
     NzSwitchModule,
     NzIconModule
@@ -45,10 +49,13 @@ export class DiscordComponent implements OnInit {
   killfeedForm!: FormGroup;
   lockpickFeed!: FormGroup;
   discordForm!: FormGroup;
+  channelsForm!: FormGroup;
+
   tokenErrorMessage: string;
   channels: ChannelDto[] = [];
 
   isDiscordSettingsSaving = false;
+  runTemplate = false;
 
   constructor(
     private readonly authService: AuthenticationService,
@@ -76,6 +83,22 @@ export class DiscordComponent implements OnInit {
       showLockpickContainerName: [false],
       sendVipLockpickAlert: [false]
     });
+
+    this.channelsForm = this.fb.group({
+      chat: [],
+      register: [],
+      taxi: [],
+      abusePublic: [],
+      killRank: [],
+      sniperRank: [],
+      lockpickRank: [],
+      killFeed: [],
+      bunkerState: [],
+      login: [],
+      buriedChest: [],
+      mineKill: [],
+      lockpickAlert: []
+    });
   }
 
   ngOnInit() {
@@ -100,12 +123,27 @@ export class DiscordComponent implements OnInit {
     this.serverService.getDiscordServer()
       .subscribe({
         next: (guild) => {
+          this.runTemplate = guild.runTemplate;
           this.channels = guild.channels;
+
+          // this.channels.forEach((channel) => {
+          //   switch(channel.)
+          // });
         }
       });
   }
 
   save() { }
+
+  createTemplate() {
+    this.serverService.createDefaultChannels()
+      .subscribe({
+        next: (guild) => {
+          this.runTemplate = guild.runTemplate;
+          this.channels = guild.channels;
+        }
+      });
+  }
 
   saveDiscordData() {
     if (this.discordForm.invalid) {

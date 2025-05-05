@@ -37,11 +37,11 @@ namespace RagnarokBotWeb.Controllers
             return Ok(guild);
         }
 
-        [HttpPatch("discord/channels")]
-        public async Task<IActionResult> UpdateDiscordChannels(SaveDiscordChannelsDto settings)
+        [HttpPatch("discord/channels/run-template")]
+        public async Task<IActionResult> RunDiscordTemplate()
         {
-            _logger.LogInformation("Patch request to confirm discord settings");
-            GuildDto guild = await _serverService.UpdateDiscordChannels(settings);
+            _logger.LogInformation("Patch request to run default discord templates");
+            GuildDto guild = await _serverService.RunDiscordTemplate();
             return Ok(guild);
         }
 

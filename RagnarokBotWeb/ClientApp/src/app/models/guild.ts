@@ -9,4 +9,5 @@ export class GuildDto {
     serverId: number;
     discordLink?: string;
     channels: ChannelDto[];
+    runTemplate: boolean;
 }

@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using RagnarokBotWeb.Infrastructure.Seed;
 
 #nullable disable
 
@@ -19,10 +19,10 @@ namespace RagnarokBotWeb.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     EntityType = table.Column<int>(type: "integer", nullable: false),
-                    BlockDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    BlockDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Active = table.Column<bool>(type: "boolean", nullable: false),
                     Value = table.Column<string>(type: "text", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -39,7 +39,7 @@ namespace RagnarokBotWeb.Migrations
                     CategoryName = table.Column<string>(type: "text", nullable: true),
                     ChannelType = table.Column<string>(type: "text", nullable: false),
                     Admin = table.Column<bool>(type: "boolean", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -58,7 +58,7 @@ namespace RagnarokBotWeb.Migrations
                     Address = table.Column<string>(type: "text", nullable: false),
                     Port = table.Column<long>(type: "bigint", nullable: false),
                     RootFolder = table.Column<string>(type: "text", nullable: true),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -78,7 +78,7 @@ namespace RagnarokBotWeb.Migrations
                     Confirmed = table.Column<bool>(type: "boolean", nullable: false),
                     Enabled = table.Column<bool>(type: "boolean", nullable: false),
                     DiscordLink = table.Column<string>(type: "text", nullable: true),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -94,7 +94,7 @@ namespace RagnarokBotWeb.Migrations
                     Name = table.Column<string>(type: "text", nullable: false),
                     Code = table.Column<string>(type: "text", nullable: false),
                     Active = table.Column<bool>(type: "boolean", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -109,7 +109,7 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: true),
                     Enabled = table.Column<bool>(type: "boolean", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -126,7 +126,7 @@ namespace RagnarokBotWeb.Migrations
                     Command = table.Column<string>(type: "text", nullable: false),
                     Public = table.Column<bool>(type: "boolean", nullable: false),
                     ChannelTemplateId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -148,7 +148,7 @@ namespace RagnarokBotWeb.Migrations
                     GuildId = table.Column<long>(type: "bigint", nullable: false),
                     ChannelType = table.Column<string>(type: "text", nullable: false),
                     DiscordId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -184,7 +184,7 @@ namespace RagnarokBotWeb.Migrations
                     ShowLockpickSector = table.Column<bool>(type: "boolean", nullable: false),
                     ShowLockpickContainerName = table.Column<bool>(type: "boolean", nullable: false),
                     SendVipLockpickAlert = table.Column<bool>(type: "boolean", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -220,7 +220,7 @@ namespace RagnarokBotWeb.Migrations
                     PasswordSalt = table.Column<byte[]>(type: "bytea", nullable: false),
                     Active = table.Column<bool>(type: "boolean", nullable: false),
                     AccessLevel = table.Column<int>(type: "integer", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -242,7 +242,7 @@ namespace RagnarokBotWeb.Migrations
                     Label = table.Column<string>(type: "text", nullable: false),
                     Command = table.Column<string>(type: "text", nullable: false),
                     ChannelId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -263,9 +263,9 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Active = table.Column<bool>(type: "boolean", nullable: false),
                     State = table.Column<int>(type: "integer", nullable: false),
-                    LastInteracted = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LastInteracted = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -286,9 +286,9 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Sector = table.Column<string>(type: "text", nullable: false),
                     Locked = table.Column<bool>(type: "boolean", nullable: false),
-                    Available = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Available = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -321,7 +321,7 @@ namespace RagnarokBotWeb.Migrations
                     VictimY = table.Column<float>(type: "real", nullable: false),
                     VictimZ = table.Column<float>(type: "real", nullable: false),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -344,11 +344,11 @@ namespace RagnarokBotWeb.Migrations
                     SteamId64 = table.Column<string>(type: "text", nullable: false),
                     ScumId = table.Column<long>(type: "bigint", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    AttemptDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AttemptDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Success = table.Column<bool>(type: "boolean", nullable: false),
                     Attempts = table.Column<int>(type: "integer", nullable: false),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -381,7 +381,7 @@ namespace RagnarokBotWeb.Migrations
                     IsBlockPurchaseRaidTime = table.Column<bool>(type: "boolean", nullable: false),
                     IsVipOnly = table.Column<bool>(type: "boolean", nullable: false),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -404,7 +404,7 @@ namespace RagnarokBotWeb.Migrations
                     DiscordId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -438,7 +438,7 @@ namespace RagnarokBotWeb.Migrations
                     Y = table.Column<float>(type: "real", nullable: true),
                     Z = table.Column<float>(type: "real", nullable: true),
                     Coin = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -461,8 +461,8 @@ namespace RagnarokBotWeb.Migrations
                     FileName = table.Column<string>(type: "text", nullable: false),
                     FileType = table.Column<int>(type: "integer", nullable: false),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
-                    FileDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    FileDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -485,7 +485,7 @@ namespace RagnarokBotWeb.Migrations
                     Value = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
                     Processed = table.Column<bool>(type: "boolean", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -508,7 +508,7 @@ namespace RagnarokBotWeb.Migrations
                     CronExpression = table.Column<string>(type: "text", nullable: false),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -530,8 +530,8 @@ namespace RagnarokBotWeb.Migrations
                     Value = table.Column<string>(type: "text", nullable: false),
                     BotId = table.Column<long>(type: "bigint", nullable: true),
                     Executed = table.Column<bool>(type: "boolean", nullable: false),
-                    ExecuteDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ExecuteDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -553,7 +553,7 @@ namespace RagnarokBotWeb.Migrations
                     PackId = table.Column<long>(type: "bigint", nullable: false),
                     Amount = table.Column<int>(type: "integer", nullable: false),
                     AmmoCount = table.Column<int>(type: "integer", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -582,7 +582,7 @@ namespace RagnarokBotWeb.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     PlayerId = table.Column<long>(type: "bigint", nullable: true),
                     ScumServerId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -613,7 +613,7 @@ namespace RagnarokBotWeb.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    CreateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreateDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -770,8 +770,6 @@ namespace RagnarokBotWeb.Migrations
                 name: "IX_Users_TenantId",
                 table: "Users",
                 column: "TenantId");
-
-            Seeder.Seed(migrationBuilder);
         }
 
         /// <inheritdoc />

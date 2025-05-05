@@ -168,8 +168,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task AddGuild(ChangeGuildDto guildDto)
         {
-            var tenantId = TenantId();
-            if (!tenantId.HasValue) throw new UnauthorizedException("Invalid token");
+            var tenantId = TenantId()!;
 
             var tenant = await _tenantRepository.FindByIdAsync(tenantId.Value);
             if (tenant is null) throw new DomainException("Tenant not found");
@@ -199,8 +198,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<GuildDto> ConfirmDiscordToken(SaveDiscordSettingsDto settings)
         {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+            var serverId = ServerId()!;
 
             var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
@@ -241,8 +239,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<GuildDto> GetServerDiscord()
         {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+            var serverId = ServerId()!;
 
             var guild = await _guildRepository.FindOneWithScumServerAsync(g => g.ScumServer.Id == serverId.Value);
             if (guild is null) throw new DomainException("Server does not have a discord configured");
@@ -251,15 +248,18 @@ namespace RagnarokBotWeb.Domain.Services
 
             var guildDto = _mapper.Map<GuildDto>(guild);
 
-            guildDto.Channels = channels.Select(channel => new ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name }).Reverse().ToList();
+            guildDto.Channels = channels
+                .Where(channel => channel.ChannelType == Discord.ChannelType.Text)
+                .Select(channel => new ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name })
+                .Reverse()
+                .ToList();
 
             return guildDto;
         }
 
-        public async Task<GuildDto> UpdateDiscordChannels(SaveDiscordChannelsDto settings)
+        public async Task<GuildDto> RunDiscordTemplate()
         {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+            var serverId = ServerId()!;
 
             var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");

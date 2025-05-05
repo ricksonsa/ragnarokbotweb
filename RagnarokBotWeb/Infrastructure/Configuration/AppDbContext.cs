@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RagnarokBotWeb.Domain.Entities;
 
 namespace RagnarokBotWeb.Infrastructure.Configuration
@@ -31,11 +32,37 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<ScheduledTask> ScheduledTasks { get; set; }
         public DbSet<PlayerRegister> PlayerRegisters { get; set; }
 
+        public AppDbContext()
+        {
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+        }
+
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             // TODO: Load from env config
             options.UseNpgsql("Host=localhost;Database=ragnarokbot;Username=postgres;Password=ragnarokbot");
             //options.UseSqlite("Data Source=app.db");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(new ValueConverter<DateTime, DateTime>(
+                            v => v.Kind == DateTimeKind.Local ? v.ToUniversalTime() : v,
+                            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)));
+                    }
+                }
+            }
         }
 
         public void MigrateDatabase()

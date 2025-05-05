@@ -17,11 +17,15 @@ export class ServerService {
   }
 
   updateDiscordSettings(updateForm: any) {
-    return this.http.patch<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord`, updateForm);
+    return this.http.patch<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord/config`, updateForm);
   }
 
   getDiscordServer() {
     return this.http.get<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord`);
+  }
+
+  createDefaultChannels() {
+    return this.http.patch<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord/channels/run-template`, null);
   }
 
 }

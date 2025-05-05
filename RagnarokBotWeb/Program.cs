@@ -170,6 +170,7 @@ namespace RagnarokBotWeb
             builder.Services.AddMvc();
 
             var app = builder.Build();
+
             app.UseCors(DefaultCorsPolicy);
 
             app.UseMiddleware<ExceptionMiddleware>();

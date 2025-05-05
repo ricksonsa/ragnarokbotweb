@@ -22,12 +22,32 @@ public class DiscordEventService(
         client.MessageReceived += MessageReceivedAsync;
         client.InteractionCreated += InteractionCreatedAsync;
         client.JoinedGuild += OnJoinedGuildAsync;
+        client.ButtonExecuted += OnButtonExecuted;
 
         try
         {
             await Task.Delay(-1, stoppingToken);
         }
         catch (TaskCanceledException) { }
+    }
+
+    private async Task OnButtonExecuted(SocketMessageComponent component)
+    {
+        try
+        {
+            await ValidateGuildIsActiveAsync(component.GuildId ?? 0L);
+
+            var handler = messageHandlerFactory.GetHandler(component);
+            handler?.HandleAsync(component);
+
+            logger.LogTrace("Handler for message with content '{}' was not found", component.Message.Content);
+        }
+        catch (Exception e)
+        {
+            logger.LogWarning(e,
+                "Error when try process MessageReceived Action. Discord guild id = '{}', SocketMessage = '{}', ChannelType = '{}'",
+                component.GuildId, component.Message.GetType().FullName, component.Message.Channel.GetType().FullName);
+        }
     }
 
     private async Task OnJoinedGuildAsync(SocketGuild socketGuild)
@@ -44,7 +64,7 @@ public class DiscordEventService(
         // Create an embed with the confirmation token
         var embed = new EmbedBuilder()
             .WithTitle("Ragnarok Bot Discord Server Confirmation")
-            .WithDescription($"Here is your confirmation token: `{guild.Token}`.")
+            .WithDescription($"Here is your confirmation token: `{guild.Token}`")
             .WithColor(Color.Green)
             .WithTimestamp(DateTimeOffset.UtcNow)
             .Build();

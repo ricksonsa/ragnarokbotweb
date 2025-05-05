@@ -1,5 +1,7 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord;
+using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -36,7 +38,7 @@ namespace RagnarokBotWeb.Domain.Services
                 _logger.LogWarning("No guild found.");
                 throw new DomainException("No guild found");
             }
-            await ClearBefore(guild);
+            //await ClearBefore(guild);
 
             await _startupDiscordTemplate.Run(guild);
             guild.RunTemplate = true;
@@ -54,6 +56,33 @@ namespace RagnarokBotWeb.Domain.Services
             var socketGuild = _client.GetGuild(guild.DiscordId);
             foreach (var channel in socketGuild.Channels) await channel.DeleteAsync();
             foreach (var category in socketGuild.CategoryChannels) await category.DeleteAsync();
+        }
+
+        public async Task SendEmbed(CreateEmbed createEmbed)
+        {
+            var channel = _client.GetChannel(createEmbed.DiscordChannelId) as IMessageChannel;
+
+            if (channel != null)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle(createEmbed.Title)
+                    .WithDescription(createEmbed.Text)
+                    .WithImageUrl(createEmbed.ImageUrl)
+                    .WithColor(Color.Blue)
+                    .Build();
+
+                var builder = new ComponentBuilder();
+
+                createEmbed.Buttons.ForEach(button =>
+                {
+                    builder.WithButton(
+                        label: button.Label,
+                        customId: button.ActionId,
+                        style: ButtonStyle.Primary);
+                });
+
+                await channel.SendMessageAsync(embed: embed, components: builder.Build());
+            }
         }
     }
 }

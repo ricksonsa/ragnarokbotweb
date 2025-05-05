@@ -4,5 +4,6 @@
     {
         public string DiscordId { get; set; }
         public string Name { get; set; }
+        public string ChannelType { get; set; }
     }
 }

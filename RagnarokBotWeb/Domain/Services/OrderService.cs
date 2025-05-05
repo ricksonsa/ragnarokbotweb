@@ -46,25 +46,19 @@ namespace RagnarokBotWeb.Domain.Services
             return new Page<OrderDto>(page.Content.Select(_mapper.Map<OrderDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 
-        public async Task<Order?> PlaceOrder(string steamId64, long packId)
+        public async Task<Order?> PlaceOrder(string identifier, long packId)
         {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid scum server");
-
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
-            if (server is null) throw new DomainException("Scum server not found");
-
             var pack = await _packRepository.FindByIdAsync(packId);
             if (pack is null) throw new DomainException("Pack not found");
 
-            var player = await _playerRepository.FindOneAsync(u => u.SteamId64 == steamId64);
-            if (player is null) throw new DomainException("Player not found");
+            var player = await _playerRepository.FindOneWithServerAsync(u => u.SteamId64 == identifier || u.DiscordId.ToString() == identifier);
+            if (player is null) throw new NotFoundException("Player not found");
 
             var order = new Order
             {
                 Pack = pack,
                 Player = player,
-                ScumServer = server
+                ScumServer = player.ScumServer
             };
 
             await _orderRepository.CreateOrUpdateAsync(order);

@@ -7,7 +7,7 @@ namespace RagnarokBotWeb.Domain.Entities;
 public class Channel : BaseEntity
 {
     public Guild Guild { get; set; }
-    public string ChannelType { get; set; }
+    public string? ChannelType { get; set; }
     public ulong DiscordId { get; set; }
     public List<Button>? Buttons { get; set; }
 }

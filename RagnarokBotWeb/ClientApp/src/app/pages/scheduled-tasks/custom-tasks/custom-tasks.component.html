@@ -1,3 +1,125 @@
-<p>
-  custom-tasks works!
-</p>
+<nz-space nzSize="middle">
+  <button *nzSpaceItem nz-button nzType="primary" (click)="save()">
+    Save Task
+  </button>
+</nz-space>
+<br>
+<br>
+<div class="main">
+  <nz-card nzTitle="Custom Scheduled Task">
+    <form nz-form [formGroup]="taskForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Task Name*</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the name!">
+          <input formControlName="name" nz-input name="name" type="text" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="description">Description</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <textarea formControlName="description" nz-input name="description" type="text" id="description"></textarea>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="enabled">Enabled</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="isActive"></label>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="scheduledTaskType">Task Type</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select formControlName="scheduledTaskType" name="value" nzPlaceHolder="" nzAllowClear>
+            <nz-option nzLabel="Bot Commands All" nzValue="0">Bot Commands</nz-option>
+            <nz-option nzLabel="Bot Commands Select One Randomly" nzValue="1">Bot Commands</nz-option>
+            <nz-option nzLabel="Server Settings" nzValue="2">Server Settings</nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="email">Times</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          @for (time of getTimes(); track $index) {
+          <div>
+            <nz-space>
+              <p *nzSpaceItem style="margin: 0;">{{time}}</p>
+              <button style="height: 20px; width: 20px;" *nzSpaceItem nz-button nzType="default"
+                (click)="removeTime($index)">
+                <nz-icon style="font-size: 10px;" nzType="close" />
+              </button>
+            </nz-space>
+          </div>
+          }
+          <button style="margin-top: 10px;" *ngIf="!cronEditor" (click)="cronEditor = true" nz-button
+            nzType="default">Add times</button>
+
+          <div *ngIf="cronEditor" style="margin-top: 10px;">
+            <cron-editor [formControl]="cron" [options]="cronOptions"></cron-editor>
+            <nz-space>
+              <button *nzSpaceItem nz-button nzType="default" (click)="cronEditor = false">Close</button>
+              <button *nzSpaceItem nz-button nzType="primary" (click)="addTime()">Add time</button>
+            </nz-space>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="enabled">Block During Raid Time</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="blockedRaidTimes"></label>
+        </nz-form-control>
+        <p nz-typography style="margin: 0; color:#8f8f8fc2;">Determine whether this Task will be executed during raid period or not.</p>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="conditions">Conditions</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="commandsExtra">
+          <nz-input-group nzSearch nzSize="large" [nzAddOnAfter]="suffixButton">
+            <div class="group">
+              <nz-select #conditionName name="value" nzPlaceHolder="Condition Type" nzAllowClear>
+                <nz-option nzLabel="Online Player Count" nzValue="PlayerCount"></nz-option>
+              </nz-select>
+              <nz-select #conditionType name="value" nzPlaceHolder="=" nzAllowClear>
+                <nz-option nzLabel="Equals" nzValue="="></nz-option>
+                <nz-option nzLabel="Lesser Then" nzValue="<"></nz-option>
+                <nz-option nzLabel="Greater Then" nzValue=">"></nz-option>
+              </nz-select>
+              <input #conditionValue type="text" nz-input placeholder="Value" />
+            </div>
+          </nz-input-group>
+          <ng-template #suffixButton>
+            <button nz-button nzType="primary" nzSize="large" nzSearch
+              (click)="addCondition(conditionName.activatedValue, conditionType.activatedValue, conditionValue.value)">
+              Add
+            </button>
+          </ng-template>
+
+          <div *ngIf="conditions.length > 0">
+            <nz-list style="margin-top: 20px;" nzBordered="true">
+              @for (time of conditions; track $index) {
+              <nz-list-item>
+                <p style="margin: 0;">{{time}}</p>
+                <button style="height: 20px; width: 20px;" nz-button nzType="default" (click)="removeCondition($index)">
+                  <nz-icon style="font-size: 10px;" nzType="close" />
+                </button>
+              </nz-list-item>
+              }
+            </nz-list>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #commandsExtra>
+        <p>You can add conditions like online player count number requirement for this task to be executed.</p>
+      </ng-template>
+    </form>
+  </nz-card>
+
+  <nz-card *ngIf="GetCommandValuesTitle()" [nzTitle]="GetCommandValuesTitle()">
+    <form nz-form [formGroup]="taskForm">
+    </form>
+  </nz-card>
+</div>

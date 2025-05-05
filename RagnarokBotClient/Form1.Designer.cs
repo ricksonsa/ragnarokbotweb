@@ -160,9 +160,9 @@
             ServersPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             ServersPanel.Controls.Add(label1);
             ServersPanel.Controls.Add(ServerListBox);
-            ServersPanel.Location = new Point(12, 379);
+            ServersPanel.Location = new Point(12, 9);
             ServersPanel.Name = "ServersPanel";
-            ServersPanel.Size = new Size(776, 59);
+            ServersPanel.Size = new Size(776, 429);
             ServersPanel.TabIndex = 5;
             ServersPanel.Visible = false;
             // 
@@ -172,9 +172,9 @@
             label1.Font = new Font("Segoe UI", 12F);
             label1.Location = new Point(13, 27);
             label1.Name = "label1";
-            label1.Size = new Size(230, 21);
+            label1.Size = new Size(134, 21);
             label1.TabIndex = 1;
-            label1.Text = "Select a game server for the bot";
+            label1.Text = "Select your server";
             label1.Click += label1_Click;
             // 
             // ServerListBox
@@ -186,7 +186,7 @@
             ServerListBox.ItemHeight = 30;
             ServerListBox.Location = new Point(13, 68);
             ServerListBox.Name = "ServerListBox";
-            ServerListBox.Size = new Size(748, 0);
+            ServerListBox.Size = new Size(748, 362);
             ServerListBox.TabIndex = 0;
             ServerListBox.SelectedIndexChanged += ServerListBox_SelectedIndexChanged;
             // 

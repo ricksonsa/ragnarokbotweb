@@ -1,4 +1,5 @@
 ﻿using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Exceptions;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -11,18 +12,26 @@ namespace RagnarokBotWeb.Domain.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public long? TenantId()
+        public long? TenantId(bool throwWhenNull = true)
         {
             var tenantIdString = GetClaimValue("http://schemas.microsoft.com/identity/claims/tenantid");
             try { return long.Parse(tenantIdString!); }
-            catch (Exception) { return null; }
+            catch (Exception)
+            {
+                if (throwWhenNull) throw new UnauthorizedException("Invalid server id");
+                return null;
+            }
         }
 
-        public long? ServerId()
+        public long? ServerId(bool throwWhenNull = true)
         {
             var serverIdString = GetClaimValue(ClaimConstants.ServerId);
             try { return long.Parse(serverIdString!); }
-            catch (Exception) { return null; }
+            catch (Exception)
+            {
+                if (throwWhenNull) throw new UnauthorizedException("Invalid server id");
+                return null;
+            }
         }
 
         public string? UserLogin()

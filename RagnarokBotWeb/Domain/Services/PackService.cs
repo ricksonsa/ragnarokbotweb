@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -10,13 +11,13 @@ namespace RagnarokBotWeb.Domain.Services
 {
     public class PackService : BaseService, IPackService
     {
-
         private readonly ILogger<PackService> _logger;
 
         private readonly IPackRepository _packRepository;
         private readonly IPackItemRepository _packItemRepository;
         private readonly IItemRepository _itemRepository;
         private readonly IScumServerRepository _scumServerRepository;
+        private readonly IDiscordService _discordService;
         private readonly IMapper _mapper;
 
         public PackService(
@@ -26,7 +27,8 @@ namespace RagnarokBotWeb.Domain.Services
             IPackItemRepository packItemRepository,
             IItemRepository itemRepository,
             IMapper mapper,
-            IScumServerRepository scumServerRepository) : base(httpContextAccessor)
+            IScumServerRepository scumServerRepository,
+            IDiscordService discordService) : base(httpContextAccessor)
         {
             _logger = logger;
             _packRepository = packRepository;
@@ -34,6 +36,7 @@ namespace RagnarokBotWeb.Domain.Services
             _itemRepository = itemRepository;
             _mapper = mapper;
             _scumServerRepository = scumServerRepository;
+            _discordService = discordService;
         }
 
         public async Task<PackDto> CreatePackAsync(PackDto createPack)
@@ -50,7 +53,7 @@ namespace RagnarokBotWeb.Domain.Services
             await _packRepository.AddAsync(pack);
             await _packRepository.SaveAsync();
 
-            createPack.Items.ForEach(async item =>
+            foreach (var item in createPack.Items)
             {
                 var packItem = new PackItem
                 {
@@ -60,8 +63,20 @@ namespace RagnarokBotWeb.Domain.Services
                 };
 
                 await _packItemRepository.AddAsync(packItem);
-                await _packItemRepository.SaveAsync();
-            });
+            }
+            await _packItemRepository.SaveAsync();
+
+            if (!string.IsNullOrEmpty(pack.DiscordChannelId))
+            {
+                var action = $"buy_package:{pack.Id}";
+                await _discordService.SendEmbed(new CreateEmbed
+                {
+                    Buttons = [new("Buy", action)],
+                    DiscordChannelId = ulong.Parse(pack.DiscordChannelId),
+                    Text = pack.Description,
+                    Title = pack.Name
+                });
+            }
 
             return _mapper.Map<PackDto>(pack);
         }
@@ -71,7 +86,7 @@ namespace RagnarokBotWeb.Domain.Services
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
 
-            var server = await _scumServerRepository.FindActiveById(id);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new UnauthorizedException("Invalid server");
 
             var pack = await _packRepository.FindByIdAsync(id);

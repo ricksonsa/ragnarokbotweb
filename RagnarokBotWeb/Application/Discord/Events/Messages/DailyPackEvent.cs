@@ -9,4 +9,9 @@ public class DailyPackEvent : IMessageEventHandler
     {
         return message.Channel.SendMessageAsync("Daily Pack Event");
     }
+
+    public Task HandleAsync(SocketMessageComponent message)
+    {
+        return message.Channel.SendMessageAsync("Daily Pack Event");
+    }
 }

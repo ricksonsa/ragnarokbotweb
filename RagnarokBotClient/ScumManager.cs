@@ -9,6 +9,7 @@ namespace RagnarokBotClient
         public static CancellationToken Token;
         private const string ChatKey = "u";
 
+
         private static Task RunCommand(string command)
         {
             if (!User32.BringWindowToForeground()) { return Task.CompletedTask; }
@@ -39,6 +40,13 @@ namespace RagnarokBotClient
             SendKeys.SendWait("{enter}{escape}");
 
             Task.Delay(Delay).Wait();
+            return Task.CompletedTask;
+        }
+
+        public static Task Start()
+        {
+            if (!User32.ReconnectToServer()) { return Task.CompletedTask; }
+
             return Task.CompletedTask;
         }
 
@@ -136,8 +144,87 @@ namespace RagnarokBotClient
 
         private class User32
         {
+            [StructLayout(LayoutKind.Sequential)]
+            public struct RECT
+            {
+                public int Left;
+                public int Top;
+                public int Right;
+                public int Bottom;
+            }
+
             [DllImport("user32.dll")]
             static extern bool SetForegroundWindow(IntPtr hWnd);
+
+            [DllImport("user32.dll")]
+            static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+
+            [DllImport("user32.dll", SetLastError = true)]
+            static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+            // Mouse
+
+            [DllImport("user32.dll")]
+            static extern bool SetCursorPos(int X, int Y);
+
+            [DllImport("user32.dll")]
+            static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+            [DllImport("user32.dll")]
+            static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
+
+            private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+            private const uint MOUSEEVENTF_LEFTUP = 0x0004;
+
+            internal static bool ReconnectToServer()
+            {
+                Process[] procs = Process.GetProcessesByName("SCUM");
+                if (procs.Length > 0)
+                {
+                    if (procs[0].MainWindowHandle != IntPtr.Zero)
+                    {
+                        MoveWindow(procs[0].MainWindowHandle, 0, 0, 800, 600, false);
+                        SetForegroundWindow(procs[0].MainWindowHandle);
+
+                        if (GetWindowRect(procs[0].MainWindowHandle, out RECT rect))
+                        {
+                            int centerX = (rect.Left + rect.Right) / 2;
+                            int centerY = (rect.Top + rect.Bottom) / 2;
+
+                            SetCursorPos(centerX, centerY);
+
+                            Thread.Sleep(3000); // Optional delay
+
+                            // Click ok on the center of the screen
+                            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
+                            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
+
+                            Thread.Sleep(5000); // Optional delay
+
+                            SetCursorPos(centerX - 300, centerY + 80);
+
+                            Thread.Sleep(2000); // Optional delay
+
+                            // Click continue
+                            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
+                            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
+                        }
+
+                        return true;
+                    }
+                    return false;
+                }
+                else
+                {
+                    Logger.LogWrite($"Couldnt find SCUM Window.");
+                    return false;
+                }
+            }
+
+            private static void User32_Exited(object? sender, EventArgs e)
+            {
+                throw new NotImplementedException();
+            }
 
             internal static bool BringWindowToForeground()
             {

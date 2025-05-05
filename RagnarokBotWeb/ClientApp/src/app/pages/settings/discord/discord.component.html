@@ -96,21 +96,45 @@
     <button nz-button [disabled]="!account?.server.discord" nzType="primary" (click)="save()">Save</button>
   </ng-template>
   <nz-card [nzTitle]="channelSelections" [nzExtra]="saveChannels">
-    <form nz-form *ngIf="account?.server.discord; else noDiscord">
+
+    <form nz-form [formGroup]="channelsForm" *ngIf="account?.server.discord; else noDiscord">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0">Create channels</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="defaultChannelsDisclaimer">
+          <button nz-button nz-popconfirm (nzOnConfirm)="createTemplate()"
+            nzPopconfirmTitle="Warning this will replace all the channels you already have set bellow. Are you sure of that?"
+            nzOkText="Yes" nzCancelText="No" [disabled]="runTemplate" nzType="primary">Create Default Channels</button>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #defaultChannelsDisclaimer>
+        <p style="margin-top: 10px;">This will create all default channels for logs and interactions on your Discord
+          server. <span nz-typography nzType="danger">Warning this will replace all the channels you already have set
+            bellow.</span></p>
+      </ng-template>
+
       <nz-divider nzText="Interactable Channels"></nz-divider>
       <br>
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Admin Commands Channel</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="chat">Chat Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="gender" nzPlaceHolder="Select a game hosting service provider">
+          <nz-select id="chat" formControlName="chat" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Commands Channel</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="register">Welcome Pack (Discord Register)</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="gender" nzPlaceHolder="Select a game hosting service provider">
+          <nz-select id="register" formControlName="register" nzPlaceHolder="Select a discord channel">
+            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="taxi">Taxi</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="taxi" formControlName="taxi" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>>
           </nz-select>
         </nz-form-control>
@@ -119,37 +143,91 @@
       <nz-divider nzText="Log Channels"></nz-divider>
       <br>
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">No Admin Abuse Channel</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="abusePublic">No Admin Abuse Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="gender" nzPlaceHolder="Select a game hosting service provider">
-            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          <nz-select id="abusePublic" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="abusePublic" [nzValue]="null" nzLabel="Disabled"></nz-option>>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Chat Channel</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="killRank">Kill Feed</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="gender" nzPlaceHolder="Select a game hosting service provider">
-            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          <nz-select id="killRank" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="killRank" [nzValue]="null" nzLabel="Disabled"></nz-option>>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Admin Alert Channel</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="sniperRank">Sniper Rank</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="gender" nzPlaceHolder="Select a game hosting service provider">
-            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          <nz-select id="sniperRank" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="sniperRank" [nzValue]="null" nzLabel="Disabled"></nz-option>>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="email">Login Channel</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="killRank">Kille Rank</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="gender" nzPlaceHolder="Select a game hosting service provider">
-            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          <nz-select id="killRank" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="killRank" [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="lockpickRank">Lockpick Rank</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="lockpickRank" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="lockpickRank" [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="bunkerState">Bunker State</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="bunkerState" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="bunkerState" [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="login">Login</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="login" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="login" [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="buriedChest">Buried Chest</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="buriedChest" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="buriedChest" [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="mineKill">Mine Kill</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="mineKill" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="mineKill" [nzValue]="null" nzLabel="Disabled"></nz-option>>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="lockpickAlert">Lockpick Alert</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="lockpickAlert" nzPlaceHolder="Select a discord channel">
+            <nz-option formControlName="lockpickAlert" [nzValue]="null" nzLabel="Disabled"></nz-option>>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -255,7 +333,8 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #lockpickAttempt>
-        <p>Notify when someone is attempting to lockpick a player lock in the selected Lockpick Alert Discord channel.</p>
+        <p>Notify when someone is attempting to lockpick a player lock in the selected Lockpick Alert Discord channel.
+        </p>
       </ng-template>
 
       <nz-form-item>
