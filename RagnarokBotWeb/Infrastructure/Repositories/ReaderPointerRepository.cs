@@ -1,8 +1,8 @@
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories;
 
@@ -14,13 +14,27 @@ public class ReaderPointerRepository(AppDbContext dbContext)
     public override async Task<ReaderPointer?> FindOneAsync(Expression<Func<ReaderPointer, bool>> predicate)
     {
         return await _dbContext.ReaderPointers
-            .Include(x => x.ScumServer)
+            //.Include(x => x.ScumServer)
             .FirstOrDefaultAsync(predicate);
     }
 
-    public override Task CreateOrUpdateAsync(ReaderPointer entity)
+    public override async Task CreateOrUpdateAsync(ReaderPointer entity)
     {
-        _dbContext.ScumServers.Attach(entity.ScumServer);
-        return base.CreateOrUpdateAsync(entity);
+        if (entity.ScumServer is not null)
+        {
+            var tracked = _dbContext.ChangeTracker.Entries<ScumServer>()
+                .FirstOrDefault(e => e.Entity.Id == entity.ScumServer.Id);
+
+            if (tracked == null)
+            {
+                _dbContext.ScumServers.Attach(entity.ScumServer);
+            }
+            else
+            {
+                entity.ScumServer = tracked.Entity;
+            }
+        }
+
+        await base.CreateOrUpdateAsync(entity);
     }
 }

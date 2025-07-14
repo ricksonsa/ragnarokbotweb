@@ -32,9 +32,6 @@ public class ChatJob(
         var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository, scumServerRepository, readerRepository);
         await foreach (var line in processor.UnreadFileLinesAsync())
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            // await publisher.Publish(server, new ChannelPublishDto { Content = line }, ChannelTemplateValues.GameChat);
-
             var parsed = new ChatTextParser().Parse(line);
             if (parsed is null)
             {
@@ -51,6 +48,8 @@ public class ChatJob(
             {
                 await chatCommandHandler.ExecuteAsync(parsed);
             }
+
+            // await publisher.Publish(server, new ChannelPublishDto { Content = line }, ChannelTemplateValues.GameChat);
         }
     }
 }

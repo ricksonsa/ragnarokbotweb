@@ -34,9 +34,12 @@ namespace RagnarokBotWeb.Application.Handlers
                 if (register is null) return;
 
                 var player = await _playerRepository.FindOneAsync(p => p.SteamId64 == input.SteamId);
+                if (player?.DiscordId != null) return;
+
                 player ??= new();
                 player.SteamId64 = input.SteamId;
                 player.SteamName = await new SteamAccountResolver().Resolve(input.SteamId);
+                player.Name = input.PlayerName;
                 player.DiscordName = _discordService.GetDiscordUserName(register.DiscordId);
                 player.DiscordId = register.DiscordId;
                 player.ScumServer = register.ScumServer;
@@ -47,6 +50,7 @@ namespace RagnarokBotWeb.Application.Handlers
                 await _discordService.SendEmbedToUserDM(new CreateEmbed
                 {
                     DiscordId = register.DiscordId,
+                    Title = "Welcome Pack",
                     Text = $"Você foi registrado no servidor {register.ScumServer.Name}, aguarde no local para receber seu Welcome Pack {DiscordEmoji.Gift}",
                 });
             }

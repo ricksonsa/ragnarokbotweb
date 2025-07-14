@@ -26,7 +26,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             Players = context.Players;
             Lockpicks = context.Lockpicks;
             Bunkers = context.Bunkers;
-            Readings = context.Readings;
             ReaderPointers = context.ReaderPointers;
             Kills = context.Kills;
             Bots = context.Bots;

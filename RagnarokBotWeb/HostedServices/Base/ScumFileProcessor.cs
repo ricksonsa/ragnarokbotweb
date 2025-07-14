@@ -92,6 +92,7 @@ public class ScumFileProcessor
                 lineNumber++;
 
                 if (pointer.LineNumber >= lineNumber) continue;
+                if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line) || line.Contains("Game version")) continue;
 
                 yield return line;
             }

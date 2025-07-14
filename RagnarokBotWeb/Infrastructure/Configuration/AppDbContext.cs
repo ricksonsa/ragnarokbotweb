@@ -9,7 +9,6 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Player> Players { get; set; }
         public DbSet<Lockpick> Lockpicks { get; set; }
         public DbSet<Bunker> Bunkers { get; set; }
-        public DbSet<Reader> Readings { get; set; }
         public DbSet<ReaderPointer> ReaderPointers { get; set; }
         public DbSet<Bot> Bots { get; set; }
         public DbSet<Kill> Kills { get; set; }
