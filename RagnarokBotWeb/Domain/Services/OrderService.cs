@@ -14,7 +14,6 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ILogger<OrderService> _logger;
         private readonly IOrderRepository _orderRepository;
         private readonly IPackRepository _packRepository;
-        private readonly IScumServerRepository _scumServerRepository;
         private readonly IPlayerRepository _playerRepository;
         private readonly IMapper _mapper;
 
@@ -24,14 +23,12 @@ namespace RagnarokBotWeb.Domain.Services
             IOrderRepository orderRepository,
             IPackRepository packRepository,
             IPlayerRepository userRepository,
-            IScumServerRepository scumServerRepository,
             IMapper mapper) : base(contextAccessor)
         {
             _logger = logger;
             _orderRepository = orderRepository;
             _packRepository = packRepository;
             _playerRepository = userRepository;
-            _scumServerRepository = scumServerRepository;
             _mapper = mapper;
         }
 

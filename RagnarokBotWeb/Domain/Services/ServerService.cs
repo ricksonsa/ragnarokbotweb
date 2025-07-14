@@ -62,13 +62,28 @@ namespace RagnarokBotWeb.Domain.Services
             var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
             if (server is null) throw new DomainException("ScumServer not found");
 
-            var newFtp = new Ftp();
-            newFtp.Address = ftpDto.Address;
-            newFtp.Port = ftpDto.Port;
-            newFtp.UserName = ftpDto.UserName;
-            newFtp.Password = ftpDto.Password;
-            newFtp.Provider = ftpDto.Provider;
-            newFtp.RootFolder = newFtp.GetRootFolder();
+            string rootPath;
+            try
+            {
+                var files = await new FtpScanner($"{ftpDto.Address}", ftpDto.UserName, ftpDto.Password).FindServerSettingsFilesAsync("SCUM");
+                if (files is null || files.Count == 0) throw new DomainException("Invalid ftp server");
+                rootPath = files.FirstOrDefault()!;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw new DomainException("Invalid ftp server");
+            }
+
+            var newFtp = new Ftp
+            {
+                Address = ftpDto.Address,
+                Port = ftpDto.Port,
+                UserName = ftpDto.UserName,
+                Password = ftpDto.Password,
+                Provider = ftpDto.Provider,
+                RootFolder = rootPath
+            };
 
             server.Name = GetServerConfigLineValue(newFtp, "ServerName");
 
@@ -93,7 +108,7 @@ namespace RagnarokBotWeb.Domain.Services
             try
             {
                 var client = _ftpService.GetClient(ftp);
-                using (var stream = client.OpenRead($"{ftp.RootFolder}Configs/ServerSettings.ini", FtpDataType.ASCII))
+                using (var stream = client.OpenRead($@"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini", FtpDataType.ASCII))
                 using (var reader = new StreamReader(stream))
                 {
                     string line;
@@ -123,7 +138,7 @@ namespace RagnarokBotWeb.Domain.Services
             try
             {
                 string tempLocalPath = "temp_file.txt"; // Temporary local file
-                string remoteFilePath = $"{ftp.RootFolder}/Configs/ServerSettings.ini";
+                string remoteFilePath = $"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini";
 
                 using (FtpClient client = _ftpService.GetClient(ftp))
                 {

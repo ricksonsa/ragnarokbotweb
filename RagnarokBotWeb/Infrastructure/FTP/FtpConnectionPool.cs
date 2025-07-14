@@ -58,9 +58,7 @@ public class FtpConnectionPool : IDisposable
 
         var client = FtpClientFactory.CreateClient(ftp);
 
-        _pools.TryAdd(key, [
-            (client, DateTime.UtcNow)
-        ]);
+        _pools.TryAdd(key, [(client, DateTime.UtcNow)]);
 
         return client;
     }

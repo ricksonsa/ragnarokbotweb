@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "[INFO] Dropping database"
+dotnet ef database drop -y
+
 echo "[INFO] Deleting app.db"
 rm -rf app.db
 

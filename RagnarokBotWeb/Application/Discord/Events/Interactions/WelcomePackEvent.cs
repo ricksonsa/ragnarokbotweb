@@ -1,5 +1,6 @@
 using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord.Handlers;
+using RagnarokBotWeb.Crosscutting.Utils;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -50,7 +51,7 @@ public class WelcomePackEvent : IInteractionEventHandler
                 return;
             }
 
-            var registerId = Guid.NewGuid();
+            var registerId = StringUtils.RandomNumericString(20)!;
 
             var newPlayerRegister = new PlayerRegister
             {
@@ -86,13 +87,13 @@ public class WelcomePackEvent : IInteractionEventHandler
                 "Vi que você já pediu o Welcome Pack e ainda não colou o código no chat do jogo. " +
                 $"Copie e cole o código {BuildWelcomePackCommand(playerRegister.WelcomePackId)} no chat do jogo!",
             EPlayerRegisterStatus.Registered =>
-                $"Vi que você pediu um novo Welcome Pack, infelizmente nao posso te ajudar {DiscordEmoji.Pensive}.",
+                $"Vi que você pediu um novo Welcome Pack, infelizmente não posso te ajudar {DiscordEmoji.Pensive}.",
             _ => throw new ArgumentOutOfRangeException(nameof(status), $"Unexpected player register status: {status}.")
         };
     }
 
-    private static string BuildWelcomePackCommand(Guid registerId)
+    private static string BuildWelcomePackCommand(string registerId)
     {
-        return "!WelcomePack_" + registerId;
+        return "!welcomepack" + registerId;
     }
 }

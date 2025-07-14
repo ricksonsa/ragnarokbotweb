@@ -85,8 +85,7 @@ export class ServerComponent implements OnInit {
       userName: [null, [Validators.required]],
       password: [null, [Validators.required]],
       address: [null, [Validators.required]],
-      port: [null, [Validators.required]],
-      provider: [null, [Validators.required]]
+      port: [null, [Validators.required]]
     });
   }
 

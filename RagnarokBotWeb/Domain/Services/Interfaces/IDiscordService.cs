@@ -6,6 +6,8 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     public interface IDiscordService
     {
         Task<Guild> CreateChannelTemplates(long serverId);
-        Task SendEmbed(CreateEmbed createEmbed);
+        Task SendEmbedToChannel(CreateEmbed createEmbed);
+        Task SendEmbedToUserDM(CreateEmbed createEmbed);
+        string GetDiscordUserName(ulong discordId);
     }
 }

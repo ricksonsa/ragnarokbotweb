@@ -10,6 +10,14 @@ public class PlayerRegisterRepository(AppDbContext appDbContext)
 {
     private readonly AppDbContext _appDbContext = appDbContext;
 
+    public async Task<PlayerRegister?> FindOneWithServerByWelcomeIdAsync(string welcomeId)
+    {
+        return await _appDbContext.PlayerRegisters
+            .Include(register => register.ScumServer)
+            .Where(register => register.WelcomePackId == welcomeId)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<PlayerRegister?> FindByGuildIdAndDiscordIdAsync(long guildId, ulong discordId)
     {
         return await _appDbContext.PlayerRegisters

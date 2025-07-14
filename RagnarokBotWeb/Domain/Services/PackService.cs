@@ -69,10 +69,10 @@ namespace RagnarokBotWeb.Domain.Services
             if (!string.IsNullOrEmpty(pack.DiscordChannelId))
             {
                 var action = $"buy_package:{pack.Id}";
-                await _discordService.SendEmbed(new CreateEmbed
+                await _discordService.SendEmbedToChannel(new CreateEmbed
                 {
                     Buttons = [new("Buy", action)],
-                    DiscordChannelId = ulong.Parse(pack.DiscordChannelId),
+                    DiscordId = ulong.Parse(pack.DiscordChannelId),
                     Text = pack.Description,
                     Title = pack.Name
                 });

@@ -27,6 +27,10 @@ namespace RagnarokBotWeb.Domain.Services
             _logger = logger;
         }
 
+        private static ITrigger OneMinTrigger() => TriggerBuilder.Create()
+                         .WithCronSchedule(AppSettingsStatic.OneMinCron)
+                         .Build();
+
         private static ITrigger TwoMinTrigger() => TriggerBuilder.Create()
                             .WithCronSchedule(AppSettingsStatic.TwoMinCron)
                             .Build();
@@ -68,6 +72,8 @@ namespace RagnarokBotWeb.Domain.Services
                  .UsingJobData("server_id", server.Id)
                  .Build();
             await scheduler.ScheduleJob(job, TwentySecondsTrigger());
+
+            _logger.LogInformation("Loaded server tasks for server id {}", server.Id);
         }
 
         private async Task ScheduleFtpServerTasks(ScumServer server, CancellationToken cancellationToken = default)
@@ -79,35 +85,37 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Chat.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            await scheduler.ScheduleJob(job, OneMinTrigger());
 
-            job = JobBuilder.Create<KillLogJob>()
-                   .WithIdentity($"KillLogJob({server.Id})")
-                   .UsingJobData("server_id", server.Id)
-                   .UsingJobData("file_type", EFileType.Kill.ToString())
-                   .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            //job = JobBuilder.Create<KillLogJob>()
+            //       .WithIdentity($"KillLogJob({server.Id})")
+            //       .UsingJobData("server_id", server.Id)
+            //       .UsingJobData("file_type", EFileType.Kill.ToString())
+            //       .Build();
+            //await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<EconomyJob>()
-                .WithIdentity($"EconomyJob({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("file_type", EFileType.Economy.ToString())
-                .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            //job = JobBuilder.Create<EconomyJob>()
+            //    .WithIdentity($"EconomyJob({server.Id})")
+            //    .UsingJobData("server_id", server.Id)
+            //    .UsingJobData("file_type", EFileType.Economy.ToString())
+            //    .Build();
+            //await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<GamePlayJob>()
-                .WithIdentity($"GamePlayJob({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("file_type", EFileType.Gameplay.ToString())
-                .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            //job = JobBuilder.Create<GamePlayJob>()
+            //    .WithIdentity($"GamePlayJob({server.Id})")
+            //    .UsingJobData("server_id", server.Id)
+            //    .UsingJobData("file_type", EFileType.Gameplay.ToString())
+            //    .Build();
+            //await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            job = JobBuilder.Create<LoginJob>()
-                .WithIdentity($"LoginJob({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("file_type", EFileType.Login.ToString())
-                .Build();
-            await scheduler.ScheduleJob(job, DefaultTrigger());
+            //job = JobBuilder.Create<LoginJob>()
+            //    .WithIdentity($"LoginJob({server.Id})")
+            //    .UsingJobData("server_id", server.Id)
+            //    .UsingJobData("file_type", EFileType.Login.ToString())
+            //    .Build();
+            //await scheduler.ScheduleJob(job, DefaultTrigger());
+
+            _logger.LogInformation("Loaded ftp tasks for server id {}", server.Id);
         }
 
         public async Task NewServerAddedAsync(ScumServer server)

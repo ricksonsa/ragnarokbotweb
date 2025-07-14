@@ -6,16 +6,6 @@
   <nz-card [nzTitle]="ftp" [nzExtra]="saveFtpTemplate">
     <form nz-form [formGroup]="ftpForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="provider">Provider</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please select your FTP Provider!">
-          <nz-select formControlName="provider" id="provider" nzPlaceHolder="Select a game hosting service provider">
-            <nz-option [nzValue]="0" nzLabel="PingPerfect"></nz-option>
-            <nz-option [nzValue]="1" nzLabel="GGHosting"></nz-option>
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="address">IP Address</nz-form-label>
         <nz-form-control nzErrorTip="Please input your FTP IP Address!" [nzSpan]="24">
           <input formControlName="address" nz-input name="address" type="text" id="address" />

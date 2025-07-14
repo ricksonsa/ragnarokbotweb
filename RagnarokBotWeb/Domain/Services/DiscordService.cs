@@ -58,9 +58,51 @@ namespace RagnarokBotWeb.Domain.Services
             foreach (var category in socketGuild.CategoryChannels) await category.DeleteAsync();
         }
 
-        public async Task SendEmbed(CreateEmbed createEmbed)
+        public string GetDiscordUserName(ulong discordId)
         {
-            var channel = _client.GetChannel(createEmbed.DiscordChannelId) as IMessageChannel;
+            var user = _client.GetUser(discordId);
+            if (user is null)
+            {
+                return null;
+            }
+
+            return user.Username;
+        }
+
+        public async Task SendEmbedToUserDM(CreateEmbed createEmbed)
+        {
+            var user = _client.GetUser(createEmbed.DiscordId);
+            if (user is null)
+            {
+                _logger.LogInformation("User with discordId: {} was not found", createEmbed.DiscordId);
+                return;
+            }
+
+            var dmChannel = await user.CreateDMChannelAsync();
+
+            var embed = new EmbedBuilder()
+                .WithTitle(createEmbed.Title)
+                .WithDescription(createEmbed.Text)
+                .WithImageUrl(createEmbed.ImageUrl)
+                .WithColor(Color.Blue)
+                .Build();
+
+            var builder = new ComponentBuilder();
+
+            createEmbed.Buttons.ForEach(button =>
+            {
+                builder.WithButton(
+                    label: button.Label,
+                    customId: button.ActionId,
+                    style: ButtonStyle.Primary);
+            });
+
+            await dmChannel.SendMessageAsync(embed: embed, components: builder.Build());
+        }
+
+        public async Task SendEmbedToChannel(CreateEmbed createEmbed)
+        {
+            var channel = _client.GetChannel(createEmbed.DiscordId) as IMessageChannel;
 
             if (channel != null)
             {

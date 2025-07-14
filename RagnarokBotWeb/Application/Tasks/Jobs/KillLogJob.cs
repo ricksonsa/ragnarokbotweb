@@ -6,45 +6,35 @@ using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs;
 
-public class KillLogJob : AbstractJob, IJob
-{
-    private readonly IFtpService _ftpService;
-    private readonly ILogger<KillLogJob> _logger;
-    private readonly IPlayerRepository _playerRepository;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IUnitOfWork _unitOfWork;
 
-    public KillLogJob(
-        ILogger<KillLogJob> logger,
-        IFtpService ftpService,
-        IScumServerRepository scumServerRepository,
-        IPlayerRepository playerRepository,
-        IUnitOfWork unitOfWork,
-        IServiceProvider serviceProvider) : base(scumServerRepository)
-    {
-        _logger = logger;
-        _playerRepository = playerRepository;
-        _unitOfWork = unitOfWork;
-        _ftpService = ftpService;
-        _serviceProvider = serviceProvider;
-    }
+public class KillLogJob(
+ILogger<KillLogJob> logger,
+IScumServerRepository scumServerRepository,
+IUnitOfWork unitOfWork,
+IReaderPointerRepository readerPointerRepository,
+IPlayerRepository playerRepository,
+IReaderRepository readerRepository,
+IFtpService ftpService
+) : AbstractJob(scumServerRepository), IJob
+{
 
     public async Task Execute(IJobExecutionContext context)
     {
         try
         {
-            _logger.LogInformation("Triggered KillLogJob->Execute at: {time}", DateTimeOffset.Now);
+            logger.LogInformation("Triggered KillLogJob->Execute at: {time}", DateTimeOffset.Now);
 
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(_serviceProvider, _ftpService, server, fileType);
-            var lines = await processor.ProcessUnreadFileLines();
+            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository, scumServerRepository, readerRepository);
+            List<string> lines = [];
 
-            var resolvedLines = lines
-                .Where(line => !line.Contains("Game version") || !string.IsNullOrWhiteSpace(line));
-
-            using var enumerator = resolvedLines.GetEnumerator();
+            await foreach (var line in processor.UnreadFileLinesAsync())
+            {
+                lines.Add(line);
+            }
+            using var enumerator = lines.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 var first = enumerator.Current;
@@ -53,17 +43,17 @@ public class KillLogJob : AbstractJob, IJob
 
                 if (string.IsNullOrWhiteSpace(first) && second.Contains("Game version")) continue;
 
-                var players = await _playerRepository.GetAllByServerId(server.Id);
+                var players = await playerRepository.GetAllByServerId(server.Id);
                 var kill = new KillLogParser(server).Parse(first, second);
-                _logger.Log(LogLevel.Information, "Adding new kill entry: {} -> {}", kill.KillerName, kill.TargetName);
-                _unitOfWork.ScumServers.Attach(server);
-                await _unitOfWork.Kills.AddAsync(kill);
-                await _unitOfWork.SaveAsync();
+                logger.Log(LogLevel.Information, "Adding new kill entry: {} -> {}", kill.KillerName, kill.TargetName);
+                unitOfWork.ScumServers.Attach(server);
+                await unitOfWork.Kills.AddAsync(kill);
+                await unitOfWork.SaveAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            logger.LogError(ex.Message);
         }
     }
 }

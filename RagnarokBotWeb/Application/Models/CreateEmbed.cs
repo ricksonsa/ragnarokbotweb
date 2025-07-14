@@ -2,7 +2,7 @@
 {
     public class CreateEmbed
     {
-        public ulong DiscordChannelId { get; set; }
+        public ulong DiscordId { get; set; }
         public string Title { get; set; }
         public string Text { get; set; }
         public string ImageUrl { get; set; }

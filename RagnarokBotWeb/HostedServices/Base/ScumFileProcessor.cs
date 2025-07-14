@@ -4,6 +4,7 @@ using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using System.Diagnostics;
 using System.Text;
 
 namespace RagnarokBotWeb.HostedServices.Base;
@@ -15,8 +16,9 @@ public class ScumFileProcessor
         server => Path.Combine(Path.GetTempPath(), "ragnarok", server, "ftp_files");
 
     private readonly ILogger<ScumFileProcessor> _logger;
-
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IReaderPointerRepository _readerPointerRepository;
+    private readonly IReaderRepository _readerRepository;
+    private readonly IScumServerRepository _scumServerRepository;
     private readonly IFtpService _ftpService;
 
     private readonly ScumServer _scumServer;
@@ -24,74 +26,80 @@ public class ScumFileProcessor
     private readonly Ftp _ftp;
 
     public ScumFileProcessor(
-        IServiceProvider serviceProvider,
         IFtpService ftpService,
         ScumServer server,
-        EFileType fileType
-    )
+        EFileType fileType,
+        IReaderPointerRepository readerPointerRepository,
+        IScumServerRepository scumServerRepository,
+        IReaderRepository readerRepository)
     {
         _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ScumFileProcessor>();
-        _serviceProvider = serviceProvider;
+        _readerPointerRepository = readerPointerRepository;
         _ftpService = ftpService;
         _scumServer = server;
         _fileType = fileType;
         _ftp = server.Ftp!;
+        _scumServerRepository = scumServerRepository;
+        _readerRepository = readerRepository;
     }
 
-    public async Task<IList<string>> ProcessUnreadFileLines()
+    public async IAsyncEnumerable<string> UnreadFileLinesAsync()
     {
-        _logger.LogInformation("{}->Execute ProcessUnreadFileLines for server: {}", _fileType, _scumServer.Id);
+        _logger.LogInformation("{} -> Executing ProcessUnreadFileLines for server: {}", _fileType, _scumServer.Id);
 
         var client = _ftpService.GetClient(_ftp);
         var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
-        var ftpFileNames = GetLogFiles(client, _ftp.RootFolder, today, _fileType);
 
-        if (ftpFileNames.Count == 0)
+        var ftpFiles = GetLogFiles(client, _ftp.RootFolder, today, _fileType);
+
+        // Filter files with no changes in size
+        List<(FtpListItem, ReaderPointer?)> filteredFiles = [];
+        foreach (var file in ftpFiles)
         {
-            _logger.LogWarning("No files found, ignoring ProcessUnreadFileLines process.");
-            return [];
+            var pointer = await _readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
+            if (pointer == null || pointer.FileSize != file.Size)
+            {
+                filteredFiles.Add((file, pointer));
+            }
+        }
+
+        if (filteredFiles.Count == 0)
+        {
+            _logger.LogWarning("No unread or updated files found. Skipping ProcessUnreadFileLines.");
+            yield break;
         }
 
         var localPath = GetLocalPath();
         Directory.CreateDirectory(localPath);
 
-        var pointer = await GetReaderPointer();
-        var ftpUnreadFileNames = GetUnreadFiles(pointer, ftpFileNames, today);
+        // Download required files
+        _ftpService.CopyFiles(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList());
 
-        if (ftpUnreadFileNames.Count == 0)
+        var allLines = new List<string>();
+        foreach (var file in filteredFiles)
         {
-            _logger.LogWarning("No files unread found, ignoring ProcessUnreadFileLines process.");
-            return [];
-        }
+            var filePath = Path.Combine(localPath, file.Item1.Name);
+            var pointer = file.Item2 ?? BuildReaderPointer(filePath);
 
-        _ftpService.CopyFiles(client, localPath, GetFilePaths(_ftp.RootFolder, ftpUnreadFileNames));
+            var filename = Path.GetFileName(filePath);
+            _logger.LogInformation("{} -> Reading file: {}", _fileType, filename);
 
-        List<string> allLines = [];
+            int lineNumber = 0;
+            using var reader = new StreamReader(filePath, Encoding.Unicode);
 
-        var index = 0;
-        do
-        {
-            var filename = ftpUnreadFileNames[index];
-            var filepath = Path.Combine(localPath, filename);
-
-            pointer ??= BuildReaderPointer(filepath);
-
-            if (pointer.FileName != filename)
+            while (await reader.ReadLineAsync() is { } line)
             {
-                pointer.FileName = filename;
-                pointer.LineNumber = 0;
-                pointer.FileDate = ScumUtils.ParseDateTime(filename);
+                lineNumber++;
+
+                if (pointer.LineNumber >= lineNumber) continue;
+
+                yield return line;
             }
 
-            var lines = await ReadFileLines(pointer, filepath);
-            allLines.AddRange(lines);
-
-            index++;
-
-            pointer = await GetReaderPointer();
-        } while (ftpUnreadFileNames.Count > index);
-
-        return allLines;
+            pointer.LineNumber = lineNumber;
+            await _readerPointerRepository.CreateOrUpdateAsync(pointer);
+            await _readerPointerRepository.SaveAsync();
+        }
     }
 
     private string GetLocalPath()
@@ -99,93 +107,41 @@ public class ScumFileProcessor
         return LocalPathFunc.Invoke($"server_{_scumServer.Id}");
     }
 
-    private async Task<IList<string>> ReadFileLines(ReaderPointer pointer, string filepath)
-    {
-        var filename = Path.GetFileName(filepath);
-
-        _logger.LogInformation("{}->Execute Reading file: {}", _fileType, filename);
-
-        using var reader = new StreamReader(filepath, Encoding.Unicode);
-
-        var lines = new List<string>();
-        var lineNumber = 0;
-
-        while (await reader.ReadLineAsync() is { } line)
-        {
-            lineNumber++;
-
-            if (pointer.LineNumber >= lineNumber) continue;
-
-            lines.Add(line);
-        }
-
-        if (lines.Count > 0)
-        {
-            pointer.LineNumber = lineNumber;
-            await SaveLines(pointer, filename, lines);
-        };
-
-        return lines;
-    }
-
     private ReaderPointer BuildReaderPointer(string filepath)
     {
-        var filename = Path.GetFileName(filepath);
+        var fileInfo = new FileInfo(filepath);
         return new ReaderPointer
         {
             LineNumber = 0,
-            FileType = _fileType,
-            FileName = filename,
+            FileName = fileInfo.Name,
+            FileSize = fileInfo.Length,
             ScumServer = _scumServer,
-            FileDate = ScumUtils.ParseDateTime(filename)
+            FileDate = ScumUtils.ParseDateTime(fileInfo.Name)
         };
     }
 
-    private static List<string> GetUnreadFiles(ReaderPointer? pointer, List<string> fileNames, DateTime targetDateTime)
+    private static List<FtpListItem> GetLogFiles(FtpClient client, string? rootFolder, DateTime today, EFileType fileType)
     {
-        if (pointer == null || pointer.Id == 0) return fileNames;
-        if (targetDateTime.Date != pointer.FileDate.Date) return fileNames;
+        var prefixFileNameYesterday = fileType.ToString().ToLower() + "_" + today.AddDays(-1).ToString("yyyyMMdd");
+        var prefixFileNameToday = fileType.ToString().ToLower() + "_" + today.ToString("yyyyMMdd");
+        var prefixFileNameTomorrow = fileType.ToString().ToLower() + "_" + today.AddDays(+1).ToString("yyyyMMdd");
 
-        var index = fileNames.TakeWhile(fileName => pointer.FileDate > ScumUtils.ParseDateTime(fileName)).Count();
+        try
+        {
+            return client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/")
+               .Where(file => file.Name.StartsWith(prefixFileNameYesterday)
+                                || file.Name.StartsWith(prefixFileNameToday)
+                                || file.Name.StartsWith(prefixFileNameTomorrow))
+               .OrderBy(file => file.Created)
+               .ToList();
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            Debug.WriteLine(ex.Message);
+#endif
+            throw;
+        }
 
-        return fileNames.GetRange(index, fileNames.Count - index);
-    }
-
-    private static List<string> GetLogFiles(FtpClient client, string? rootFolder, DateTime today, EFileType fileType)
-    {
-        var prefixFileName = fileType.ToString().ToLower() + "_" + today.ToString("yyyyMMdd");
-
-        return client.GetNameListing(rootFolder)
-            .Where(fileName => fileName.StartsWith(prefixFileName))
-            .OrderBy(ScumUtils.ParseDateTime)
-            .ToList();
-    }
-
-    private Task<ReaderPointer?> GetReaderPointer()
-    {
-        using var scope = _serviceProvider.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<IReaderPointerService>();
-
-        return service.GetReaderPointer(_scumServer.Id, _fileType);
-    }
-
-    private async Task SaveLines(ReaderPointer pointer, string filename, IList<string> lines)
-    {
-        using var scope = _serviceProvider.CreateScope();
-
-        var readerPointerRepository = scope.ServiceProvider.GetRequiredService<IReaderPointerRepository>();
-        var scumServerRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
-        await readerPointerRepository.CreateOrUpdateAsync(pointer);
-
-        var readerRepository = scope.ServiceProvider.GetRequiredService<IReaderRepository>();
-        var server = await scumServerRepository.FindByIdAsync(_scumServer.Id);
-        await readerRepository.AddRangeAsync(lines.Select(line => new Reader(filename, line, server!)).ToList());
-
-        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveAsync();
-    }
-
-    private static IList<string> GetFilePaths(string? path, IList<string> filenames)
-    {
-        return path == null ? filenames : filenames.Select(filename => Path.Combine(path, filename)).ToList();
     }
 }

@@ -61,7 +61,6 @@ public class DiscordEventService(
             props.PermissionOverwrites = DiscordSocketClientUtils.BuildPermissionOverwrites(socketGuild, adminOnly: true);
         });
 
-        // Create an embed with the confirmation token
         var embed = new EmbedBuilder()
             .WithTitle("Ragnarok Bot Discord Server Confirmation")
             .WithDescription($"Here is your confirmation token: `{guild.Token}`")

@@ -1,5 +1,3 @@
-using RagnarokBotWeb.Domain.Entities;
-using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -12,14 +10,5 @@ public class ReaderPointerService : IReaderPointerService
     public ReaderPointerService(IReaderPointerRepository repository)
     {
         _repository = repository;
-    }
-
-    public Task<ReaderPointer?> GetReaderPointer(long scumServerId, EFileType fileType)
-    {
-        return _repository
-            .FindOneAsync(pointer =>
-                pointer.ScumServer.Id == scumServerId
-                && pointer.FileType == fileType
-            );
     }
 }
