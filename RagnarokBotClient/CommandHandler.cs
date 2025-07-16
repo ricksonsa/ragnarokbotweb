@@ -17,31 +17,54 @@ namespace RagnarokBotClient
         }
 
         [STAThread]
-        public Task Handle(Command command)
+        public List<Func<Task>> Handle(BotCommand command)
         {
-            switch (command.Type)
+            List<Func<Task>> tasks = [];
+            foreach (var commandValue in command.Values)
             {
-                case ECommandType.Delivery: return ScumManager.SpawnItem(command.Value!, command.Amount, command.Target!);
+                switch (commandValue.Type)
+                {
+                    case ECommandType.Delivery:
+                        tasks.Add(() => ScumManager.SpawnItem(commandValue.Value!, commandValue.Amount, commandValue.Target!));
+                        break;
 
-                case ECommandType.Kick: return ScumManager.KickPlayer(command.Target ?? command.Value);
+                    case ECommandType.Kick:
+                        tasks.Add(() => ScumManager.KickPlayer(commandValue.Target ?? commandValue.Value));
+                        break;
 
-                case ECommandType.Ban: return ScumManager.BanPlayer(command.Target ?? command.Value);
+                    case ECommandType.Ban:
+                        tasks.Add(() => ScumManager.BanPlayer(commandValue.Target ?? commandValue.Value));
+                        break;
 
-                case ECommandType.Announce: return ScumManager.Announce(command.Value);
+                    case ECommandType.Announce:
+                        tasks.Add(() => ScumManager.Announce(commandValue.Value));
+                        break;
 
-                case ECommandType.Say: return ScumManager.Say(command.Value);
+                    case ECommandType.Say:
+                        tasks.Add(() => ScumManager.Say(commandValue.Value));
+                        break;
 
-                case ECommandType.TeleportPlayer:
-                    var v = command.Coordinates!.Split(" ");
-                    var x = v[0];
-                    var y = v[1];
-                    var z = v[2];
-                    return ScumManager.Teleport(command.Target!, x, y, z);
+                    case ECommandType.TeleportPlayer:
+                        var v = commandValue.Coordinates!.Split(" ");
+                        var x = v[0];
+                        var y = v[1];
+                        var z = v[2];
+                        tasks.Add(() => ScumManager.Teleport(commandValue.Target!, x, y, z));
+                        break;
 
-                case ECommandType.ListPlayers: return HandleListPlayers();
+                    case ECommandType.ListPlayers:
+                        tasks.Add(HandleListPlayers);
+                        break;
+                }
             }
 
-            return Task.CompletedTask;
+            if (command.Values.Any(values => values.Type == ECommandType.Delivery))
+            {
+                tasks.Add(() => _remote.PatchAsync($"api/bots/deliveries/{command.Data.Split("_")[1]}/confirm", null));
+            }
+
+
+            return tasks;
         }
 
         private async Task HandleListPlayers()
@@ -65,7 +88,7 @@ namespace RagnarokBotClient
             thread.SetApartmentState(ApartmentState.STA); // Ensure STA for clipboard access
             thread.Start();
             thread.Join(); // Wait for the thread to complete
-            var response = await _remote.GetAsync($"api/bots/players?identifier={_identifier}&input={clipboardContent}");
+            var response = await _remote.PostAsync($"api/bots/players", new { Value = clipboardContent });
         }
     }
 }

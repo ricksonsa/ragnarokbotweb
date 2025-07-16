@@ -19,6 +19,7 @@
           <th>Scum Name</th>
           <th>Steam Name</th>
           <th>Steam ID</th>
+          <th>Registered Discord</th>
           <th>Discord Name</th>
           <th>VIP</th>
           <th>Banned</th>
@@ -34,8 +35,19 @@
           <td>{{data.name}}</td>
           <td>{{data.steamName}}</td>
           <td>{{data.steamId64}}</td>
+          <td nzAlign="center">
+            <nz-icon nz-popover [nzPopoverContent]="data.discordId ? 'Yes' : 'No'" style="font-size: 18px;"
+              [nzType]="data.discordId ? 'check' : 'close'"
+              [ngClass]="{ 'success': data.discordId, 'danger': !data.discordId}">
+            </nz-icon>
+          </td>
           <td>{{data.discordName}}</td>
-          <td>Yes</td>
+          <td>  
+            <nz-icon nz-popover [nzPopoverContent]="data.discordId ? 'Yes' : 'No'" style="font-size: 18px;"
+              [nzType]="data.discordId ? 'check' : 'close'"
+              [ngClass]="{ 'success': data.discordId, 'danger': !data.discordId}">
+            </nz-icon>
+          </td>
           <td>No</td>
           <td>{{data.coin}}</td>
           <td>{{data.money}}</td>

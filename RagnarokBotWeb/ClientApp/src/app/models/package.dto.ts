@@ -15,6 +15,7 @@ export class PackageDto {
     enabled!: boolean;
     isBlockPurchaseRaidTime!: boolean;
     isVipOnly!: boolean;
+    isWelcomePack!: boolean;
     isDailyPackage!: boolean;
     createDate!: Date;
     items?: ItemDto[];

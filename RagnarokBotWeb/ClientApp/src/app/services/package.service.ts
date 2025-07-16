@@ -8,13 +8,16 @@ import { Page } from '../core/pagination/pager';
   providedIn: 'root'
 })
 export class PackageService {
-
   constructor(private readonly http: HttpClient) { }
 
   getPackages(pageSize: number, pageNumber: number, filter: string | null = null) {
     var url = `${WEB_API.baseUrl}/api/packs?pageSize=${pageSize}&pageNumber=${pageNumber}`;
     if (filter) url += `&filter=${filter}`;
     return this.http.get<Page<PackageDto>>(url);
+  }
+
+  getWelcomePack() {
+    return this.http.get<PackageDto>(`${WEB_API.baseUrl}/api/packs/welcome-pack`);
   }
 
   getByPackageId(id: number) {

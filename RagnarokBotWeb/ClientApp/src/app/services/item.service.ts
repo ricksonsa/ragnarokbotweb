@@ -8,6 +8,7 @@ import { Page } from '../core/pagination/pager';
   providedIn: 'root'
 })
 export class ItemService {
+
   constructor(private readonly http: HttpClient) { }
 
   getItems(pageSize: number, pageNumber: number, filter: string | null = null) {

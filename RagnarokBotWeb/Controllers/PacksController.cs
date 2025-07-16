@@ -27,6 +27,14 @@ namespace RagnarokBotWeb.Controllers
             return Ok(await _packService.GetPacksPageByFilterAsync(paginator, filter));
         }
 
+        [HttpGet("welcome-pack")]
+        public async Task<IActionResult> GetWelcomePack()
+        {
+            var pack = await _packService.FetchWelcomePack();
+            if (pack is null) return NotFound("Pack not found");
+            return Ok(pack);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPackById(long id)
         {

@@ -32,7 +32,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
             foreach (var command in commands)
             {
-                _cacheService.GetCommandQueue(serverId.Value).Enqueue(BotCommand.Command(command));
+                var botCommand = new BotCommand();
+                botCommand.Command(command);
+                _cacheService.GetCommandQueue(serverId.Value).Enqueue(botCommand);
             }
 
             return Task.CompletedTask;

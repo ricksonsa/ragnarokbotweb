@@ -27,6 +27,8 @@ namespace RagnarokBotWeb.Application.Mapping
                     .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
 
             CreateMap<Item, ItemDto>();
+            CreateMap<Bot, BotDto>();
+            CreateMap<Order, OrderDto>();
 
             CreateMap<PackItem, ItemToPackDto>()
                 .ForPath((dto) => dto.ItemName, opt => opt.MapFrom(packItem => packItem.Item.Name))

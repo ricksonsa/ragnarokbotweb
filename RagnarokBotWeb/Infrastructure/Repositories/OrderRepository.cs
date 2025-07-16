@@ -22,19 +22,35 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             if (entity.ScumServer is not null) _appDbContext.ScumServers.Attach(entity.ScumServer);
             if (entity.Pack is not null) _appDbContext.Packs.Attach(entity.Pack);
+            if (entity.Player is not null) _appDbContext.Players.Attach(entity.Player);
 
             return base.CreateOrUpdateAsync(entity);
         }
 
-        public Task<Order?> FindOneWithPackCreated()
+        public Task<Order?> FindOneWithPackCreatedByServer(long serverId)
         {
             return _appDbContext.Orders
+                .Include(order => order.ScumServer)
                 .Include(order => order.Player)
                 .Include(order => order.Pack)
                 .ThenInclude(pack => pack!.PackItems)
                 .ThenInclude(packItems => packItems.Item)
+                .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId)
                 .OrderBy(order => order.CreateDate)
                 .FirstOrDefaultAsync(order => order.Status == EOrderStatus.Created);
+        }
+
+        public Task<List<Order>> FindWithPack(long packId)
+        {
+            return _appDbContext.Orders
+                .Include(order => order.ScumServer)
+                .Include(order => order.Player)
+                .Include(order => order.Pack)
+                .ThenInclude(pack => pack!.PackItems)
+                .ThenInclude(packItems => packItems.Item)
+                .Where(order => order.Pack != null && order.Pack.Id == packId)
+                .OrderByDescending(order => order.CreateDate)
+                .ToListAsync();
         }
 
         public Task<Page<Order>> GetPageByFilter(Paginator paginator, string? filter)
@@ -42,7 +58,8 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             var query = _appDbContext.Orders
                .Include(pack => pack.Pack)
                .Include(pack => pack.ScumServer)
-               .Include(pack => pack.Player);
+               .Include(pack => pack.Player)
+               .OrderByDescending(order => order.Id);
 
             if (!string.IsNullOrEmpty(filter))
             {

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Discord;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
@@ -64,21 +65,36 @@ namespace RagnarokBotWeb.Domain.Services
 
                 await _packItemRepository.AddAsync(packItem);
             }
-            await _packItemRepository.SaveAsync();
 
             if (!string.IsNullOrEmpty(pack.DiscordChannelId))
             {
-                var action = $"buy_package:{pack.Id}";
-                await _discordService.SendEmbedToChannel(new CreateEmbed
-                {
-                    Buttons = [new("Buy", action)],
-                    DiscordId = ulong.Parse(pack.DiscordChannelId),
-                    Text = pack.Description,
-                    Title = pack.Name
-                });
+                pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
+                await _packRepository.CreateOrUpdateAsync(pack);
+                await _packRepository.SaveAsync();
             }
 
+            await _packItemRepository.SaveAsync();
             return _mapper.Map<PackDto>(pack);
+        }
+
+        private async Task<ulong> GenerateDiscordPackButton(Pack pack)
+        {
+            var action = $"buy_package:{pack.Id}";
+            var embed = new CreateEmbed
+            {
+                Buttons = [new($"Buy {pack.Name}", action)],
+                DiscordId = ulong.Parse(pack.DiscordChannelId!),
+                Text = pack.Description,
+                ImageUrl = pack.ImageUrl,
+                Title = pack.Name
+            };
+            IUserMessage message;
+            if (embed.ImageUrl != null)
+                message = await _discordService.SendEmbedWithBase64Image(embed);
+            else
+                message = await _discordService.SendEmbedToChannel(embed);
+
+            return message.Id;
         }
 
         public async Task<PackDto> FetchPackById(long id)
@@ -90,7 +106,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (server is null) throw new UnauthorizedException("Invalid server");
 
             var pack = await _packRepository.FindByIdAsync(id);
-            if (pack is null) throw new NotFoundException("Package not found");
+            if (pack is null || pack.Deleted != null) throw new NotFoundException("Package not found");
 
             if (pack.ScumServer.Id != server.Id) throw new UnauthorizedException("Invalid package");
 
@@ -113,6 +129,7 @@ namespace RagnarokBotWeb.Domain.Services
             packEntity.IsVipOnly = packDto.IsVipOnly ?? false;
             packEntity.DeliveryText = packDto.DeliveryText;
             packEntity.Description = packDto.Description;
+            packEntity.IsWelcomePack = packDto.IsWelcomePack ?? false;
             packEntity.Name = packDto.Name;
             packEntity.Enabled = packDto.Enabled ?? false;
             packEntity.ImageUrl = packDto.ImageUrl;
@@ -127,7 +144,7 @@ namespace RagnarokBotWeb.Domain.Services
             }
             await _packItemRepository.SaveAsync();
 
-            packDto.Items!.ForEach(async item =>
+            foreach (var item in packDto.Items)
             {
                 var packItem = new PackItem
                 {
@@ -138,7 +155,21 @@ namespace RagnarokBotWeb.Domain.Services
 
                 await _packItemRepository.CreateOrUpdateAsync(packItem);
                 await _packItemRepository.SaveAsync();
-            });
+            }
+
+            if (!string.IsNullOrEmpty(packDto.DiscordChannelId))
+            {
+                if (packDto.DiscordChannelId != packEntity.DiscordChannelId && packEntity.DiscordMessageId != null)
+                {
+                    await _discordService.RemoveMessage(ulong.Parse(packEntity.DiscordChannelId!), packEntity.DiscordMessageId!.Value);
+                }
+
+                packEntity.DiscordChannelId = packDto.DiscordChannelId;
+                packEntity.DiscordMessageId = await GenerateDiscordPackButton(packEntity);
+
+                await _packRepository.CreateOrUpdateAsync(packEntity);
+                await _packRepository.SaveAsync();
+            }
 
             return await FetchPackById(id);
         }
@@ -155,11 +186,18 @@ namespace RagnarokBotWeb.Domain.Services
 
             foreach (var packItem in pack.PackItems)
             {
-                _packItemRepository.Delete(packItem);
+                packItem.Deleted = DateTime.UtcNow;
+                await _packItemRepository.CreateOrUpdateAsync(packItem);
             }
             await _packItemRepository.SaveAsync();
 
-            _packRepository.Delete(pack);
+            if (pack.DiscordChannelId != null && pack.DiscordMessageId != null)
+            {
+                await _discordService.RemoveMessage(ulong.Parse(pack.DiscordChannelId!), pack.DiscordMessageId!.Value);
+            }
+
+            pack.Deleted = DateTime.UtcNow;
+            await _packRepository.CreateOrUpdateAsync(pack);
             await _packRepository.SaveAsync();
 
             return pack;
@@ -172,6 +210,17 @@ namespace RagnarokBotWeb.Domain.Services
 
             var page = await _packRepository.GetPageByServerAndFilter(paginator, serverId.Value, filter);
             return new Page<PackDto>(page.Content.Select(_mapper.Map<PackDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
+        }
+
+        public async Task<PackDto> FetchWelcomePack()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+
+            var pack = await _packRepository.FindOneAsync(package => package.IsWelcomePack);
+            if (pack == null) throw new NotFoundException("Package not found");
+
+            return await FetchPackById(pack.Id);
         }
     }
 }

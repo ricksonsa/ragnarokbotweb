@@ -13,10 +13,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public bool Active { get; set; }
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Default;
 
-        public User()
-        {
-            CreateDate = DateTime.Now;
-        }
+        public User() { }
 
         public void SetPassword(string password)
         {

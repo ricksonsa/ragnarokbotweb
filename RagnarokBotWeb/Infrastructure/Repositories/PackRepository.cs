@@ -20,6 +20,15 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .FirstOrDefaultAsync(pack => pack.Id == id);
         }
 
+        public async Task<Pack?> FindWelcomePackByServerIdAsync(long id)
+        {
+            return await _appDbContext.Packs
+                .Include(pack => pack.ScumServer)
+                .Include(pack => pack.PackItems)
+                .ThenInclude(packItem => packItem.Item)
+                .FirstOrDefaultAsync(pack => pack.ScumServer.Id == id && pack.IsWelcomePack && pack.Enabled);
+        }
+
         public async Task<Pack?> FindByIdAsNoTrackingAsync(long id)
         {
             return await _appDbContext.Packs
@@ -45,7 +54,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(pack => pack.ScumServer)
                 .Include(pack => pack.PackItems)
                 .ThenInclude(packItem => packItem.Item)
-                .Where(pack => pack.ScumServer.Id == id);
+                .Where(pack => pack.Deleted == null && pack.ScumServer.Id == id && !pack.IsWelcomePack);
 
             if (!string.IsNullOrEmpty(filter))
             {

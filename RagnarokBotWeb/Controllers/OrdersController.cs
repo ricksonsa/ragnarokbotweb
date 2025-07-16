@@ -24,7 +24,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateOrder(CreateOrderDto createOrder)
         {
-            var order = await _orderService.PlaceOrder(createOrder.SteamId, createOrder.PackId);
+            var order = await _orderService.PlaceDeliveryOrder(createOrder.SteamId, createOrder.PackId);
             if (order is null) return BadRequest("Invalid payload");
             return Ok(order);
         }

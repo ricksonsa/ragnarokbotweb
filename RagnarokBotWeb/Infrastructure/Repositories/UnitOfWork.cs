@@ -8,10 +8,11 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
     public class UnitOfWork : IUnitOfWork
     {
         private AppDbContext _context;
+
+        public AppDbContext AppDbContext { get; }
         public DbSet<Player> Players { get; }
         public DbSet<Lockpick> Lockpicks { get; }
         public DbSet<Bunker> Bunkers { get; }
-        public DbSet<Reader> Readings { get; }
         public DbSet<ReaderPointer> ReaderPointers { get; }
         public DbSet<Kill> Kills { get; }
         public DbSet<Bot> Bots { get; }
@@ -19,6 +20,12 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<ScumServer> ScumServers { get; }
         public DbSet<ScheduledTask> ScheduledTasks { get; }
         public DbSet<Ftp> Ftps { get; }
+        public DbSet<Vip> Vips { get; }
+        public DbSet<Ban> Bans { get; set; }
+        public DbSet<Silence> Silences { get; set; }
+        public DbSet<Warzone> Warzones { get; set; }
+        public DbSet<WarzoneItem> WarzoneItems { get; set; }
+        public DbSet<Teleport> Teleports { get; set; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -33,6 +40,12 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             ScumServers = context.ScumServers;
             Ftps = context.Ftps;
             ScheduledTasks = context.ScheduledTasks;
+            Vips = context.Vips;
+            Bans = context.Bans;
+            Silences = context.Silences;
+            Silences = context.Silences;
+            WarzoneItems = context.WarzoneItems;
+            Teleports = context.Teleports;
         }
 
         public async Task SaveAsync()

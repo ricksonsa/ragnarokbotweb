@@ -21,7 +21,7 @@ namespace RagnarokBotWeb.Domain.Services
             bunker ??= new(sector);
             bunker.ScumServer = server;
             bunker.Locked = locked;
-            bunker.Available = DateTime.Now.Add(activation);
+            bunker.Available = DateTime.UtcNow.Add(activation);
 
             await _bunkerRepository.CreateOrUpdateAsync(bunker);
             await _bunkerRepository.SaveAsync();

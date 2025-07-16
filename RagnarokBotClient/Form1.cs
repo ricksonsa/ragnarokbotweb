@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
-using Shared.Enums;
 using Shared.Models;
 using Shared.Security;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -16,7 +16,7 @@ namespace RagnarokBotClient
         private bool _setup = false;
         private string _identifier;
 
-        Queue<Command> _commandQueue = [];
+        ConcurrentQueue<BotCommand> _commandQueue = [];
         private CancellationTokenSource _cancellationTokenSource;
         private string _token;
         private string _exePath;
@@ -132,7 +132,6 @@ namespace RagnarokBotClient
             Task.Run(async () =>
             {
                 await Authenticate();
-                await Login();
             });
         }
 
@@ -145,7 +144,9 @@ namespace RagnarokBotClient
                 StartButton.Text = "Stop";
                 HealthCheck(token)
                     .ContinueWith((_) => GameCheck(token))
-                    .ContinueWith((_) => { ProcessComand(token); ReceiveCommand(token); });
+                    .ContinueWith((_) => Task.WaitAll(ReceiveCommand(token), ProcessCommand(token)));
+
+
             }
             catch (OperationCanceledException)
             {
@@ -155,7 +156,7 @@ namespace RagnarokBotClient
 
         public void Stop()
         {
-            _remote.DeleteAsync($"api/bots/unregister?identifier={_identifier}");
+            _remote.DeleteAsync($"api/bots/unregister");
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
             if (StatusValue.InvokeRequired)
@@ -227,35 +228,54 @@ namespace RagnarokBotClient
 
         private async Task ReceiveCommand(CancellationToken token)
         {
-            token.ThrowIfCancellationRequested();
+            await _remote.PostAsync($"api/bots/register", null);
             UpdateStatus("Ready...");
             UpdateStatus("Listening for commands...");
             while (!token.IsCancellationRequested)
             {
-                var command = await _remote.GetAsync($"api/bots/commands?identifier={_identifier}");
-                if (command is not null)
+                try
                 {
-                    _commandQueue.Enqueue(JsonConvert.DeserializeObject<Command>(command)!);
+                    var command = await _remote.GetAsync($"api/bots/commands");
+                    if (!string.IsNullOrEmpty(command))
+                    {
+                        _commandQueue.Enqueue(JsonConvert.DeserializeObject<BotCommand>(command)!);
+#if DEBUG
+                        Debug.WriteLine("Command Received");
+#endif
+                    }
+                    await Task.Delay(3000, token);
                 }
-                await Task.Delay(1000, token);
+                catch (Exception) { }
+
             }
         }
 
-        private async Task ProcessComand(CancellationToken token)
+        private async Task ProcessCommand(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                if (_commandQueue.TryDequeue(out Command command))
+#if DEBUG
+                Debug.WriteLine("Command Queue state is:");
+                Debug.WriteLine(JsonConvert.SerializeObject(_commandQueue.ToList()));
+#endif
+                try
                 {
-                    if (command is null) continue;
-                    var task = new CommandHandler(_cancellationTokenSource.Token, _identifier, _remote).Handle(command);
-                    if (task is null) continue;
+                    if (_commandQueue.TryDequeue(out BotCommand command))
+                    {
+                        var tasks = new CommandHandler(_cancellationTokenSource.Token, _identifier, _remote).Handle(command);
+                        if (tasks == null || tasks.Count == 0) continue;
 
-                    await task!;
-                    while (!task.IsCompleted) { continue; }
+                        foreach (var task in tasks)
+                        {
+                            await task();
+                        }
+
+                        await Task.Delay(2000, token);
+                    }
+
                 }
+                catch (Exception) { }
 
-                await Task.Delay(2000, token);
             }
         }
 
@@ -301,14 +321,7 @@ namespace RagnarokBotClient
         private void TestBtn_Click(object sender, EventArgs e)
         {
             UpdateStatus("Added test command", false);
-            var command = new Command
-            {
-                Value = "Weapon_MK18",
-                Type = ECommandType.Delivery,
-                Amount = 1,
-                Target = "CastigoDeMae"
-            };
-            _commandQueue.Enqueue(command);
+
         }
 
         private void Form1_Load(object sender, EventArgs e) { }
@@ -319,8 +332,11 @@ namespace RagnarokBotClient
 
         private void ServerListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var test = sender;
-            _serverId = long.Parse(sender.ToString()!.Split(" - ")[0]);
+            var test = ((dynamic)sender).SelectedItem as string;
+            _serverId = long.Parse(test!.Split(" - ")[0]);
+            ServersPanel.Invoke(new Action(() => ServersPanel.Visible = false));
+            ServersPanel.Invoke(new Action(() => ServersPanel.Enabled = false));
+            Login();
         }
     }
 }

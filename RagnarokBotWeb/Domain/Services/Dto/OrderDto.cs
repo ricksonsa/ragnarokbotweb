@@ -4,6 +4,7 @@ namespace RagnarokBotWeb.Domain.Services.Dto
 {
     public class OrderDto
     {
+        public long Id { get; set; }
         public PackDto? Pack { get; set; }
         public EOrderStatus Status { get; set; }
         public PlayerDto? Player { get; set; }

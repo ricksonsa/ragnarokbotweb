@@ -10,7 +10,7 @@ namespace RagnarokBotClient
         private const string ChatKey = "u";
 
 
-        private static Task RunCommand(string command)
+        private static Task RunCommand(string command, int tab = 0)
         {
             if (!User32.BringWindowToForeground()) { return Task.CompletedTask; }
 
@@ -18,6 +18,16 @@ namespace RagnarokBotClient
             SendKeys.SendWait(ChatKey);
             Token.ThrowIfCancellationRequested();
             Task.Delay(600).Wait();
+
+            switch (tab)
+            {
+                case 0:
+                default:
+                    break;
+                case 1:
+                    SendKeys.SendWait("{tab}");
+                    break;
+            }
 
             Task.Run(() =>
             {
@@ -34,10 +44,29 @@ namespace RagnarokBotClient
             }).Wait();
 
             SendKeys.SendWait("^{v}");
+            Task.Delay(200).Wait();
+
 
             Token.ThrowIfCancellationRequested();
 
-            SendKeys.SendWait("{enter}{escape}");
+            SendKeys.SendWait("{enter}");
+            Task.Delay(400).Wait();
+
+
+            switch (tab)
+            {
+                case 0:
+                default:
+                    break;
+                case 1:
+                    SendKeys.SendWait("{tab}");
+                    Task.Delay(900).Wait();
+                    SendKeys.SendWait("{tab}");
+                    break;
+            }
+            Task.Delay(600).Wait();
+
+            SendKeys.SendWait("{escape}");
 
             Task.Delay(Delay).Wait();
             return Task.CompletedTask;
@@ -110,7 +139,7 @@ namespace RagnarokBotClient
         {
             if (text.StartsWith("#")) text.TrimStart('#');
             Logger.LogWrite($"Bot says {text}");
-            return RunCommand($"{text}");
+            return RunCommand($"{text}", tab: 1);
         }
 
         public static Task Command(string text)

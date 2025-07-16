@@ -1,12 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RagnarokBotWeb.Application;
+using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
 {
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = AuthorizationPolicyConstants.AccessTokenPolicy)]
     [Route("api/bots")]
     public class BotController : ControllerBase
     {
@@ -25,8 +27,8 @@ namespace RagnarokBotWeb.Controllers
             return Ok(await _botService.GetCommand());
         }
 
-        [HttpGet("players")]
-        public IActionResult UpdatePlayers([FromQuery] string input)
+        [HttpPost("players")]
+        public IActionResult UpdatePlayers(PlayersListRequest input)
         {
             _botService.UpdatePlayersOnline(input);
             return Ok();
@@ -44,6 +46,13 @@ namespace RagnarokBotWeb.Controllers
         {
             var bot = await _botService.RegisterBot();
             return Ok(bot);
+        }
+
+        [HttpPatch("deliveries/{id}/confirm")]
+        public async Task<IActionResult> ConfirmDelivery(long id)
+        {
+            await _botService.ConfirmDelivery(id);
+            return Ok();
         }
 
         [HttpDelete("unregister")]

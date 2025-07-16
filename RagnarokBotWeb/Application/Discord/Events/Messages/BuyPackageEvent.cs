@@ -1,3 +1,4 @@
+using Discord;
 using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -20,18 +21,49 @@ public class BuyPackageEvent : IMessageEventHandler
     {
         using var scope = _serviceProvider.CreateScope();
         var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
+        var botService = scope.ServiceProvider.GetRequiredService<IBotService>();
+
+        if (!await botService.IsBotOnline(component.GuildId!.Value))
+        {
+            var embed = new EmbedBuilder()
+                 .WithTitle("Order failed")
+                 .WithDescription("There is no active bots at the moment. Please try again later.")
+                 .WithColor(Color.Red)
+                 .Build();
+
+            await component.RespondAsync(embed: embed, ephemeral: true);
+        }
+
         try
         {
-            var order = await orderService.PlaceOrder(component.User.Id.ToString(), long.Parse(component.Data.CustomId.Split(":")[1]));
-            await component.Channel.SendMessageAsync($"Your order number ${order!.Id} was registered. Please wait in an open area until your order is delivered.");
+            var order = await orderService.PlaceDeliveryOrderFromDiscord(component.GuildId.Value, component.User.Id, long.Parse(component.Data.CustomId.Split(":")[1]));
+
+            var embed = new EmbedBuilder()
+              .WithTitle(order!.Pack!.Name)
+              .WithDescription($"Your order with number #{order!.Id} was registered. Please stay put until it is delivered.")
+              .WithColor(Color.Green)
+              .Build();
+
+            await component.RespondAsync(embed: embed, ephemeral: true);
         }
         catch (NotFoundException)
         {
-            await component.Channel.SendMessageAsync($"User not registered, please register using #wecolmepack");
+            var embed = new EmbedBuilder()
+            .WithTitle("Error")
+            .WithDescription("User not registered. Please register using #wecolmepack.")
+            .WithColor(Color.Red)
+            .Build();
+
+            await component.RespondAsync(embed: embed, ephemeral: true);
         }
         catch (Exception ex)
         {
-            await component.Channel.SendMessageAsync($"Your request have failed [{ex.Message}]");
+            var embed = new EmbedBuilder()
+            .WithTitle("Error")
+            .WithDescription(ex.Message)
+            .WithColor(Color.Red)
+            .Build();
+            await component.RespondAsync(embed: embed, ephemeral: true);
         }
     }
 }

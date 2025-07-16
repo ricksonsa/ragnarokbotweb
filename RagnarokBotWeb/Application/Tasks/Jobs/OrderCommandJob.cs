@@ -5,7 +5,7 @@ using Shared.Enums;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
-    public class OrderCommandJob : IJob
+    public class OrderCommandJob : AbstractJob, IJob
     {
         private readonly ICacheService _cacheService;
         private readonly IOrderRepository _orderRepository;
@@ -13,8 +13,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public OrderCommandJob(
             ICacheService cacheService,
+            IScumServerRepository scumServerRepository,
             IBotRepository botRepository,
-            IOrderRepository orderRepository)
+            IOrderRepository orderRepository) : base(scumServerRepository)
         {
             _cacheService = cacheService;
             _botRepository = botRepository;
@@ -23,24 +24,28 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var order = await _orderRepository.FindOneWithPackCreated();
+            var server = await GetServerAsync(context);
+            var order = await _orderRepository.FindOneWithPackCreatedByServer(server.Id);
 
             if (order is null) return;
             if (order.Pack is null) return;
-            if ((await _botRepository.FindOneAsync(bot => bot.State == EBotState.Online)) is null) return;
+            if ((await _botRepository.FindByOnlineScumServerId(server.Id)) is null) return;
+            if (order.Player?.SteamId64 is null) return;
 
             order.Status = EOrderStatus.Command;
             _orderRepository.Update(order);
             await _orderRepository.SaveAsync();
 
-            var commands = new List<BotCommand>();
+            var command = new BotCommand();
             foreach (var packItem in order.Pack.PackItems)
             {
-                if (order.Player?.SteamId64 is null) continue;
-                commands.Add(BotCommand.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount));
+                command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
             }
 
-            commands.ForEach(_cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue);
+            command.Say(order.ResolvedDeliveryText());
+            command.Data = "order_" + order.Id.ToString();
+
+            _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
         }
     }
 }

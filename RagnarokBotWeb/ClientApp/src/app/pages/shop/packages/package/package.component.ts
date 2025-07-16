@@ -12,21 +12,24 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzUploadFile, NzUploadModule } from 'ng-zorro-antd/upload';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { NzImageModule } from 'ng-zorro-antd/image';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { PackageService } from '../../../../services/package.service';
 import { EventManager, EventWithContent } from '../../../../services/event-manager.service';
 import { Alert } from '../../../../models/alert';
 import { ItemDto } from '../../../../models/item.dto';
 import { ItemService } from '../../../../services/item.service';
-import { Observable, of, debounceTime, distinctUntilChanged, tap, switchMap } from 'rxjs';
+import { Observable, of, debounceTime, distinctUntilChanged, tap, switchMap, Observer } from 'rxjs';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { PackageItemDto } from '../../../../models/package.dto';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { ServerService } from '../../../../services/server.service';
 import { ChannelDto } from '../../../../models/channel.dto';
+import { arrayBufferToBase64, toBase64 } from '../../../../core/functions/file.functions';
 
 @Component({
   selector: 'app-package',
@@ -50,7 +53,9 @@ import { ChannelDto } from '../../../../models/channel.dto';
     NzTypographyModule,
     NzTableModule,
     NzPopconfirmModule,
-    NzButtonModule
+    NzButtonModule,
+    NzUploadModule,
+    NzImageModule
   ]
 })
 export class PackageComponent implements OnInit {
@@ -67,6 +72,8 @@ export class PackageComponent implements OnInit {
   selectedItem?: ItemDto;
   filter = '';
   channels: ChannelDto[] = [];
+  avatarUrl: string;
+  uploading = false;
 
   get searchControl() {
     return this.packageItemForm.controls['searchControl'];
@@ -88,6 +95,7 @@ export class PackageComponent implements OnInit {
       vipPrice: [null],
       isVipOnly: [false],
       discordChannelId: [null],
+      imageUrl: [null],
       purchaseCooldownSeconds: [null],
       stockPerPlayer: [null],
       enabled: [true],
@@ -111,6 +119,7 @@ export class PackageComponent implements OnInit {
       var item = data['package'];
       if (item) {
         this.packageForm.patchValue(item);
+        this.avatarUrl = this.packageForm.value.imageUrl;
         this.items = item.items;
       }
     });
@@ -142,6 +151,10 @@ export class PackageComponent implements OnInit {
 
   changeFilter() {
     this.searchControl.setValue(this.filter);
+  }
+
+  handleImageChange(data: any) {
+
   }
 
   setUpFilter() {
@@ -243,5 +256,28 @@ export class PackageComponent implements OnInit {
         }
       });
   }
+
+  imageFile: File | null = null;
+  imagePreview: string | ArrayBuffer | null = null;
+  handleBeforeUpload = (file: NzUploadFile, _fileList: NzUploadFile[]): boolean => {
+    // Convert NzUploadFile to native File
+    const rawFile = file as unknown as File;
+    this.imageFile = rawFile;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.imagePreview = e.target?.result;
+      // toBase64(this.imageFile)
+      this.avatarUrl = arrayBufferToBase64(e.target?.result as ArrayBuffer);
+      toBase64(this.imageFile).then((value: string) => {
+        this.avatarUrl = value;
+        this.packageForm.controls['imageUrl'].setValue(value);
+      });
+    };
+    reader.readAsDataURL(rawFile);
+
+    return false; // prevent auto-upload
+  };
+
 
 }

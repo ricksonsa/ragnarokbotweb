@@ -42,6 +42,23 @@
           purchase. Disabled packages won't show up in the Discord Channel</p>
       </nz-form-item>
 
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="packageImage">Package Image</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="uploadBtn">
+          <img *ngIf="avatarUrl" nz-image width="200px" height="200px" [nzSrc]="avatarUrl" alt="" />
+          <ng-template #uploadBtn>
+            <nz-upload nzAction="https://www.mocky.io/v2/5cc8019d300000980a055e76" [nzBeforeUpload]="handleBeforeUpload">
+              <button nz-button>
+                <nz-icon nzType="upload" />
+                Upload
+              </button>
+            </nz-upload>
+          </ng-template>
+
+        </nz-form-control>
+      </nz-form-item>
+
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="discordChannelId">Discord Channel</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="discordChannelExtra">
@@ -135,7 +152,7 @@
         </p>
       </ng-template>
 
-      <nz-form-item>
+      <!-- <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="commands">Commands</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="commandsExtra">
           <nz-input-group nzSearch nzSize="large" [nzAddOnAfter]="suffixButton">
@@ -166,7 +183,7 @@
         <p>You can add commands like #Announce to be executed or just a text. Text added here will be sent in the
           global
           chat. <span nz-typography nzType="danger">DO NOT USE IT TO SPAWN ITEMS.</span></p>
-      </ng-template>
+      </ng-template> -->
     </form>
   </nz-card>
 
@@ -187,7 +204,7 @@
               placeholder="Please enter the item name or code" />
           </nz-input-group>
           <ng-template #itemSuffixButton>
-            <button nz-button nzType="primary" nzSize="large" nzSearch (click)="addItem(); command.value = ''">
+            <button nz-button nzType="primary" nzSize="large" nzSearch (click)="addItem();">
               Add Item
             </button>
           </ng-template>

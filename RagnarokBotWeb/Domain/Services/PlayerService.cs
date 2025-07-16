@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Models;
 
@@ -17,6 +19,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IPlayerRepository _playerRepository;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly IMapper _mapper;
+        private readonly IServiceProvider _serviceProvider;
 
         public PlayerService(
             IHttpContextAccessor contextAccessor,
@@ -24,13 +27,15 @@ namespace RagnarokBotWeb.Domain.Services
             ICacheService cacheService,
             IPlayerRepository playerRepository,
             IMapper mapper,
-            IScumServerRepository scumServerRepository) : base(contextAccessor)
+            IScumServerRepository scumServerRepository,
+            IServiceProvider serviceProvider) : base(contextAccessor)
         {
             _logger = logger;
             _cacheService = cacheService;
             _playerRepository = playerRepository;
             _mapper = mapper;
             _scumServerRepository = scumServerRepository;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<PlayerDto> GetPlayer(long id)
@@ -50,7 +55,12 @@ namespace RagnarokBotWeb.Domain.Services
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
             var page = await _playerRepository.GetPageByServerId(paginator, serverId.Value, filter);
-            return new Page<PlayerDto>(page.Content.Select(_mapper.Map<PlayerDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
+            var content = page.Content.Select(_mapper.Map<PlayerDto>);
+            foreach (var player in content)
+            {
+                player.Online = _cacheService.GetConnectedPlayers(serverId.Value).Any(connectedPlayer => connectedPlayer.SteamID == player.SteamId64);
+            }
+            return new Page<PlayerDto>(content, page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 
         public bool IsPlayerConnected(string steamId64, long? serverId)
@@ -111,16 +121,15 @@ namespace RagnarokBotWeb.Domain.Services
             player.Name = name;
             player.ScumServer = (await _scumServerRepository.FindByIdAsync(server.Id))!;
 
-            if (player.Id == 0)
-                _logger.LogInformation("New User Connected {} {}({})", steamId64, name, scumId);
-            else
-                _logger.LogInformation("Registered User Connected {} {}({})", steamId64, name, scumId);
-
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
 
-            if (!_cacheService.GetCommandQueue(server.Id).Any(command => command.Type == Shared.Enums.ECommandType.ListPlayers))
-                _cacheService.GetCommandQueue(server.Id).Enqueue(BotCommand.ListPlayers());
+            if (!_cacheService.GetCommandQueue(server.Id).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.Delivery)))
+            {
+                var command = new BotCommand();
+                command.ListPlayers();
+                _cacheService.GetCommandQueue(server.Id).Enqueue(command);
+            }
         }
 
         public ScumPlayer? PlayerDisconnected(long serverId, string steamId64)
@@ -137,9 +146,15 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task UpdateFromScumPlayers(long serverId, List<ScumPlayer>? players)
         {
             if (players is null) players = _cacheService.GetConnectedPlayers(serverId);
+
+            using var scope = _serviceProvider.CreateScope(); // inject IServiceProvider
+            var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
             foreach (var player in players)
             {
-                var user = await FindBySteamId64Async(player.SteamID, serverId);
+                var user = await ctx.Players
+                .Include(p => p.ScumServer)
+                .FirstOrDefaultAsync(p => p.SteamId64 == player.SteamID && p.ScumServerId == serverId);
                 user ??= new();
                 user.X = player.X;
                 user.Y = player.Y;
@@ -150,9 +165,17 @@ namespace RagnarokBotWeb.Domain.Services
                 user.Gold = player.GoldBalance;
                 user.Money = player.AccountBalance;
                 user.Fame = player.Fame;
-                _playerRepository.Update(user);
+                if (user.Id == 0)
+                {
+                    await ctx.Players.AddAsync(user);
+                }
+                else
+                {
+                    ctx.Players.Update(user);
+                }
+
+                await ctx.SaveChangesAsync();
             }
-            await _playerRepository.SaveAsync();
         }
 
         public async Task<IEnumerable<Player>> GetAllUsersAsync()
@@ -160,9 +183,9 @@ namespace RagnarokBotWeb.Domain.Services
             return await _playerRepository.GetAllAsync();
         }
 
-        public Task<Player?> FindBySteamId64Async(string steamId64, long serverId)
+        public async Task<Player?> FindBySteamId64Async(string steamId64, long serverId)
         {
-            return _playerRepository.FindOneWithServerAsync(user => user.SteamId64 == steamId64 && user.ScumServer.Id == serverId);
+            return await _playerRepository.FindOneWithServerAsync(player => player.SteamId64 == steamId64 && player.ScumServerId == serverId);
         }
 
         public async Task AddPlayerAsync(Player user)

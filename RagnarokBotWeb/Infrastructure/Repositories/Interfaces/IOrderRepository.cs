@@ -5,7 +5,8 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
     public interface IOrderRepository : IRepository<Order>
     {
-        Task<Order?> FindOneWithPackCreated();
+        Task<Order?> FindOneWithPackCreatedByServer(long serverId);
+        Task<List<Order>> FindWithPack(long packId);
         Task<Page<Order>> GetPageByFilter(Paginator paginator, string? filter);
     }
 }

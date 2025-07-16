@@ -1,3 +1,123 @@
-<p>
-  welcome-pack works!
-</p>
+<nz-space nzSize="middle">
+  <button *nzSpaceItem nz-button nzType="primary" (click)="save()">
+    Save Welcome Pack
+  </button>
+</nz-space>
+<br>
+<br>
+<div class="main">
+  <nz-card nzTitle="Package">
+    <form nz-form [formGroup]="packageForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Name*</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the package name!">
+          <input formControlName="name" nz-input name="name" type="text" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="description">Description*</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the package description!">
+          <textarea formControlName="description" nz-input name="description" type="text" id="description"></textarea>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="enabled">Enabled</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="enabled"></label>
+        </nz-form-control>
+        <p nz-typography style="margin: 0; color:#8f8f8fc2;">Determine whether this package will be available for
+          purchase. Disabled packages won't show up in the Discord Channel</p>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="deliveryText">Package Delivery Text</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="packageDeliveryExtra">
+          <input formControlName="deliveryText" nz-input name="deliveryText" type="text" id="deliveryText" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #packageDeliveryExtra>
+        <p style="margin: 0">Text that the bot will send in global chat after the package is delivered. Leave it blank
+          for no text.</p>
+        <p>You can use fixed variables for data reference like {{'{orderId}'}} {{'{playerName}'}} {{'{packageName}'}}.
+        </p>
+      </ng-template>
+    </form>
+  </nz-card>
+
+  <nz-autocomplete (selectionChange)="autocompleteSelect($event)" [nzDataSource]="" nzBackfill #auto
+    [nzDefaultActiveFirstOption]="true">
+    @for (item of suggestions$ | async; track $index) {
+    <nz-auto-option [nzLabel]="item.code + ' - ' + item.name" [nzValue]="item">{{item.code + ' - ' +
+      item.name}}</nz-auto-option>
+    }
+  </nz-autocomplete>
+  <nz-card nzTitle="Package Items">
+    <form [formGroup]="packageItemForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="searchControl">Item</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-input-group nzSearch nzSize="large" [nzAddOnAfter]="itemSuffixButton">
+            <input formControlName="searchControl" type="text" [nzAutocomplete]="auto" nz-input
+              placeholder="Please enter the item name or code" />
+          </nz-input-group>
+          <ng-template #itemSuffixButton>
+            <button nz-button nzType="primary" nzSize="large" nzSearch (click)="addItem();">
+              Add Item
+            </button>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="amount">Amount</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="ammountExtra">
+          <input formControlName="amount" [placeholder]="!selectedItem ? 'Select a item first' : ''" nz-input
+            name="amount" type="number" id="amount" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #ammountExtra>
+        <p style="margin: 0">The amount of the selected item that will be spawned.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="vipPrice">Ammo Count</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="ammoCountExtra">
+          <input formControlName="ammoCount" [placeholder]="!selectedItem ? 'Select a item first' : ''" nz-input
+            name="amount" type="number" id="amount" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #ammoCountExtra>
+        <p style="margin: 0">The ammo count that will be loaded into the magazine. Only for magazines and clips!</p>
+      </ng-template>
+
+      <nz-table nzShowPagination="false" [nzData]="['']">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Ammo Count</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track $index) {
+          <tr>
+            <td>{{item.itemName}}</td>
+            <td>{{item.amount}}</td>
+            <td>{{item.ammoCount}}</td>
+            <td>
+              <button nzSize="large" style="height: 20px; width: 20px;" [nzDanger]="true" nz-button nzType="link"
+                (click)="removeItem(item.itemId)">
+                <nz-icon style="font-size: 20px;" nzType="close" />
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </nz-table>
+    </form>
+
+  </nz-card>
+</div>

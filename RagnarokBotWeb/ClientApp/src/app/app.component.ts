@@ -69,6 +69,7 @@ export class AppComponent implements OnInit {
   theme: string | null;
 
   private readonly notification = inject(NzNotificationService);
+  paths: string[] = [];
 
   constructor(
     private readonly authenticationService: AuthenticationService,
@@ -101,6 +102,7 @@ export class AppComponent implements OnInit {
       }))
       .subscribe({
         next: (account) => {
+          this.paths = router.url.replace(`servers/${account.serverId}/`, '').split('/');
           if (this.authenticationService.isAuthenticated()) {
             this.logged = true;
           }

@@ -15,6 +15,7 @@
         public long? PurchaseCooldownSeconds { get; set; } = 0;
         public long? StockPerPlayer { get; set; } = 0;
         public bool? Enabled { get; set; }
+        public bool? IsWelcomePack { get; set; }
         public bool? IsBlockPurchaseRaidTime { get; set; }
         public bool? IsVipOnly { get; set; }
         public string? DeliveryText { get; set; }

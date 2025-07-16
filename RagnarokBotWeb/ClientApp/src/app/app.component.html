@@ -16,10 +16,10 @@
             <a routerLink="servers/1/dashboard/home">Home</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/dashboard/console">Console</a>
+            <a routerLink="servers/1/dashboard/console">Console (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/dashboard/chat">Chat</a>
+            <a routerLink="servers/1/dashboard/chat">Chat (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -33,7 +33,7 @@
             <a routerLink="servers/1/settings/discord">Discord</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/settings/rankings">Rankings</a>
+            <a routerLink="servers/1/settings/rankings">Rankings (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -44,10 +44,10 @@
             <a routerLink="servers/1/management/players">Players</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/management/vips">VIPs</a>
+            <a routerLink="servers/1/management/vips">VIPs (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/management/tickets">Tickets</a>
+            <a routerLink="servers/1/management/tickets">Tickets (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -55,7 +55,7 @@
       <li nz-submenu nzOpen nzTitle="Shop" nzIcon="dollar-circle">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/shop/bank">Bank</a>
+            <a routerLink="servers/1/shop/bank">Bank (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
             <a routerLink="servers/1/shop/orders">Orders</a>
@@ -74,21 +74,17 @@
 
       <li nz-submenu nzOpen nzTitle="Events" nzIcon="star">
         <ul>
-
           <li nz-menu-item nzMatchRouter>
-            <a>Lucky Wheel</a>
+            <a>Air Drops (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Air Drops</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
-            <a>PvP Events</a>
+            <a routerLink="servers/1/events/warzones">Warzones</a>
           </li>
           <li nz-menu-item nzMatchRouter>
             <a routerLink="servers/1/management/players">Quests (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a>Taxi</a>
+            <a>Taxi (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -96,10 +92,10 @@
       <li nz-submenu nzOpen nzTitle="Scheduled Tasks" nzIcon="clock-circle">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/scheduled-tasks/default">Default</a>
+            <a routerLink="servers/1/scheduled-tasks/default">Default (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/scheduled-tasks/custom">Custom</a>
+            <a routerLink="servers/1/scheduled-tasks/custom">Custom (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -154,11 +150,10 @@
         </div>
         <nz-affix [nzOffsetBottom]="5" [nzOffsetTop]="10">
           <nz-breadcrumb style="margin-bottom: 20px;">
-            <nz-breadcrumb-item>Home</nz-breadcrumb-item>
-            <nz-breadcrumb-item>
-              <a>Application List</a>
-            </nz-breadcrumb-item>
-            <nz-breadcrumb-item>An Application</nz-breadcrumb-item>
+            @for (path of paths; track $index) {
+            <nz-breadcrumb-item style="text-transform: capitalize;">{{path}}</nz-breadcrumb-item>
+            }
+
           </nz-breadcrumb>
         </nz-affix>
 

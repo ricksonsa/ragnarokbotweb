@@ -30,6 +30,12 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Ftp> Ftps { get; set; }
         public DbSet<ScheduledTask> ScheduledTasks { get; set; }
         public DbSet<PlayerRegister> PlayerRegisters { get; set; }
+        public DbSet<Vip> Vips { get; set; }
+        public DbSet<Ban> Bans { get; set; }
+        public DbSet<Silence> Silences { get; set; }
+        public DbSet<Warzone> Warzones { get; set; }
+        public DbSet<WarzoneItem> WarzoneItems { get; set; }
+        public DbSet<Teleport> Teleports { get; set; }
 
         public AppDbContext()
         {

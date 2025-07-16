@@ -6,9 +6,11 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
     public interface IOrderService
     {
-        Task<Order?> PlaceOrder(string identifier, long packId);
+        Task<Order?> PlaceDeliveryOrder(string identifier, long packId);
+        Task<Order?> PlaceDeliveryOrderFromDiscord(ulong guildId, ulong discordId, long packId);
+        Task<Order?> PlaceWelcomePackOrder(Player player);
         Task<IEnumerable<Order>> GetCreatedOrders();
         Task<Page<OrderDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter);
-
+        Task<OrderDto> ConfirmOrderDelivered(long orderId);
     }
 }

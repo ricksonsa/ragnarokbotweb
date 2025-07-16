@@ -48,9 +48,9 @@
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Registered on Discord</nz-form-label>
-        <nz-icon nz-popover [nzPopoverContent]="playerForm.value.discordId != null ? 'Yes' : 'No'"
-          style="font-size: 18px;" [nzType]="playerForm.value.discordId != null ? 'check' : 'close'"
-          [ngClass]="{ 'success': playerForm.value.discordId != null, 'danger': playerForm.value.discordId == null}"></nz-icon>
+        <nz-icon nz-popover [nzPopoverContent]="playerForm.value.discordId ? 'Yes' : 'No'"
+          style="font-size: 18px;" [nzType]="playerForm.value.discordId ? 'check' : 'close'"
+          [ngClass]="{ 'success': playerForm.value.discordId, 'danger': !playerForm.value.discordId}"></nz-icon>
       </nz-form-item>
 
       <nz-form-item>
@@ -65,7 +65,7 @@
         <nz-form-control [nzSpan]="24">
           <p style="margin: 0;"><b>{{ playerForm.value.fame }}</b></p>
         </nz-form-control>
-        <button *ngIf="playerForm.value.fame != null" nz-button (click)="addingFame = true;" nzType="link">Add
+        <button *ngIf="playerForm.value.fame != null" nz-button (click)="addingFame = true;" nzType="link">Add/Remove
           Fame</button>
       </nz-form-item>
 
@@ -74,7 +74,7 @@
         <nz-form-control [nzSpan]="24">
           <p style="margin: 0;"><b>{{ playerForm.value.money }}</b></p>
         </nz-form-control>
-        <button *ngIf="playerForm.value.money != null" (click)="addingMoney = true;" nz-button nzType="link">Add
+        <button *ngIf="playerForm.value.money != null" (click)="addingMoney = true;" nz-button nzType="link">Add/Remove
           Money</button>
       </nz-form-item>
 
@@ -83,7 +83,7 @@
         <nz-form-control [nzSpan]="24">
           <p style="margin: 0;"><b>{{ playerForm.value.gold }}</b></p>
         </nz-form-control>
-        <button *ngIf="playerForm.value.gold != null" (click)="addingGold = true;" nz-button nzType="link">Add
+        <button *ngIf="playerForm.value.gold != null" (click)="addingGold = true;" nz-button nzType="link">Add/Remove
           Gold</button>
       </nz-form-item>
 
@@ -92,7 +92,7 @@
         <nz-form-control [nzSpan]="24">
           <p style="margin: 0;"><b>{{ playerForm.value.coin }}</b></p>
         </nz-form-control>
-        <button *ngIf="playerForm.value.coin != null" (click)="addingCoins = true;" nz-button nzType="link">Add
+        <button *ngIf="playerForm.value.coin != null" (click)="addingCoins = true;" nz-button nzType="link">Add/Remove
           Coins</button>
 
       </nz-form-item>
@@ -100,7 +100,7 @@
   </nz-card>
 </div>
 
-<nz-modal [(nzVisible)]="addingCoins" nzTitle="Add Coins" (nzOnCancel)="addingCoins = false">
+<nz-modal [(nzVisible)]="addingCoins" nzTitle="Add/Remove Coins" (nzOnCancel)="addingCoins = false">
   <div *nzModalContent>
     <p nz-typography>Adding bot coins to {{playerForm.value.name}}, input negative values to remove coins.</p>
     <input nz-input type="number" [(ngModel)]="addCoinsValue">
@@ -111,9 +111,10 @@
   </div>
 </nz-modal>
 
-<nz-modal [(nzVisible)]="addingGold" nzTitle="Add Gold" (nzOnCancel)="addingGold = false">
+<nz-modal [(nzVisible)]="addingGold" nzTitle="Add/Remove Gold" (nzOnCancel)="addingGold = false">
   <div *nzModalContent>
     <p nz-typography>Adding ingame gold to {{playerForm.value.name}}, input negative values to remove gold.</p>
+    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take sometime to update in game.</p>
     <input nz-input type="number" [(ngModel)]="addGoldValue">
   </div>
   <div *nzModalFooter>
@@ -122,9 +123,10 @@
   </div>
 </nz-modal>
 
-<nz-modal [(nzVisible)]="addingMoney" nzTitle="Add Money" (nzOnCancel)="addingMoney = false">
+<nz-modal [(nzVisible)]="addingMoney" nzTitle="Add/Remove Money" (nzOnCancel)="addingMoney = false">
   <div *nzModalContent>
     <p nz-typography>Adding ingame money to {{playerForm.value.name}}, input negative values to remove money.</p>
+    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take sometime to update in game.</p>
     <input nz-input type="number" [(ngModel)]="addMoneyValue">
   </div>
   <div *nzModalFooter>
@@ -133,9 +135,10 @@
   </div>
 </nz-modal>
 
-<nz-modal [(nzVisible)]="addingFame" nzTitle="Add Fame" (nzOnCancel)="addingFame = false">
+<nz-modal [(nzVisible)]="addingFame" nzTitle="Add/Remove Fame" (nzOnCancel)="addingFame = false">
   <div *nzModalContent>
     <p nz-typography>Adding ingame fame to {{playerForm.value.name}}, input negative values to remove fame.</p>
+    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take sometime to update in game.</p>
     <input nz-input type="number" [(ngModel)]="addFameValue">
   </div>
   <div *nzModalFooter>

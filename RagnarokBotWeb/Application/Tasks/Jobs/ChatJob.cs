@@ -15,6 +15,7 @@ public class ChatJob(
     IPlayerRegisterRepository playerRegisterRepository,
     IPlayerRepository playerRespository,
     IReaderRepository readerRepository,
+    IOrderService orderService,
     IDiscordService discordService,
     IFtpService ftpService,
     DiscordChannelPublisher publisher
@@ -42,7 +43,8 @@ public class ChatJob(
             var chatCommandHandler = new ExclamationCommandHandlerFactory(
                 playerRespository,
                 playerRegisterRepository,
-                discordService).Create(parsed.Text);
+                discordService,
+                orderService).Create(parsed.Text);
 
             if (chatCommandHandler is not null)
             {

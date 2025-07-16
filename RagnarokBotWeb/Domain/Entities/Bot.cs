@@ -15,14 +15,11 @@ namespace RagnarokBotWeb.Domain.Entities
             State = EBotState.Offline;
         }
 
-        public Bot()
-        {
-            
-        }
+        public Bot() { }
 
         public void UpdateInteraction()
         {
-            LastInteracted = DateTime.Now;
+            LastInteracted = DateTime.UtcNow;
         }
     }
 }

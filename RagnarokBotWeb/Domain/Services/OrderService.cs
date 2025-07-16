@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
@@ -32,6 +33,17 @@ namespace RagnarokBotWeb.Domain.Services
             _mapper = mapper;
         }
 
+        public async Task<OrderDto> ConfirmOrderDelivered(long orderId)
+        {
+            var order = await _orderRepository.FindByIdAsync(orderId);
+            if (order is null) throw new NotFoundException("Order not found");
+
+            order.Status = EOrderStatus.Done;
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+            return _mapper.Map<OrderDto>(order);
+        }
+
         public Task<IEnumerable<Order>> GetCreatedOrders()
         {
             return _orderRepository.FindAsync(order => order.Status == EOrderStatus.Created);
@@ -43,7 +55,26 @@ namespace RagnarokBotWeb.Domain.Services
             return new Page<OrderDto>(page.Content.Select(_mapper.Map<OrderDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 
-        public async Task<Order?> PlaceOrder(string identifier, long packId)
+        public async Task<Order?> PlaceWelcomePackOrder(Player player)
+        {
+            var pack = await _packRepository.FindWelcomePackByServerIdAsync(player.ScumServer.Id);
+            if (pack is null) return null;
+
+            var order = new Order
+            {
+                Pack = pack,
+                Player = player,
+                OrderType = EOrderType.Pack,
+                ScumServer = player.ScumServer
+            };
+
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+
+            return order;
+        }
+
+        public async Task<Order?> PlaceDeliveryOrder(string identifier, long packId)
         {
             var pack = await _packRepository.FindByIdAsync(packId);
             if (pack is null) throw new DomainException("Pack not found");
@@ -55,9 +86,37 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 Pack = pack,
                 Player = player,
+                OrderType = EOrderType.Pack,
                 ScumServer = player.ScumServer
             };
 
+            var processor = new OrderPurchaseProcessor(_orderRepository);
+            await processor.ValidateAsync(order);
+            processor.Charge(order);
+
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+
+            return order;
+        }
+
+        public async Task<Order?> PlaceDeliveryOrderFromDiscord(ulong guildId, ulong discordId, long packId)
+        {
+            var pack = await _packRepository.FindByIdAsync(packId);
+            if (pack is null) throw new DomainException("Pack not found");
+
+            var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
+            if (player is null) throw new NotFoundException("Player not found");
+
+            var order = new Order
+            {
+                Pack = pack,
+                Player = player,
+                OrderType = EOrderType.Pack,
+                ScumServer = player.ScumServer
+            };
+
+            await new OrderPurchaseProcessor(_orderRepository).ValidateAsync(order);
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
 

@@ -41,6 +41,8 @@ public class DiscordEventService(
             handler?.HandleAsync(component);
 
             logger.LogTrace("Handler for message with content '{}' was not found", component.Message.Content);
+
+            return;
         }
         catch (Exception e)
         {

@@ -65,7 +65,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity($"ListPlayersJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger());
+            await scheduler.ScheduleJob(job, DefaultTrigger());
 
             job = JobBuilder.Create<OrderCommandJob>()
                  .WithIdentity($"OrderCommandJob({server.Id})")
@@ -87,33 +87,33 @@ namespace RagnarokBotWeb.Domain.Services
                 .Build();
             await scheduler.ScheduleJob(job, OneMinTrigger());
 
-            //job = JobBuilder.Create<KillLogJob>()
-            //       .WithIdentity($"KillLogJob({server.Id})")
-            //       .UsingJobData("server_id", server.Id)
-            //       .UsingJobData("file_type", EFileType.Kill.ToString())
-            //       .Build();
-            //await scheduler.ScheduleJob(job, FiveMinTrigger());
+            job = JobBuilder.Create<KillLogJob>()
+                   .WithIdentity($"KillLogJob({server.Id})")
+                   .UsingJobData("server_id", server.Id)
+                   .UsingJobData("file_type", EFileType.Kill.ToString())
+                   .Build();
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            //job = JobBuilder.Create<EconomyJob>()
-            //    .WithIdentity($"EconomyJob({server.Id})")
-            //    .UsingJobData("server_id", server.Id)
-            //    .UsingJobData("file_type", EFileType.Economy.ToString())
-            //    .Build();
-            //await scheduler.ScheduleJob(job, FiveMinTrigger());
+            job = JobBuilder.Create<EconomyJob>()
+                .WithIdentity($"EconomyJob({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .UsingJobData("file_type", EFileType.Economy.ToString())
+                .Build();
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            //job = JobBuilder.Create<GamePlayJob>()
-            //    .WithIdentity($"GamePlayJob({server.Id})")
-            //    .UsingJobData("server_id", server.Id)
-            //    .UsingJobData("file_type", EFileType.Gameplay.ToString())
-            //    .Build();
-            //await scheduler.ScheduleJob(job, FiveMinTrigger());
+            job = JobBuilder.Create<GamePlayJob>()
+                .WithIdentity($"GamePlayJob({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .UsingJobData("file_type", EFileType.Gameplay.ToString())
+                .Build();
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
 
-            //job = JobBuilder.Create<LoginJob>()
-            //    .WithIdentity($"LoginJob({server.Id})")
-            //    .UsingJobData("server_id", server.Id)
-            //    .UsingJobData("file_type", EFileType.Login.ToString())
-            //    .Build();
-            //await scheduler.ScheduleJob(job, DefaultTrigger());
+            job = JobBuilder.Create<LoginJob>()
+                .WithIdentity($"LoginJob({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .UsingJobData("file_type", EFileType.Login.ToString())
+                .Build();
+            await scheduler.ScheduleJob(job, DefaultTrigger());
 
             _logger.LogInformation("Loaded ftp tasks for server id {}", server.Id);
         }

@@ -12,6 +12,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { debounceTime, distinctUntilChanged, Observable, of, startWith, switchMap, tap } from 'rxjs';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzPopoverModule } from 'ng-zorro-antd/popover';
 
 @Component({
   selector: 'app-players',
@@ -29,7 +30,8 @@ import { NzInputModule } from 'ng-zorro-antd/input';
     NzIconModule,
     NzCardModule,
     NzDividerModule,
-    NzTableModule
+    NzTableModule,
+    NzPopoverModule
   ]
 })
 export class PlayersComponent implements OnInit {

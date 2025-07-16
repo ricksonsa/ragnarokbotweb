@@ -7,7 +7,6 @@ namespace RagnarokBotClient
     public class WebApi
     {
         private readonly HttpClient _httpClient;
-        public HttpClient HttpClient { get { return _httpClient; } }
 
         public WebApi(Settings settings)
         {
@@ -19,7 +18,7 @@ namespace RagnarokBotClient
 
         public void SetAuthToken(string token)
         {
-            _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         }
 
         public async Task<T> PostAsync<T>(string url, object body)
@@ -27,7 +26,7 @@ namespace RagnarokBotClient
             try
             {
                 using StringContent jsonContent = new(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-                var response = await HttpClient.PostAsync(url, jsonContent);
+                var response = await _httpClient.PostAsync(url, jsonContent);
                 if (response.IsSuccessStatusCode)
                 {
                     return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync())!;
@@ -45,7 +44,8 @@ namespace RagnarokBotClient
         public async Task<string> PostAsync(string url, object body)
         {
             using StringContent jsonContent = new(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-            var response = await HttpClient.PostAsync(url, jsonContent);
+            var response = await _httpClient.PostAsync(url, jsonContent);
+            Debug.WriteLine($"Http Request [{url}] responded with status [{response.StatusCode}]");
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadAsStringAsync();
@@ -57,14 +57,15 @@ namespace RagnarokBotClient
         public async Task<HttpResponseMessage> PatchAsync(string url, string body)
         {
             using StringContent jsonContent = new(body, Encoding.UTF8, "text/plain");
-            HttpClient.DefaultRequestHeaders.Add("Content-Type", "text/plain");
-            var response = await HttpClient.PatchAsync(url, jsonContent);
+            _httpClient.DefaultRequestHeaders.Add("Content-Type", "text/plain");
+            var response = await _httpClient.PatchAsync(url, jsonContent);
             return response;
         }
 
         public async Task<T> GetAsync<T>(string url)
         {
-            var response = await HttpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url);
+            Debug.WriteLine($"Http Request [{url}] responded with status [{response.StatusCode}]");
             if (response.IsSuccessStatusCode)
             {
                 return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync())!;
@@ -75,7 +76,7 @@ namespace RagnarokBotClient
 
         public async Task<string> GetAsync(string url)
         {
-            var response = await HttpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadAsStringAsync()!;
@@ -86,7 +87,7 @@ namespace RagnarokBotClient
 
         public async Task<HttpContent> GetAsContentAsync(string url)
         {
-            var response = await HttpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 return response.Content;
@@ -98,8 +99,8 @@ namespace RagnarokBotClient
         public async Task<T> PutAsync<T>(string url, object body)
         {
             using StringContent jsonContent = new(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-            HttpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
-            var response = await HttpClient.PutAsync(url, jsonContent);
+            _httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
+            var response = await _httpClient.PutAsync(url, jsonContent);
             if (response.IsSuccessStatusCode)
             {
                 return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync())!;
@@ -110,8 +111,8 @@ namespace RagnarokBotClient
 
         public async Task<bool> DeleteAsync(string url)
         {
-            HttpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
-            var response = await HttpClient.DeleteAsync(url);
+            _httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
+            var response = await _httpClient.DeleteAsync(url);
             return response.IsSuccessStatusCode;
         }
     }

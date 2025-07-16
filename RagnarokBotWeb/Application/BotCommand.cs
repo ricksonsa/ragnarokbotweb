@@ -2,42 +2,71 @@
 
 namespace RagnarokBotWeb.Application
 {
-    public class BotCommand
+    public class BotCommandValue
     {
         public string? Coordinates { get; set; }
         public string? Target { get; set; }
         public string Value { get; set; }
-        public ECommandType Type { get; set; }
         public int Amount { get; set; } = 1;
+        public ECommandType Type { get; set; }
+    }
+
+    public class BotCommand
+    {
+        public List<BotCommandValue> Values { get; set; } = [];
+        public BotCommand Extra { get; set; }
+        public string Data { get; set; }
 
         public BotCommand() { }
 
-        public static BotCommand ListPlayers()
+        public void ListPlayers()
         {
-            return new BotCommand
+            Values.Add(new BotCommandValue
             {
                 Type = ECommandType.ListPlayers
-            };
+            });
         }
 
-        public static BotCommand Command(string command)
+        public void Command(string command)
         {
-            return new BotCommand
+            Values.Add(new BotCommandValue
             {
                 Value = command,
                 Type = ECommandType.Command
-            };
+            });
         }
 
-        public static BotCommand Delivery(string target, string value, int amount)
+        public void Say(string command)
         {
-            return new BotCommand
+            if (command.StartsWith("#")) command = command[1..];
+            Values.Add(new BotCommandValue
             {
+                Type = ECommandType.Say,
+                Value = command,
+            });
+        }
+
+        public void Delivery(string target, string value, int amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Target = target,
+                Type = ECommandType.Delivery,
+                Value = value,
+                Amount = amount,
+            });
+        }
+
+        public void Delivery(string target, string value, int amount, BotCommand extra)
+        {
+            Extra = extra;
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.Delivery,
                 Target = target,
                 Value = value,
                 Amount = amount,
-                Type = ECommandType.Delivery
-            };
+            });
         }
     }
 }

@@ -15,5 +15,6 @@
         public long? Fame { get; set; }
         public long Coin { get; set; } = 0;
         public DateTime CreateDate { get; set; }
+        public bool Online { get; set; }
     }
 }

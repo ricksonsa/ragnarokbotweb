@@ -17,8 +17,6 @@ public class ScumFileProcessor
 
     private readonly ILogger<ScumFileProcessor> _logger;
     private readonly IReaderPointerRepository _readerPointerRepository;
-    private readonly IReaderRepository _readerRepository;
-    private readonly IScumServerRepository _scumServerRepository;
     private readonly IFtpService _ftpService;
 
     private readonly ScumServer _scumServer;
@@ -39,18 +37,16 @@ public class ScumFileProcessor
         _scumServer = server;
         _fileType = fileType;
         _ftp = server.Ftp!;
-        _scumServerRepository = scumServerRepository;
-        _readerRepository = readerRepository;
     }
 
     public async IAsyncEnumerable<string> UnreadFileLinesAsync()
     {
         _logger.LogInformation("{} -> Executing ProcessUnreadFileLines for server: {}", _fileType, _scumServer.Id);
 
-        var client = _ftpService.GetClient(_ftp);
-        var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
+        FtpClient client = _ftpService.GetClient(_ftp);
+        DateTime today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
 
-        var ftpFiles = GetLogFiles(client, _ftp.RootFolder, today, _fileType);
+        List<FtpListItem> ftpFiles = GetLogFiles(client, _ftp.RootFolder, today, _fileType);
 
         // Filter files with no changes in size
         List<(FtpListItem, ReaderPointer?)> filteredFiles = [];
@@ -65,24 +61,22 @@ public class ScumFileProcessor
 
         if (filteredFiles.Count == 0)
         {
-            _logger.LogWarning("No unread or updated files found. Skipping ProcessUnreadFileLines.");
+            _logger.LogWarning("No unread or updated files found. Skipping UnreadFileLinesAsync.");
             yield break;
         }
 
-        var localPath = GetLocalPath();
+        string localPath = GetLocalPath();
         Directory.CreateDirectory(localPath);
 
         // Download required files
         _ftpService.CopyFiles(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList());
 
-        var allLines = new List<string>();
         foreach (var file in filteredFiles)
         {
-            var filePath = Path.Combine(localPath, file.Item1.Name);
-            var pointer = file.Item2 ?? BuildReaderPointer(filePath);
+            string filePath = Path.Combine(localPath, file.Item1.Name);
+            ReaderPointer pointer = file.Item2 ?? BuildReaderPointer(filePath);
 
-            var filename = Path.GetFileName(filePath);
-            _logger.LogInformation("{} -> Reading file: {}", _fileType, filename);
+            _logger.LogInformation("{} -> Reading file: {}", _fileType, file.Item1.Name);
 
             int lineNumber = 0;
             using var reader = new StreamReader(filePath, Encoding.Unicode);
@@ -130,19 +124,18 @@ public class ScumFileProcessor
         try
         {
             return client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/")
-               .Where(file => file.Name.StartsWith(prefixFileNameYesterday)
-                                || file.Name.StartsWith(prefixFileNameToday)
-                                || file.Name.StartsWith(prefixFileNameTomorrow))
-               .OrderBy(file => file.Created)
-               .ToList();
+          .Where(file => file.Name.StartsWith(prefixFileNameYesterday)
+                           || file.Name.StartsWith(prefixFileNameToday)
+                           || file.Name.StartsWith(prefixFileNameTomorrow))
+          .OrderBy(file => file.Created)
+          .ToList();
         }
         catch (Exception ex)
         {
-#if DEBUG
             Debug.WriteLine(ex.Message);
-#endif
             throw;
         }
+
 
     }
 }

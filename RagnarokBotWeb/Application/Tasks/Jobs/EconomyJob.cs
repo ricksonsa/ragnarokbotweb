@@ -31,9 +31,6 @@ public class EconomyJob(
 
             await foreach (var line in processor.UnreadFileLinesAsync())
             {
-                if (string.IsNullOrEmpty(line)) continue;
-                if (line.Contains("Game version")) continue;
-
                 if (line.Contains("changed their name"))
                 {
                     var (steamId64, scumId, changedName) = new ChangeNameLogParser().Parse(line);

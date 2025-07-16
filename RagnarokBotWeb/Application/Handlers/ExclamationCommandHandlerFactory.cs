@@ -10,11 +10,12 @@ namespace RagnarokBotWeb.Application.Handlers
         public ExclamationCommandHandlerFactory(
             IPlayerRepository playerRepository,
             IPlayerRegisterRepository playerRegisterRepository,
-            IDiscordService discordService)
+            IDiscordService discordService,
+            IOrderService orderService)
         {
             _handlers = new()
             {
-               { "!welcomepack", new WelcomePackCommandHandler(playerRepository, playerRegisterRepository, discordService) },
+               { "!welcomepack", new WelcomePackCommandHandler(playerRepository, playerRegisterRepository, discordService, orderService) },
                { "!discord", new DiscordCommandHandler() }
             };
         }

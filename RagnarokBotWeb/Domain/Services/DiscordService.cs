@@ -100,7 +100,44 @@ namespace RagnarokBotWeb.Domain.Services
             await dmChannel.SendMessageAsync(embed: embed, components: builder.Build());
         }
 
-        public async Task SendEmbedToChannel(CreateEmbed createEmbed)
+        public async Task<IUserMessage> SendEmbedWithBase64Image(CreateEmbed createEmbed)
+        {
+
+            var channel = _client.GetChannel(createEmbed.DiscordId) as IMessageChannel;
+
+            if (channel != null)
+            {
+                var base64Data = createEmbed.ImageUrl.Split(',').Last();
+                byte[] imageBytes = Convert.FromBase64String(base64Data);
+
+                var stream = new MemoryStream(imageBytes);
+                var filename = $"pack-{createEmbed.Title.Trim()}.png";
+
+                var embed = new EmbedBuilder()
+                    .WithTitle(createEmbed.Title)
+                    .WithDescription(createEmbed.Text)
+                    .WithThumbnailUrl("attachment://" + filename)
+                    .WithImageUrl("attachment://" + filename)
+                    .WithColor(Color.Blue)
+                    .Build();
+
+                var builder = new ComponentBuilder();
+
+                createEmbed.Buttons.ForEach(button =>
+                {
+                    builder.WithButton(
+                        label: button.Label,
+                        customId: button.ActionId,
+                        style: ButtonStyle.Primary);
+                });
+
+                return await channel.SendFileAsync(stream, filename, embed: embed, components: builder.Build());
+            }
+
+            return null;
+        }
+
+        public async Task<IUserMessage> SendEmbedToChannel(CreateEmbed createEmbed)
         {
             var channel = _client.GetChannel(createEmbed.DiscordId) as IMessageChannel;
 
@@ -123,7 +160,23 @@ namespace RagnarokBotWeb.Domain.Services
                         style: ButtonStyle.Primary);
                 });
 
-                await channel.SendMessageAsync(embed: embed, components: builder.Build());
+                return await channel.SendMessageAsync(embed: embed, components: builder.Build());
+            }
+
+            return null;
+        }
+
+        public async Task RemoveMessage(ulong channelId, ulong messageId)
+        {
+            var channel = await _client.GetChannelAsync(channelId) as IMessageChannel;
+
+            if (channel != null)
+            {
+                var message = await channel.GetMessageAsync(messageId);
+                if (message != null)
+                {
+                    await message.DeleteAsync();
+                }
             }
         }
     }

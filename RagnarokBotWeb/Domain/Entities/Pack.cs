@@ -1,4 +1,5 @@
-﻿namespace RagnarokBotWeb.Domain.Entities
+﻿
+namespace RagnarokBotWeb.Domain.Entities
 {
     public class Pack : BaseEntity
     {
@@ -10,6 +11,7 @@
         public string? Commands { get; set; }
         public string? ImageUrl { get; set; }
         public string? DiscordChannelId { get; set; }
+        public ulong? DiscordMessageId { get; set; }
         public long? PurchaseCooldownSeconds { get; set; }
         public long? StockPerPlayer { get; set; }
         public bool Enabled { get; set; }
@@ -17,5 +19,7 @@
         public bool IsVipOnly { get; set; }
         public ScumServer ScumServer { get; set; }
         public List<PackItem> PackItems { get; set; }
+        public bool IsWelcomePack { get; set; }
+        public DateTime? Deleted { get; set; }
     }
 }

@@ -95,11 +95,11 @@ export class PackagesComponent implements OnInit {
 
   confirmDelete(id: number) {
     this.packageService.deletePackage(id)
-      .subscribe({
-        next: () => {
-          this.pageSizeChange(this.pageSize);
-        }
-      });
+      .pipe(switchMap(() => {
+        this.pageSizeChange(this.pageSize);
+        this.pageIndexChange(this.pageIndex);
+        return of();
+      }));
   }
 
   cancelDelete() { }

@@ -64,6 +64,7 @@ export class PlayerComponent implements OnInit {
       steamName: [null],
       steamId64: [null],
       discordName: [null],
+      discordId: [null],
       money: [null],
       gold: [null],
       fame: [null],

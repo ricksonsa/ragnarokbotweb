@@ -7,5 +7,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
     {
         Task<Page<Pack>> GetPageByServerAndFilter(Paginator paginator, long id, string? filter);
         Task<Pack?> FindByIdAsNoTrackingAsync(long id);
+        Task<Pack?> FindWelcomePackByServerIdAsync(long id);
     }
 }

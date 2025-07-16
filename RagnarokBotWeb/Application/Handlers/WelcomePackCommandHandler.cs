@@ -11,16 +11,19 @@ namespace RagnarokBotWeb.Application.Handlers
     {
         private readonly IPlayerRegisterRepository _playerRegisterRepository;
         private readonly IDiscordService _discordService;
+        private readonly IOrderService _orderService;
         private readonly IPlayerRepository _playerRepository;
 
         public WelcomePackCommandHandler(
             IPlayerRepository playerRepository,
             IPlayerRegisterRepository playerRegisterRepository,
-            IDiscordService discordService)
+            IDiscordService discordService,
+            IOrderService orderService)
         {
             _playerRepository = playerRepository;
             _playerRegisterRepository = playerRegisterRepository;
             _discordService = discordService;
+            _orderService = orderService;
         }
 
         public async Task ExecuteAsync(ChatTextParseResult input)
@@ -47,11 +50,18 @@ namespace RagnarokBotWeb.Application.Handlers
                 await _playerRepository.CreateOrUpdateAsync(player);
                 await _playerRepository.SaveAsync();
 
+                string text = $"You were registered at {register.ScumServer.Name}.";
+                var order = await _orderService.PlaceWelcomePackOrder(player);
+                if (order != null)
+                {
+                    text += $" Stay put to receive your Welcome Pack {DiscordEmoji.Gift}";
+                }
+
                 await _discordService.SendEmbedToUserDM(new CreateEmbed
                 {
                     DiscordId = register.DiscordId,
-                    Title = "Welcome Pack",
-                    Text = $"Você foi registrado no servidor {register.ScumServer.Name}, aguarde no local para receber seu Welcome Pack {DiscordEmoji.Gift}",
+                    Title = "Registration",
+                    Text = text,
                 });
             }
             else

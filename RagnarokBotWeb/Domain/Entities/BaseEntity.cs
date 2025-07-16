@@ -13,7 +13,7 @@ namespace RagnarokBotWeb.Domain.Entities
 
         protected BaseEntity()
         {
-            CreateDate = DateTime.Now;
+            CreateDate = DateTime.UtcNow;
         }
 
         public bool IsTransitory()

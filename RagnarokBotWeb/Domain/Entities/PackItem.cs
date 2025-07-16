@@ -1,4 +1,5 @@
-﻿namespace RagnarokBotWeb.Domain.Entities
+﻿
+namespace RagnarokBotWeb.Domain.Entities
 {
     public class PackItem : BaseEntity
     {
@@ -6,5 +7,6 @@
         public Pack Pack { get; set; }
         public int Amount { get; set; } = 1;
         public int AmmoCount { get; set; }
+        public DateTime? Deleted { get; set; }
     }
 }
