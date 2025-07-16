@@ -65,7 +65,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity($"ListPlayersJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, DefaultTrigger());
+            await scheduler.ScheduleJob(job, OneMinTrigger());
 
             job = JobBuilder.Create<OrderCommandJob>()
                  .WithIdentity($"OrderCommandJob({server.Id})")
