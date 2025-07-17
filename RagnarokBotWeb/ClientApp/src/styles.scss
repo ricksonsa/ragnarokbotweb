@@ -46,6 +46,17 @@
 //     border-color: var(--border-color) !important;
 //   }
   
+@font-face {
+  font-family: 'Montserrat';
+  src: url('assets/fonts/montserrat/Montserrat-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif !important;
+}
+
 .main {
     display: flex;
     justify-content: space-between;
@@ -81,6 +92,12 @@
 
 .danger {
     color: #ff4d4f !important;
+}
+
+.description-color {
+    font-size: 14px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.45) !important;
 }
 
 .discord-success {

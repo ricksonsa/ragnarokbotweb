@@ -24,12 +24,12 @@ import { AccountDto } from '../../../models/account.dto';
 import { Alert } from '../../../models/alert';
 import { ChannelDto } from '../../../models/channel.dto';
 import { ItemDto } from '../../../models/item.dto';
-import { PackageItemDto } from '../../../models/package.dto';
 import { AuthenticationService } from '../../../services/authentication.service';
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { ItemService } from '../../../services/item.service';
 import { PackageService } from '../../../services/package.service';
 import { ServerService } from '../../../services/server.service';
+import { PackItemDto } from '../../../models/package.dto';
 
 @Component({
   selector: 'app-package',
@@ -64,7 +64,7 @@ export class WelcomePackComponent implements OnInit {
   packageItemForm!: FormGroup;
   private fb = inject(NonNullableFormBuilder);
   commands: string[] = [];
-  items: PackageItemDto[] = [];
+  items: PackItemDto[] = [];
   isLoading: boolean;
   total: any;
   suggestions$: Observable<ItemDto[]> = of([]);
@@ -121,7 +121,7 @@ export class WelcomePackComponent implements OnInit {
       if (item) {
         this.packageForm.patchValue(item);
         this.avatarUrl = this.packageForm.value.imageUrl;
-        this.items = item.items;
+        this.items = item.packItems;
       }
     });
   }
@@ -189,17 +189,20 @@ export class WelcomePackComponent implements OnInit {
     this.router.navigate(['servers', this.account!.serverId, 'shop', 'packages']);
   }
 
+
   addItem() {
     if (!this.selectedItem) return;
 
-    var packageItem = new PackageItemDto(
-      this.selectedItem.id,
-      this.selectedItem.name,
-      +this.packageItemForm.value.amount,
-      +this.packageItemForm.value.ammoCount);
+    var packageItem: PackItemDto = {
+      amount: this.packageItemForm.value.amount,
+      ammoCount: this.packageItemForm.value.ammoCount,
+      deleted: null,
+      itemId: this.selectedItem.id,
+      itemName: this.selectedItem.name,
+      packId: this.packageForm.value.id
+    };
 
     this.items.push(packageItem);
-
     this.selectedItem = null;
     this.packageItemForm.patchValue({
       searchControl: '',
@@ -238,7 +241,7 @@ export class WelcomePackComponent implements OnInit {
     }
 
     var pack = this.packageForm.value;
-    pack.items = this.items;
+    pack.packItems = this.items;
 
     this.packageService.savePackage(pack)
       .subscribe({

@@ -1,5 +1,4 @@
 ﻿using RagnarokBotWeb.Application.Pagination;
-using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Dto;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
@@ -10,7 +9,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<PackDto> FetchPackById(long id);
         Task<PackDto> CreatePackAsync(PackDto createPack);
         Task<PackDto> UpdatePackAsync(long id, PackDto createPack);
-        Task<Pack> DeletePackAsync(long id);
+        Task DeletePackAsync(long id);
         Task<PackDto> FetchWelcomePack();
     }
 }

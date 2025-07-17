@@ -67,7 +67,17 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public override Task CreateOrUpdateAsync(Pack entity)
         {
-            _appDbContext.ScumServers.Attach(entity.ScumServer);
+            if (entity.ScumServer != null) _appDbContext.ScumServers.Attach(entity.ScumServer);
+            if (_appDbContext.ChangeTracker.Entries<Pack>().Any(e => e.Entity.Id == entity.Id))
+            {
+                _appDbContext.ChangeTracker.Entries<Pack>().FirstOrDefault(e => e.Entity.Id == entity.Id)!.State = EntityState.Detached;
+            }
+
+            foreach (var packItem in entity.PackItems)
+            {
+                _appDbContext.Items.Attach(packItem.Item);
+            }
+
             return base.CreateOrUpdateAsync(entity);
         }
     }

@@ -26,6 +26,8 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<Warzone> Warzones { get; set; }
         public DbSet<WarzoneItem> WarzoneItems { get; set; }
         public DbSet<Teleport> Teleports { get; set; }
+        public DbSet<WarzoneSpawn> WarzoneSpawns { get; set; }
+        public DbSet<WarzoneTeleport> WarzoneTeleports { get; set; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -46,6 +48,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             Silences = context.Silences;
             WarzoneItems = context.WarzoneItems;
             Teleports = context.Teleports;
+            WarzoneTeleports = context.WarzoneTeleports;
+            WarzoneSpawns = context.WarzoneSpawns;
+            Teleports = context.Teleports;
+            Warzones = context.Warzones;
         }
 
         public async Task SaveAsync()

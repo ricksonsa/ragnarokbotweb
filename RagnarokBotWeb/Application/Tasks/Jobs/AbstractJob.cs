@@ -14,11 +14,11 @@ public abstract class AbstractJob
         _scumServerRepository = scumServerRepository;
     }
 
-    protected async Task<ScumServer> GetServerAsync(IJobExecutionContext context)
+    protected async Task<ScumServer> GetServerAsync(IJobExecutionContext context, bool ftpRequired = true)
     {
         var serverId = GetServerIdFromContext(context);
         var server = await _scumServerRepository.FindByIdAsNoTrackingAsync(serverId);
-        if (server?.Ftp is null)
+        if (server?.Ftp is null && ftpRequired)
             throw new Exception("Invalid server: the server is non existent or does not have a ftp configuration");
         return server;
     }

@@ -38,12 +38,11 @@
         <nz-form-control [nzSpan]="2">
           <label nz-checkbox formControlName="enabled"></label>
         </nz-form-control>
-        <p nz-typography style="margin: 0; color:#8f8f8fc2;">Determine whether this package will be available for
-          purchase. Disabled packages won't show up in the Discord Channel</p>
+        <p nz-typography class="description-color">Determine whether this Warzone will be active. Disabled
+          Warzones won't be started in the game.</p>
       </nz-form-item>
 
-
-      <nz-form-item>
+      <nz-form-item nzAlign="bottom">
         <nz-form-label [nzSpan]="0" nzFor="warzoneThumbnail">Warzone Thumbnail</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="uploadBtn">
           <img *ngIf="avatarUrl" nz-image width="200px" height="200px" [nzSrc]="avatarUrl" alt="" />
@@ -52,7 +51,7 @@
               [nzBeforeUpload]="handleBeforeUpload">
               <button nz-button>
                 <nz-icon nzType="upload" />
-                Upload
+                Select Image
               </button>
             </nz-upload>
           </ng-template>
@@ -110,7 +109,7 @@
         <nz-form-control [nzSpan]="2">
           <label nz-checkbox formControlName="isVipOnly"></label>
         </nz-form-control>
-        <p nz-typography style="margin: 0; color:#8f8f8fc2;">Determine whether the teleport will only be available for
+        <p nz-typography class="description-color">Determine whether the teleport will only be available for
           VIP Players.</p>
       </nz-form-item>
 
@@ -134,6 +133,41 @@
       </ng-template>
 
       <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="itemSpawnInterval">Item Spawn Interval (minutes)</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="intervalExtra" nzErrorTip="Number should be greater then zero.">
+          <input formControlName="itemSpawnInterval" nz-input name="itemSpawnInterval" type="number"
+            id="itemSpawnInterval" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #intervalExtra>
+        <p>The interval at which items will spawn in Warzone.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="warzoneDurationInterval">Warzone duration time (minutes)</nz-form-label>
+        <nz-form-control [nzExtra]="warzoneDurationIntervalExtra" [nzSpan]="24"
+          nzErrorTip="Number should be greater then 5.">
+          <input formControlName="warzoneDurationInterval" nz-input name="warzoneDurationInterval" type="number"
+            id="warzoneDurationInterval" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #warzoneDurationIntervalExtra>
+        <p>The duration time until this Warzone ends for another Warzone to start.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="minPlayerOnline">Minimum Player Required</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="minPlayerOnlineExtra"
+          nzErrorTip="The interval have to be greater then 10 seconds.">
+          <input formControlName="minPlayerOnline" nz-input name="minPlayerOnline" type="number" id="minPlayerOnline" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #minPlayerOnlineExtra>
+        <p>The minimum number of players online required to start the event. Leave it blank for always start
+          idepentently of players online.</p>
+      </ng-template>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="stockPerPlayer">Stock Per Player</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="dailyPackageExtra">
           <input formControlName="stockPerPlayer" nz-input name="stockPerPlayer" type="number" id="stockPerPlayer" />
@@ -154,6 +188,17 @@
           it blank
           for no text.</p>
       </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="startMessage">Warzone Start Message</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="startMessageExtra">
+          <input formControlName="startMessage" nz-input name="startMessage" type="text" id="startMessage" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #startMessageExtra>
+        <p style="margin: 0">The text that you be used to announce the start of the Warzone. Leave it blank for no
+          announcements.</p>
+      </ng-template>
     </form>
   </nz-card>
 
@@ -164,6 +209,7 @@
       item.name}}</nz-auto-option>
     }
   </nz-autocomplete>
+
   <nz-card nzTitle="Warzone Items">
     <form [formGroup]="packageItemForm" nz-form>
       <nz-form-item>
@@ -182,14 +228,17 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="amount">Priority</nz-form-label>
-        <nz-form-control [nzSpan]="24" [nzExtra]="ammountExtra">
-          <input formControlName="amount" [placeholder]="!selectedItem ? 'Select a item first' : ''" nz-input
-            name="amount" type="number" id="amount" />
+        <nz-form-label [nzSpan]="0" nzFor="priority">Priority</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="priorityExtra">
+          <nz-select id="priority" formControlName="priority" nzPlaceHolder="Item spawn priority">
+            <nz-option [nzValue]="1" nzLabel="Low"></nz-option>>
+            <nz-option [nzValue]="2" nzLabel="Medium"></nz-option>>
+            <nz-option [nzValue]="3" nzLabel="High"></nz-option>>
+          </nz-select>
         </nz-form-control>
       </nz-form-item>
-      <ng-template #ammountExtra>
-        <p style="margin: 0">The priority of which the item will be selected to spawn randomly.</p>
+      <ng-template #priorityExtra>
+        <p style="margin: 0">The probability that the item will be selected to spawn.</p>
       </ng-template>
 
       <nz-table nzShowPagination="false" [nzData]="['']">
@@ -201,13 +250,13 @@
           </tr>
         </thead>
         <tbody>
-          @for (item of items; track $index) {
+          @for (warzoneItem of items; track $index) {
           <tr>
-            <td>{{item.itemName}}</td>
-            <td>{{item.amount}}</td>
+            <td>{{warzoneItem.itemName}}</td>
+            <td>{{resolvePriorityText(warzoneItem.priority)}}</td>
             <td>
               <button nzSize="large" style="height: 20px; width: 20px;" [nzDanger]="true" nz-button nzType="link"
-                (click)="removeItem(item.itemId)">
+                (click)="removeItem(warzoneItem.itemId)">
                 <nz-icon style="font-size: 20px;" nzType="close" />
               </button>
             </td>
@@ -216,6 +265,110 @@
         </tbody>
       </nz-table>
     </form>
-
   </nz-card>
+
+  <nz-card nzTitle="Item Spawn Point">
+    <form [formGroup]="itemSpawnPointForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Name</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input formControlName="name" placeholder="Name for the item spawn point" nz-input name="name" type="text"
+            id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coordinates">Coordinates</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="itemSpawnCoordinatesExtra">
+          <input formControlName="coordinates"
+            placeholder="{X=-365234.031 Y=32936.133 Z=35726.176|P=322.996277 Y=172.876053 R=0.000000}" nz-input
+            name="coordinates" type="text" id="coordinates" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #itemSpawnCoordinatesExtra>
+        <p style="margin: 0">The ingame coordinates for the items to spawn to. You can press control-c inside the game
+          to
+          get the
+          coordinates.</p>
+      </ng-template>
+
+      <button nz-button nzType="primary" (click)="addSpawnPoint()">Add Item Spawn Point</button><br><br>
+
+      <nz-table nzShowPagination="false" [nzData]="['']">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Coordinates</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (warzoneTeleport of itemSpawnPoints; track $index) {
+          <tr>
+            <td>{{ warzoneTeleport.teleport.name }}</td>
+            <td>{{ warzoneTeleport.teleport.coordinates }}</td>
+            <td>
+              <button nzSize="large" style="height: 20px; width: 20px;" [nzDanger]="true" nz-button nzType="link"
+                (click)="remoteItemSpawnPoint($index)">
+                <nz-icon style="font-size: 20px;" nzType="close" />
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </nz-table>
+    </form>
+  </nz-card>
+
+  <nz-card nzTitle="Warzone Teleport">
+    <form [formGroup]="teleportForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Name</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input formControlName="name" placeholder="Name of the teleport point" nz-input name="name" type="text"
+            id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coordinates">Coordinates</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="coordinatesExtra">
+          <input formControlName="coordinates"
+            placeholder="{X=-365234.031 Y=32936.133 Z=35726.176|P=322.996277 Y=172.876053 R=0.000000}" nz-input
+            name="coordinates" type="text" id="coordinates" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #coordinatesExtra>
+        <p style="margin: 0">The ingame coordinates to teleport to. You can press control-c inside the game to get the
+          coordinates.</p>
+      </ng-template>
+
+      <button nz-button nzType="primary" (click)="addTeleport()">Add Teleport</button><br><br>
+
+      <nz-table nzShowPagination="false" [nzData]="['']">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Coordinates</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (warzoneTeleport of teleports; track $index) {
+          <tr>
+            <td>{{ warzoneTeleport.teleport.name }}</td>
+            <td>{{ warzoneTeleport.teleport.coordinates }}</td>
+            <td>
+              <button nzSize="large" style="height: 20px; width: 20px;" [nzDanger]="true" nz-button nzType="link"
+                (click)="removeTeleport($index)">
+                <nz-icon style="font-size: 20px;" nzType="close" />
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </nz-table>
+    </form>
+  </nz-card>
+
 </div>

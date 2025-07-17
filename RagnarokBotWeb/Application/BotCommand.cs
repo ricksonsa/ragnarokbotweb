@@ -68,5 +68,14 @@ namespace RagnarokBotWeb.Application
                 Amount = amount,
             });
         }
+
+        public void Announce(string value)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.Announce,
+                Value = value
+            });
+        }
     }
 }

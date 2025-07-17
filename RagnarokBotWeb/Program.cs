@@ -127,6 +127,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IReaderRepository, ReaderRepository>();
             builder.Services.AddScoped<IReaderPointerRepository, ReaderPointerRepository>();
             builder.Services.AddScoped<IBunkerRepository, BunkerRepository>();
+            builder.Services.AddScoped<IWarzoneRepository, WarzoneRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
@@ -144,6 +145,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<ITaskService, TaskService>();
             builder.Services.AddScoped<IPlayerRegisterService, PlayerRegisterService>();
             builder.Services.AddScoped<IReaderPointerService, ReaderPointerService>();
+            builder.Services.AddScoped<IWarzoneService, WarzoneService>();
 
             builder.Services.AddScoped<StartupDiscordTemplate>();
 

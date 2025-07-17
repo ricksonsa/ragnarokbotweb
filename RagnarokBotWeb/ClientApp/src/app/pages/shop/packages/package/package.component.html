@@ -48,7 +48,8 @@
         <nz-form-control [nzSpan]="24" [nzExtra]="uploadBtn">
           <img *ngIf="avatarUrl" nz-image width="200px" height="200px" [nzSrc]="avatarUrl" alt="" />
           <ng-template #uploadBtn>
-            <nz-upload nzAction="https://www.mocky.io/v2/5cc8019d300000980a055e76" [nzBeforeUpload]="handleBeforeUpload">
+            <nz-upload nzAction="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+              [nzBeforeUpload]="handleBeforeUpload">
               <button nz-button>
                 <nz-icon nzType="upload" />
                 Upload

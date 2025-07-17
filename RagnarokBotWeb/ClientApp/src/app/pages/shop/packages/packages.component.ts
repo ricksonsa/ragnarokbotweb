@@ -12,8 +12,10 @@ import { Router, RouterModule } from '@angular/router';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
+import { EventManager, EventWithContent } from '../../../services/event-manager.service';
+import { Alert } from '../../../models/alert';
 
 @Component({
   selector: 'app-packages',
@@ -45,7 +47,10 @@ export class PackagesComponent implements OnInit {
   suggestions$: Observable<PackageDto[]> = of([]);
   isLoading = true;
 
-  constructor(private readonly packageService: PackageService, private readonly router: Router) { }
+  constructor(
+    private readonly packageService: PackageService,
+    private readonly router: Router,
+    private readonly eventManager: EventManager) { }
 
   ngOnInit() {
     // this.loadPage();
@@ -94,12 +99,12 @@ export class PackagesComponent implements OnInit {
   }
 
   confirmDelete(id: number) {
-    this.packageService.deletePackage(id)
-      .pipe(switchMap(() => {
+    firstValueFrom(this.packageService.deletePackage(id))
+      .then(() => {
         this.pageSizeChange(this.pageSize);
         this.pageIndexChange(this.pageIndex);
-        return of();
-      }));
+        this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Pack number ${id} deleted.`, 'success')));
+      });
   }
 
   cancelDelete() { }

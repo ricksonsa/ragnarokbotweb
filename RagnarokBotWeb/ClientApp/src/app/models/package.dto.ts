@@ -18,9 +18,14 @@ export class PackageDto {
     isWelcomePack!: boolean;
     isDailyPackage!: boolean;
     createDate!: Date;
-    items?: ItemDto[];
+    packItems?: PackItemDto[];
 }
 
-export class PackageItemDto {
-    constructor(public itemId: number, public itemName: string, public amount: number, public ammoCount: number) { }
+export interface PackItemDto {
+    itemId: number;
+    itemName: string;
+    packId: number;
+    amount: number;
+    ammoCount: number;
+    deleted: string | null;
 }

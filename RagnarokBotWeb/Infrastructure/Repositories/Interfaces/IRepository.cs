@@ -1,10 +1,12 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using RagnarokBotWeb.Domain.Entities;
 using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
     public interface IRepository<T> where T : BaseEntity
     {
+        DbSet<T> DbSet();
         Task<IEnumerable<T>> GetAllAsync();
         Task<T?> FindByIdAsync(long id);
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);

@@ -18,6 +18,11 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             _dbSet = context.Set<T>();
         }
 
+        public virtual DbSet<T> DbSet()
+        {
+            return _dbSet;
+        }
+
         public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
             return await _dbSet.ToListAsync();

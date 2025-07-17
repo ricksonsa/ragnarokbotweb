@@ -22,6 +22,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         DbSet<Silence> Silences { get; }
         DbSet<Warzone> Warzones { get; }
         DbSet<WarzoneItem> WarzoneItems { get; }
+        DbSet<Teleport> Teleports { get; }
+        DbSet<WarzoneSpawn> WarzoneSpawns { get; }
+        DbSet<WarzoneTeleport> WarzoneTeleports { get; }
+
 
         Task SaveAsync();
     }

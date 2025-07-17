@@ -24,12 +24,15 @@ import { AccountDto } from '../../../../models/account.dto';
 import { Alert } from '../../../../models/alert';
 import { ChannelDto } from '../../../../models/channel.dto';
 import { ItemDto } from '../../../../models/item.dto';
-import { PackageItemDto } from '../../../../models/package.dto';
 import { AuthenticationService } from '../../../../services/authentication.service';
 import { EventManager, EventWithContent } from '../../../../services/event-manager.service';
 import { ItemService } from '../../../../services/item.service';
-import { PackageService } from '../../../../services/package.service';
 import { ServerService } from '../../../../services/server.service';
+import { WarzoneDto } from '../../../../models/warzone.dto';
+import { WarzoneItemDto } from '../../../../models/warzone-item.dto';
+import { WarzoneTeleportDto } from '../../../../models/warzone-teleport';
+import { WarzoneSpawnDto } from '../../../../models/warzone-spawn.dto';
+import { WarzoneService } from '../../../../services/warzone.service';
 
 @Component({
   selector: 'app-warzone',
@@ -62,9 +65,13 @@ export class WarzoneComponent implements OnInit {
   account?: AccountDto;
   packageForm!: FormGroup;
   packageItemForm!: FormGroup;
+  teleportForm!: FormGroup;
+  teleports: WarzoneTeleportDto[] = [];
+  itemSpawnPointForm!: FormGroup;
+  itemSpawnPoints: WarzoneSpawnDto[] = [];
   private fb = inject(NonNullableFormBuilder);
   commands: string[] = [];
-  items: PackageItemDto[] = [];
+  items: WarzoneItemDto[] = [];
   isLoading: boolean;
   total: any;
   suggestions$: Observable<ItemDto[]> = of([]);
@@ -81,20 +88,25 @@ export class WarzoneComponent implements OnInit {
 
   constructor(
     private readonly authService: AuthenticationService,
-    private readonly packageService: PackageService,
     private readonly itemService: ItemService,
+    private readonly warzoneService: WarzoneService,
     private readonly serverService: ServerService,
     private route: ActivatedRoute,
     private readonly eventManager: EventManager,
     private readonly router: Router) {
+
     this.packageForm = this.fb.group({
-      id: [null],
+      id: [0],
       name: [null, [Validators.required]],
       description: [null, [Validators.required]],
       price: [null],
       vipPrice: [null],
+      itemSpawnInterval: [5, [Validators.required, Validators.min(1)]],
+      warzoneDurationInterval: [30, [Validators.required, Validators.min(5)]],
+      minPlayerOnline: [null],
       isVipOnly: [false],
       discordChannelId: [null],
+      startMessage: [null],
       imageUrl: [null],
       purchaseCooldownSeconds: [null],
       stockPerPlayer: [null],
@@ -105,8 +117,18 @@ export class WarzoneComponent implements OnInit {
 
     this.packageItemForm = this.fb.group({
       searchControl: [null, [Validators.required]],
-      amount: [1],
-      ammoCount: [0]
+      priority: [3],
+      name: [null, [Validators.required, Validators.minLength(1)]],
+    });
+
+    this.teleportForm = this.fb.group({
+      name: [null, [Validators.required, Validators.minLength(1)]],
+      coordinates: [null, [Validators.required, Validators.minLength(10)]]
+    });
+
+    this.itemSpawnPointForm = this.fb.group({
+      name: [null, [Validators.required, Validators.minLength(1)]],
+      coordinates: [null, [Validators.required, Validators.minLength(10)]]
     });
   }
 
@@ -116,11 +138,14 @@ export class WarzoneComponent implements OnInit {
     this.loadDiscordChannels();
 
     this.route.data.subscribe(data => {
-      var item = data['package'];
+      var item = data['warzone'];
       if (item) {
+        const warzone = item as WarzoneDto;
         this.packageForm.patchValue(item);
         this.avatarUrl = this.packageForm.value.imageUrl;
-        this.items = item.items;
+        this.items = warzone.warzoneItems;
+        this.itemSpawnPoints = warzone.spawnPoints;
+        this.teleports = warzone.teleports;
       }
     });
   }
@@ -135,12 +160,22 @@ export class WarzoneComponent implements OnInit {
   }
 
   confirmDelete(id: number) {
-    this.packageService.deletePackage(id)
+    this.warzoneService.deleteWarzone(id)
       .subscribe({
         next: () => {
           this.goBack();
         }
       });
+  }
+
+  resolvePriorityText(priority: number) {
+    switch (priority) {
+      case 1:
+      default:
+        return 'Low';
+      case 2: return 'Medium';
+      case 3: return 'High';
+    }
   }
 
   cancelDelete() { }
@@ -153,9 +188,40 @@ export class WarzoneComponent implements OnInit {
     this.searchControl.setValue(this.filter);
   }
 
-  handleImageChange(data: any) {
+  addTeleport() {
+    if (this.teleportForm.invalid) return;
+    var teleport: WarzoneTeleportDto = {
+      id: 0,
+      warzoneId: this.packageForm.value.id,
+      teleport: {
+        id: 0,
+        coordinates: this.teleportForm.value.coordinates,
+        name: this.teleportForm.value.name
+      }
+    };
 
+    this.teleports.push(teleport);
+
+    this.teleportForm.patchValue({ name: null, coordinates: null });
   }
+
+  addSpawnPoint() {
+    if (this.itemSpawnPointForm.invalid) return;
+    var teleport: WarzoneSpawnDto = {
+      id: 0,
+      warzoneId: this.packageForm.value.id,
+      teleport: {
+        id: 0,
+        coordinates: this.itemSpawnPointForm.value.coordinates,
+        name: this.itemSpawnPointForm.value.name
+      }
+    };
+    this.itemSpawnPoints.push(teleport);
+
+    this.itemSpawnPointForm.patchValue({ name: null, coordinates: null });
+  }
+
+  handleImageChange(data: any) { }
 
   setUpFilter() {
     this.suggestions$ = this.searchControl.valueChanges
@@ -185,25 +251,30 @@ export class WarzoneComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['servers', this.account!.serverId, 'shop', 'packages']);
+    this.router.navigate(['servers', this.account!.serverId, 'events', 'warzones']);
   }
 
   addItem() {
     if (!this.selectedItem) return;
 
-    var packageItem = new PackageItemDto(
-      this.selectedItem.id,
-      this.selectedItem.name,
-      +this.packageItemForm.value.amount,
-      +this.packageItemForm.value.ammoCount);
+    const alreadyItem = this.items.find(warzoneItem => warzoneItem.itemId == this.selectedItem.id);
+    if (alreadyItem != null) return;
+
+    var packageItem: WarzoneItemDto = {
+      itemId: this.selectedItem.id,
+      itemName: this.selectedItem.name,
+      deleted: null,
+      priority: this.packageItemForm.value.priority,
+      warzoneId: this.packageForm.value.id
+    };
 
     this.items.push(packageItem);
 
     this.selectedItem = null;
     this.packageItemForm.patchValue({
       searchControl: '',
-      amount: 1,
-      ammoCount: 0
+      priority: 1,
+      name: null
     });
   }
 
@@ -220,6 +291,14 @@ export class WarzoneComponent implements OnInit {
     this.items = this.items.filter(item => item.itemId !== id);
   }
 
+  removeTeleport(index: number) {
+    this.teleports.splice(index, 1);
+  }
+
+  remoteItemSpawnPoint(index: number) {
+    this.itemSpawnPoints.splice(index, 1);
+  }
+
   save() {
     if (this.packageForm.invalid) {
       Object.values(this.packageForm.controls).forEach(control => {
@@ -232,19 +311,31 @@ export class WarzoneComponent implements OnInit {
     }
 
     if (!this.items || this.items.length <= 0) {
-      this.eventManager.broadcast(new EventWithContent('alert', new Alert('', 'At least one item is required to create a package.', 'error')));
+      this.eventManager.broadcast(new EventWithContent('alert', new Alert('', 'At least one item is required to create a Warzone.', 'error')));
       return;
     }
 
-    var pack = this.packageForm.value;
-    pack.items = this.items;
+    if (!this.itemSpawnPoints || this.itemSpawnPoints.length <= 0) {
+      this.eventManager.broadcast(new EventWithContent('alert', new Alert('', 'At least one item spawn point is required to create a Warzone.', 'error')));
+      return;
+    }
 
-    this.packageService.savePackage(pack)
+    if (!this.teleports || this.teleports.length <= 0) {
+      this.eventManager.broadcast(new EventWithContent('alert', new Alert('', 'At least one teleport point is required to create a Warzone.', 'error')));
+      return;
+    }
+
+    var warzone = this.packageForm.value as WarzoneDto;
+    warzone.warzoneItems = this.items;
+    warzone.teleports = this.teleports;
+    warzone.spawnPoints = this.itemSpawnPoints;
+
+    this.warzoneService.saveWarzone(warzone)
       .subscribe({
         next: (value) => {
-          var message = `Package ${value.name} successfully created.`;
-          if (pack.id) {
-            message = `Package ${value.name} successfully updated.`;
+          var message = `Warzone ${value.name} successfully created.`;
+          if (warzone.id) {
+            message = `Warzone ${value.name} successfully updated.`;
           }
 
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', message, 'success')));

@@ -25,7 +25,7 @@ export class PackageService {
   }
 
   deletePackage(id: number) {
-    return this.http.delete<PackageDto>(`${WEB_API.baseUrl}/api/packs/${id}`);
+    return this.http.delete(`${WEB_API.baseUrl}/api/packs/${id}`);
   }
 
   savePackage(packForm: any) {

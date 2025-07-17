@@ -30,23 +30,16 @@ namespace RagnarokBotWeb.Application.Mapping
             CreateMap<Bot, BotDto>();
             CreateMap<Order, OrderDto>();
 
-            CreateMap<PackItem, ItemToPackDto>()
-                .ForPath((dto) => dto.ItemName, opt => opt.MapFrom(packItem => packItem.Item.Name))
-                .ForPath((dto) => dto.ItemId, opt => opt.MapFrom(packItem => packItem.Item.Id))
-                .ForPath((dto) => dto.Amount, opt => opt.MapFrom(packItem => packItem.Amount))
-                .ForPath((dto) => dto.PackId, opt => opt.MapFrom(packItem => packItem.Pack.Id))
-                .ForPath((dto) => dto.ItemCode, opt => opt.MapFrom(packItem => packItem.Item.Code))
-                .ReverseMap()
-                   .ForPath((packItem) => packItem.Item.Name, opt => opt.MapFrom(dto => dto.ItemName))
-                   .ForPath((packItem) => packItem.Item.Id, opt => opt.MapFrom(dto => dto.ItemId))
-                   .ForPath((packItem) => packItem.Amount, opt => opt.MapFrom(dto => dto.Amount))
-                   .ForPath((packItem) => packItem.Pack.Id, opt => opt.MapFrom(dto => dto.PackId))
-                   .ForPath((packItem) => packItem.Item.Code, opt => opt.MapFrom(dto => dto.ItemCode));
+            CreateMap<PackItem, PackItemDto>()
+             .ForPath((dto) => dto.PackId, opt => opt.MapFrom(pack => pack.Pack.Id))
+             .ForPath((dto) => dto.ItemName, opt => opt.MapFrom(pack => pack.Item.Name))
+             .ForPath((dto) => dto.ItemId, opt => opt.MapFrom(pack => pack.Item.Id))
+         .ReverseMap()
+            .ForPath((pack) => pack.Pack.Id, opt => opt.MapFrom(dto => dto.PackId))
+            .ForPath((pack) => pack.Item.Name, opt => opt.MapFrom(dto => dto.ItemName))
+            .ForPath((pack) => pack.Item.Id, opt => opt.MapFrom(dto => dto.ItemId));
 
-            CreateMap<Pack, PackDto>()
-                .ForMember(dto => dto.Items, opt => opt.MapFrom(source => source.PackItems))
-                .ReverseMap()
-                    .ForMember(source => source.PackItems, opt => opt.MapFrom(dto => dto.Items));
+            CreateMap<Pack, PackDto>().ReverseMap();
 
             CreateMap<Player, PlayerDto>();
 
@@ -54,6 +47,32 @@ namespace RagnarokBotWeb.Application.Mapping
 
             CreateMap<Guild, GuildDto>()
                 .ForMember((dto) => dto.ServerId, opt => opt.MapFrom(server => server.ScumServer.Id));
+
+            CreateMap<Teleport, TeleportDto>().ReverseMap();
+
+            CreateMap<WarzoneTeleport, WarzoneTeleportDto>()
+                .ForPath((dto) => dto.WarzoneId, opt => opt.MapFrom(warzone => warzone.Warzone.Id))
+                .ReverseMap()
+                   .ForPath((warzone) => warzone.Warzone.Id, opt => opt.MapFrom(dto => dto.WarzoneId));
+
+            CreateMap<WarzoneSpawn, WarzoneSpawnDto>()
+               .ForPath((dto) => dto.WarzoneId, opt => opt.MapFrom(warzone => warzone.Warzone.Id))
+               .ReverseMap()
+                  .ForPath((warzone) => warzone.Warzone.Id, opt => opt.MapFrom(dto => dto.WarzoneId));
+
+            CreateMap<WarzoneItem, WarzoneItemDto>()
+                .ForPath((dto) => dto.WarzoneId, opt => opt.MapFrom(warzone => warzone.Warzone.Id))
+                .ForPath((dto) => dto.ItemName, opt => opt.MapFrom(warzone => warzone.Item.Name))
+                .ForPath((dto) => dto.ItemId, opt => opt.MapFrom(warzone => warzone.Item.Id))
+            .ReverseMap()
+               .ForPath((warzone) => warzone.Warzone.Id, opt => opt.MapFrom(dto => dto.WarzoneId))
+               .ForPath((warzone) => warzone.Item.Name, opt => opt.MapFrom(dto => dto.ItemName))
+               .ForPath((warzone) => warzone.Item.Id, opt => opt.MapFrom(dto => dto.ItemId));
+
+            CreateMap<Warzone, WarzoneDto>()
+                 .ForPath((dto) => dto.ScumServerId, opt => opt.MapFrom(warzone => warzone.ScumServer.Id))
+            .ReverseMap()
+               .ForPath((warzone) => warzone.ScumServer.Id, opt => opt.MapFrom(dto => dto.ScumServerId));
         }
     }
 }

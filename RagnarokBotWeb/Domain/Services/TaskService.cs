@@ -73,6 +73,12 @@ namespace RagnarokBotWeb.Domain.Services
                  .Build();
             await scheduler.ScheduleJob(job, TwentySecondsTrigger());
 
+            job = JobBuilder.Create<WarzoneBootstartJob>()
+                .WithIdentity($"WarzoneBootstartJob({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, TwoMinTrigger());
+
             _logger.LogInformation("Loaded server tasks for server id {}", server.Id);
         }
 
@@ -149,7 +155,7 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var servers = await _scumServerRepository.FindActive();
             _cacheService.AddServers(servers);
-            foreach (var server in servers)
+            foreach (var server in await _scumServerRepository.GetActiveServersWithFtp())
             {
                 await ScheduleServerTasks(server, cancellationToken);
             }

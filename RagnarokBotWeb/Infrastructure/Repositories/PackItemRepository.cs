@@ -9,6 +9,16 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         private readonly AppDbContext _appDbContext;
         public PackItemRepository(AppDbContext context) : base(context) { _appDbContext = context; }
 
+        public void DeletePackItems(List<PackItem> packItems)
+        {
+            foreach (var packItem in packItems)
+            {
+                packItem.Item = null;
+                base.Delete(packItem);
+            }
+
+        }
+
         public override Task AddAsync(PackItem entity)
         {
             _appDbContext.Items.Attach(entity.Item);

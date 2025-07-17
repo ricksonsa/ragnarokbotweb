@@ -22,14 +22,14 @@ import { EventManager, EventWithContent } from '../../../../services/event-manag
 import { Alert } from '../../../../models/alert';
 import { ItemDto } from '../../../../models/item.dto';
 import { ItemService } from '../../../../services/item.service';
-import { Observable, of, debounceTime, distinctUntilChanged, tap, switchMap, Observer } from 'rxjs';
+import { Observable, of, debounceTime, distinctUntilChanged, tap, switchMap } from 'rxjs';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { PackageItemDto } from '../../../../models/package.dto';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { ServerService } from '../../../../services/server.service';
 import { ChannelDto } from '../../../../models/channel.dto';
 import { arrayBufferToBase64, toBase64 } from '../../../../core/functions/file.functions';
+import { PackageDto, PackItemDto } from '../../../../models/package.dto';
 
 @Component({
   selector: 'app-package',
@@ -64,7 +64,7 @@ export class PackageComponent implements OnInit {
   packageItemForm!: FormGroup;
   private fb = inject(NonNullableFormBuilder);
   commands: string[] = [];
-  items: PackageItemDto[] = [];
+  items: PackItemDto[] = [];
   isLoading: boolean;
   total: any;
   suggestions$: Observable<ItemDto[]> = of([]);
@@ -88,7 +88,7 @@ export class PackageComponent implements OnInit {
     private readonly eventManager: EventManager,
     private readonly router: Router) {
     this.packageForm = this.fb.group({
-      id: [null],
+      id: [0],
       name: [null, [Validators.required]],
       description: [null, [Validators.required]],
       price: [null],
@@ -118,9 +118,10 @@ export class PackageComponent implements OnInit {
     this.route.data.subscribe(data => {
       var item = data['package'];
       if (item) {
-        this.packageForm.patchValue(item);
+        const pack = item as PackageDto;
+        this.packageForm.patchValue(pack);
         this.avatarUrl = this.packageForm.value.imageUrl;
-        this.items = item.items;
+        this.items = pack.packItems;
       }
     });
   }
@@ -191,14 +192,16 @@ export class PackageComponent implements OnInit {
   addItem() {
     if (!this.selectedItem) return;
 
-    var packageItem = new PackageItemDto(
-      this.selectedItem.id,
-      this.selectedItem.name,
-      +this.packageItemForm.value.amount,
-      +this.packageItemForm.value.ammoCount);
+    var packageItem: PackItemDto = {
+      amount: this.packageItemForm.value.amount,
+      ammoCount: this.packageItemForm.value.ammoCount,
+      deleted: null,
+      itemId: this.selectedItem.id,
+      itemName: this.selectedItem.name,
+      packId: this.packageForm.value.id
+    };
 
     this.items.push(packageItem);
-
     this.selectedItem = null;
     this.packageItemForm.patchValue({
       searchControl: '',
@@ -236,8 +239,8 @@ export class PackageComponent implements OnInit {
       return;
     }
 
-    var pack = this.packageForm.value;
-    pack.items = this.items;
+    var pack = this.packageForm.value as PackageDto;
+    pack.packItems = this.items;
 
     this.packageService.savePackage(pack)
       .subscribe({

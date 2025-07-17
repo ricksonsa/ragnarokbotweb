@@ -60,9 +60,8 @@ namespace RagnarokBotWeb.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePack(long id)
         {
-            var pack = await _packService.DeletePackAsync(id);
-            if (pack is null) return NotFound("Pack not found");
-            return Ok(pack);
+            await _packService.DeletePackAsync(id);
+            return Ok();
         }
     }
 }

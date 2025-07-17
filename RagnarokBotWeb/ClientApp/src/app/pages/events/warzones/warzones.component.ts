@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { PackageDto } from '../../../models/package.dto';
-import { PackageService } from '../../../services/package.service';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
@@ -12,8 +10,12 @@ import { Router, RouterModule } from '@angular/router';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
+import { WarzoneService } from '../../../services/warzone.service';
+import { WarzoneDto } from '../../../models/warzone.dto';
+import { EventManager, EventWithContent } from '../../../services/event-manager.service';
+import { Alert } from '../../../models/alert';
 
 @Component({
   selector: 'app-warzones',
@@ -37,15 +39,18 @@ import { NzPopoverModule } from 'ng-zorro-antd/popover';
 })
 export class WarzonesComponent implements OnInit {
 
-  dataSource: PackageDto[] = [];
+  dataSource: WarzoneDto[] = [];
   total = 0;
   pageIndex = 1;
   pageSize = 10;
   searchControl = new FormControl();
-  suggestions$: Observable<PackageDto[]> = of([]);
+  suggestions$: Observable<WarzoneDto[]> = of([]);
   isLoading = true;
 
-  constructor(private readonly packageService: PackageService, private readonly router: Router) { }
+  constructor(
+    private readonly warzoneService: WarzoneService,
+    private readonly eventManager: EventManager,
+    private readonly router: Router) { }
 
   ngOnInit() {
     // this.loadPage();
@@ -56,7 +61,7 @@ export class WarzonesComponent implements OnInit {
     const query = this.searchControl.value; // Get value from the input field
 
     this.isLoading = true;
-    this.suggestions$ = this.packageService.getPackages(this.pageSize, this.pageIndex, query)
+    this.suggestions$ = this.warzoneService.getWarzones(this.pageSize, this.pageIndex, query)
       .pipe(
         tap(() => (this.isLoading = false)),
         switchMap((page) => {
@@ -76,7 +81,7 @@ export class WarzonesComponent implements OnInit {
         debounceTime(300), // Wait 300ms after the last input
         distinctUntilChanged(), // Ignore same consecutive values
         tap(() => (this.isLoading = true)), // Show loading indicator
-        switchMap(value => this.packageService.getPackages(this.pageSize, this.pageIndex, value)
+        switchMap(value => this.warzoneService.getWarzones(this.pageSize, this.pageIndex, value)
         ),
         tap((page) => {
           if (page) {
@@ -94,12 +99,12 @@ export class WarzonesComponent implements OnInit {
   }
 
   confirmDelete(id: number) {
-    this.packageService.deletePackage(id)
-      .pipe(switchMap(() => {
+    firstValueFrom(this.warzoneService.deleteWarzone(id))
+      .then(() => {
         this.pageSizeChange(this.pageSize);
         this.pageIndexChange(this.pageIndex);
-        return of();
-      }));
+        this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Warzone number ${id} deleted.`, 'success')));
+      });
   }
 
   cancelDelete() { }

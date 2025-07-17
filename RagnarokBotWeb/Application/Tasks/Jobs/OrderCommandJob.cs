@@ -24,7 +24,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var server = await GetServerAsync(context);
+            var server = await GetServerAsync(context, ftpRequired: false);
             var order = await _orderRepository.FindOneWithPackCreatedByServer(server.Id);
 
             if (order is null) return;

@@ -7,6 +7,7 @@ using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using System.Diagnostics;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -15,9 +16,8 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ILogger<PackService> _logger;
 
         private readonly IPackRepository _packRepository;
-        private readonly IPackItemRepository _packItemRepository;
-        private readonly IItemRepository _itemRepository;
         private readonly IScumServerRepository _scumServerRepository;
+        private readonly IPackItemRepository _packItemRepository;
         private readonly IDiscordService _discordService;
         private readonly IMapper _mapper;
 
@@ -25,19 +25,17 @@ namespace RagnarokBotWeb.Domain.Services
             IHttpContextAccessor httpContextAccessor,
             ILogger<PackService> logger,
             IPackRepository packRepository,
-            IPackItemRepository packItemRepository,
-            IItemRepository itemRepository,
             IMapper mapper,
             IScumServerRepository scumServerRepository,
-            IDiscordService discordService) : base(httpContextAccessor)
+            IDiscordService discordService,
+            IPackItemRepository packItemRepository) : base(httpContextAccessor)
         {
             _logger = logger;
             _packRepository = packRepository;
-            _packItemRepository = packItemRepository;
-            _itemRepository = itemRepository;
             _mapper = mapper;
             _scumServerRepository = scumServerRepository;
             _discordService = discordService;
+            _packItemRepository = packItemRepository;
         }
 
         public async Task<PackDto> CreatePackAsync(PackDto createPack)
@@ -50,21 +48,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             var pack = _mapper.Map<Pack>(createPack);
             pack.ScumServer = server;
-            pack.PackItems = null;
-            await _packRepository.AddAsync(pack);
+            await _packRepository.CreateOrUpdateAsync(pack);
             await _packRepository.SaveAsync();
-
-            foreach (var item in createPack.Items)
-            {
-                var packItem = new PackItem
-                {
-                    Amount = item.Amount,
-                    Item = await _itemRepository.FindByIdAsync(item.ItemId),
-                    Pack = pack
-                };
-
-                await _packItemRepository.AddAsync(packItem);
-            }
 
             if (!string.IsNullOrEmpty(pack.DiscordChannelId))
             {
@@ -73,7 +58,6 @@ namespace RagnarokBotWeb.Domain.Services
                 await _packRepository.SaveAsync();
             }
 
-            await _packItemRepository.SaveAsync();
             return _mapper.Map<PackDto>(pack);
         }
 
@@ -118,63 +102,47 @@ namespace RagnarokBotWeb.Domain.Services
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
 
-            var packEntity = await _packRepository.FindByIdAsync(id);
-            if (packEntity is null) throw new NotFoundException("Pack not found");
+            var packNotTracked = await _packRepository.FindByIdAsNoTrackingAsync(id);
+            if (packNotTracked is null) throw new NotFoundException("Pack not found");
 
-            if (packEntity.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
+            if (packNotTracked.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
 
-            packEntity.StockPerPlayer = packDto.StockPerPlayer;
-            packEntity.VipPrice = packDto.VipPrice ?? 0;
-            packEntity.Price = packDto.Price ?? 0;
-            packEntity.IsVipOnly = packDto.IsVipOnly ?? false;
-            packEntity.DeliveryText = packDto.DeliveryText;
-            packEntity.Description = packDto.Description;
-            packEntity.IsWelcomePack = packDto.IsWelcomePack ?? false;
-            packEntity.Name = packDto.Name;
-            packEntity.Enabled = packDto.Enabled ?? false;
-            packEntity.ImageUrl = packDto.ImageUrl;
-            packEntity.IsBlockPurchaseRaidTime = packDto.IsBlockPurchaseRaidTime ?? false;
-
-            await _packRepository.CreateOrUpdateAsync(packEntity);
-            await _packRepository.SaveAsync();
-
-            foreach (var packItem in packEntity.PackItems)
-            {
-                _packItemRepository.Delete(packItem);
-            }
+            _packItemRepository.DeletePackItems(packNotTracked.PackItems);
             await _packItemRepository.SaveAsync();
 
-            foreach (var item in packDto.Items)
-            {
-                var packItem = new PackItem
-                {
-                    Amount = item.Amount,
-                    Item = await _itemRepository.FindByIdAsync(item.ItemId),
-                    Pack = packEntity
-                };
+            var pack = _mapper.Map<Pack>(packDto);
+            pack.ScumServer = packNotTracked.ScumServer;
 
-                await _packItemRepository.CreateOrUpdateAsync(packItem);
-                await _packItemRepository.SaveAsync();
+            await _packRepository.CreateOrUpdateAsync(pack);
+            try
+            {
+                await _packRepository.SaveAsync();
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.InnerException.Message);
+                throw;
             }
 
-            if (!string.IsNullOrEmpty(packDto.DiscordChannelId))
+            if (!string.IsNullOrEmpty(packDto.DiscordChannelId) && packDto.DiscordChannelId != packNotTracked.DiscordChannelId)
             {
-                if (packDto.DiscordChannelId != packEntity.DiscordChannelId && packEntity.DiscordMessageId != null)
+                if (packNotTracked.DiscordMessageId != null)
                 {
-                    await _discordService.RemoveMessage(ulong.Parse(packEntity.DiscordChannelId!), packEntity.DiscordMessageId!.Value);
+                    await _discordService.RemoveMessage(ulong.Parse(packNotTracked.DiscordChannelId!), packNotTracked.DiscordMessageId!.Value);
                 }
 
-                packEntity.DiscordChannelId = packDto.DiscordChannelId;
-                packEntity.DiscordMessageId = await GenerateDiscordPackButton(packEntity);
+                pack.DiscordChannelId = packDto.DiscordChannelId;
+                pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
 
-                await _packRepository.CreateOrUpdateAsync(packEntity);
+                await _packRepository.CreateOrUpdateAsync(packNotTracked);
                 await _packRepository.SaveAsync();
             }
 
             return await FetchPackById(id);
         }
 
-        public async Task<Pack> DeletePackAsync(long id)
+        public async Task DeletePackAsync(long id)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
@@ -184,11 +152,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (pack.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
 
-            foreach (var packItem in pack.PackItems)
-            {
-                packItem.Deleted = DateTime.UtcNow;
-                await _packItemRepository.CreateOrUpdateAsync(packItem);
-            }
+            _packItemRepository.DeletePackItems(pack.PackItems);
             await _packItemRepository.SaveAsync();
 
             if (pack.DiscordChannelId != null && pack.DiscordMessageId != null)
@@ -200,7 +164,7 @@ namespace RagnarokBotWeb.Domain.Services
             await _packRepository.CreateOrUpdateAsync(pack);
             await _packRepository.SaveAsync();
 
-            return pack;
+            return;
         }
 
         public async Task<Page<PackDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter)
