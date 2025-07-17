@@ -31,19 +31,19 @@
             get
             {
                 if (!StopAt.HasValue) return false;
-                return DateTime.UtcNow < StopAt.Value;
+                return DateTime.Now < StopAt.Value;
             }
         }
 
         public void Run()
         {
-            StopAt = DateTime.UtcNow.AddMinutes(WarzoneDurationInterval);
+            StopAt = DateTime.Now.AddMinutes(WarzoneDurationInterval);
         }
 
         public void Stop()
         {
             StopAt = null;
-            LastRunned = DateTime.UtcNow;
+            LastRunned = DateTime.Now;
         }
     }
 }
