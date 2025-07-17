@@ -18,7 +18,6 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
           ICacheService cacheService,
           IScumServerRepository scumServerRepository,
           IBotRepository botRepository,
-          IWarzoneRepository warzoneRepository,
           ISchedulerFactory schedulerFactory,
           ILogger<WarzoneBootstartJob> logger,
           IUnitOfWork unitOfWork) : base(scumServerRepository)
