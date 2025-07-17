@@ -60,16 +60,11 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                .UsingJobData("warzone_id", warzone.Id)
                .Build();
 
-            ITrigger trigger = TriggerBuilder.Create()
-                .WithIdentity("oneTimeTrigger", "group1")
+            ITrigger warzoneClosingTrigger = TriggerBuilder.Create()
+                .WithIdentity("CloseWarzoneJobTrigger", server.Id.ToString())
                 .StartAt(new DateTimeOffset(warzone.StopAt!.Value))
                 .WithSimpleSchedule(x => x.WithRepeatCount(0)) // only once
                 .Build();
-            ITrigger warzoneClosingTrigger = TriggerBuilder.Create()
-              .WithIdentity("CloseWarzoneJobTrigger", server.Id.ToString())
-              .StartAt(DateBuilder.FutureDate((int)warzone.WarzoneDurationInterval, IntervalUnit.Minute))
-              .WithSimpleSchedule(x => x.WithRepeatCount(0))
-              .Build();
 
             await scheduler.ScheduleJob(closeWarzoneJob, warzoneClosingTrigger);
 
@@ -96,7 +91,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 _cacheService.GetCommandQueue(server.Id).Enqueue(command);
             }
 
-            _logger.LogInformation("Warzone Id {} Started for Server Id {} at: {time}", warzone.Id, server.Id, DateTimeOffset.Now);
+            _logger.LogInformation("Warzone Id {} Opened for Server Id {} at: {time}", warzone.Id, server.Id, DateTimeOffset.Now);
 
         }
     }
