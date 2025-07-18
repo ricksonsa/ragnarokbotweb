@@ -32,10 +32,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public async Task<Pack?> FindByIdAsNoTrackingAsync(long id)
         {
             return await _appDbContext.Packs
-                .AsNoTracking()
                 .Include(pack => pack.ScumServer)
                 .Include(pack => pack.PackItems)
-                .ThenInclude(packItem => packItem.Item)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(pack => pack.Id == id);
         }
 
@@ -67,14 +66,13 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public override Task CreateOrUpdateAsync(Pack entity)
         {
-            if (entity.ScumServer != null) _appDbContext.ScumServers.Attach(entity.ScumServer);
-            if (_appDbContext.ChangeTracker.Entries<Pack>().Any(e => e.Entity.Id == entity.Id))
-            {
-                _appDbContext.ChangeTracker.Entries<Pack>().FirstOrDefault(e => e.Entity.Id == entity.Id)!.State = EntityState.Detached;
-            }
-
             foreach (var packItem in entity.PackItems)
             {
+                if (_appDbContext.ChangeTracker.Entries<Item>().Any(e => e.Entity.Id == packItem.Id))
+                {
+                    _appDbContext.ChangeTracker.Entries<Item>().FirstOrDefault(e => e.Entity.Id == packItem.Id)!.State = EntityState.Detached;
+                }
+
                 _appDbContext.Items.Attach(packItem.Item);
             }
 

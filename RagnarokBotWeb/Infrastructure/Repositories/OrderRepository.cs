@@ -72,9 +72,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public Task<Page<Order>> GetPageByFilter(Paginator paginator, string? filter)
         {
             var query = _appDbContext.Orders
-               .Include(pack => pack.Pack)
-               .Include(pack => pack.ScumServer)
-               .Include(pack => pack.Player)
+               .Include(order => order.Pack)
+               .Include(order => order.Warzone)
+               .Include(order => order.ScumServer)
+               .Include(order => order.Player)
                .OrderByDescending(order => order.Id);
 
             if (!string.IsNullOrEmpty(filter))

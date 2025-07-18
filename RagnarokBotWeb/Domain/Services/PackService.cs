@@ -114,9 +114,6 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (packNotTracked.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
 
-            _packItemRepository.DeletePackItems(packNotTracked.PackItems);
-            await _packItemRepository.SaveAsync();
-
             var pack = _mapper.Map<Pack>(packDto);
             pack.ScumServer = packNotTracked.ScumServer;
 
@@ -132,10 +129,13 @@ namespace RagnarokBotWeb.Domain.Services
 
             }
 
+            _packItemRepository.DeletePackItems(packNotTracked.PackItems);
+            await _packItemRepository.SaveAsync();
+
             await _packRepository.CreateOrUpdateAsync(pack);
             await _packRepository.SaveAsync();
 
-            return await FetchPackById(id);
+            return _mapper.Map<PackDto>(pack);
         }
 
         public async Task DeletePackAsync(long id)

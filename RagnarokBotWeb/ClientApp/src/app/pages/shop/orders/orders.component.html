@@ -16,8 +16,9 @@
       <thead>
         <tr>
           <th>Id</th>
-          <th>Package Name</th>
-          <th>Package Description</th>
+          <th>Order Name</th>
+          <th>Order Description</th>
+          <th>Order Type</th>
           <th>Player Name</th>
           <th>Player Steam Id</th>
           <th>Player Discord Name</th>
@@ -28,8 +29,9 @@
       <tbody>
         <tr *ngFor="let data of basicTable.data">
           <td>{{data.id}}</td>
-          <td>{{data.pack.name}}</td>
-          <td>{{data.pack.description}}</td>
+          <td>{{data.pack?.name ?? data.warzone.name}}</td>
+          <td>{{data.pack?.description ?? data.warzone.description}}</td>
+          <td>{{resolveOrderType(data.orderType)}}</td>
           <td>{{data.player.name}}</td>
           <td>{{data.player.steamId64}}</td>
           <td>{{data.player.discordName}}</td>

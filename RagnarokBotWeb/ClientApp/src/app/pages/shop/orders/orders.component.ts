@@ -29,7 +29,6 @@ import { OrderService } from '../../../services/order.service';
   ]
 })
 export class OrdersComponent implements OnInit {
-
   dataSource: OrderDto[] = [];
   total = 0;
   pageIndex = 1;
@@ -84,6 +83,14 @@ export class OrdersComponent implements OnInit {
           return of(page.content);
         })
       ); // Hide loading indicator
+  }
+
+   resolveOrderType(type: number) {
+    switch(type) {
+      case 0: return 'Shop Pack';
+      case 1: return 'Warzone Teleport';
+      default: return type.toString();
+    }
   }
 
   pageIndexChange(index: number) {
