@@ -7,7 +7,6 @@ using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
-using System.Diagnostics;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -81,6 +80,14 @@ namespace RagnarokBotWeb.Domain.Services
             return message.Id;
         }
 
+        private async Task DeleteDiscordMessage(Pack? pack)
+        {
+            if (pack?.DiscordChannelId != null && pack.DiscordMessageId != null)
+            {
+                await _discordService.RemoveMessage(ulong.Parse(pack.DiscordChannelId!), pack.DiscordMessageId!.Value);
+            }
+        }
+
         public async Task<PackDto> FetchPackById(long id)
         {
             var serverId = ServerId();
@@ -113,18 +120,6 @@ namespace RagnarokBotWeb.Domain.Services
             var pack = _mapper.Map<Pack>(packDto);
             pack.ScumServer = packNotTracked.ScumServer;
 
-            await _packRepository.CreateOrUpdateAsync(pack);
-            try
-            {
-                await _packRepository.SaveAsync();
-
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.InnerException.Message);
-                throw;
-            }
-
             if (!string.IsNullOrEmpty(packDto.DiscordChannelId) && packDto.DiscordChannelId != packNotTracked.DiscordChannelId)
             {
                 if (packNotTracked.DiscordMessageId != null)
@@ -135,9 +130,10 @@ namespace RagnarokBotWeb.Domain.Services
                 pack.DiscordChannelId = packDto.DiscordChannelId;
                 pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
 
-                await _packRepository.CreateOrUpdateAsync(packNotTracked);
-                await _packRepository.SaveAsync();
             }
+
+            await _packRepository.CreateOrUpdateAsync(pack);
+            await _packRepository.SaveAsync();
 
             return await FetchPackById(id);
         }
@@ -155,10 +151,7 @@ namespace RagnarokBotWeb.Domain.Services
             _packItemRepository.DeletePackItems(pack.PackItems);
             await _packItemRepository.SaveAsync();
 
-            if (pack.DiscordChannelId != null && pack.DiscordMessageId != null)
-            {
-                await _discordService.RemoveMessage(ulong.Parse(pack.DiscordChannelId!), pack.DiscordMessageId!.Value);
-            }
+            await DeleteDiscordMessage(pack);
 
             pack.Deleted = DateTime.UtcNow;
             await _packRepository.CreateOrUpdateAsync(pack);

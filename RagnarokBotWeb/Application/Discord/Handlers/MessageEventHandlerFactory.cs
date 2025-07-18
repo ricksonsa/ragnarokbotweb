@@ -14,7 +14,8 @@ public class MessageEventHandlerFactory : IMessageEventHandlerFactory
     private readonly Dictionary<string, Func<IServiceProvider, IMessageEventHandler>> _handlers = new(StringComparer.OrdinalIgnoreCase)
     {
         { "!dailypack", (serviceProvider) => new DailyPackEvent() },
-        { "buy_package", (serviceProvider) => new BuyPackageEvent(serviceProvider) }
+        { "buy_package", (serviceProvider) => new BuyPackageEvent(serviceProvider) },
+        { "buy_warzone", (serviceProvider) => new BuyWarzoneEvent(serviceProvider) }
     };
 
     public IMessageEventHandler? GetHandler(SocketMessage message)

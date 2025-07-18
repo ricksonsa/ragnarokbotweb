@@ -46,6 +46,17 @@ namespace RagnarokBotWeb.Application
             });
         }
 
+        public void Teleport(string target, string coordinates)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Target = target,
+                Type = ECommandType.TeleportPlayer,
+                Value = target,
+                Coordinates = coordinates
+            });
+        }
+
         public void Delivery(string target, string value, int amount)
         {
             Values.Add(new BotCommandValue

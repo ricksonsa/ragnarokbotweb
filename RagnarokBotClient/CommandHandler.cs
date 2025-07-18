@@ -45,11 +45,7 @@ namespace RagnarokBotClient
                         break;
 
                     case ECommandType.TeleportPlayer:
-                        var v = commandValue.Coordinates!.Split(" ");
-                        var x = v[0];
-                        var y = v[1];
-                        var z = v[2];
-                        tasks.Add(() => ScumManager.Teleport(commandValue.Target!, x, y, z));
+                        tasks.Add(() => ScumManager.Teleport(commandValue.Target!, commandValue.Coordinates!));
                         break;
 
                     case ECommandType.ListPlayers:

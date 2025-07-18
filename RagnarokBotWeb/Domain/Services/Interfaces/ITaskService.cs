@@ -8,5 +8,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task LoadAllServersTasks(CancellationToken cancellationToken);
         Task NewServerAddedAsync(ScumServer server);
         Task FtpConfigAddedAsync(ScumServer server);
+        Task DeleteJob(string jobKey);
     }
 }

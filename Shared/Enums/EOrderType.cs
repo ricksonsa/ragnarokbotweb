@@ -3,6 +3,6 @@
     public enum EOrderType
     {
         Pack,
-        Teleport
+        Warzone
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Enums;
@@ -25,10 +26,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             var server = await GetServerAsync(context, ftpRequired: false);
-            var order = await _orderRepository.FindOneWithPackCreatedByServer(server.Id);
+            var order = await _orderRepository.FindOneByServer(server.Id);
 
             if (order is null) return;
-            if (order.Pack is null) return;
             if ((await _botRepository.FindByOnlineScumServerId(server.Id)) is null) return;
             if (order.Player?.SteamId64 is null) return;
 
@@ -37,15 +37,26 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             await _orderRepository.SaveAsync();
 
             var command = new BotCommand();
-            foreach (var packItem in order.Pack.PackItems)
+
+            if (order.OrderType == EOrderType.Pack)
             {
-                command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
+                if (order.Pack is null) return;
+                foreach (var packItem in order.Pack.PackItems)
+                {
+                    command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
+                }
+
+                command.Say(order.ResolvedDeliveryText());
+                command.Data = "order_" + order.Id.ToString();
+            }
+            else if (order.OrderType == EOrderType.Warzone)
+            {
+                if (order.Warzone is null) return;
+                var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
+                command.Teleport(order.Player.SteamId64, teleport.Teleport.Coordinates);
             }
 
-            command.Say(order.ResolvedDeliveryText());
-            command.Data = "order_" + order.Id.ToString();
-
-            _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
+            if (command != null) _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
         }
     }
 }

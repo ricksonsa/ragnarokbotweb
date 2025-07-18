@@ -65,7 +65,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity($"ListPlayersJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, OneMinTrigger());
+            //await scheduler.ScheduleJob(job, OneMinTrigger());
 
             job = JobBuilder.Create<OrderCommandJob>()
                  .WithIdentity($"OrderCommandJob({server.Id})")
@@ -77,7 +77,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity($"WarzoneBootstartJob({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TwoMinTrigger());
+            await scheduler.ScheduleJob(job, OneMinTrigger());
 
             _logger.LogInformation("Loaded server tasks for server id {}", server.Id);
         }
@@ -149,6 +149,12 @@ namespace RagnarokBotWeb.Domain.Services
 
             await ScheduleFtpServerTasks(server);
             _cacheService.AddServers([server]);
+        }
+
+        public async Task DeleteJob(string jobKey)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+            await scheduler.DeleteJob(new JobKey(jobKey));
         }
 
         public async Task LoadAllServersTasks(CancellationToken cancellationToken)

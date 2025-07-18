@@ -12,6 +12,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         private readonly IBotRepository _botRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ISchedulerFactory _schedulerFactory;
+        private readonly IDiscordService _discordService;
 
         public CloseWarzoneJob(
           ICacheService cacheService,
@@ -19,13 +20,15 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
           IBotRepository botRepository,
           ISchedulerFactory schedulerFactory,
           ILogger<CloseWarzoneJob> logger,
-          IUnitOfWork unitOfWork) : base(scumServerRepository)
+          IUnitOfWork unitOfWork,
+          IDiscordService discordService) : base(scumServerRepository)
         {
             _cacheService = cacheService;
             _botRepository = botRepository;
             _schedulerFactory = schedulerFactory;
             _logger = logger;
             _unitOfWork = unitOfWork;
+            _discordService = discordService;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -49,6 +52,15 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
             JobKey jobKey = new($"WarzoneItemSpawnJob({server.Id})");
             await scheduler.DeleteJob(jobKey);
+
+            if (warzone.DiscordChannelId != null)
+            {
+                try
+                {
+                    await _discordService.RemoveMessage(ulong.Parse(warzone.DiscordChannelId!), warzone.DiscordMessageId!.Value);
+                }
+                catch (Exception) { }
+            }
 
             _logger.LogInformation("Warzone Id {} Closed for Server Id {} at: {time}", warzone.Id, server.Id, DateTimeOffset.Now);
         }

@@ -9,15 +9,21 @@ namespace RagnarokBotClient
         public static CancellationToken Token;
         private const string ChatKey = "u";
 
+        private static Task Sleep(int ms)
+        {
+            return Task.Delay(ms);
+        }
 
         private static Task RunCommand(string command, int tab = 0)
         {
             if (!User32.BringWindowToForeground()) { return Task.CompletedTask; }
 
-            Task.Delay(800).Wait();
+            Sleep(1000).Wait();
+
             SendKeys.SendWait(ChatKey);
             Token.ThrowIfCancellationRequested();
-            Task.Delay(600).Wait();
+
+            Sleep(1000).Wait();
 
             switch (tab)
             {
@@ -26,6 +32,7 @@ namespace RagnarokBotClient
                     break;
                 case 1:
                     SendKeys.SendWait("{tab}");
+                    Sleep(1000).Wait();
                     break;
             }
 
@@ -44,14 +51,12 @@ namespace RagnarokBotClient
             }).Wait();
 
             SendKeys.SendWait("^{v}");
-            Task.Delay(200).Wait();
-
+            Sleep(1000).Wait();
 
             Token.ThrowIfCancellationRequested();
 
             SendKeys.SendWait("{enter}");
-            Task.Delay(400).Wait();
-
+            Sleep(1000).Wait();
 
             switch (tab)
             {
@@ -60,15 +65,15 @@ namespace RagnarokBotClient
                     break;
                 case 1:
                     SendKeys.SendWait("{tab}");
-                    Task.Delay(900).Wait();
+                    Sleep(1000).Wait();
                     SendKeys.SendWait("{tab}");
                     break;
             }
-            Task.Delay(600).Wait();
+            Sleep(1000).Wait();
 
             SendKeys.SendWait("{escape}");
 
-            Task.Delay(Delay).Wait();
+            Sleep(3000).Wait();
             return Task.CompletedTask;
         }
 
@@ -95,8 +100,14 @@ namespace RagnarokBotClient
 
         public static Task Teleport(string steamID, string x, string y, string z)
         {
-            Logger.LogWrite($"Teleporting drone to {steamID} at {x}, {y}, {z}");
+            Logger.LogWrite($"Teleporting {steamID} to {x}, {y}, {z}");
             return RunCommand($"#teleport {x} {y} {z} {steamID}");
+        }
+
+        public static Task Teleport(string steamID, string coordinates)
+        {
+            Logger.LogWrite($"Teleporting {steamID} to {coordinates}");
+            return RunCommand($"#teleport {coordinates} {steamID}");
         }
 
         public static Task TeleportTo(string adminSteamID, string playerSteamID)

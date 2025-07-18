@@ -1,4 +1,5 @@
-﻿using Quartz;
+﻿using Microsoft.EntityFrameworkCore;
+using Quartz;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -10,19 +11,19 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         private readonly ILogger<WarzoneItemSpawnJob> _logger;
         private readonly ICacheService _cacheService;
         private readonly IBotRepository _botRepository;
-        private readonly IWarzoneRepository _warzoneRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public WarzoneItemSpawnJob(
           ICacheService cacheService,
           IScumServerRepository scumServerRepository,
           IBotRepository botRepository,
-          IWarzoneRepository warzoneRepository,
-          ILogger<WarzoneItemSpawnJob> logger) : base(scumServerRepository)
+          ILogger<WarzoneItemSpawnJob> logger,
+          IUnitOfWork unitOfWork) : base(scumServerRepository)
         {
             _cacheService = cacheService;
             _botRepository = botRepository;
-            _warzoneRepository = warzoneRepository;
             _logger = logger;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -34,11 +35,18 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var warzoneId = GetValueFromContext<long>(context, "warzone_id");
             if (warzoneId == 0) return;
 
-            var warzone = await _warzoneRepository.FindByIdAsync(warzoneId);
+            var warzone = await _unitOfWork.Warzones
+                .Include(warzone => warzone.ScumServer)
+                .Include(warzone => warzone.WarzoneItems)
+                    .ThenInclude(warzone => warzone.Item)
+                .Include(warzone => warzone.SpawnPoints)
+                    .ThenInclude(warzone => warzone.Teleport)
+                .FirstOrDefaultAsync(warzone => warzone.Id == warzoneId);
+
             if (warzone == null) return;
 
-            var warzoneItem = WarzoneItemSelector.SelectItem(warzone);
-            var spawnPoint = WarzoneItemSelector.SelectSpawnPoint(warzone);
+            var warzoneItem = WarzoneRandomSelector.SelectItem(warzone);
+            var spawnPoint = WarzoneRandomSelector.SelectSpawnPoint(warzone);
 
             var command = new BotCommand();
 

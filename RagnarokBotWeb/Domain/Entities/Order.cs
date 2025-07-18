@@ -17,6 +17,34 @@ namespace RagnarokBotWeb.Domain.Entities
             Status = EOrderStatus.Created;
         }
 
+        private string ResolvePurchaseCooldownText(long seconds)
+        {
+            var now = DateTime.UtcNow;
+            var remainingMinutes = (CreateDate.AddSeconds(seconds) - now).TotalMinutes;
+            var remainingSeconds = (CreateDate.AddSeconds(seconds) - now).TotalSeconds;
+
+            if (remainingMinutes > 0) return $"\nNext purchase will be available in {Math.Round(remainingMinutes)} minutes.";
+            return $"\nNext purchase will be available in {Math.Round(remainingSeconds)} seconds.";
+        }
+
+        public string ResolveWarzoneCooldownText()
+        {
+            if (Warzone!.PurchaseCooldownSeconds.HasValue && Warzone.PurchaseCooldownSeconds.Value > 0)
+            {
+                return ResolvePurchaseCooldownText(Warzone.PurchaseCooldownSeconds.Value);
+            }
+            return string.Empty;
+        }
+
+        public string ResolvePackCooldownText()
+        {
+            if (Pack!.PurchaseCooldownSeconds.HasValue && Pack.PurchaseCooldownSeconds.Value > 0)
+            {
+                return ResolvePurchaseCooldownText(Pack.PurchaseCooldownSeconds.Value);
+            }
+            return string.Empty;
+        }
+
         public string ResolvedDeliveryText()
         {
             if (Pack == null) return null;

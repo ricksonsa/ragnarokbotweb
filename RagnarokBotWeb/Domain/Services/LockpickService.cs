@@ -21,21 +21,7 @@ namespace RagnarokBotWeb.Domain.Services
             _logger.Log(LogLevel.Information, "Adding new lockpick attempt from steamId: {}", lockpick.SteamId64);
             var user = await _uow.Players.FirstOrDefaultAsync(user => user.SteamId64 == lockpick.SteamId64);
 
-            if (lockpick.ScumServer is not null)
-            {
-                var tracked = _uow.AppDbContext.ChangeTracker.Entries<ScumServer>()
-                    .FirstOrDefault(e => e.Entity.Id == lockpick.ScumServer.Id);
-
-                if (tracked == null)
-                {
-                    _uow.AppDbContext.ScumServers.Attach(lockpick.ScumServer);
-                }
-                else
-                {
-                    lockpick.ScumServer = tracked.Entity;
-                }
-            }
-
+            //_uow.AppDbContext.ScumServers.Attach(lockpick.ScumServer);
             await _uow.Lockpicks.AddAsync(lockpick);
             await _uow.SaveAsync();
             return lockpick;

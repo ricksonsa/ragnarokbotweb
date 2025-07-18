@@ -16,6 +16,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IOrderRepository _orderRepository;
         private readonly IPackRepository _packRepository;
         private readonly IPlayerRepository _playerRepository;
+        private readonly IWarzoneRepository _warzoneRepository;
         private readonly IMapper _mapper;
 
         public OrderService(
@@ -24,13 +25,15 @@ namespace RagnarokBotWeb.Domain.Services
             IOrderRepository orderRepository,
             IPackRepository packRepository,
             IPlayerRepository userRepository,
-            IMapper mapper) : base(contextAccessor)
+            IMapper mapper,
+            IWarzoneRepository warzoneRepository) : base(contextAccessor)
         {
             _logger = logger;
             _orderRepository = orderRepository;
             _packRepository = packRepository;
             _playerRepository = userRepository;
             _mapper = mapper;
+            _warzoneRepository = warzoneRepository;
         }
 
         public async Task<OrderDto> ConfirmOrderDelivered(long orderId)
@@ -113,6 +116,29 @@ namespace RagnarokBotWeb.Domain.Services
                 Pack = pack,
                 Player = player,
                 OrderType = EOrderType.Pack,
+                ScumServer = player.ScumServer
+            };
+
+            await new OrderPurchaseProcessor(_orderRepository).ValidateAsync(order);
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+
+            return order;
+        }
+
+        public async Task<Order?> PlaceWarzoneOrderFromDiscord(ulong guildId, ulong discordId, long warzoneId)
+        {
+            var warzone = await _warzoneRepository.FindByIdAsync(warzoneId);
+            if (warzone is null) throw new DomainException("Warzone not found");
+
+            var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
+            if (player is null) throw new NotFoundException("Player not found");
+
+            var order = new Order
+            {
+                Warzone = warzone,
+                Player = player,
+                OrderType = EOrderType.Warzone,
                 ScumServer = player.ScumServer
             };
 

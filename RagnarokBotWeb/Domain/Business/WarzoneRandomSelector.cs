@@ -2,7 +2,7 @@
 
 namespace RagnarokBotWeb.Domain.Business
 {
-    public static class WarzoneItemSelector
+    public static class WarzoneRandomSelector
     {
         private static readonly Random _random = new();
 
@@ -31,6 +31,13 @@ namespace RagnarokBotWeb.Domain.Business
         {
             int r = _random.Next(warzone.SpawnPoints.Count);
             return warzone.SpawnPoints[r];
+
+        }
+
+        public static WarzoneTeleport SelectTeleportPoint(Warzone warzone)
+        {
+            int r = _random.Next(warzone.Teleports.Count);
+            return warzone.Teleports[r];
 
         }
     }

@@ -1,4 +1,5 @@
 ﻿using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Dto;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
@@ -10,5 +11,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<WarzoneDto> CreateWarzoneAsync(WarzoneDto createWarzone);
         Task<WarzoneDto> UpdateWarzoneAsync(long id, WarzoneDto createWarzone);
         Task DeleteWarzoneAsync(long id);
+        Task DeleteDiscordMessage(Warzone? warzone);
+        Task<ulong> GenerateDiscordWarzoneButton(Warzone warzone);
     }
 }

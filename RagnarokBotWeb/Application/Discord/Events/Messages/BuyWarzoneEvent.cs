@@ -6,11 +6,11 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord.Events.Messages;
 
-public class BuyPackageEvent : IMessageEventHandler
+public class BuyWarzoneEvent : IMessageEventHandler
 {
     private readonly IServiceProvider _serviceProvider;
 
-    public BuyPackageEvent(IServiceProvider serviceProvider)
+    public BuyWarzoneEvent(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
@@ -36,11 +36,12 @@ public class BuyPackageEvent : IMessageEventHandler
 
         try
         {
-            var order = await orderService.PlaceDeliveryOrderFromDiscord(component.GuildId.Value, component.User.Id, long.Parse(component.Data.CustomId.Split(":")[1]));
+            var order = await orderService.PlaceWarzoneOrderFromDiscord(component.GuildId.Value, component.User.Id, long.Parse(component.Data.CustomId.Split(":")[1]));
 
             var embed = new EmbedBuilder()
-              .WithTitle(order!.Pack!.Name)
-              .WithDescription($"Your order with number #{order!.Id} was registered. Please stay put until it is delivered.{order.ResolveWarzoneCooldownText()}")
+              .WithTitle(order!.Warzone!.Name)
+              .WithDescription(
+                $"Your order with number #{order!.Id} was registered. You will be teleported to the event soon.{order.ResolveWarzoneCooldownText()}")
               .WithColor(Color.Green)
               .Build();
 

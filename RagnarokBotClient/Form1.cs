@@ -239,9 +239,6 @@ namespace RagnarokBotClient
                     if (!string.IsNullOrEmpty(command))
                     {
                         _commandQueue.Enqueue(JsonConvert.DeserializeObject<BotCommand>(command)!);
-#if DEBUG
-                        Debug.WriteLine("Command Received");
-#endif
                     }
                     await Task.Delay(3000, token);
                 }
@@ -254,10 +251,6 @@ namespace RagnarokBotClient
         {
             while (!token.IsCancellationRequested)
             {
-#if DEBUG
-                Debug.WriteLine("Command Queue state is:");
-                Debug.WriteLine(JsonConvert.SerializeObject(_commandQueue.ToList()));
-#endif
                 try
                 {
                     if (_commandQueue.TryDequeue(out BotCommand command))
