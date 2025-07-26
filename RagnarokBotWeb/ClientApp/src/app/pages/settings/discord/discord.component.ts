@@ -125,15 +125,13 @@ export class DiscordComponent implements OnInit {
         next: (guild) => {
           this.runTemplate = guild.runTemplate;
           this.channels = guild.channels;
-
-          // this.channels.forEach((channel) => {
-          //   switch(channel.)
-          // });
         }
       });
   }
 
-  save() { }
+  save() {
+
+  }
 
   createTemplate() {
     this.serverService.createDefaultChannels()

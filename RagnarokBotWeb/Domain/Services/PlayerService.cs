@@ -124,7 +124,7 @@ namespace RagnarokBotWeb.Domain.Services
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
 
-            if (!_cacheService.GetCommandQueue(server.Id).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.Delivery)))
+            if (!_cacheService.GetCommandQueue(server.Id).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
             {
                 var command = new BotCommand();
                 command.ListPlayers();

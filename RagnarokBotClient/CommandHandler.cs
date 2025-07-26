@@ -4,16 +4,13 @@ namespace RagnarokBotClient
 {
     public class CommandHandler
     {
-        private readonly CancellationToken _token;
-        private readonly string _identifier;
         private readonly WebApi _remote;
+        private readonly ScumManager _scumManager;
 
-        public CommandHandler(CancellationToken token, string identifier, WebApi remote)
+        public CommandHandler(ScumManager scumManager, WebApi remote)
         {
-            _token = token;
-            ScumManager.Token = _token;
             _remote = remote;
-            _identifier = identifier;
+            _scumManager = scumManager;
         }
 
         [STAThread]
@@ -24,28 +21,32 @@ namespace RagnarokBotClient
             {
                 switch (commandValue.Type)
                 {
-                    case ECommandType.Delivery:
-                        tasks.Add(() => ScumManager.SpawnItem(commandValue.Value!, commandValue.Amount, commandValue.Target!));
+                    case ECommandType.SimpleDelivery:
+                        tasks.Add(() => _scumManager.SpawnItem(commandValue.Value!, commandValue.Amount, commandValue.Target!));
+                        break;
+
+                    case ECommandType.MagazineDelivery:
+                        tasks.Add(() => _scumManager.SpawnItem(commandValue.Target!, commandValue.Amount, int.Parse(commandValue.Value), commandValue.Coordinates!));
                         break;
 
                     case ECommandType.Kick:
-                        tasks.Add(() => ScumManager.KickPlayer(commandValue.Target ?? commandValue.Value));
+                        tasks.Add(() => _scumManager.KickPlayer(commandValue.Target ?? commandValue.Value));
                         break;
 
                     case ECommandType.Ban:
-                        tasks.Add(() => ScumManager.BanPlayer(commandValue.Target ?? commandValue.Value));
+                        tasks.Add(() => _scumManager.BanPlayer(commandValue.Target ?? commandValue.Value));
                         break;
 
                     case ECommandType.Announce:
-                        tasks.Add(() => ScumManager.Announce(commandValue.Value));
+                        tasks.Add(() => _scumManager.Announce(commandValue.Value));
                         break;
 
                     case ECommandType.Say:
-                        tasks.Add(() => ScumManager.Say(commandValue.Value));
+                        tasks.Add(() => _scumManager.Say(commandValue.Value));
                         break;
 
                     case ECommandType.TeleportPlayer:
-                        tasks.Add(() => ScumManager.Teleport(commandValue.Target!, commandValue.Coordinates!));
+                        tasks.Add(() => _scumManager.Teleport(commandValue.Target!, commandValue.Coordinates!));
                         break;
 
                     case ECommandType.ListPlayers:
@@ -54,7 +55,7 @@ namespace RagnarokBotClient
                 }
             }
 
-            if (command.Values.Any(values => values.Type == ECommandType.Delivery))
+            if (command.Values.Any(values => values.Type == ECommandType.SimpleDelivery))
             {
                 tasks.Add(() => _remote.PatchAsync($"api/bots/deliveries/{command.Data.Split("_")[1]}/confirm", null));
             }
@@ -65,7 +66,7 @@ namespace RagnarokBotClient
 
         private async Task HandleListPlayers()
         {
-            await ScumManager.DumpListPlayers();
+            await _scumManager.DumpListPlayers();
             await Task.Delay(1000);
 
             string clipboardContent = string.Empty;

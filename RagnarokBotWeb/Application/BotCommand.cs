@@ -62,9 +62,21 @@ namespace RagnarokBotWeb.Application
             Values.Add(new BotCommandValue
             {
                 Target = target,
-                Type = ECommandType.Delivery,
+                Type = ECommandType.SimpleDelivery,
                 Value = value,
                 Amount = amount,
+            });
+        }
+
+        public void MagazineDelivery(string coordinates, string item, int amount, int ammoCount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Target = item,
+                Type = ECommandType.MagazineDelivery,
+                Value = ammoCount.ToString(),
+                Amount = amount,
+                Coordinates = coordinates
             });
         }
 
@@ -73,7 +85,7 @@ namespace RagnarokBotWeb.Application
             Extra = extra;
             Values.Add(new BotCommandValue
             {
-                Type = ECommandType.Delivery,
+                Type = ECommandType.SimpleDelivery,
                 Target = target,
                 Value = value,
                 Amount = amount,

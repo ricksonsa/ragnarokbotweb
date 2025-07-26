@@ -36,7 +36,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 foreach (var bot in bots)
                 {
-                    if (!_cacheService.GetCommandQueue(bot.ScumServer.Id).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.Delivery)))
+                    if (!_cacheService.GetCommandQueue(bot.ScumServer.Id).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
                     {
                         var command = new BotCommand();
                         command.ListPlayers();

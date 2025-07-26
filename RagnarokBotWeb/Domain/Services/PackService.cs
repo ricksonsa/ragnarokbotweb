@@ -126,7 +126,6 @@ namespace RagnarokBotWeb.Domain.Services
 
                 pack.DiscordChannelId = packDto.DiscordChannelId;
                 pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
-
             }
 
             _packItemRepository.DeletePackItems(packNotTracked.PackItems);

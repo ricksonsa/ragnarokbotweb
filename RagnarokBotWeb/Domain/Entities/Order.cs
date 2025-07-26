@@ -23,7 +23,7 @@ namespace RagnarokBotWeb.Domain.Entities
             var remainingMinutes = (CreateDate.AddSeconds(seconds) - now).TotalMinutes;
             var remainingSeconds = (CreateDate.AddSeconds(seconds) - now).TotalSeconds;
 
-            if (remainingMinutes > 0) return $"\nNext purchase will be available in {Math.Round(remainingMinutes)} minutes.";
+            if (Math.Round(remainingMinutes) > 0) return $"\nNext purchase will be available in {Math.Round(remainingMinutes)} minutes.";
             return $"\nNext purchase will be available in {Math.Round(remainingSeconds)} seconds.";
         }
 

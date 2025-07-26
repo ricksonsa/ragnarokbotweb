@@ -5,25 +5,47 @@ namespace RagnarokBotClient
 {
     public class ScumManager
     {
-        private const int Delay = 2000;
-        public static CancellationToken Token;
-        private const string ChatKey = "u";
+        private readonly IniFile _iniFile = new();
+        private string chatKey = "t";
+        private int delayBetweenInteractions = 0;
 
-        private static Task Sleep(int ms)
+        public CancellationToken Token { get; set; }
+
+        public ScumManager()
         {
-            return Task.Delay(ms);
+            SetupFromIni();
         }
 
-        private static Task RunCommand(string command, int tab = 0)
+        private void SetupFromIni()
+        {
+            try
+            {
+                chatKey = _iniFile.Read("OpenChatKey");
+                if (int.TryParse(_iniFile.Read("MsDelayBetweenInteractions"), out int delay))
+                    delayBetweenInteractions = delay;
+
+                if (string.IsNullOrEmpty(chatKey)) chatKey = "t";
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private Task Sleep(int ms = 600)
+        {
+            return Task.Delay(ms + delayBetweenInteractions);
+        }
+
+        private Task RunCommand(string command, int tab = 0)
         {
             if (!User32.BringWindowToForeground()) { return Task.CompletedTask; }
 
-            Sleep(1000).Wait();
+            Sleep().Wait();
 
-            SendKeys.SendWait(ChatKey);
+            SendKeys.SendWait(chatKey);
             Token.ThrowIfCancellationRequested();
 
-            Sleep(1000).Wait();
+            Sleep().Wait();
 
             switch (tab)
             {
@@ -32,31 +54,23 @@ namespace RagnarokBotClient
                     break;
                 case 1:
                     SendKeys.SendWait("{tab}");
-                    Sleep(1000).Wait();
+                    Sleep().Wait();
                     break;
             }
 
-            Task.Run(() =>
-            {
-                AutoResetEvent @event = new(false);
-                Thread thread = new(
-                    () =>
-                    {
-                        Clipboard.SetText(command);
-                        @event.Set();
-                    });
-                thread.SetApartmentState(ApartmentState.STA);
-                thread.Start();
-                @event.WaitOne();
-            }).Wait();
+            var setClipboardThread = new Thread(() => Clipboard.SetText(command));
+            setClipboardThread.SetApartmentState(ApartmentState.STA);
+            setClipboardThread.Start();
+            setClipboardThread.Join(); // safer than WaitOne here
 
+            Sleep().Wait();
             SendKeys.SendWait("^{v}");
-            Sleep(1000).Wait();
+            Sleep(250).Wait();
 
             Token.ThrowIfCancellationRequested();
 
             SendKeys.SendWait("{enter}");
-            Sleep(1000).Wait();
+            Sleep().Wait();
 
             switch (tab)
             {
@@ -69,11 +83,11 @@ namespace RagnarokBotClient
                     SendKeys.SendWait("{tab}");
                     break;
             }
-            Sleep(1000).Wait();
+            Sleep().Wait();
 
             SendKeys.SendWait("{escape}");
 
-            Sleep(3000).Wait();
+            Sleep().Wait();
             return Task.CompletedTask;
         }
 
@@ -84,76 +98,68 @@ namespace RagnarokBotClient
             return Task.CompletedTask;
         }
 
-        public static Task SetupBot()
-        {
-            if (!User32.BringWindowToForeground()) { return Task.CompletedTask; }
-
-            SendKeys.SendWait(ChatKey);
-            Token.ThrowIfCancellationRequested();
-            Task.Delay(600).Wait();
-            SendKeys.SendWait("{TAB}");
-            Task.Delay(600).Wait();
-            SendKeys.SendWait("{escape}");
-            Task.Delay(Delay).Wait();
-            return Task.CompletedTask;
-        }
-
-        public static Task Teleport(string steamID, string x, string y, string z)
+        public Task Teleport(string steamID, string x, string y, string z)
         {
             Logger.LogWrite($"Teleporting {steamID} to {x}, {y}, {z}");
             return RunCommand($"#teleport {x} {y} {z} {steamID}");
         }
 
-        public static Task Teleport(string steamID, string coordinates)
+        public Task Teleport(string steamID, string coordinates)
         {
             Logger.LogWrite($"Teleporting {steamID} to {coordinates}");
             return RunCommand($"#teleport {coordinates} {steamID}");
         }
 
-        public static Task TeleportTo(string adminSteamID, string playerSteamID)
+        public Task TeleportTo(string adminSteamID, string playerSteamID)
         {
             Logger.LogWrite($"Teleporting {adminSteamID} to {playerSteamID}");
             return RunCommand($"#teleportto {playerSteamID} {adminSteamID}");
         }
 
-        public static Task TeleportBotTo(string playerSteamID)
+        public Task TeleportBotTo(string playerSteamID)
         {
             Logger.LogWrite($"Teleporting bot to {playerSteamID}");
             return RunCommand($"#teleportto {playerSteamID}");
         }
 
-        public static Task SpawnItem(string item, int amount)
+        public Task SpawnItem(string item, int amount)
         {
             Logger.LogWrite($"Spawning item {amount} x {item}");
             return RunCommand($"#spawnitem {item} {amount}");
         }
 
-        public static Task SpawnItem(string item, int amount, string location)
+        public Task SpawnItem(string item, int amount, string location)
         {
             Logger.LogWrite($"Spawning item {amount} x {item} at location {location}");
             return RunCommand($"#spawnitem {item} {amount} location {location}");
         }
 
-        public static Task KickPlayer(string steamId)
+        public Task SpawnItem(string item, int amount, int ammoCount, string location)
+        {
+            Logger.LogWrite($"Spawning item {amount} x {item} with AmmoCount {ammoCount} at location {location}");
+            return RunCommand($"#spawnitem {item} {amount} AmmoCount {ammoCount} location {location}");
+        }
+
+        public Task KickPlayer(string steamId)
         {
             Logger.LogWrite($"Kicking player {steamId} from the server");
             return RunCommand($"#kick {steamId}");
         }
 
-        public static Task BanPlayer(string steamId)
+        public Task BanPlayer(string steamId)
         {
             Logger.LogWrite($"Banning player {steamId} from the server");
             return RunCommand($"#ban {steamId}");
         }
 
-        public static Task Say(string text)
+        public Task Say(string text)
         {
             if (text.StartsWith("#")) text.TrimStart('#');
             Logger.LogWrite($"Bot says {text}");
             return RunCommand($"{text}", tab: 1);
         }
 
-        public static Task Command(string text)
+        public Task Command(string text)
         {
             if (!text.StartsWith("#"))
             {
@@ -164,19 +170,19 @@ namespace RagnarokBotClient
             return RunCommand($"{text}");
         }
 
-        public static Task Announce(string content)
+        public Task Announce(string content)
         {
             Logger.LogWrite($"Announcing {content}");
             return RunCommand($"#announce {content}");
         }
 
-        public static Task DumpAllSquadsInfoList()
+        public Task DumpAllSquadsInfoList()
         {
             Logger.LogWrite($"DumpAllSquadsInfoList");
             return RunCommand("#DumpAllSquadsInfoList");
         }
 
-        public static Task DumpListPlayers()
+        public Task DumpListPlayers()
         {
             Logger.LogWrite($"DumpListPlayers");
             return RunCommand("#ListPlayers true");
@@ -184,6 +190,38 @@ namespace RagnarokBotClient
 
         private class User32
         {
+            [StructLayout(LayoutKind.Sequential)]
+            struct INPUT
+            {
+                public uint type;
+                public InputUnion u;
+            }
+
+            [StructLayout(LayoutKind.Explicit)]
+            struct InputUnion
+            {
+                [FieldOffset(0)] public KEYBDINPUT ki;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            struct KEYBDINPUT
+            {
+                public ushort wVk;
+                public ushort wScan;
+                public uint dwFlags;
+                public uint time;
+                public IntPtr dwExtraInfo;
+            }
+
+            const uint INPUT_KEYBOARD = 1;
+            const uint KEYEVENTF_KEYUP = 0x0002;
+
+            const ushort VK_CONTROL = 0x11;
+            const ushort VK_V = 0x56;
+
+            [DllImport("user32.dll", SetLastError = true)]
+            static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
             [StructLayout(LayoutKind.Sequential)]
             public struct RECT
             {
@@ -215,6 +253,70 @@ namespace RagnarokBotClient
 
             private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
             private const uint MOUSEEVENTF_LEFTUP = 0x0004;
+
+            internal static void SendCtrlV()
+            {
+                INPUT[] inputs = new INPUT[4];
+
+                // Ctrl down
+                inputs[0] = new INPUT
+                {
+                    type = INPUT_KEYBOARD,
+                    u = new InputUnion
+                    {
+                        ki = new KEYBDINPUT
+                        {
+                            wVk = VK_CONTROL,
+                            dwFlags = 0,
+                        }
+                    }
+                };
+
+                // V down
+                inputs[1] = new INPUT
+                {
+                    type = INPUT_KEYBOARD,
+                    u = new InputUnion
+                    {
+                        ki = new KEYBDINPUT
+                        {
+                            wVk = VK_V,
+                            dwFlags = 0,
+                        }
+                    }
+                };
+
+                // V up
+                inputs[2] = new INPUT
+                {
+                    type = INPUT_KEYBOARD,
+                    u = new InputUnion
+                    {
+                        ki = new KEYBDINPUT
+                        {
+                            wVk = VK_V,
+                            dwFlags = KEYEVENTF_KEYUP,
+                        }
+                    }
+                };
+
+                // Ctrl up
+                inputs[3] = new INPUT
+                {
+                    type = INPUT_KEYBOARD,
+                    u = new InputUnion
+                    {
+                        ki = new KEYBDINPUT
+                        {
+                            wVk = VK_CONTROL,
+                            dwFlags = KEYEVENTF_KEYUP,
+                        }
+                    }
+                };
+
+                SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+            }
+
 
             internal static bool ReconnectToServer()
             {

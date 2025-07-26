@@ -40,7 +40,7 @@ public class BuyPackageEvent : IMessageEventHandler
 
             var embed = new EmbedBuilder()
               .WithTitle(order!.Pack!.Name)
-              .WithDescription($"Your order with number #{order!.Id} was registered. Please stay put until it is delivered.{order.ResolveWarzoneCooldownText()}")
+              .WithDescription($"Your order with number #{order!.Id} was registered. Please stay put until it is delivered.{order.ResolvePackCooldownText()}")
               .WithColor(Color.Green)
               .Build();
 

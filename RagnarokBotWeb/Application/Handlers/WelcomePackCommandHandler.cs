@@ -50,6 +50,10 @@ namespace RagnarokBotWeb.Application.Handlers
                 await _playerRepository.CreateOrUpdateAsync(player);
                 await _playerRepository.SaveAsync();
 
+                register.Status = Domain.Enums.EPlayerRegisterStatus.Registered;
+                await _playerRegisterRepository.CreateOrUpdateAsync(register);
+                await _playerRegisterRepository.SaveAsync();
+
                 string text = $"You were registered at {register.ScumServer.Name}.";
                 var order = await _orderService.PlaceWelcomePackOrder(player);
                 if (order != null)

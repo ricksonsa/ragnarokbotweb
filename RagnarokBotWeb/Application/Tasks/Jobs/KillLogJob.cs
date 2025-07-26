@@ -27,7 +27,7 @@ IFtpService ftpService
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository, scumServerRepository, readerRepository);
+            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository);
             List<string> lines = [];
 
             await foreach (var line in processor.UnreadFileLinesAsync())

@@ -12,6 +12,9 @@ namespace RagnarokBotClient
         public static bool Loading = false;
 
         private readonly WebApi _remote;
+        private readonly IniFile _iniFile;
+        private readonly ScumManager _scumManager;
+
         private Process _gameProcess;
         private bool _setup = false;
         private string _identifier;
@@ -23,6 +26,7 @@ namespace RagnarokBotClient
         private List<ScumServer> _scumServers = [];
         private long _serverId = 0;
 
+
         public Form1()
         {
             InitializeComponent();
@@ -33,6 +37,8 @@ namespace RagnarokBotClient
             _exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
             ServersPanel.Size = new Size(776, 429);
             LoadCredentials();
+            _iniFile = new();
+            _scumManager = new ScumManager();
         }
 
         private void Logger_OnLogging(object? sender, string e)
@@ -141,6 +147,7 @@ namespace RagnarokBotClient
             {
                 _cancellationTokenSource = new CancellationTokenSource();
                 var token = _cancellationTokenSource.Token;
+                _scumManager.Token = token;
                 StartButton.Text = "Stop";
                 HealthCheck(token)
                     .ContinueWith((_) => GameCheck(token))
@@ -255,7 +262,7 @@ namespace RagnarokBotClient
                 {
                     if (_commandQueue.TryDequeue(out BotCommand command))
                     {
-                        var tasks = new CommandHandler(_cancellationTokenSource.Token, _identifier, _remote).Handle(command);
+                        var tasks = new CommandHandler(_scumManager, _remote).Handle(command);
                         if (tasks == null || tasks.Count == 0) continue;
 
                         foreach (var task in tasks)

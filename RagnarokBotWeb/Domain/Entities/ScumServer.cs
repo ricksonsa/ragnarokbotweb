@@ -29,6 +29,12 @@ namespace RagnarokBotWeb.Domain.Entities
         public bool SendVipLockpickAlert { get; set; }
 
         #endregion
+
+        #region Discord
+        public bool SendLocalChatToDiscord { get; set; }
+        public bool SendGlobalChatToDiscord { get; set; }
+        #endregion
+
         public ScumServer(Tenant tenant)
         {
             Tenant = tenant;
@@ -45,7 +51,7 @@ namespace RagnarokBotWeb.Domain.Entities
         {
             return string.IsNullOrEmpty(RestartTimes) ? new List<string>() : RestartTimes.Split(";").ToList();
         }
-        
+
         public TimeZoneInfo GetTimeZoneOrDefault()
         {
             return TimeZoneId == null ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);

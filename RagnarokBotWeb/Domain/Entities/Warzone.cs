@@ -1,4 +1,6 @@
-﻿namespace RagnarokBotWeb.Domain.Entities
+﻿using RagnarokBotWeb.Application.Models;
+
+namespace RagnarokBotWeb.Domain.Entities
 {
     public class Warzone : BaseEntity
     {
@@ -44,6 +46,19 @@
         {
             StopAt = null;
             LastRunned = DateTime.Now;
+        }
+
+        public CreateEmbed WarzoneButtonEmbed()
+        {
+            var action = $"buy_warzone:{Id}";
+            return new CreateEmbed
+            {
+                Buttons = [new($"Buy {Name} Teleport", action)],
+                DiscordId = ulong.Parse(DiscordChannelId!),
+                Text = Description,
+                ImageUrl = ImageUrl,
+                Title = Name
+            };
         }
     }
 }

@@ -36,7 +36,7 @@ namespace RagnarokBotWeb.Domain.Business
                 var previousOrder = previousSamePackOrders.FirstOrDefault(WasPurchasedWithinPurchaseCooldownSeconds);
                 if (previousOrder != null)
                 {
-                    throw new DomainException($"This pack is under cooldown time. {previousOrder.ResolveWarzoneCooldownText()}");
+                    throw new DomainException($"This pack is under cooldown time. {previousOrder.ResolvePackCooldownText()}");
                 }
             }
 
@@ -105,14 +105,27 @@ namespace RagnarokBotWeb.Domain.Business
 
         public long Charge(Order order)
         {
-            var price = order.Player!.IsVip() ? Convert.ToInt64(order.Pack!.VipPrice) : Convert.ToInt64(order.Pack!.Price);
+            long price = 0;
+            if (order.OrderType == Shared.Enums.EOrderType.Pack)
+                price = order.Player!.IsVip() ? Convert.ToInt64(order.Pack!.VipPrice) : Convert.ToInt64(order.Pack!.Price);
+            else if (order.OrderType == Shared.Enums.EOrderType.Warzone)
+                price = order.Player!.IsVip() ? Convert.ToInt64(order.Warzone!.VipPrice) : Convert.ToInt64(order.Warzone!.Price);
+
             order.Player!.Coin -= price;
             return order.Player!.Coin;
         }
 
         private bool WasPurchasedWithinPurchaseCooldownSeconds(Order order)
         {
-            return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Warzone!.PurchaseCooldownSeconds;
+            if (order.OrderType == Shared.Enums.EOrderType.Warzone)
+            {
+                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Warzone!.PurchaseCooldownSeconds;
+            }
+            else if (order.OrderType == Shared.Enums.EOrderType.Pack)
+            {
+                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Pack!.PurchaseCooldownSeconds;
+            }
+            return false;
         }
 
         public bool WasPurchasedWithinLast24Hours(Order order)

@@ -43,7 +43,10 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 if (order.Pack is null) return;
                 foreach (var packItem in order.Pack.PackItems)
                 {
-                    command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
+                    if (packItem.AmmoCount > 0)
+                        command.MagazineDelivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount, packItem.AmmoCount);
+                    else
+                        command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
                 }
 
                 command.Say(order.ResolvedDeliveryText());

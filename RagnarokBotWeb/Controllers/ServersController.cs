@@ -53,6 +53,14 @@ namespace RagnarokBotWeb.Controllers
             return Ok(guild);
         }
 
+        [HttpPut("discord/channels")]
+        public async Task<IActionResult> UpdateDiscord(List<SaveChannelDto> channels)
+        {
+            _logger.LogInformation("Patch request to confirm discord settings");
+            ScumServerDto server = await _serverService.SaveServerDiscordChannels(channels);
+            return Ok(server);
+        }
+
         [HttpPatch("ftp")]
         public async Task<IActionResult> UpdateServerFtp(FtpDto ftp)
         {

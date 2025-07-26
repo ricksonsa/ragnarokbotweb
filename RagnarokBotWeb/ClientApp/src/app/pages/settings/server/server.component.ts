@@ -26,6 +26,7 @@ import { AccountDto } from '../../../models/account.dto';
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { Alert } from '../../../models/alert';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
+import { ChannelDto } from '../../../models/channel.dto';
 registerLocaleData(localePT);
 registerLocaleData(localeES);
 registerLocaleData(localeDE);
@@ -58,6 +59,8 @@ export class ServerComponent implements OnInit {
   cron = new FormControl();
   ftpForm!: FormGroup;
   accountDto?: AccountDto;
+  channels: ChannelDto[] = [];
+
   private fb = inject(NonNullableFormBuilder);
 
   public cronOptions: CronOptions = {
@@ -98,7 +101,16 @@ export class ServerComponent implements OnInit {
             this.ftpForm.patchValue(account.server.ftp);
           }
         }
-      })
+      });
+  }
+
+  loadDiscordChannels() {
+    this.serverService.getDiscordServer()
+      .subscribe({
+        next: (guild) => {
+          this.channels = guild.channels;
+        }
+      });
   }
 
   addTime() {

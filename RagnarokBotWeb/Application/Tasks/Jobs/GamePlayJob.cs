@@ -12,8 +12,6 @@ public class GamePlayJob(
     IBunkerService bunkerService,
     ILockpickService lockpickService,
     IReaderPointerRepository readerPointerRepository,
-    IPlayerService playerService,
-    IReaderRepository readerRepository,
     IFtpService ftpService
 ) : AbstractJob(scumServerRepository), IJob
 {
@@ -26,7 +24,7 @@ public class GamePlayJob(
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository, scumServerRepository, readerRepository);
+            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository);
             await foreach (var line in processor.UnreadFileLinesAsync())
             {
                 if (string.IsNullOrEmpty(line)) continue;

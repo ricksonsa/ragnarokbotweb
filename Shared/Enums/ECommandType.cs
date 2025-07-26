@@ -2,7 +2,7 @@
 {
     public enum ECommandType
     {
-        Delivery,
+        SimpleDelivery,
         TeleportPlayer,
         Kick,
         Ban,
@@ -10,6 +10,7 @@
         Say,
         Command,
         DestroyItems,
-        ListPlayers
+        ListPlayers,
+        MagazineDelivery
     }
 }

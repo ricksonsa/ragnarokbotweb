@@ -60,6 +60,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<Order?> PlaceWelcomePackOrder(Player player)
         {
+            _logger.LogInformation("Welcomepack order placed for player {} steamId[{}] discordId[{}] serverId[{}]", player.Name, player.SteamId64, player.DiscordId, player.ScumServerId);
             var pack = await _packRepository.FindWelcomePackByServerIdAsync(player.ScumServer.Id);
             if (pack is null) return null;
 
@@ -84,6 +85,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             var player = await _playerRepository.FindOneWithServerAsync(u => u.SteamId64 == identifier || u.DiscordId.ToString() == identifier);
             if (player is null) throw new NotFoundException("Player not found");
+
+            _logger.LogInformation("Delivery order placed for player {} steamId[{}] discordId[{}] serverId[{}]", player.Name, player.SteamId64, player.DiscordId, player.ScumServerId);
 
             var order = new Order
             {
@@ -111,6 +114,8 @@ namespace RagnarokBotWeb.Domain.Services
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
             if (player is null) throw new NotFoundException("Player not found");
 
+            _logger.LogInformation("Delivery order placed for player {} steamId[{}] discordId[{}] serverId[{}]", player.Name, player.SteamId64, player.DiscordId, player.ScumServerId);
+
             var order = new Order
             {
                 Pack = pack,
@@ -119,7 +124,10 @@ namespace RagnarokBotWeb.Domain.Services
                 ScumServer = player.ScumServer
             };
 
-            await new OrderPurchaseProcessor(_orderRepository).ValidateAsync(order);
+            var processor = new OrderPurchaseProcessor(_orderRepository);
+            await processor.ValidateAsync(order);
+            processor.Charge(order);
+
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
 
@@ -134,6 +142,8 @@ namespace RagnarokBotWeb.Domain.Services
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
             if (player is null) throw new NotFoundException("Player not found");
 
+            _logger.LogInformation("Warzone order placed for player {} steamId[{}] discordId[{}] warzoneId[{}] serverId[{}]", player.Name, player.SteamId64, player.DiscordId, warzone.Id, player.ScumServerId);
+
             var order = new Order
             {
                 Warzone = warzone,
@@ -142,7 +152,10 @@ namespace RagnarokBotWeb.Domain.Services
                 ScumServer = player.ScumServer
             };
 
-            await new OrderPurchaseProcessor(_orderRepository).ValidateAsync(order);
+            var processor = new OrderPurchaseProcessor(_orderRepository);
+            await processor.ValidateAsync(order);
+            processor.Charge(order);
+
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
 

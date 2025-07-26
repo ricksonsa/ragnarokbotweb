@@ -22,6 +22,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IMapper _mapper;
         private readonly DiscordSocketClient _discordClient;
         private readonly IDiscordService _discordService;
+        private readonly IChannelRepository _channelRepository;
 
         public ServerService(
             IHttpContextAccessor httpContext,
@@ -34,7 +35,8 @@ namespace RagnarokBotWeb.Domain.Services
             ITaskService taskService,
             IGuildRepository guildRepository,
             DiscordSocketClient discordClient,
-            IDiscordService discordService) : base(httpContext)
+            IDiscordService discordService,
+            IChannelRepository channelRepository) : base(httpContext)
         {
             _logger = logger;
             _scumServerRepository = scumServerRepository;
@@ -46,6 +48,7 @@ namespace RagnarokBotWeb.Domain.Services
             _guildRepository = guildRepository;
             _discordClient = discordClient;
             _discordService = discordService;
+            _channelRepository = channelRepository;
         }
 
         public async Task<ScumServerDto> ChangeFtp(FtpDto ftpDto)
@@ -280,6 +283,26 @@ namespace RagnarokBotWeb.Domain.Services
             if (server is null) throw new NotFoundException("Server not found");
 
             return _mapper.Map<GuildDto>(await _discordService.CreateChannelTemplates(serverId.Value));
+        }
+
+        public async Task<ScumServerDto> SaveServerDiscordChannels(List<SaveChannelDto> saveChannels)
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            if (server.Guild is null) throw new NotFoundException("Discord not configured");
+
+            foreach (var saveChannel in saveChannels)
+            {
+                var channel = await _channelRepository.FindOneByServerIdAndChatType(serverId.Value, saveChannel.ChannelType) ?? new();
+                channel.Guild = server.Guild!;
+                channel.DiscordId = ulong.Parse(saveChannel.DiscordId);
+                await _channelRepository.CreateOrUpdateAsync(channel);
+                await _channelRepository.SaveAsync();
+            }
+
+            return _mapper.Map<ScumServerDto>(server);
         }
     }
 }

@@ -13,7 +13,6 @@ public class EconomyJob(
     IScumServerRepository scumServerRepository,
     IReaderPointerRepository readerPointerRepository,
     IPlayerService playerService,
-    IReaderRepository readerRepository,
     IFtpService ftpService,
     DiscordChannelPublisher publisher
 ) : AbstractJob(scumServerRepository), IJob
@@ -27,7 +26,7 @@ public class EconomyJob(
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository, scumServerRepository, readerRepository);
+            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository);
 
             await foreach (var line in processor.UnreadFileLinesAsync())
             {
