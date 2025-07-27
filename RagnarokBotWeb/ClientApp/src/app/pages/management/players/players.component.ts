@@ -13,6 +13,7 @@ import { debounceTime, distinctUntilChanged, Observable, of, startWith, switchMa
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
+import { getDaysBetweenDates } from '../../../core/functions/date.functions';
 
 @Component({
   selector: 'app-players',
@@ -91,6 +92,10 @@ export class PlayersComponent implements OnInit {
       ); // Hide loading indicator
   }
 
+  getDate(date: Date) {
+    const remaining = getDaysBetweenDates(new Date(date));
+    return `${remaining} days to expire`;
+  }
 
   loadPlayers() {
     this.playerService.getPlayers(this.pageSize, this.pageIndex)

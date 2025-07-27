@@ -19,6 +19,7 @@ import { AuthenticationService } from '../../../../services/authentication.servi
 import { AccountDto } from '../../../../models/account.dto';
 import { EventManager, EventWithContent } from '../../../../services/event-manager.service';
 import { Alert } from '../../../../models/alert';
+import { getDaysBetweenDates } from '../../../../core/functions/date.functions';
 
 @Component({
   selector: 'app-player',
@@ -69,6 +70,8 @@ export class PlayerComponent implements OnInit {
       gold: [null],
       fame: [null],
       coin: [null],
+      isVip: [false],
+      vipExpiresAt: [null]
     });
   }
 
@@ -81,6 +84,14 @@ export class PlayerComponent implements OnInit {
         this.playerForm.patchValue(player);
       }
     });
+  }
+
+  confirmVipRemove(id: number) {
+
+  }
+  getDate(date: Date) {
+    const remaining = getDaysBetweenDates(new Date(date));
+    return `${remaining} days to expire`;
   }
 
   loadAccount() {
@@ -97,7 +108,6 @@ export class PlayerComponent implements OnInit {
   }
 
   confirmSilence(id: number) {
-
   }
 
   addCoinsValue = 0;

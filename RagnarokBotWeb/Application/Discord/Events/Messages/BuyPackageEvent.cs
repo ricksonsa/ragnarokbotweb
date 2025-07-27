@@ -32,6 +32,7 @@ public class BuyPackageEvent : IMessageEventHandler
                  .Build();
 
             await component.RespondAsync(embed: embed, ephemeral: true);
+            return;
         }
 
         try
@@ -45,6 +46,7 @@ public class BuyPackageEvent : IMessageEventHandler
               .Build();
 
             await component.RespondAsync(embed: embed, ephemeral: true);
+            return;
         }
         catch (NotFoundException)
         {

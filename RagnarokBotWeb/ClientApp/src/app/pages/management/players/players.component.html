@@ -43,9 +43,9 @@
           </td>
           <td>{{data.discordName}}</td>
           <td>  
-            <nz-icon nz-popover [nzPopoverContent]="data.discordId ? 'Yes' : 'No'" style="font-size: 18px;"
-              [nzType]="data.discordId ? 'check' : 'close'"
-              [ngClass]="{ 'success': data.discordId, 'danger': !data.discordId}">
+            <nz-icon nz-popover [nzPopoverContent]="data.isVip ? getDate(data.vipExpiresAt) : 'No'" style="font-size: 18px;"
+              [nzType]="data.isVip ? 'check' : 'close'"
+              [ngClass]="{ 'success': data.isVip, 'danger': !data.isVip}">
             </nz-icon>
           </td>
           <td>No</td>

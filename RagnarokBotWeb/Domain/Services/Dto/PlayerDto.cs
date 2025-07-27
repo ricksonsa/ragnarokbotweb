@@ -16,5 +16,11 @@
         public long Coin { get; set; } = 0;
         public DateTime CreateDate { get; set; }
         public bool Online { get; set; }
+        public bool IsVip { get; set; }
+        public bool IsBanned { get; set; }
+        public bool IsSilenced { get; set; }
+        public DateTime? VipExpiresAt { get; set; }
+        public DateTime? BanExpiresAt { get; set; }
+        public DateTime? SilenceExpiresAt { get; set; }
     }
 }

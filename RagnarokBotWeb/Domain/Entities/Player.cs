@@ -21,11 +21,6 @@ public class Player : BaseEntity
     public List<Ban> Bans { get; set; }
     public List<Silence> Silences { get; set; }
 
-    public Player()
-    {
-        CreateDate = DateTime.UtcNow;
-    }
-
     public bool IsVip() => Vips?.Any(vip => vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
     public bool IsSilenced() => Silences?.Any(silence => silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
     public bool IsBanned() => Bans?.Any(ban => ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;

@@ -85,19 +85,18 @@ export class DiscordComponent implements OnInit {
     });
 
     this.channelsForm = this.fb.group({
-      chat: [],
-      register: [],
-      taxi: [],
-      abusePublic: [],
-      killRank: [],
-      sniperRank: [],
-      lockpickRank: [],
-      killFeed: [],
-      bunkerState: [],
-      login: [],
-      buriedChest: [],
-      mineKill: [],
-      lockpickAlert: []
+      "game-chat": [],
+      "no-admin-abuse-public": [],
+      "kill-feed": [],
+      "bunker-states": [],
+      "taxi": [],
+      "kill-rank": [],
+      "sniper-rank": [],
+      "lockpick-rank": [],
+      "login": [],
+      "buried-chest": [],
+      "mine-kill": [],
+      "lockpick-alert": []
     });
   }
 
@@ -130,7 +129,10 @@ export class DiscordComponent implements OnInit {
   }
 
   save() {
-
+    var list = [];
+    for (const key in this.channelsForm.value) {
+      list.push({ key, value: this.channelsForm.value[key] });
+    }
   }
 
   createTemplate() {

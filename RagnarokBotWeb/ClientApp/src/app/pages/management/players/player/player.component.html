@@ -48,9 +48,22 @@
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Registered on Discord</nz-form-label>
-        <nz-icon nz-popover [nzPopoverContent]="playerForm.value.discordId ? 'Yes' : 'No'"
-          style="font-size: 18px;" [nzType]="playerForm.value.discordId ? 'check' : 'close'"
+        <nz-icon nz-popover [nzPopoverContent]="playerForm.value.discordId ? 'Yes' : 'No'" style="font-size: 18px;"
+          [nzType]="playerForm.value.discordId ? 'check' : 'close'"
           [ngClass]="{ 'success': playerForm.value.discordId, 'danger': !playerForm.value.discordId}"></nz-icon>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Vip</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-icon nz-popover
+            [nzPopoverContent]="playerForm.value.isVip ? getDate(playerForm.value.vipExpiresAt) : 'No'"
+            style="font-size: 18px;" [nzType]="playerForm.value.isVip ? 'check' : 'close'"
+            [ngClass]="{ 'success': playerForm.value.isVip, 'danger': !playerForm.value.isVip}"></nz-icon>
+        </nz-form-control>
+        <button nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove {{ playerForm.value.name }}'s vip?"
+          (nzOnConfirm)="confirmVipRemove(playerForm.value.id)" nzPopconfirmPlacement="topLeft" [nzOkText]="'Yes'"
+          nzCancelText="No" [nzOkDanger]="true" *ngIf="playerForm.value.isVip" nz-button nzType="link">Remove Vip</button>
       </nz-form-item>
 
       <nz-form-item>
@@ -114,7 +127,8 @@
 <nz-modal [(nzVisible)]="addingGold" nzTitle="Add/Remove Gold" (nzOnCancel)="addingGold = false">
   <div *nzModalContent>
     <p nz-typography>Adding ingame gold to {{playerForm.value.name}}, input negative values to remove gold.</p>
-    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take sometime to update in game.</p>
+    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take
+      sometime to update in game.</p>
     <input nz-input type="number" [(ngModel)]="addGoldValue">
   </div>
   <div *nzModalFooter>
@@ -126,7 +140,8 @@
 <nz-modal [(nzVisible)]="addingMoney" nzTitle="Add/Remove Money" (nzOnCancel)="addingMoney = false">
   <div *nzModalContent>
     <p nz-typography>Adding ingame money to {{playerForm.value.name}}, input negative values to remove money.</p>
-    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take sometime to update in game.</p>
+    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take
+      sometime to update in game.</p>
     <input nz-input type="number" [(ngModel)]="addMoneyValue">
   </div>
   <div *nzModalFooter>
@@ -138,7 +153,8 @@
 <nz-modal [(nzVisible)]="addingFame" nzTitle="Add/Remove Fame" (nzOnCancel)="addingFame = false">
   <div *nzModalContent>
     <p nz-typography>Adding ingame fame to {{playerForm.value.name}}, input negative values to remove fame.</p>
-    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take sometime to update in game.</p>
+    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take
+      sometime to update in game.</p>
     <input nz-input type="number" [(ngModel)]="addFameValue">
   </div>
   <div *nzModalFooter>

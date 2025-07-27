@@ -41,7 +41,16 @@ namespace RagnarokBotWeb.Application.Mapping
 
             CreateMap<Pack, PackDto>().ReverseMap();
 
-            CreateMap<Player, PlayerDto>();
+            CreateMap<Player, PlayerDto>()
+                .ForMember((dto) => dto.IsVip, opt => opt.MapFrom(player => player.IsVip()))
+                .ForMember((dto) => dto.IsBanned, opt => opt.MapFrom(player => player.IsBanned()))
+                .ForMember((dto) => dto.IsSilenced, opt => opt.MapFrom(player => player.IsSilenced()))
+                .ForMember((dto) => dto.VipExpiresAt,
+                    opt => opt.MapFrom(player => player.IsVip() ? player.Vips.OrderByDescending(v => v.ExpirationDate).First().ExpirationDate : null))
+                .ForMember((dto) => dto.BanExpiresAt,
+                    opt => opt.MapFrom(player => player.IsBanned() ? player.Bans.OrderByDescending(v => v.ExpirationDate).First().ExpirationDate : null))
+                .ForMember((dto) => dto.SilenceExpiresAt,
+                    opt => opt.MapFrom(player => player.IsSilenced() ? player.Silences.OrderByDescending(v => v.ExpirationDate).First().ExpirationDate : null));
 
             CreateMap<Button, ButtonDto>();
 

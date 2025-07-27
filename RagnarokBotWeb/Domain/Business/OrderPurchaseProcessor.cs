@@ -99,7 +99,6 @@ namespace RagnarokBotWeb.Domain.Business
             else if (order.OrderType == Shared.Enums.EOrderType.Warzone)
             {
                 await ValidateWarzone(order);
-
             }
         }
 

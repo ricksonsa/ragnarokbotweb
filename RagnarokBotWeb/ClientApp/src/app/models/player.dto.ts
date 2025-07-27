@@ -14,4 +14,6 @@ export class PlayerDto {
     fame?: number;
     coin?: number;
     createDate?: number;
+    isVip!: boolean;
+    vipExpiresAt?: Date;
 }
