@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RagnarokBotWeb.Infrastructure.Configuration;
@@ -11,9 +12,11 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250727195135_DiscordButtonMessageId")]
+    partial class DiscordButtonMessageId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,11 +39,11 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<bool>("Indefinitely")
-                        .HasColumnType("boolean");
-
                     b.Property<long?>("PlayerId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("Processed")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -225,6 +228,9 @@ namespace RagnarokBotWeb.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ChannelType")
+                        .IsUnique();
+
                     b.HasIndex("DiscordId")
                         .IsUnique();
 
@@ -295,36 +301,6 @@ namespace RagnarokBotWeb.Migrations
                     b.HasIndex("BotId");
 
                     b.ToTable("Commands");
-                });
-
-            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.DiscordRole", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<decimal>("DiscordId")
-                        .HasColumnType("numeric(20,0)");
-
-                    b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<bool>("Indefinitely")
-                        .HasColumnType("boolean");
-
-                    b.Property<long?>("PlayerId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlayerId");
-
-                    b.ToTable("DiscordRoles");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Ftp", b =>
@@ -958,11 +934,11 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<bool>("Indefinitely")
-                        .HasColumnType("boolean");
-
                     b.Property<long?>("PlayerId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("Processed")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -1098,11 +1074,11 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<bool>("Indefinitely")
-                        .HasColumnType("boolean");
-
                     b.Property<long?>("PlayerId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("Processed")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -1347,13 +1323,6 @@ namespace RagnarokBotWeb.Migrations
                         .HasForeignKey("BotId");
 
                     b.Navigation("Bot");
-                });
-
-            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.DiscordRole", b =>
-                {
-                    b.HasOne("RagnarokBotWeb.Domain.Entities.Player", null)
-                        .WithMany("DiscordRoles")
-                        .HasForeignKey("PlayerId");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Kill", b =>
@@ -1634,8 +1603,6 @@ namespace RagnarokBotWeb.Migrations
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Player", b =>
                 {
                     b.Navigation("Bans");
-
-                    b.Navigation("DiscordRoles");
 
                     b.Navigation("Silences");
 

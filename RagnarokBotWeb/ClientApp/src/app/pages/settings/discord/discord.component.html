@@ -94,10 +94,9 @@
       Channels</span>
   </ng-template>
   <ng-template #saveChannels>
-    <button nz-button [disabled]="!account?.server.discord" nzType="primary" (click)="save()">Save</button>
+    <button nz-button [disabled]="!account?.server.discord" nzType="primary">Save</button>
   </ng-template>
-  <nz-card [nzTitle]="channelSelections" [nzExtra]="saveChannels">
-
+  <nz-card [nzTitle]="channelSelections">
     <form nz-form [formGroup]="channelsForm" *ngIf="account?.server.discord; else noDiscord">
       <nz-form-item>
         <nz-form-label [nzSpan]="0">Create channels</nz-form-label>
@@ -116,6 +115,18 @@
       <nz-divider nzText="Interactable Channels"></nz-divider>
       <br>
       <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="register">Welcomepack/Registering Channel</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select id="register" formControlName="register" nzPlaceHolder="Select a discord channel">
+            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
+            @for (channel of channels; track $index) {
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="chat">Chat Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
           <nz-select id="chat" formControlName="game-chat" nzPlaceHolder="Select a discord channel">
@@ -128,7 +139,7 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="taxi">Taxi</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="taxi">Taxi Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
           <nz-select id="taxi" formControlName="taxi" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
@@ -267,9 +278,9 @@
     <nz-icon nzType="aim" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Kill Feed</span>
   </ng-template>
   <ng-template #saveKillfeed>
-    <button nz-button [disabled]="!account?.server.discord" nzType="primary" (click)="save()">Save</button>
+    <button nz-button [disabled]="!account?.server.discord" nzType="primary">Save</button>
   </ng-template>
-  <nz-card [nzTitle]="killfeed" [nzExtra]="saveKillfeed">
+  <nz-card [nzTitle]="killfeed">
     <form nz-form *ngIf="account?.server.discord; else noDiscord" [formGroup]="killfeedForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="null" nzFor="useKillFeed">Post Kills in Discord</nz-form-label>
@@ -347,9 +358,9 @@
     <nz-icon nzType="lock" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Lockpick Feed</span>
   </ng-template>
   <ng-template #saveLockpickFeed>
-    <button nz-button [disabled]="!account?.server.discord" nzType="primary" (click)="save()">Save</button>
+    <button nz-button [disabled]="!account?.server.discord" nzType="primary">Save</button>
   </ng-template>
-  <nz-card [nzTitle]="lock" [nzExtra]="saveLockpickFeed">
+  <nz-card [nzTitle]="lock">
     <ng-template #noDiscord>
       <nz-alert nzMessage="Discord configuration is required." nzType="error"></nz-alert>
     </ng-template>

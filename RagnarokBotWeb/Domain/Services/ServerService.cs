@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using FluentFTP;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -22,7 +23,9 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IMapper _mapper;
         private readonly DiscordSocketClient _discordClient;
         private readonly IDiscordService _discordService;
+        private readonly IChannelTemplateRepository _channelTemplateRepository;
         private readonly IChannelRepository _channelRepository;
+
 
         public ServerService(
             IHttpContextAccessor httpContext,
@@ -36,6 +39,7 @@ namespace RagnarokBotWeb.Domain.Services
             IGuildRepository guildRepository,
             DiscordSocketClient discordClient,
             IDiscordService discordService,
+            IChannelTemplateRepository channelTemplateRepository,
             IChannelRepository channelRepository) : base(httpContext)
         {
             _logger = logger;
@@ -48,6 +52,7 @@ namespace RagnarokBotWeb.Domain.Services
             _guildRepository = guildRepository;
             _discordClient = discordClient;
             _discordService = discordService;
+            _channelTemplateRepository = channelTemplateRepository;
             _channelRepository = channelRepository;
         }
 
@@ -268,7 +273,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             guildDto.Channels = channels
                 .Where(channel => channel.ChannelType == Discord.ChannelType.Text)
-                .Select(channel => new ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name })
+                .Select(channel => new Dto.ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name })
                 .Reverse()
                 .ToList();
 
@@ -295,14 +300,141 @@ namespace RagnarokBotWeb.Domain.Services
 
             foreach (var saveChannel in saveChannels)
             {
-                var channel = await _channelRepository.FindOneByServerIdAndChatType(serverId.Value, saveChannel.ChannelType) ?? new();
+                ulong? discordId = null;
+                if (ulong.TryParse(saveChannel.Value, out ulong result))
+                    discordId = result;
+
+                var channel = await _channelRepository.FindOneByServerIdAndChatType(serverId.Value, saveChannel.Key) ?? new();
+
+                if (!discordId.HasValue)
+                {
+                    if (!channel.IsTransitory())
+                    {
+                        if (channel.Buttons?.Count > 0 && channel.DiscordId != discordId)
+                            foreach (var button in channel.Buttons)
+                                await _discordService.RemoveMessage(channel.DiscordId, button.MessageId);
+
+                        _channelRepository.Delete(channel);
+                        await _channelRepository.SaveAsync();
+                    }
+                    continue;
+                }
+
+                var channelTemplateValue = ChannelTemplateValue.FromValue(saveChannel.Key);
+                if (channelTemplateValue is null)
+                {
+                    _logger.LogError("Invalid template channelType[{}]", saveChannel.Key);
+                    continue;
+                }
+
                 channel.Guild = server.Guild!;
-                channel.DiscordId = ulong.Parse(saveChannel.DiscordId);
+                channel.ChannelType = channelTemplateValue.ToString();
+                channel.DiscordId = discordId!.Value;
+
+                var channelTemplate = await _channelTemplateRepository.FindOneAsync(ct => ct.ChannelType == channel.ChannelType);
+                if (channelTemplate is null)
+                {
+                    _logger.LogError("Channel template not found with channelType[{}]", channel.ChannelType);
+                    continue;
+                }
+
+                if (channelTemplate.Buttons is not null)
+                    foreach (var buttonTemplate in channelTemplate.Buttons)
+                    {
+                        var message = await _discordService.CreateButtonAsync(channel.DiscordId, buttonTemplate);
+                        if (message is null)
+                        {
+                            _logger.LogError("Coudn't create discord button [{}] of template [{}] on discord channel with id [{}]", buttonTemplate.Name, buttonTemplate.ChannelTemplate.Name, channel.DiscordId);
+                            continue;
+                        }
+                        var button = new Button(buttonTemplate.Command, buttonTemplate.Name, message.Id);
+                        channel.Buttons?.Add(button);
+                    }
+
                 await _channelRepository.CreateOrUpdateAsync(channel);
                 await _channelRepository.SaveAsync();
             }
 
             return _mapper.Map<ScumServerDto>(server);
+        }
+
+        public async Task<ScumServerDto?> SaveServerDiscordChannel(SaveChannelDto saveChannel)
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            if (server.Guild is null) throw new NotFoundException("Discord not configured");
+
+
+            ulong? discordId = null;
+            if (ulong.TryParse(saveChannel.Value, out ulong result))
+                discordId = result;
+
+            var channel = await _channelRepository.FindOneByServerIdAndChatType(serverId.Value, saveChannel.Key) ?? new();
+
+            if (!discordId.HasValue)
+            {
+                if (!channel.IsTransitory())
+                {
+                    if (channel.Buttons?.Count > 0 && channel.DiscordId != discordId)
+                        foreach (var button in channel.Buttons)
+                            await _discordService.RemoveMessage(channel.DiscordId, button.MessageId);
+
+                    _channelRepository.Delete(channel);
+                    await _channelRepository.SaveAsync();
+                }
+                return _mapper.Map<ScumServerDto>(server);
+            }
+
+            var channelTemplateValue = ChannelTemplateValue.FromValue(saveChannel.Key);
+            if (channelTemplateValue is null)
+            {
+                _logger.LogError("Invalid template channelType[{}]", saveChannel.Key);
+                throw new Exception("Invalid template channelType");
+            }
+
+            channel.Guild = server.Guild!;
+            channel.ChannelType = channelTemplateValue.ToString();
+            channel.DiscordId = discordId!.Value;
+
+            var channelTemplate = await _channelTemplateRepository.FindOneAsync(ct => ct.ChannelType == channel.ChannelType);
+            if (channelTemplate is null)
+            {
+                _logger.LogError("Channel template not found with channelType[{}]", channel.ChannelType);
+                throw new Exception("Channel template not found with channelType");
+            }
+
+            if (channelTemplate.Buttons is not null)
+                foreach (var buttonTemplate in channelTemplate.Buttons)
+                {
+                    var message = await _discordService.CreateButtonAsync(channel.DiscordId, buttonTemplate);
+                    if (message is null)
+                    {
+                        _logger.LogError("Coudn't create discord button [{}] of template [{}] on discord channel with id [{}]", buttonTemplate.Name, buttonTemplate.ChannelTemplate.Name, channel.DiscordId);
+                        continue;
+                    }
+                    var button = new Button(buttonTemplate.Command, buttonTemplate.Name, message.Id);
+                    channel.Buttons?.Add(button);
+                }
+
+            await _channelRepository.CreateOrUpdateAsync(channel);
+            await _channelRepository.SaveAsync();
+
+
+            return _mapper.Map<ScumServerDto>(server);
+        }
+
+
+        public async Task<List<SaveChannelDto>> GetServerDiscordChannels()
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            if (server.Guild is null) throw new NotFoundException("Discord not configured");
+            var channels = await _channelRepository.FindAllByServerId(serverId.Value);
+            return channels.Select(channel => new SaveChannelDto { Key = channel.ChannelType!, Value = channel.DiscordId.ToString() }).ToList();
         }
     }
 }

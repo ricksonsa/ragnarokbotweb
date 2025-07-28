@@ -33,12 +33,7 @@ public class StartupDiscordTemplate(
             Guild = guild,
             ChannelType = dto.ChannelType.ToString(),
             DiscordId = dto.DiscordId,
-            Buttons = dto.Buttons.Select(x => new Button
-            {
-                Label = x.Label,
-                Command = x.Command
-            }
-            ).ToList()
+            Buttons = dto.Buttons.Select(x => new Button(x.Command, x.Label, x.MessageId)).ToList()
         };
     }
 }

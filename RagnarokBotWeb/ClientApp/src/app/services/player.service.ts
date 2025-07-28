@@ -9,6 +9,7 @@ import { Page } from '../core/pagination/pager';
 })
 export class PlayerService {
 
+
   constructor(private readonly http: HttpClient) { }
 
   getPlayers(pageSize: number, pageNumber: number, filter: string = null) {
@@ -21,6 +22,18 @@ export class PlayerService {
 
   getPlayerById(id: number) {
     return this.http.get<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}`);
+  }
+
+  removeBan(id: number) {
+    return this.http.delete<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/ban`);
+  }
+
+  removeVip(id: number) {
+    return this.http.delete<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/vip`);
+  }
+
+  removeSilence(id: number) {
+    return this.http.delete<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/silence`);
   }
 
 }

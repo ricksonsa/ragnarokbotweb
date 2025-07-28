@@ -14,12 +14,15 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
+import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { AuthenticationService } from '../../../../services/authentication.service';
 import { AccountDto } from '../../../../models/account.dto';
 import { EventManager, EventWithContent } from '../../../../services/event-manager.service';
 import { Alert } from '../../../../models/alert';
 import { getDaysBetweenDates } from '../../../../core/functions/date.functions';
+import { PlayerService } from '../../../../services/player.service';
 
 @Component({
   selector: 'app-player',
@@ -41,7 +44,9 @@ import { getDaysBetweenDates } from '../../../../core/functions/date.functions';
     NzListModule,
     NzTypographyModule,
     NzPopconfirmModule,
-    NzButtonModule
+    NzButtonModule,
+    NzDatePickerModule,
+    NzRadioModule
   ]
 })
 export class PlayerComponent implements OnInit {
@@ -50,14 +55,22 @@ export class PlayerComponent implements OnInit {
   account?: AccountDto;
   addingCoins = false;
   addingGold = false;
+  addingVip = false;
+  silencingPlayer = false;
   addingMoney = false;
   addingFame = false;
+  banningPlayer = false;
   addingCoinsLoader = false;
+  dateType = 0;
+  days = 30;
+  selectedDate: Date = new Date();
+  whitelist = false;
 
   constructor(
     private readonly authService: AuthenticationService,
     private readonly eventManager: EventManager,
     private route: ActivatedRoute,
+    private readonly playerService: PlayerService,
     private readonly router: Router) {
     this.playerForm = this.fb.group({
       id: [null],
@@ -71,7 +84,11 @@ export class PlayerComponent implements OnInit {
       fame: [null],
       coin: [null],
       isVip: [false],
-      vipExpiresAt: [null]
+      vipExpiresAt: [null],
+      isBanned: [false],
+      banExpiresAt: [null],
+      isSilenced: [false],
+      silenceExpiresAt: [null]
     });
   }
 
@@ -87,8 +104,81 @@ export class PlayerComponent implements OnInit {
   }
 
   confirmVipRemove(id: number) {
+    this.playerService.removeVip(id)
+      .subscribe({
+        next: (player) => {
+          this.playerForm.patchValue(player);
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `${player.name} vip removed`, 'success')));
+        }
+      });
+  }
+
+  confirmRemoveBan(id: number) {
+    this.playerService.removeBan(id)
+      .subscribe({
+        next: (player) => {
+          this.playerForm.patchValue(player);
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `${player.name} ban removed`, 'success')));
+        }
+      });
+  }
+
+  confirmRemoveSilence(id: number) {
+    this.playerService.removeSilence(id)
+      .subscribe({
+        next: (player) => {
+          this.playerForm.patchValue(player);
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `${player.name} silence removed`, 'success')));
+        }
+      });
+  }
+
+  confirmBan() {
 
   }
+
+  confirmSilence() {
+  }
+
+
+  disableCondition() {
+    switch (this.dateType) {
+      case 0:
+        if (this.days <= 0) return true;
+        break;
+      case 1:
+        if (!this.selectedDate) return true;
+        break;
+      default: return false;
+    }
+    return false
+  }
+
+  openAddVip() {
+    this.dateType = 0;
+    this.days = 30;
+    this.addingVip = true;
+  }
+
+  openBan() {
+    this.dateType = 0;
+    this.days = 30;
+    this.banningPlayer = true;
+  }
+
+  openSilence() {
+    this.dateType = 0;
+    this.days = 30;
+    this.silencingPlayer = true;
+  }
+
+  disabledDate = (current: Date): boolean => {
+    // Can not select days before today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return current && current < today;
+  };
+
   getDate(date: Date) {
     const remaining = getDaysBetweenDates(new Date(date));
     return `${remaining} days to expire`;
@@ -103,12 +193,6 @@ export class PlayerComponent implements OnInit {
       });
   }
 
-  confirmBan(id: number) {
-
-  }
-
-  confirmSilence(id: number) {
-  }
 
   addCoinsValue = 0;
   addCoins() {

@@ -9,11 +9,14 @@ import { GuildDto } from '../models/guild';
   providedIn: 'root'
 })
 export class ServerService {
-
   constructor(private readonly http: HttpClient, private readonly authService: AuthenticationService) { }
 
   updateFtp(updateForm: any) {
     return this.http.patch<ScumServer>(`${WEB_API.baseUrl}/api/servers/ftp`, updateForm);
+  }
+
+  updateChannels(value: { key: string; value: any; }) {
+    return this.http.put<ScumServer>(`${WEB_API.baseUrl}/api/servers/discord/channels`, value);
   }
 
   updateDiscordSettings(updateForm: any) {
@@ -22,6 +25,10 @@ export class ServerService {
 
   getDiscordServer() {
     return this.http.get<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord`);
+  }
+
+  getDiscordChannels() {
+    return this.http.get<{ key: string, value: string }[]>(`${WEB_API.baseUrl}/api/servers/discord/channels`);
   }
 
   createDefaultChannels() {

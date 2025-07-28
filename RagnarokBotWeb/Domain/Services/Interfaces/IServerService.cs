@@ -12,5 +12,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<GuildDto> RunDiscordTemplate();
         Task<GuildDto> GetServerDiscord();
         Task<ScumServerDto> SaveServerDiscordChannels(List<SaveChannelDto> channels);
+        Task<ScumServerDto?> SaveServerDiscordChannel(SaveChannelDto saveChannel);
+        Task<List<SaveChannelDto>> GetServerDiscordChannels();
     }
 }

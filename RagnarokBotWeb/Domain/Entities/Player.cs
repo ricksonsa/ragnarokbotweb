@@ -20,8 +20,86 @@ public class Player : BaseEntity
     public List<Vip> Vips { get; set; }
     public List<Ban> Bans { get; set; }
     public List<Silence> Silences { get; set; }
+    public List<DiscordRole> DiscordRoles { get; set; }
 
     public bool IsVip() => Vips?.Any(vip => vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
     public bool IsSilenced() => Silences?.Any(silence => silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
     public bool IsBanned() => Bans?.Any(ban => ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
+
+    public Vip? RemoveVip()
+    {
+        return Vips?.FirstOrDefault(vip => vip.Indefinitely || vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date);
+    }
+
+    public Silence? RemoveSilence()
+    {
+        return Silences?.FirstOrDefault(silence => silence.Indefinitely || silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date > DateTime.UtcNow.Date);
+    }
+
+    public Ban? RemoveBan()
+    {
+        return Bans?.FirstOrDefault(ban => ban.Indefinitely || ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date > DateTime.UtcNow.Date);
+    }
+
+
+    public void AddVip(int? days)
+    {
+        Vips ??= [];
+        if (days.HasValue)
+        {
+            var date = DateTime.UtcNow;
+            Vips.Add(new Vip(date.AddDays(days.Value)));
+        }
+        else
+        {
+            Vips.Add(new Vip());
+        }
+    }
+
+    public void AddSilence(int? days)
+    {
+        Silences ??= [];
+        if (days.HasValue)
+        {
+            var date = DateTime.UtcNow;
+            Silences.Add(new Silence(date.AddDays(days.Value)));
+        }
+        else
+        {
+            Silences.Add(new Silence());
+        }
+    }
+
+    public void AddBan(int? days)
+    {
+        Bans ??= [];
+        if (days.HasValue)
+        {
+            var date = DateTime.UtcNow;
+            Bans.Add(new Ban(date.AddDays(days.Value)));
+        }
+        else
+        {
+            Bans.Add(new Ban());
+        }
+    }
+
+    public void AddDiscordRole(int? days, ulong discordId)
+    {
+        DiscordRoles ??= [];
+
+        if (DiscordRoles.Any(role => role.DiscordId == discordId))
+            return;
+
+        if (days.HasValue)
+        {
+            var date = DateTime.UtcNow;
+            DiscordRoles.Add(new DiscordRole(date.AddDays(days.Value)) { DiscordId = discordId });
+        }
+        else
+        {
+            DiscordRoles.Add(new DiscordRole() { DiscordId = discordId });
+        }
+    }
+
 }

@@ -1,4 +1,5 @@
 ﻿using RagnarokBotWeb.Application;
+using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using Shared.Models;
 
@@ -7,12 +8,14 @@ namespace RagnarokBotWeb.Domain.Services
     public class CacheService : ICacheService
     {
         private Dictionary<long, List<ScumPlayer>> _connectedPlayers;
-        private readonly Dictionary<long, Queue<BotCommand>> _queue;
+        private readonly Dictionary<long, Queue<BotCommand>> _botCommandQueue;
+        private readonly Dictionary<long, Queue<FileChangeCommand>> _fileChangeQueue;
 
         public CacheService()
         {
             _connectedPlayers = [];
-            _queue = [];
+            _botCommandQueue = [];
+            _fileChangeQueue = [];
         }
 
         public List<ScumPlayer> GetConnectedPlayers(long serverId)
@@ -22,7 +25,12 @@ namespace RagnarokBotWeb.Domain.Services
 
         public Queue<BotCommand> GetCommandQueue(long serverId)
         {
-            return _queue[serverId];
+            return _botCommandQueue[serverId];
+        }
+
+        public Queue<FileChangeCommand> GetFileChangeQueue(long serverId)
+        {
+            return _fileChangeQueue[serverId];
         }
 
         public void ClearConnectedPlayers(long serverId)
@@ -44,9 +52,14 @@ namespace RagnarokBotWeb.Domain.Services
                     _connectedPlayers.Add(server.Id, []);
                 }
 
-                if (!_queue.ContainsKey(server.Id))
+                if (!_botCommandQueue.ContainsKey(server.Id))
                 {
-                    _queue.Add(server.Id, []);
+                    _botCommandQueue.Add(server.Id, []);
+                }
+
+                if (!_fileChangeQueue.ContainsKey(server.Id))
+                {
+                    _fileChangeQueue.Add(server.Id, []);
                 }
             }
         }

@@ -14,7 +14,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         void ResetPlayersConnection(long? serverId = null);
         ScumPlayer? PlayerDisconnected(long serverId, string steamId64);
 
-        // FIXME: pass guild id, because user can be in multiples guilds with same steam id
         Task<Player?> FindBySteamId64Async(string steamId, long serverId);
         Task AddPlayerAsync(Player user);
         Task UpdatePlayerAsync(Player user);
@@ -23,5 +22,14 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
 
         Task<Page<PlayerDto>> GetPlayers(Paginator paginator, string? filter);
         Task<PlayerDto> GetPlayer(long id);
+        Task<PlayerDto> RemoveVip(long id);
+        Task<PlayerDto> RemoveDiscordRole(long id, ulong discordId);
+        Task<PlayerDto> RemoveSilence(long id);
+        Task<PlayerDto> RemoveBan(long id);
+
+        Task<PlayerDto> AddBan(long id, PlayerVipDto dto);
+        Task<PlayerDto> AddDiscordRole(long id, PlayerVipDto dto);
+        Task<PlayerDto> AddSilence(long id, PlayerVipDto dto);
+        Task<PlayerDto> AddVip(long id, PlayerVipDto dto);
     }
 }

@@ -44,5 +44,26 @@ namespace RagnarokBotWeb.Controllers
             var player = await _playerService.GetPlayer(id);
             return Ok(player);
         }
+
+        [HttpDelete("{id}/ban")]
+        public async Task<IActionResult> RemovePlayerBan(long id)
+        {
+            var player = await _playerService.RemoveBan(id);
+            return Ok(player);
+        }
+
+        [HttpDelete("{id}/silence")]
+        public async Task<IActionResult> RemovePlayerSilence(long id)
+        {
+            var player = await _playerService.RemoveSilence(id);
+            return Ok(player);
+        }
+
+        [HttpDelete("{id}/vip")]
+        public async Task<IActionResult> RemovePlayerVip(long id)
+        {
+            var player = await _playerService.RemoveVip(id);
+            return Ok(player);
+        }
     }
 }

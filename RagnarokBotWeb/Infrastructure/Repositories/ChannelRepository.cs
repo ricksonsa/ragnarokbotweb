@@ -24,9 +24,18 @@ public class ChannelRepository(AppDbContext context) : Repository<Channel>(conte
     public Task<Channel?> FindOneByServerIdAndChatType(long serverId, string chatType)
     {
         return DbSet()
-            .Include(channel => channel.ChannelType)
+            .Include(channel => channel.Buttons)
             .Include(channel => channel.Guild)
             .Include(channel => channel.Guild.ScumServer)
             .FirstOrDefaultAsync(channel => channel.Guild.ScumServer.Id == serverId && channel.ChannelType == chatType);
+    }
+
+    public Task<List<Channel>> FindAllByServerId(long serverId)
+    {
+        return DbSet()
+            .Include(channel => channel.Guild)
+            .Include(channel => channel.Guild.ScumServer)
+            .Where(channel => channel.Guild.ScumServer.Id == serverId)
+            .ToListAsync();
     }
 }

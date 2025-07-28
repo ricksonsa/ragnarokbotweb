@@ -19,6 +19,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         DbSet<Ftp> Ftps { get; }
         DbSet<Vip> Vips { get; }
         DbSet<Ban> Bans { get; }
+        DbSet<DiscordRole> DiscordRoles { get; }
         DbSet<Silence> Silences { get; }
         DbSet<Warzone> Warzones { get; }
         DbSet<WarzoneItem> WarzoneItems { get; }

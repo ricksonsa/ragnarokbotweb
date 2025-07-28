@@ -15,5 +15,9 @@ export class PlayerDto {
     coin?: number;
     createDate?: number;
     isVip!: boolean;
+    isBanned!: boolean;
+    isSilenced!: boolean;
     vipExpiresAt?: Date;
+    banExpiresAt?: Date;
+    silenceExpiresAt?: Date;
 }

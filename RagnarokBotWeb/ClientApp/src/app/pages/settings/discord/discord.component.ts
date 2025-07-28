@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -19,6 +19,7 @@ import { Alert } from '../../../models/alert';
 import { ChannelDto } from '../../../models/channel.dto';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-discord',
@@ -42,7 +43,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
     NzIconModule
   ]
 })
-export class DiscordComponent implements OnInit {
+export class DiscordComponent implements OnInit, OnDestroy {
   account?: AccountDto;
   private fb = inject(NonNullableFormBuilder);
 
@@ -53,6 +54,7 @@ export class DiscordComponent implements OnInit {
 
   tokenErrorMessage: string;
   channels: ChannelDto[] = [];
+  subs: Subscription[] = [];
 
   isDiscordSettingsSaving = false;
   runTemplate = false;
@@ -89,6 +91,7 @@ export class DiscordComponent implements OnInit {
       "no-admin-abuse-public": [],
       "kill-feed": [],
       "bunker-states": [],
+      "register": [],
       "taxi": [],
       "kill-rank": [],
       "sniper-rank": [],
@@ -99,10 +102,14 @@ export class DiscordComponent implements OnInit {
       "lockpick-alert": []
     });
   }
+  ngOnDestroy(): void {
+    this.subs.forEach(sub => sub.unsubscribe());
+  }
 
   ngOnInit() {
     this.loadAccount();
     this.loadDiscordChannels();
+    this.loadTemplateDiscordChannels();
   }
 
   loadAccount(force = false) {
@@ -118,6 +125,32 @@ export class DiscordComponent implements OnInit {
       });
   }
 
+  loadTemplateDiscordChannels() {
+    this.serverService.getDiscordChannels()
+      .subscribe({
+        next: (response) => {
+          response.forEach(item => {
+            this.channelsForm.controls[item.key].patchValue(item.value);
+          });
+        },
+        complete: () => {
+          for (const control in this.channelsForm.controls) {
+            this.subs.push(
+              this.channelsForm.controls[control].valueChanges
+                .subscribe(
+                  {
+                    next: (value) => {
+                      console.log(control, value);
+                      this.save({ key: control, value });
+                    }
+                  }
+                )
+            );
+          }
+        }
+      });
+  }
+
   loadDiscordChannels() {
     this.serverService.getDiscordServer()
       .subscribe({
@@ -128,11 +161,13 @@ export class DiscordComponent implements OnInit {
       });
   }
 
-  save() {
-    var list = [];
-    for (const key in this.channelsForm.value) {
-      list.push({ key, value: this.channelsForm.value[key] });
-    }
+  save(value: any) {
+    this.serverService.updateChannels(value)
+      .subscribe({
+        next: (response: any) => {
+          // this.eventManager.broadcast(new EventWithContent('alert', new Alert('Server', `Channels updated`, 'success')));
+        }
+      });
   }
 
   createTemplate() {

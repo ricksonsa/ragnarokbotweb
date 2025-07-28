@@ -18,8 +18,10 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ICacheService _cacheService;
         private readonly IPlayerRepository _playerRepository;
         private readonly IScumServerRepository _scumServerRepository;
+        private readonly IDiscordService _discordService;
         private readonly IMapper _mapper;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IUnitOfWork _unitOfWork;
 
         public PlayerService(
             IHttpContextAccessor contextAccessor,
@@ -28,7 +30,9 @@ namespace RagnarokBotWeb.Domain.Services
             IPlayerRepository playerRepository,
             IMapper mapper,
             IScumServerRepository scumServerRepository,
-            IServiceProvider serviceProvider) : base(contextAccessor)
+            IServiceProvider serviceProvider,
+            IUnitOfWork unitOfWork,
+            IDiscordService discordService) : base(contextAccessor)
         {
             _logger = logger;
             _cacheService = cacheService;
@@ -36,6 +40,8 @@ namespace RagnarokBotWeb.Domain.Services
             _mapper = mapper;
             _scumServerRepository = scumServerRepository;
             _serviceProvider = serviceProvider;
+            _unitOfWork = unitOfWork;
+            _discordService = discordService;
         }
 
         public async Task<PlayerDto> GetPlayer(long id)
@@ -211,6 +217,176 @@ namespace RagnarokBotWeb.Domain.Services
             player.ScumServer = server;
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
+        }
+
+        public async Task<PlayerDto> AddVip(long id, PlayerVipDto dto)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            if (player.IsVip())
+                throw new DomainException("Player already has ongoing vip");
+
+            if (dto.DiscordRoleId.HasValue)
+            {
+                player.AddDiscordRole(dto.Days, dto.DiscordRoleId.Value);
+                await _discordService.AddUserRoleAsync(player.ScumServer!.Guild!.DiscordId, player.DiscordId!.Value, dto.DiscordRoleId.Value);
+            }
+            player.AddVip(dto.Days);
+
+            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            {
+                FileChangeType = Enums.EFileChangeType.Whitelist,
+                FileChangeMethod = Enums.EFileChangeMethod.AddLine,
+                Value = player.SteamId64!
+            });
+
+            await _playerRepository.CreateOrUpdateAsync(player);
+            await _playerRepository.SaveAsync();
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> AddSilence(long id, PlayerVipDto dto)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            if (player.IsSilenced())
+                throw new DomainException("Player already has ongoing silence");
+
+            player.AddSilence(dto.Days);
+            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            {
+                FileChangeType = Enums.EFileChangeType.SilencedUsers,
+                FileChangeMethod = Enums.EFileChangeMethod.AddLine,
+                Value = player.SteamId64!
+            });
+
+            await _playerRepository.CreateOrUpdateAsync(player);
+            await _playerRepository.SaveAsync();
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> AddBan(long id, PlayerVipDto dto)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            if (player.IsBanned())
+                throw new DomainException("Player already has ongoing ban");
+
+            player.AddBan(dto.Days);
+            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            {
+                FileChangeType = Enums.EFileChangeType.BannedUsers,
+                FileChangeMethod = Enums.EFileChangeMethod.AddLine,
+                Value = player.SteamId64!
+            });
+
+            var botCommand = new BotCommand();
+            botCommand.Kick(player.SteamId64!);
+            _cacheService.GetCommandQueue(player.ScumServerId).Enqueue(botCommand);
+
+            await _playerRepository.CreateOrUpdateAsync(player);
+            await _playerRepository.SaveAsync();
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> RemoveVip(long id)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            Vip? vip = player.RemoveVip();
+
+            if (vip is null)
+                throw new DomainException("Player is not vip");
+
+            _unitOfWork.Vips.Remove(vip);
+            await _unitOfWork.SaveAsync();
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> RemoveSilence(long id)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            Silence? silence = player.RemoveSilence();
+
+            if (silence is null)
+                throw new DomainException("Player is not silenced");
+
+            _unitOfWork.Silences.Remove(silence);
+            await _unitOfWork.SaveAsync();
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> RemoveBan(long id)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            Ban? ban = player.RemoveBan();
+
+            if (ban is null)
+                throw new DomainException("Player is not banned");
+
+            _unitOfWork.Bans.Remove(ban);
+            await _unitOfWork.SaveAsync();
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> RemoveDiscordRole(long id, ulong roleId)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            var role = player.DiscordRoles?.FirstOrDefault(role => role.DiscordId == roleId);
+
+            if (role is null)
+                throw new DomainException("Player is not banned");
+
+            _unitOfWork.DiscordRoles.Remove(role);
+            await _unitOfWork.SaveAsync();
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> AddDiscordRole(long id, PlayerVipDto dto)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            if (!dto.DiscordRoleId.HasValue)
+                throw new NotFoundException("Invalid role");
+
+            if (player.DiscordRoles is null || player.DiscordRoles.Any(role => role.DiscordId == dto.DiscordRoleId))
+                throw new DomainException("Player already has this role");
+
+            await _discordService.AddUserRoleAsync(player.ScumServer!.Guild!.DiscordId, player.DiscordId!.Value, dto.DiscordRoleId.Value);
+            player.AddDiscordRole(dto.Days, dto.DiscordRoleId.Value);
+
+            await _playerRepository.CreateOrUpdateAsync(player);
+            await _playerRepository.SaveAsync();
+
+            return _mapper.Map<PlayerDto>(player);
+
         }
     }
 }

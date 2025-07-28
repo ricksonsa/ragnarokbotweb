@@ -8,6 +8,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
     public class OrderCommandJob : AbstractJob, IJob
     {
+        private readonly ILogger<OrderCommandJob> _logger;
         private readonly ICacheService _cacheService;
         private readonly IOrderRepository _orderRepository;
         private readonly IBotRepository _botRepository;
@@ -16,15 +17,19 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             ICacheService cacheService,
             IScumServerRepository scumServerRepository,
             IBotRepository botRepository,
-            IOrderRepository orderRepository) : base(scumServerRepository)
+            IOrderRepository orderRepository,
+            ILogger<OrderCommandJob> logger) : base(scumServerRepository)
         {
             _cacheService = cacheService;
             _botRepository = botRepository;
             _orderRepository = orderRepository;
+            _logger = logger;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
+            _logger.LogInformation("Triggered {} -> Execute at: {time}", nameof(OrderCommandJob), DateTimeOffset.Now);
+
             var server = await GetServerAsync(context, ftpRequired: false);
             var order = await _orderRepository.FindOneByServer(server.Id);
 

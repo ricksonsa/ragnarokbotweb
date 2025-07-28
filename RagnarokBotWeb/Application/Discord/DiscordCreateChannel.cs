@@ -31,8 +31,8 @@ public class DiscordCreateChannel(DiscordSocketClient client, IChannelTemplateSe
             if (channelTemplate.Buttons is not null)
                 foreach (var buttonTemplate in channelTemplate.Buttons)
                 {
-                    await CreateButtonAsync(channel, buttonTemplate);
-                    channelDto.Buttons.Add(new ButtonDto(buttonTemplate.Command, buttonTemplate.Name));
+                    var message = await CreateButtonAsync(channel, buttonTemplate);
+                    channelDto.Buttons.Add(new ButtonDto(buttonTemplate.Command, buttonTemplate.Name, message.Id));
                 }
 
             channels.Add(channelDto);

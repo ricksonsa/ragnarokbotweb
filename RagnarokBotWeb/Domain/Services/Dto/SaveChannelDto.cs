@@ -2,7 +2,7 @@
 {
     public class SaveChannelDto
     {
-        public string ChannelType { get; set; }
-        public string DiscordId { get; set; }
+        public string Key { get; set; }
+        public string? Value { get; set; }
     }
 }

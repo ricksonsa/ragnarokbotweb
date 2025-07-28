@@ -168,16 +168,89 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task RemoveMessage(ulong channelId, ulong messageId)
         {
-            var channel = await _client.GetChannelAsync(channelId) as IMessageChannel;
+            try
+            {
+                var channel = await _client.GetChannelAsync(channelId) as IMessageChannel;
+
+                if (channel != null)
+                {
+                    var message = await channel.GetMessageAsync(messageId);
+                    if (message != null)
+                    {
+                        await message.DeleteAsync();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                _logger.LogError("Could not remove message[{}] from channel[{}]", messageId, channelId);
+            }
+
+        }
+
+        public async Task<IUserMessage?> CreateButtonAsync(ulong discordId, ButtonTemplate buttonTemplate)
+        {
+            var channel = await _client.GetChannelAsync(discordId) as IMessageChannel;
 
             if (channel != null)
             {
-                var message = await channel.GetMessageAsync(messageId);
-                if (message != null)
-                {
-                    await message.DeleteAsync();
-                }
+                var button = new ButtonBuilder()
+                    .WithLabel(buttonTemplate.Name)
+                    .WithCustomId(buttonTemplate.Command)
+                    .WithStyle(ButtonStyle.Primary);
+
+                var messageComponent = new ComponentBuilder()
+                    .WithButton(button)
+                    .Build();
+
+                return await channel.SendMessageAsync(components: messageComponent);
             }
+
+            return null;
+        }
+
+        public async Task AddUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId)
+        {
+            var guild = _client.GetGuild(guildId);
+
+            var user = guild.GetUser(userDiscordId);
+            if (user == null)
+            {
+                _logger.LogError("User not found with discordId[{}]", userDiscordId);
+                return;
+            }
+
+            var role = guild.GetRole(roleId);
+            if (role == null)
+            {
+                _logger.LogError("Discord Role not found with Id[{}]", roleId);
+                return;
+            }
+
+            await user.AddRoleAsync(role);
+            _logger.LogInformation("Added Discord Role Id[{}] to user[{}]", roleId, userDiscordId);
+        }
+
+        public async Task RemoveUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId)
+        {
+            var guild = _client.GetGuild(guildId);
+
+            var user = guild.GetUser(userDiscordId);
+            if (user == null)
+            {
+                _logger.LogError("User not found with discordId[{}]", userDiscordId);
+                return;
+            }
+
+            var role = guild.GetRole(roleId);
+            if (role == null)
+            {
+                _logger.LogError("Discord Role not found with Id[{}]", roleId);
+                return;
+            }
+
+            await user.RemoveRoleAsync(role);
+            _logger.LogInformation("Removed Discord Role Id[{}] to user[{}]", roleId, userDiscordId);
         }
     }
 }

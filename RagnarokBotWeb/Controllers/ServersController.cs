@@ -54,11 +54,19 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPut("discord/channels")]
-        public async Task<IActionResult> UpdateDiscord(List<SaveChannelDto> channels)
+        public async Task<IActionResult> GetDiscordChannels(SaveChannelDto channel)
         {
-            _logger.LogInformation("Patch request to confirm discord settings");
-            ScumServerDto server = await _serverService.SaveServerDiscordChannels(channels);
+            _logger.LogInformation("Patch request to update discord channels");
+            ScumServerDto? server = await _serverService.SaveServerDiscordChannel(channel);
             return Ok(server);
+        }
+
+        [HttpGet("discord/channels")]
+        public async Task<IActionResult> UpdateDiscord()
+        {
+            _logger.LogInformation("Get request to fetch discord channels");
+            var channels = await _serverService.GetServerDiscordChannels();
+            return Ok(channels);
         }
 
         [HttpPatch("ftp")]

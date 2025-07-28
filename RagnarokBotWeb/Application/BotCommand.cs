@@ -27,6 +27,15 @@ namespace RagnarokBotWeb.Application
             });
         }
 
+        public void Kick(string steamId)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.Kick,
+                Value = steamId
+            });
+        }
+
         public void Command(string command)
         {
             Values.Add(new BotCommandValue

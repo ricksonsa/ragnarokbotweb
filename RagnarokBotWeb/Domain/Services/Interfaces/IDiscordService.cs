@@ -12,5 +12,8 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         string GetDiscordUserName(ulong discordId);
         Task RemoveMessage(ulong channelId, ulong messageId);
         Task<IUserMessage> SendEmbedWithBase64Image(CreateEmbed createEmbed);
+        Task<IUserMessage?> CreateButtonAsync(ulong discordId, ButtonTemplate buttonTemplate);
+        Task AddUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId);
+        Task RemoveUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId);
     }
 }

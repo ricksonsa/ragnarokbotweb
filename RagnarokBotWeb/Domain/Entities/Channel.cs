@@ -2,7 +2,6 @@
 
 namespace RagnarokBotWeb.Domain.Entities;
 
-[Index(nameof(ChannelType), IsUnique = true)]
 [Index(nameof(DiscordId), IsUnique = true)]
 public class Channel : BaseEntity
 {
@@ -10,4 +9,9 @@ public class Channel : BaseEntity
     public string? ChannelType { get; set; }
     public ulong DiscordId { get; set; }
     public List<Button>? Buttons { get; set; }
+
+    public Channel()
+    {
+        Buttons = new List<Button>();
+    }
 }
