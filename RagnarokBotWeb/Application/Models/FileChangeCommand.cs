@@ -8,5 +8,7 @@ namespace RagnarokBotWeb.Application.Models
         public EFileChangeMethod FileChangeMethod { get; set; } = EFileChangeMethod.None;
         public string Key { get; set; }
         public string Value { get; set; }
+        public required long ServerId { get; set; }
+        public BotCommand? BotCommand { get; set; }
     }
 }

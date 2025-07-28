@@ -19,33 +19,36 @@ namespace RagnarokBotWeb.Application
 
         public BotCommand() { }
 
-        public void ListPlayers()
+        public BotCommand ListPlayers()
         {
             Values.Add(new BotCommandValue
             {
                 Type = ECommandType.ListPlayers
             });
+            return this;
         }
 
-        public void Kick(string steamId)
+        public BotCommand Kick(string steamId)
         {
             Values.Add(new BotCommandValue
             {
                 Type = ECommandType.Kick,
                 Value = steamId
             });
+            return this;
         }
 
-        public void Command(string command)
+        public BotCommand Command(string command)
         {
             Values.Add(new BotCommandValue
             {
                 Value = command,
                 Type = ECommandType.Command
             });
+            return this;
         }
 
-        public void Say(string command)
+        public BotCommand Say(string command)
         {
             if (command.StartsWith("#")) command = command[1..];
             Values.Add(new BotCommandValue
@@ -53,9 +56,10 @@ namespace RagnarokBotWeb.Application
                 Type = ECommandType.Say,
                 Value = command,
             });
+            return this;
         }
 
-        public void Teleport(string target, string coordinates)
+        public BotCommand Teleport(string target, string coordinates)
         {
             Values.Add(new BotCommandValue
             {
@@ -64,9 +68,10 @@ namespace RagnarokBotWeb.Application
                 Value = target,
                 Coordinates = coordinates
             });
+            return this;
         }
 
-        public void Delivery(string target, string value, int amount)
+        public BotCommand Delivery(string target, string value, int amount)
         {
             Values.Add(new BotCommandValue
             {
@@ -75,9 +80,10 @@ namespace RagnarokBotWeb.Application
                 Value = value,
                 Amount = amount,
             });
+            return this;
         }
 
-        public void MagazineDelivery(string coordinates, string item, int amount, int ammoCount)
+        public BotCommand MagazineDelivery(string coordinates, string item, int amount, int ammoCount)
         {
             Values.Add(new BotCommandValue
             {
@@ -87,9 +93,10 @@ namespace RagnarokBotWeb.Application
                 Amount = amount,
                 Coordinates = coordinates
             });
+            return this;
         }
 
-        public void Delivery(string target, string value, int amount, BotCommand extra)
+        public BotCommand Delivery(string target, string value, int amount, BotCommand extra)
         {
             Extra = extra;
             Values.Add(new BotCommandValue
@@ -99,15 +106,17 @@ namespace RagnarokBotWeb.Application
                 Value = value,
                 Amount = amount,
             });
+            return this;
         }
 
-        public void Announce(string value)
+        public BotCommand Announce(string value)
         {
             Values.Add(new BotCommandValue
             {
                 Type = ECommandType.Announce,
                 Value = value
             });
+            return this;
         }
     }
 }

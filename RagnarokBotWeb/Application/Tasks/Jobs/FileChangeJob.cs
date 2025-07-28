@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.Handlers.ChangeFileHandler;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -10,6 +11,7 @@ public class FileChangeJob(
     ILogger<FileChangeJob> logger,
     IScumServerRepository scumServerRepository,
     IFtpService ftpService,
+    IUnitOfWork unitOfWork,
     ICacheService cacheService
 ) : AbstractJob(scumServerRepository), IJob
 {
@@ -23,7 +25,11 @@ public class FileChangeJob(
             FileChangeCommand? command = cacheService.GetFileChangeQueue(server.Id).Dequeue();
             if (command == null) return;
 
-            // TODO: File edit handler using ftpService
+            var handler = new ChangeFileHandlerFactory(ftpService, unitOfWork).CreateAddRemoveLineHandler(command.FileChangeType);
+            await handler.Handle(command);
+
+            if (command.BotCommand is not null) cacheService.GetCommandQueue(command.ServerId).Enqueue(command.BotCommand);
+
         }
         catch (Exception ex)
         {

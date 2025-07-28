@@ -239,7 +239,8 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 FileChangeType = Enums.EFileChangeType.Whitelist,
                 FileChangeMethod = Enums.EFileChangeMethod.AddLine,
-                Value = player.SteamId64!
+                Value = player.SteamId64!,
+                ServerId = player.ScumServerId
             });
 
             await _playerRepository.CreateOrUpdateAsync(player);
@@ -262,7 +263,8 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 FileChangeType = Enums.EFileChangeType.SilencedUsers,
                 FileChangeMethod = Enums.EFileChangeMethod.AddLine,
-                Value = player.SteamId64!
+                Value = player.SteamId64!,
+                ServerId = player.ScumServerId
             });
 
             await _playerRepository.CreateOrUpdateAsync(player);
@@ -285,12 +287,10 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 FileChangeType = Enums.EFileChangeType.BannedUsers,
                 FileChangeMethod = Enums.EFileChangeMethod.AddLine,
-                Value = player.SteamId64!
+                Value = player.SteamId64!,
+                ServerId = player.ScumServerId,
+                BotCommand = new BotCommand().Kick(player.SteamId64!)
             });
-
-            var botCommand = new BotCommand();
-            botCommand.Kick(player.SteamId64!);
-            _cacheService.GetCommandQueue(player.ScumServerId).Enqueue(botCommand);
 
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();

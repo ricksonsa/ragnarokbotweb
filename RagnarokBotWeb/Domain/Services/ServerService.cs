@@ -7,7 +7,6 @@ using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
-using System.Text;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -134,57 +133,6 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 _logger.LogError(ex.Message);
                 throw new DomainException("Invalid FTP server");
-            }
-            return null;
-        }
-
-        public string UpdateConfigLine(Ftp ftp, string config, string newValue)
-        {
-
-            if (ftp is null) throw new DomainException("Invalid ftp server");
-
-            try
-            {
-                string tempLocalPath = "temp_file.txt"; // Temporary local file
-                string remoteFilePath = $"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini";
-
-                using (FtpClient client = _ftpService.GetClient(ftp))
-                {
-                    // Download file into memory stream
-                    using (MemoryStream stream = new())
-                    {
-                        client.DownloadStream(stream, remoteFilePath);
-                        stream.Position = 0; // Reset stream position
-
-                        // Read all lines into an array
-                        string[] lines = new StreamReader(stream).ReadToEnd().Split(Environment.NewLine);
-
-                        // Find the index of the line containing the search text
-                        int lineIndex = Array.FindIndex(lines, line => line.Contains(config));
-
-                        if (lineIndex != -1)
-                        {
-                            lines[lineIndex] = $"{lines[lineIndex].Split("=")[0]}={newValue}"; // Replace line
-
-                            // Convert back to a MemoryStream for uploading
-                            string updatedContent = string.Join(Environment.NewLine, lines);
-                            MemoryStream updatedStream = new(Encoding.UTF8.GetBytes(updatedContent));
-
-                            // Upload modified content
-                            client.UploadStream(updatedStream, remoteFilePath);
-                            _logger.LogInformation("Updated line {} successfully with value {} for server {}", lines[lineIndex], newValue, ServerId()!);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Text not found in the file.");
-                        }
-                    }
-                    client.Disconnect();
-                }
-            }
-            catch (Exception)
-            {
-                throw new DomainException("Invalid ftp server");
             }
             return null;
         }

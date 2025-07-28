@@ -43,7 +43,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     {
                         FileChangeMethod = Domain.Enums.EFileChangeMethod.RemoveLine,
                         FileChangeType = Domain.Enums.EFileChangeType.Whitelist,
-                        Value = player.SteamId64!
+                        Value = player.SteamId64!,
+                        ServerId = server.Id
                     });
 
                     _unitOfWork.Vips.Remove(player.RemoveVip()!);
