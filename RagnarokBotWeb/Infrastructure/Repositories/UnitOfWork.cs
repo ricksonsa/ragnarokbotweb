@@ -9,7 +9,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
     {
         private AppDbContext _context;
 
-        public AppDbContext AppDbContext { get; }
+        public AppDbContext AppDbContext { get => _context; }
         public DbSet<Player> Players { get; }
         public DbSet<Lockpick> Lockpicks { get; }
         public DbSet<Bunker> Bunkers { get; }
@@ -29,31 +29,39 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<WarzoneSpawn> WarzoneSpawns { get; set; }
         public DbSet<WarzoneTeleport> WarzoneTeleports { get; set; }
         public DbSet<DiscordRole> DiscordRoles { get; set; }
+        public IDbContextFactory<AppDbContext> _dbContextFactory { get; }
 
-        public UnitOfWork(AppDbContext context)
+        public UnitOfWork(IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _context = context;
-            Players = context.Players;
-            Lockpicks = context.Lockpicks;
-            Bunkers = context.Bunkers;
-            ReaderPointers = context.ReaderPointers;
-            Kills = context.Kills;
-            Bots = context.Bots;
-            Tenants = context.Tenants;
-            ScumServers = context.ScumServers;
-            Ftps = context.Ftps;
-            ScheduledTasks = context.ScheduledTasks;
-            Vips = context.Vips;
-            Bans = context.Bans;
-            Silences = context.Silences;
-            Silences = context.Silences;
-            WarzoneItems = context.WarzoneItems;
-            Teleports = context.Teleports;
-            WarzoneTeleports = context.WarzoneTeleports;
-            WarzoneSpawns = context.WarzoneSpawns;
-            Teleports = context.Teleports;
-            Warzones = context.Warzones;
-            DiscordRoles = context.DiscordRoles;
+            _context = dbContextFactory.CreateDbContext();
+            Players = _context.Players;
+            Lockpicks = _context.Lockpicks;
+            Bunkers = _context.Bunkers;
+            ReaderPointers = _context.ReaderPointers;
+            Kills = _context.Kills;
+            Bots = _context.Bots;
+            Tenants = _context.Tenants;
+            ScumServers = _context.ScumServers;
+            Ftps = _context.Ftps;
+            ScheduledTasks = _context.ScheduledTasks;
+            Vips = _context.Vips;
+            Bans = _context.Bans;
+            Silences = _context.Silences;
+            Silences = _context.Silences;
+            WarzoneItems = _context.WarzoneItems;
+            Teleports = _context.Teleports;
+            WarzoneTeleports = _context.WarzoneTeleports;
+            WarzoneSpawns = _context.WarzoneSpawns;
+            Teleports = _context.Teleports;
+            Warzones = _context.Warzones;
+            DiscordRoles = _context.DiscordRoles;
+            _dbContextFactory = dbContextFactory;
+        }
+
+        public AppDbContext CreateDbContext()
+        {
+            _context = _dbContextFactory.CreateDbContext();
+            return _context;
         }
 
         public async Task SaveAsync()

@@ -24,7 +24,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("{serverId}")]
         public async Task<IActionResult> GetServer(long serverId)
         {
-            _logger.LogInformation("Get request to fetch server data for serverId {}", serverId);
+            _logger.LogInformation("Get request to fetch server data for serverId {Id}", serverId);
             ScumServer server = await _serverService.GetServer(serverId);
             return Ok(server);
         }
@@ -53,8 +53,16 @@ namespace RagnarokBotWeb.Controllers
             return Ok(guild);
         }
 
+        [HttpGet("discord/roles")]
+        public async Task<IActionResult> GetDiscordRoles()
+        {
+            _logger.LogInformation("Get request to fetch discord roles");
+            var roles = await _serverService.GetServerDiscordRoles();
+            return Ok(roles);
+        }
+
         [HttpPut("discord/channels")]
-        public async Task<IActionResult> GetDiscordChannels(SaveChannelDto channel)
+        public async Task<IActionResult> UpdateDiscordChannels(SaveChannelDto channel)
         {
             _logger.LogInformation("Patch request to update discord channels");
             ScumServerDto? server = await _serverService.SaveServerDiscordChannel(channel);
@@ -62,7 +70,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet("discord/channels")]
-        public async Task<IActionResult> UpdateDiscord()
+        public async Task<IActionResult> GetDiscordChannels()
         {
             _logger.LogInformation("Get request to fetch discord channels");
             var channels = await _serverService.GetServerDiscordChannels();

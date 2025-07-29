@@ -31,6 +31,10 @@ export class ServerService {
     return this.http.get<{ key: string, value: string }[]>(`${WEB_API.baseUrl}/api/servers/discord/channels`);
   }
 
+  getDiscordRoles() {
+    return this.http.get<{ discordId: string, name: string }[]>(`${WEB_API.baseUrl}/api/servers/discord/roles`);
+  }
+
   createDefaultChannels() {
     return this.http.patch<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord/channels/run-template`, null);
   }

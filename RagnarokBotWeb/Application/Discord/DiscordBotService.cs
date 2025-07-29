@@ -44,7 +44,8 @@ public class DiscordBotService : BackgroundService
             _logger.LogInformation("Discord bot has the following Guilds:");
             foreach (var guild in _client.Guilds)
             {
-                _logger.LogInformation("Guild Id: {}, Guild Name: {}, Guild Created: {time}", guild.Id, guild.Name, guild.CreatedAt);
+                _logger.LogInformation("Guild Id: {GuildId}, Guild Name: {GuildName}, Guild Created: {CreatedTime}", guild.Id, guild.Name, guild.CreatedAt);
+
             }
             IsReady = true;
             return Task.CompletedTask;

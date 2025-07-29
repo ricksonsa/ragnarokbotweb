@@ -18,22 +18,22 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             ICacheService cacheService) : base(scumServerRepository)
         {
             _unitOfWork = unitOfWork;
+            _unitOfWork.CreateDbContext();
             _logger = logger;
             _cacheService = cacheService;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogInformation("Triggered {} -> Execute at: {time}", nameof(BanExpireJob), DateTimeOffset.Now);
-
             var server = await GetServerAsync(context, ftpRequired: false);
+            _logger.LogDebug("Triggered {Job}->Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
             var players = _unitOfWork.Players
                 .Include(player => player.Bans)
                 .Where(player =>
                     player.ScumServer != null
                     && player.SteamId64 != null
                     && player.ScumServer.Id == server.Id
-                    && player.Bans.Any(ban => !ban.Indefinitely && ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
+                    && player.Bans.Any(ban => !ban.Processed && !ban.Indefinitely && ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
 
             foreach (var player in players)
             {
@@ -47,12 +47,15 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         ServerId = server.Id
                     });
 
-                    _unitOfWork.Bans.Remove(player.RemoveBan()!);
+                    var ban = player.RemoveBan();
+                    if (ban is null) return;
+                    ban.Processed = true;
+                    _unitOfWork.Bans.Update(ban);
                     await _unitOfWork.SaveAsync();
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Error trying to remove player ban -> {}", ex.Message);
+                    _logger.LogError("Error trying to remove player ban -> {Ex}", ex.Message);
                 }
             }
         }

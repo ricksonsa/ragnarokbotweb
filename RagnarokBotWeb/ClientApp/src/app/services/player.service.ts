@@ -8,8 +8,6 @@ import { Page } from '../core/pagination/pager';
   providedIn: 'root'
 })
 export class PlayerService {
-
-
   constructor(private readonly http: HttpClient) { }
 
   getPlayers(pageSize: number, pageNumber: number, filter: string = null) {
@@ -34,6 +32,18 @@ export class PlayerService {
 
   removeSilence(id: number) {
     return this.http.delete<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/silence`);
+  }
+
+  silence(id: any, dto: any) {
+    return this.http.post<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/silence`, dto);
+  }
+
+  ban(id: any, dto: any) {
+    return this.http.post<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/ban`, dto);
+  }
+
+  vip(id: any, dto: any) {
+    return this.http.post<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/vip`, dto);
   }
 
 }

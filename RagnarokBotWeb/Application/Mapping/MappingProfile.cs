@@ -46,11 +46,11 @@ namespace RagnarokBotWeb.Application.Mapping
                 .ForMember((dto) => dto.IsBanned, opt => opt.MapFrom(player => player.IsBanned()))
                 .ForMember((dto) => dto.IsSilenced, opt => opt.MapFrom(player => player.IsSilenced()))
                 .ForMember((dto) => dto.VipExpiresAt,
-                    opt => opt.MapFrom(player => player.IsVip() ? player.Vips.OrderByDescending(v => v.ExpirationDate).First().ExpirationDate : null))
+                    opt => opt.MapFrom(player => player.IsVip() ? player.Vips.OrderByDescending(v => v.ExpirationDate).First(x => x.Indefinitely || !x.Processed).ExpirationDate : null))
                 .ForMember((dto) => dto.BanExpiresAt,
-                    opt => opt.MapFrom(player => player.IsBanned() ? player.Bans.OrderByDescending(v => v.ExpirationDate).First().ExpirationDate : null))
+                    opt => opt.MapFrom(player => player.IsBanned() ? player.Bans.OrderByDescending(v => v.ExpirationDate).First(x => x.Indefinitely || !x.Processed).ExpirationDate : null))
                 .ForMember((dto) => dto.SilenceExpiresAt,
-                    opt => opt.MapFrom(player => player.IsSilenced() ? player.Silences.OrderByDescending(v => v.ExpirationDate).First().ExpirationDate : null));
+                    opt => opt.MapFrom(player => player.IsSilenced() ? player.Silences.OrderByDescending(v => v.ExpirationDate).First(x => x.Indefinitely || !x.Processed).ExpirationDate : null));
 
             CreateMap<Button, ButtonDto>();
 

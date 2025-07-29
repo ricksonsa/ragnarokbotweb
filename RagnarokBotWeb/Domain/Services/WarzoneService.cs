@@ -286,7 +286,7 @@ namespace RagnarokBotWeb.Domain.Services
                 _unitOfWork.Warzones.Update(warzone);
                 await _unitOfWork.SaveAsync();
 
-                _logger.LogInformation("Warzone Id {} Opened for Server Id {} at: {time}", warzone.Id, server.Id, DateTimeOffset.Now);
+                _logger.LogInformation("Warzone Id {Warzone} Opened for Server Id {Server} at: {time}", warzone.Id, server.Id, DateTimeOffset.Now);
 
             }
 
@@ -329,7 +329,7 @@ namespace RagnarokBotWeb.Domain.Services
             }
             catch (Exception)
             {
-                _logger.LogWarning("Tried delete inexisting jobs {}", closeWarzoneJobKey.Name);
+                _logger.LogWarning("Tried delete inexisting jobs {Job}", closeWarzoneJobKey.Name);
             }
 
             try
@@ -339,7 +339,7 @@ namespace RagnarokBotWeb.Domain.Services
             catch (Exception)
             {
 
-                _logger.LogWarning("Tried delete inexisting jobs {}", warzoneItemSpawnJobKey.Name);
+                _logger.LogWarning("Tried delete inexisting jobs {Job}", warzoneItemSpawnJobKey.Name);
             }
 
             if (warzone.DiscordChannelId != null)
@@ -351,7 +351,7 @@ namespace RagnarokBotWeb.Domain.Services
                 catch (Exception) { }
             }
 
-            _logger.LogInformation("Warzone Id {} Closed for Server Id {} at: {time}", warzone.Id, server.Id, DateTimeOffset.Now);
+            _logger.LogInformation("Warzone Id {Warzone} Closed for Server Id {Id} at: {time}", warzone.Id, server.Id, DateTimeOffset.Now);
         }
     }
 }

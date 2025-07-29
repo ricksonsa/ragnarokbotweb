@@ -28,7 +28,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogInformation("Triggered {} -> Execute at: {time}", nameof(OrderCommandJob), DateTimeOffset.Now);
+            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
             var server = await GetServerAsync(context, ftpRequired: false);
             var order = await _orderRepository.FindOneByServer(server.Id);

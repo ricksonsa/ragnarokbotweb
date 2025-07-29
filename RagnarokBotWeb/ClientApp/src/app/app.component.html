@@ -166,7 +166,8 @@
 
 <div class="login" *ngIf="!logged && !register">
   <nz-card class="login-container">
-    <h4 nz-typography>Ragnarok Bot Login</h4>
+    <h4 nz-typography>Ragnarok Bot</h4>
+    <p nz-typography class="description-color"> Manage your SCUM private server with automation tools and insights powered by Ragnarok Bot. Log in to configure events, spawns, and more.</p>
     <br>
     <form nz-form [formGroup]="loginForm">
       <nz-space style="width: 100%;" nzDirection="vertical">
@@ -189,7 +190,7 @@
         </div>
 
         <button *nzSpaceItem nz-button type="button" nzType="link" (click)="register = true">Don't have an account?
-          Create your account.</button>
+          Sign up one here</button>
         <button *nzSpaceItem (click)="login()" [nzBlock]="true" nz-button nzType="primary" nzSize="large">Login</button>
       </nz-space>
     </form>
@@ -198,7 +199,8 @@
 
 <div class="login" *ngIf="!logged && register">
   <nz-card class="login-container">
-    <h4 nz-typography>Ragnarok Bot Register</h4>
+    <h4 nz-typography>Ragnarok Bot</h4>
+    <h5 nz-typography>Sign Up</h5>
     <br>
     <form nz-form [formGroup]="registerForm" (action)="signup()">
       <nz-space style="width: 100%;" nzDirection="vertical">
@@ -235,9 +237,10 @@
           <ng-container *ngTemplateOutlet="error"></ng-container>
         </div>
 
-        <nz-space style="width: 100%;" *nzSpaceItem>
-          <button *nzSpaceItem [nzBlock]="true" nz-button nzType="default" nzSize="large"
-            (click)="register = false">Login</button>
+        <nz-space nzDirection="vertical" style="width: 100%;" *nzSpaceItem>
+          <button *nzSpaceItem nz-button type="button" [nzBlock]="true" nzType="link" (click)="register = false">
+            Already have an account? Sign In
+          </button>
           <button *nzSpaceItem (click)="signup()" [nzBlock]="true" nz-button nzType="primary"
             nzSize="large">Register</button>
         </nz-space>

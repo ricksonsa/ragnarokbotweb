@@ -1,24 +1,28 @@
-﻿using System.Security.Authentication;
-using FluentFTP;
+﻿using FluentFTP;
 using RagnarokBotWeb.Domain.Entities;
+using System.Security.Authentication;
 
 namespace RagnarokBotWeb.Infrastructure.FTP;
-
 public static class FtpClientFactory
 {
     public static FtpClient CreateClient(Ftp ftp)
     {
-        var client = new FtpClient(ftp.Address, port: (int)ftp.Port, user: ftp.UserName, pass: ftp.Password);
-        var ftpConfig = new FtpConfig
+        if (string.IsNullOrWhiteSpace(ftp.Address) || string.IsNullOrWhiteSpace(ftp.UserName))
+            throw new ArgumentException("FTP configuration is invalid.");
+
+        var client = new FtpClient(ftp.Address, port: (int)ftp.Port, user: ftp.UserName, pass: ftp.Password)
         {
-            LogHost = true,
-            LogToConsole = true,
-            SslProtocols = SslProtocols.Tls12,
-            ConnectTimeout = 50000,
-            DataConnectionType = FtpDataConnectionType.AutoPassive
+            Config = new FtpConfig
+            {
+                LogHost = true,
+                LogToConsole = false,
+                SslProtocols = SslProtocols.Tls12,
+                EncryptionMode = FtpEncryptionMode.Auto,
+                ConnectTimeout = 50000,
+                DataConnectionType = FtpDataConnectionType.PASV
+            }
         };
-        client.Config = ftpConfig;
-        client.AutoConnect();
+
         return client;
     }
 }

@@ -228,6 +228,21 @@ namespace RagnarokBotWeb.Domain.Services
             return guildDto;
         }
 
+        public async Task<List<DiscordRolesDto>> GetServerDiscordRoles()
+        {
+            var serverId = ServerId()!;
+
+            var guild = await _guildRepository.FindOneWithScumServerAsync(g => g.ScumServer.Id == serverId.Value);
+            if (guild is null) throw new DomainException("Server does not have a discord configured");
+
+            var roles = _discordClient.GetGuild(guild.DiscordId).Roles;
+
+            return roles
+                .Where(role => role.Name != "@everyone")
+                .Select(role => new DiscordRolesDto { DiscordId = role.Id.ToString(), Name = role.Name })
+                .ToList();
+        }
+
         public async Task<GuildDto> RunDiscordTemplate()
         {
             var serverId = ServerId()!;
@@ -271,7 +286,7 @@ namespace RagnarokBotWeb.Domain.Services
                 var channelTemplateValue = ChannelTemplateValue.FromValue(saveChannel.Key);
                 if (channelTemplateValue is null)
                 {
-                    _logger.LogError("Invalid template channelType[{}]", saveChannel.Key);
+                    _logger.LogError("Invalid template channelType[{Key}]", saveChannel.Key);
                     continue;
                 }
 
@@ -282,7 +297,7 @@ namespace RagnarokBotWeb.Domain.Services
                 var channelTemplate = await _channelTemplateRepository.FindOneAsync(ct => ct.ChannelType == channel.ChannelType);
                 if (channelTemplate is null)
                 {
-                    _logger.LogError("Channel template not found with channelType[{}]", channel.ChannelType);
+                    _logger.LogError("Channel template not found with channelType[{Type}]", channel.ChannelType);
                     continue;
                 }
 
@@ -292,7 +307,7 @@ namespace RagnarokBotWeb.Domain.Services
                         var message = await _discordService.CreateButtonAsync(channel.DiscordId, buttonTemplate);
                         if (message is null)
                         {
-                            _logger.LogError("Coudn't create discord button [{}] of template [{}] on discord channel with id [{}]", buttonTemplate.Name, buttonTemplate.ChannelTemplate.Name, channel.DiscordId);
+                            _logger.LogError("Coudn't create discord button [{Button}] of template [{Template}] on discord channel with id [{Id}]", buttonTemplate.Name, buttonTemplate.ChannelTemplate.Name, channel.DiscordId);
                             continue;
                         }
                         var button = new Button(buttonTemplate.Command, buttonTemplate.Name, message.Id);
@@ -338,7 +353,7 @@ namespace RagnarokBotWeb.Domain.Services
             var channelTemplateValue = ChannelTemplateValue.FromValue(saveChannel.Key);
             if (channelTemplateValue is null)
             {
-                _logger.LogError("Invalid template channelType[{}]", saveChannel.Key);
+                _logger.LogError("Invalid template channelType[{Key}]", saveChannel.Key);
                 throw new Exception("Invalid template channelType");
             }
 
@@ -349,7 +364,7 @@ namespace RagnarokBotWeb.Domain.Services
             var channelTemplate = await _channelTemplateRepository.FindOneAsync(ct => ct.ChannelType == channel.ChannelType);
             if (channelTemplate is null)
             {
-                _logger.LogError("Channel template not found with channelType[{}]", channel.ChannelType);
+                _logger.LogError("Channel template not found with channelType[{Key}]", channel.ChannelType);
                 throw new Exception("Channel template not found with channelType");
             }
 
@@ -359,7 +374,7 @@ namespace RagnarokBotWeb.Domain.Services
                     var message = await _discordService.CreateButtonAsync(channel.DiscordId, buttonTemplate);
                     if (message is null)
                     {
-                        _logger.LogError("Coudn't create discord button [{}] of template [{}] on discord channel with id [{}]", buttonTemplate.Name, buttonTemplate.ChannelTemplate.Name, channel.DiscordId);
+                        _logger.LogError("Coudn't create discord button [{Button}] of template [{Template}] on discord channel with id [{Id}]", buttonTemplate.Name, buttonTemplate.ChannelTemplate.Name, channel.DiscordId);
                         continue;
                     }
                     var button = new Button(buttonTemplate.Command, buttonTemplate.Name, message.Id);

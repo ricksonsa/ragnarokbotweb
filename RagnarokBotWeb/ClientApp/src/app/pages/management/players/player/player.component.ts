@@ -21,8 +21,9 @@ import { AuthenticationService } from '../../../../services/authentication.servi
 import { AccountDto } from '../../../../models/account.dto';
 import { EventManager, EventWithContent } from '../../../../services/event-manager.service';
 import { Alert } from '../../../../models/alert';
-import { getDaysBetweenDates } from '../../../../core/functions/date.functions';
+import { getDaysBetweenDates, getDaysBetweenNowAndFuture } from '../../../../core/functions/date.functions';
 import { PlayerService } from '../../../../services/player.service';
+import { ServerService } from '../../../../services/server.service';
 
 @Component({
   selector: 'app-player',
@@ -64,13 +65,16 @@ export class PlayerComponent implements OnInit {
   dateType = 0;
   days = 30;
   selectedDate: Date = new Date();
-  whitelist = false;
+  whitelist = true;
+  selectedDiscordId: any;
+  discordRoles: { discordId: string; name: string; }[] = [];
 
   constructor(
     private readonly authService: AuthenticationService,
     private readonly eventManager: EventManager,
     private route: ActivatedRoute,
     private readonly playerService: PlayerService,
+    private readonly serverService: ServerService,
     private readonly router: Router) {
     this.playerForm = this.fb.group({
       id: [null],
@@ -94,6 +98,7 @@ export class PlayerComponent implements OnInit {
 
   ngOnInit() {
     this.loadAccount();
+    this.loadRoles();
 
     this.route.data.subscribe(data => {
       var player = data['player'];
@@ -101,6 +106,13 @@ export class PlayerComponent implements OnInit {
         this.playerForm.patchValue(player);
       }
     });
+  }
+
+  loadRoles() {
+    this.serverService.getDiscordRoles()
+      .subscribe({
+        next: (roles) => this.discordRoles = roles
+      });
   }
 
   confirmVipRemove(id: number) {
@@ -133,13 +145,67 @@ export class PlayerComponent implements OnInit {
       });
   }
 
-  confirmBan() {
+  confirmVip() {
+    this.addingCoinsLoader = true;
+    this.playerService.vip(this.playerForm.value.id, {
+      days: this.resolveDays(),
+      whitelist: this.whitelist,
+      discordRoleId: this.selectedDiscordId
+    })
+      .subscribe({
+        next: (player) => {
+          this.playerForm.patchValue(player);
+          this.addingVip = false;
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Vip added to ${player.name}`, 'success')));
+        },
+        complete: () => this.addingCoinsLoader = false
+      });
+  }
 
+  confirmBan() {
+    this.addingCoinsLoader = true;
+    this.playerService.ban(this.playerForm.value.id, {
+      days: this.resolveDays(),
+    })
+      .subscribe({
+        next: (player) => {
+          this.playerForm.patchValue(player);
+          this.banningPlayer = false;
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `${player.name} banned`, 'success')));
+        },
+        complete: () => this.addingCoinsLoader = false
+      });
   }
 
   confirmSilence() {
+    this.addingCoinsLoader = true;
+    this.playerService.silence(this.playerForm.value.id, {
+      days: this.resolveDays(),
+    })
+      .subscribe({
+        next: (player) => {
+          this.playerForm.patchValue(player);
+          this.silencingPlayer = false;
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `${player.name} silenced`, 'success')));
+        },
+        complete: () => this.addingCoinsLoader = false
+      });
   }
 
+  date(date?: any) {
+    if (date) return new Date(date);
+    return new Date();
+  }
+
+  resolveDays(): number {
+    switch (this.dateType) {
+      case 0:
+        return this.days;
+      case 1:
+        return getDaysBetweenNowAndFuture(new Date(this.selectedDate));
+      default: return null;
+    }
+  }
 
   disableCondition() {
     switch (this.dateType) {

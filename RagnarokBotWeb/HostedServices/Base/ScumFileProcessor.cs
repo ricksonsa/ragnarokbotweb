@@ -80,8 +80,6 @@ public class ScumFileProcessor
 
     public async IAsyncEnumerable<string> UnreadFileLinesAsync()
     {
-        _logger.LogInformation("{} -> Executing ProcessUnreadFileLines for server: {}", _fileType, _scumServer.Id);
-
         FtpClient client = _ftpService.GetClient(_ftp);
         DateTime today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
 
@@ -93,7 +91,6 @@ public class ScumFileProcessor
             var pointer = await _readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
             if (pointer == null || pointer.LastUpdated != file.Modified)
             {
-                _logger.LogInformation("Remote File {}:{} -> Pointer {}:{}", file.Name, file.Size, pointer?.FileName, pointer?.FileSize);
                 filteredFiles.Add((file, pointer));
             }
         }
@@ -113,8 +110,6 @@ public class ScumFileProcessor
         {
             string filePath = Path.Combine(localPath, file.Item1.Name);
             ReaderPointer pointer = file.Item2 ?? BuildReaderPointer(filePath, file.Item1?.Modified ?? DateTime.Now);
-
-            _logger.LogInformation("{} -> Reading file: {}", _fileType, file.Item1.Name);
 
             int lineNumber = 0;
             using var reader = new StreamReader(filePath, Encoding.Unicode);

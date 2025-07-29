@@ -8,3 +8,17 @@ export function getDaysBetweenDates(utcDate: Date, localDate = new Date()): numb
 
   return diffInDays;
 }
+
+export function getDaysBetweenNowAndFuture(futureDate: Date): number {
+  const now = new Date();
+
+  const msInDay = 1000 * 60 * 60 * 24;
+
+  // Get UTC dates to avoid time zone issues
+  const utcNow = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const utcFuture = Date.UTC(futureDate.getFullYear(), futureDate.getMonth(), futureDate.getDate());
+
+  const diffInMs = utcFuture - utcNow;
+
+  return Math.ceil(diffInMs / msInDay);
+}

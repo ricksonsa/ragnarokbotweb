@@ -16,7 +16,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogInformation("Triggered BotAliveJob->Execute at: {time}", DateTimeOffset.Now);
+            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
             try
             {

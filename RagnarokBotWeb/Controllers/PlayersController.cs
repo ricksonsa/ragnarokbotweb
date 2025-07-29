@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
@@ -42,6 +43,27 @@ namespace RagnarokBotWeb.Controllers
         public async Task<IActionResult> GetPlayer(long id)
         {
             var player = await _playerService.GetPlayer(id);
+            return Ok(player);
+        }
+
+        [HttpPost("{id}/silence")]
+        public async Task<IActionResult> AddPlayerSilence(long id, PlayerVipDto dto)
+        {
+            var player = await _playerService.AddSilence(id, dto);
+            return Ok(player);
+        }
+
+        [HttpPost("{id}/ban")]
+        public async Task<IActionResult> AddPlayerBan(long id, PlayerVipDto dto)
+        {
+            var player = await _playerService.AddBan(id, dto);
+            return Ok(player);
+        }
+
+        [HttpPost("{id}/vip")]
+        public async Task<IActionResult> AddPlayerVip(long id, PlayerVipDto dto)
+        {
+            var player = await _playerService.AddVip(id, dto);
             return Ok(player);
         }
 

@@ -1,6 +1,5 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Application.Handlers.ChangeFileHandler;
-using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -17,23 +16,28 @@ public class FileChangeJob(
 {
     public async Task Execute(IJobExecutionContext context)
     {
-        try
+
+        logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+        var server = await GetServerAsync(context, ftpRequired: false);
+
+        if (cacheService.GetFileChangeQueue(server.Id).TryDequeue(out var command))
         {
-            logger.LogInformation("Triggered {}->Execute at: {time}", nameof(FileChangeJob), DateTimeOffset.Now);
-            var server = await GetServerAsync(context, ftpRequired: false);
-
-            FileChangeCommand? command = cacheService.GetFileChangeQueue(server.Id).Dequeue();
-            if (command == null) return;
-
-            var handler = new ChangeFileHandlerFactory(ftpService, unitOfWork).CreateAddRemoveLineHandler(command.FileChangeType);
-            await handler.Handle(command);
-
-            if (command.BotCommand is not null) cacheService.GetCommandQueue(command.ServerId).Enqueue(command.BotCommand);
-
+            try
+            {
+                var handler = new ChangeFileHandlerFactory(ftpService, unitOfWork).CreateAddRemoveLineHandler(command.FileChangeType);
+                await handler.Handle(command);
+                if (command.BotCommand is not null) cacheService.GetCommandQueue(command.ServerId).Enqueue(command.BotCommand);
+            }
+            catch (Exception ex)
+            {
+                if (command.Retries <= 5)
+                {
+                    command.Retries += 1;
+                    cacheService.GetFileChangeQueue(command.ServerId).Enqueue(command);
+                }
+                logger.LogError(ex.Message);
+            }
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex.Message);
-        }
+
     }
 }

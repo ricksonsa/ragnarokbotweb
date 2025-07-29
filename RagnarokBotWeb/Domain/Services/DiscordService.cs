@@ -74,7 +74,7 @@ namespace RagnarokBotWeb.Domain.Services
             var user = _client.GetUser(createEmbed.DiscordId);
             if (user is null)
             {
-                _logger.LogInformation("User with discordId: {} was not found", createEmbed.DiscordId);
+                _logger.LogInformation("User with discordId: {DiscordId} was not found", createEmbed.DiscordId);
                 return;
             }
 
@@ -183,7 +183,7 @@ namespace RagnarokBotWeb.Domain.Services
             }
             catch (Exception)
             {
-                _logger.LogError("Could not remove message[{}] from channel[{}]", messageId, channelId);
+                _logger.LogError("Could not remove message[{Message}] from channel[{Channel}]", messageId, channelId);
             }
 
         }
@@ -211,46 +211,48 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task AddUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId)
         {
-            var guild = _client.GetGuild(guildId);
+            var socketGuild = _client.GetGuild(guildId); // SocketGuild
+            IGuild guild = socketGuild; // Pode ser usado como IGuild
 
-            var user = guild.GetUser(userDiscordId);
+            var user = await guild.GetUserAsync(userDiscordId);
             if (user == null)
             {
-                _logger.LogError("User not found with discordId[{}]", userDiscordId);
+                _logger.LogError("User not found with discordId[{Id}]", userDiscordId);
                 return;
             }
 
             var role = guild.GetRole(roleId);
             if (role == null)
             {
-                _logger.LogError("Discord Role not found with Id[{}]", roleId);
+                _logger.LogError("Discord Role not found with Id[{Id}]", roleId);
                 return;
             }
 
             await user.AddRoleAsync(role);
-            _logger.LogInformation("Added Discord Role Id[{}] to user[{}]", roleId, userDiscordId);
+            _logger.LogInformation("Added Discord Role Id[{Role}] to user[{User}]", roleId, userDiscordId);
         }
 
         public async Task RemoveUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId)
         {
-            var guild = _client.GetGuild(guildId);
+            var socketGuild = _client.GetGuild(guildId); // SocketGuild
+            IGuild guild = socketGuild; // Pode ser usado como IGuild
 
-            var user = guild.GetUser(userDiscordId);
+            var user = await guild.GetUserAsync(userDiscordId);
             if (user == null)
             {
-                _logger.LogError("User not found with discordId[{}]", userDiscordId);
+                _logger.LogError("User not found with discordId[{Id}]", userDiscordId);
                 return;
             }
 
             var role = guild.GetRole(roleId);
             if (role == null)
             {
-                _logger.LogError("Discord Role not found with Id[{}]", roleId);
+                _logger.LogError("Discord Role not found with Id[{Id}]", roleId);
                 return;
             }
 
             await user.RemoveRoleAsync(role);
-            _logger.LogInformation("Removed Discord Role Id[{}] to user[{}]", roleId, userDiscordId);
+            _logger.LogInformation("Removed Discord Role Id[{Role}] to user[{User}]", roleId, userDiscordId);
         }
     }
 }

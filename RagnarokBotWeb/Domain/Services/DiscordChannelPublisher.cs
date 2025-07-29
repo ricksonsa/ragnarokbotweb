@@ -16,7 +16,7 @@ public class DiscordChannelPublisher(
     {
         if (server.Guild == null)
         {
-            logger.LogWarning("ScumServer = '{}' does not have a Guild yet.", server);
+            logger.LogWarning("ScumServer = '{Id}' does not have a Guild yet.", server.Id);
             return;
         }
 
@@ -28,7 +28,7 @@ public class DiscordChannelPublisher(
         var channel = await channelService.FindByGuildIdAndChannelTypeAsync(guild.Id, channelType);
         if (channel == null)
         {
-            logger.LogWarning("Guild = '{}' does not have a channel with ChannelType = '{}'.", guild, channelType);
+            logger.LogWarning("Guild = '{GuildId}' does not have a channel with ChannelType = '{Type}'.", guild.Id, channelType);
             return;
         }
 
@@ -37,7 +37,7 @@ public class DiscordChannelPublisher(
         var socketChannel = client.GetChannel(channel.DiscordId);
         if (socketChannel is not ISocketMessageChannel socketMessageChannel)
         {
-            logger.LogWarning("SocketChannel = '{}' type not supported.", socketChannel.GetType().Name);
+            logger.LogWarning("SocketChannel = '{Name}' type not supported.", socketChannel.GetType().Name);
             return;
         }
 

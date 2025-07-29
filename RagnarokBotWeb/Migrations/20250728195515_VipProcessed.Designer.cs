@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RagnarokBotWeb.Infrastructure.Configuration;
@@ -11,9 +12,11 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250728195515_VipProcessed")]
+    partial class VipProcessed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1103,9 +1106,6 @@ namespace RagnarokBotWeb.Migrations
 
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamp without time zone");
-
-                    b.Property<decimal?>("DiscordRoleId")
-                        .HasColumnType("numeric(20,0)");
 
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("timestamp without time zone");

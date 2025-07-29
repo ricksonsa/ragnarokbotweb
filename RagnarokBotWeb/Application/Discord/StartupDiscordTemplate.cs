@@ -15,7 +15,7 @@ public class StartupDiscordTemplate(
     {
         if (guild.RunTemplate)
         {
-            logger.LogWarning("Template already executed in GuildId: {} and DiscordId {}", guild.Id, guild.DiscordId);
+            logger.LogWarning("Template already executed in GuildId: {GuildId} and DiscordId {DiscordId}", guild.Id, guild.DiscordId);
             return;
         }
 

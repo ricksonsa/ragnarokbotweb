@@ -38,6 +38,16 @@ namespace RagnarokBotWeb.Application
             return this;
         }
 
+        public BotCommand Ban(string steamId)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.Ban,
+                Value = steamId
+            });
+            return this;
+        }
+
         public BotCommand Command(string command)
         {
             Values.Add(new BotCommandValue

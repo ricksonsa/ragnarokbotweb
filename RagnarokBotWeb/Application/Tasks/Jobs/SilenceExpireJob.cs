@@ -18,22 +18,23 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             ICacheService cacheService) : base(scumServerRepository)
         {
             _unitOfWork = unitOfWork;
+            _unitOfWork.CreateDbContext();
             _logger = logger;
             _cacheService = cacheService;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogInformation("Triggered {} -> Execute at: {time}", nameof(SilenceExpireJob), DateTimeOffset.Now);
-
+            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
             var server = await GetServerAsync(context, ftpRequired: false);
+
             var players = _unitOfWork.Players
                 .Include(player => player.Silences)
                 .Where(player =>
                     player.ScumServer != null
                     && player.SteamId64 != null
                     && player.ScumServer.Id == server.Id
-                    && player.Silences.Any(silence => !silence.Indefinitely && silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
+                    && player.Silences.Any(silence => !silence.Processed && !silence.Indefinitely && silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
 
             foreach (var player in players)
             {
@@ -47,12 +48,15 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         ServerId = server.Id
                     });
 
-                    _unitOfWork.Silences.Remove(player.RemoveSilence()!);
+                    var silence = player.RemoveSilence();
+                    if (silence is null) return;
+                    silence.Processed = true;
+                    _unitOfWork.Silences.Update(silence);
                     await _unitOfWork.SaveAsync();
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Error trying to remove player silence -> {}", ex.Message);
+                    _logger.LogError("Error trying to remove player silence -> {Ex}", ex.Message);
                 }
             }
         }

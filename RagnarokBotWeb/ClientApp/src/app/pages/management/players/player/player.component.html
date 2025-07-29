@@ -3,18 +3,6 @@
     <nz-icon nzType="arrow-left"></nz-icon>
     Players
   </button>
-  @if (playerForm.value.isBanned) {
-  <button *nzSpaceItem nz-button nzType="default" (click)="confirmRemoveBan(playerForm.value.id)">
-    <nz-icon nzType="stop"></nz-icon>
-    Remove Ban
-  </button>
-  } @else {
-  <button *nzSpaceItem nz-button nzType="default" nzDanger="true" (click)="openBan()">
-    <nz-icon nzType="stop"></nz-icon>
-    Ban <b> {{ playerForm.value.name }}</b>
-  </button>
-  }
-
   @if (playerForm.value.isSilenced) {
   <button *nzSpaceItem nz-button nzType="default" (click)="confirmRemoveSilence(playerForm.value.id)">
     <nz-icon nzType="stop"></nz-icon>
@@ -26,7 +14,17 @@
     Silence <b> {{ playerForm.value.name }}</b>
   </button>
   }
-
+  @if (playerForm.value.isBanned) {
+  <button *nzSpaceItem nz-button nzType="default" (click)="confirmRemoveBan(playerForm.value.id)">
+    <nz-icon nzType="stop"></nz-icon>
+    Remove Ban
+  </button>
+  } @else {
+  <button *nzSpaceItem nz-button nzType="default" nzDanger="true" (click)="openBan()">
+    <nz-icon nzType="stop"></nz-icon>
+    Ban <b> {{ playerForm.value.name }}</b>
+  </button>
+  }
 </nz-space>
 <br>
 <br>
@@ -62,12 +60,43 @@
       </nz-form-item>
 
       <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Silenced</nz-form-label>
+        <nz-icon *ngIf="!playerForm.value.isSilenced" nz-popover nzPopoverContent="No" style="font-size: 18px;"
+          nzType="close" class="danger"></nz-icon>
+        <p style="margin: 0; text-emphasis: ' ';" class="description-color"
+          *ngIf="playerForm.value.isSilenced && playerForm.value.silenceExpiresAt" nz-typography>
+          Until {{date(playerForm.value.silenceExpiresAt) | date: 'fullDate'}}
+        </p>
+
+        <p style="margin: 0; text-emphasis: ' ';" class="description-color"
+          *ngIf="playerForm.value.isSilenced && !playerForm.value.silenceExpiresAt" nz-typography>Forever</p>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Banned</nz-form-label>
+        <nz-icon *ngIf="!playerForm.value.isBanned" nz-popover nzPopoverContent="No" style="font-size: 18px;"
+          nzType="close" class="danger"></nz-icon>
+        <p style="margin: 0; text-emphasis: ' ';" class="description-color"
+          *ngIf="playerForm.value.isBanned && playerForm.value.banExpiresAt" nz-typography>
+          Until {{date(playerForm.value.banExpiresAt) | date: 'fullDate'}}
+        </p>
+
+        <p style="margin: 0; text-emphasis: ' ';" class="description-color"
+          *ngIf="playerForm.value.isBanned && !playerForm.value.banExpiresAt" nz-typography>Forever</p>
+      </nz-form-item>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Vip</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-icon nz-popover
-            [nzPopoverContent]="playerForm.value.isVip ? getDate(playerForm.value.vipExpiresAt) : 'No'"
-            style="font-size: 18px;" [nzType]="playerForm.value.isVip ? 'check' : 'close'"
-            [ngClass]="{ 'success': playerForm.value.isVip, 'danger': !playerForm.value.isVip}"></nz-icon>
+          <nz-icon *ngIf="!playerForm.value.isVip" nz-popover nzPopoverContent="No" style="font-size: 18px;"
+            nzType="close" class="danger"></nz-icon>
+          <p style="margin: 0;" class="description-color"
+            *ngIf="playerForm.value.isVip && playerForm.value.vipExpiresAt" nz-typography>
+            Until {{date(playerForm.value.vipExpiresAt) | date: 'fullDate'}}
+          </p>
+
+          <p style="margin: 0;" class="description-color"
+            *ngIf="playerForm.value.isVip && !playerForm.value.vipExpiresAt" nz-typography>Forever</p>
         </nz-form-control>
         <button nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove {{ playerForm.value.name }}'s vip?"
           (nzOnConfirm)="confirmVipRemove(playerForm.value.id)" nzPopconfirmPlacement="topLeft" [nzOkText]="'Yes'"
@@ -179,25 +208,33 @@
     <nz-radio-group [(ngModel)]="dateType">
       <label nz-radio [nzValue]="0">Days</label>
       <label nz-radio [nzValue]="1">Calendar</label>
+      <label nz-radio [nzValue]="2">Forever</label>
     </nz-radio-group>
     <br><br>
 
     @if(dateType == 0) {
     <input nz-input type="number" [(ngModel)]="days" />
+    <br><br>
     }
     @else if (dateType == 1) {
     <p nz-typography>Select an expiration date for this player's vip.</p>
     <nz-date-picker [(ngModel)]="selectedDate" nzSize="large" [nzDisabledDate]="disabledDate"></nz-date-picker>
+    <br><br>
     }
 
-    <br><br>
     <label nz-checkbox [(ngModel)]="whitelist">Add player to whitelist</label>
     <p nz-typography class="description-color">Players added to whitelist will have priority on joining the server, and
       the game will kick a non whitelisted players when it's full.</p>
+    <br>
+    <nz-select [(ngModel)]="selectedDiscordId" style="width: 100%;" nzPlaceHolder="Select the discord role">
+      <nz-option *ngFor="let role of discordRoles" [nzValue]="role.discordId" [nzLabel]="role.name"></nz-option>
+    </nz-select>
+    <p nz-typography class="description-color">The selected role will be applied to the player on discord and will be
+      applied until the expiration of the vip. Leave it blank if not needed.</p>
   </div>
   <div *nzModalFooter>
     <button nz-button nzType="default" (click)="addingVip = false;">Cancel</button>
-    <button nz-button nzType="primary" (click)="addGold()" [nzLoading]="addingCoinsLoader">Add</button>
+    <button nz-button nzType="primary" (click)="confirmVip()" [nzLoading]="addingCoinsLoader">Add</button>
   </div>
 </nz-modal>
 
@@ -206,7 +243,7 @@
     <nz-radio-group [(ngModel)]="dateType">
       <label nz-radio [nzValue]="0">Days</label>
       <label nz-radio [nzValue]="1">Calendar</label>
-      <label nz-radio [nzValue]="3">Indefinitely</label>
+      <label nz-radio [nzValue]="3">Forever</label>
     </nz-radio-group>
     <br><br>
 
@@ -221,7 +258,8 @@
   </div>
   <div *nzModalFooter>
     <button nz-button nzType="default" (click)="banningPlayer = false;">Cancel</button>
-    <button nz-button nzType="primary" (click)="addGold()" [nzLoading]="addingCoinsLoader" nzDanger="true">Ban</button>
+    <button nz-button nzType="primary" (click)="confirmBan()" [nzLoading]="addingCoinsLoader"
+      nzDanger="true">Ban</button>
   </div>
 </nz-modal>
 
@@ -231,7 +269,7 @@
     <nz-radio-group [(ngModel)]="dateType">
       <label nz-radio [nzValue]="0">Days</label>
       <label nz-radio [nzValue]="1">Calendar</label>
-      <label nz-radio [nzValue]="3">Indefinitely</label>
+      <label nz-radio [nzValue]="3">Forever</label>
     </nz-radio-group>
     <br><br>
 

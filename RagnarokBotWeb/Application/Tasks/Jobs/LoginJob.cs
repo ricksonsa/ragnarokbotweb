@@ -19,9 +19,9 @@ public class LoginJob(
 
     public async Task Execute(IJobExecutionContext context)
     {
+        logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
         try
         {
-            logger.LogInformation("Triggered LoginJob->Execute at: {time}", DateTimeOffset.Now);
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 

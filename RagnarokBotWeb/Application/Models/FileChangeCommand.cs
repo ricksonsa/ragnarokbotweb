@@ -10,5 +10,7 @@ namespace RagnarokBotWeb.Application.Models
         public string Value { get; set; }
         public required long ServerId { get; set; }
         public BotCommand? BotCommand { get; set; }
+        public string Method { get; set; }
+        public int Retries { get; set; } = 0;
     }
 }

@@ -28,6 +28,10 @@ namespace RagnarokBotWeb.Domain.Services
             _logger = logger;
         }
 
+        private static ITrigger CronTrigger(string cron) => TriggerBuilder.Create()
+                        .WithCronSchedule(cron)
+                        .Build();
+
         private static ITrigger OneMinTrigger() => TriggerBuilder.Create()
                          .WithCronSchedule(AppSettingsStatic.OneMinCron)
                          .Build();
@@ -85,7 +89,7 @@ namespace RagnarokBotWeb.Domain.Services
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
 
-            _logger.LogInformation("Loaded server tasks for server id {}", server.Id);
+            _logger.LogInformation("Loaded server tasks for server id {Id}", server.Id);
         }
 
         private async Task ScheduleFtpServerTasks(ScumServer server, CancellationToken cancellationToken = default)
@@ -131,33 +135,33 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity($"VipExpireJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, EveryDayTrigger());
+            await scheduler.ScheduleJob(job, TwoMinTrigger());
 
             job = JobBuilder.Create<BanExpireJob>()
                 .WithIdentity($"BanExpireJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, EveryDayTrigger());
+            await scheduler.ScheduleJob(job, TwoMinTrigger());
 
             job = JobBuilder.Create<SilenceExpireJob>()
                 .WithIdentity($"SilenceExpireJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, EveryDayTrigger());
+            await scheduler.ScheduleJob(job, TwoMinTrigger());
 
             job = JobBuilder.Create<DiscordRoleExpireJob>()
                 .WithIdentity($"DiscordRoleExpireJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, EveryDayTrigger());
+            await scheduler.ScheduleJob(job, TwoMinTrigger());
 
             job = JobBuilder.Create<FileChangeJob>()
                 .WithIdentity($"FileChangeJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            await scheduler.ScheduleJob(job, CronTrigger("0/30 * * * * ?"));
 
-            _logger.LogInformation("Loaded ftp tasks for server id {}", server.Id);
+            _logger.LogInformation("Loaded ftp tasks for server id {Id}", server.Id);
         }
 
         public async Task NewServerAddedAsync(ScumServer server)

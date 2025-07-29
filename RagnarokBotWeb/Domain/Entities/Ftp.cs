@@ -16,15 +16,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public Ftp(EHostProvider provider)
         {
             Provider = provider;
-            RootFolder = GetRootFolder();
         }
-
-        public string GetRootFolder() => Provider switch
-        {
-            EHostProvider.PingPerfect => "/" + Address + "_7000/",
-            EHostProvider.GGHosting => "/" + Address + "_7000/",// FIXME: Resolver root folder gghosting
-            _ => $"/",
-        };
 
     }
 }

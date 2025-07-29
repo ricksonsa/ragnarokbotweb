@@ -21,8 +21,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogInformation("Triggered ListPlayersHostedService->Process at: {time}", DateTimeOffset.Now);
-
+            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
             try
             {
                 JobDataMap dataMap = context.JobDetail.JobDataMap;

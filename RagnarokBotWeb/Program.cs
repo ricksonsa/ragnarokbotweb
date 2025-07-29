@@ -16,6 +16,7 @@ using RagnarokBotWeb.Infrastructure.FTP;
 using RagnarokBotWeb.Infrastructure.Repositories;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using RagnarokBotWeb.Middlewares;
+using Serilog;
 
 namespace RagnarokBotWeb
 {
@@ -23,7 +24,26 @@ namespace RagnarokBotWeb
     {
         public static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console() // ensure this works even without config
+                .CreateBootstrapLogger(); // <== temporary early logger
+
+            Log.Information("RagnarokBotWeb is starting up...");
             var builder = WebApplication.CreateBuilder(args);
+
+            // This MUST come right after builder is created
+            builder.Host.UseSerilog((ctx, services, loggerConfig) => loggerConfig
+                .WriteTo.Console()
+                .ReadFrom.Configuration(ctx.Configuration)
+                .ReadFrom.Services(services)
+                .Enrich.FromLogContext()
+            );
+
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            builder.Configuration
+                .AddJsonFile("appsettings.json")
+                .AddJsonFile($"appsettings.{environment}.json", true)
+                .AddEnvironmentVariables();
 
             var DefaultCorsPolicy = "_defaultCorsPolicy";
 
@@ -78,6 +98,7 @@ namespace RagnarokBotWeb
                 });
             });
 
+            builder.Services.AddDbContextFactory<AppDbContext>();
             builder.Services.AddDbContext<AppDbContext>();
             builder.Services.AddHttpContextAccessor();
 
@@ -87,7 +108,9 @@ namespace RagnarokBotWeb
                 {
                     GatewayIntents = GatewayIntents.Guilds |
                                      GatewayIntents.GuildMessages |
-                                     GatewayIntents.MessageContent
+                                     GatewayIntents.MessageContent |
+                                     GatewayIntents.AllUnprivileged |
+                                     GatewayIntents.GuildMembers
                 };
                 return new DiscordSocketClient(config);
             });
@@ -96,14 +119,12 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<LoadFtpTaskService>();
 
             builder.Services.AddHostedService<DiscordBotService>();
-            // uncomment this to run the template creation test
-            // builder.Services.AddHostedService<TestDiscordTemplate>();
             builder.Services.AddHostedService<DiscordEventService>();
 
             builder.Services.AddSingleton<IMessageEventHandlerFactory, MessageEventHandlerFactory>();
             builder.Services.AddSingleton<IInteractionEventHandlerFactory, InteractionEventHandlerFactory>();
 
-            builder.Configuration.AddJsonFile("appsettings.json");
+
             builder.Services.Configure<AppSettings>(options =>
             {
                 var section = builder.Configuration.GetSection(nameof(AppSettings));
@@ -170,7 +191,6 @@ namespace RagnarokBotWeb
             });
 
             builder.Services.AddMvc();
-
             var app = builder.Build();
 
             app.UseCors(DefaultCorsPolicy);
@@ -207,7 +227,18 @@ namespace RagnarokBotWeb
             // Redirect to Angular for non-API requests
             app.MapFallbackToFile("index.html");
 
-            app.Run();
+            try
+            {
+                app.Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Application start-up failed");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
     }
 }

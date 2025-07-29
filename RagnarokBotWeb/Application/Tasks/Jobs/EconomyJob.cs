@@ -21,7 +21,7 @@ public class EconomyJob(
     {
         try
         {
-            logger.LogInformation("Triggered EconomyJob->Execute at: {time}", DateTimeOffset.Now);
+            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);

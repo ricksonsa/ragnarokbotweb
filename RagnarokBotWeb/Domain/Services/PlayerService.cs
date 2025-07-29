@@ -158,29 +158,39 @@ namespace RagnarokBotWeb.Domain.Services
 
             foreach (var player in players)
             {
-                var user = await ctx.Players
-                .Include(p => p.ScumServer)
-                .FirstOrDefaultAsync(p => p.SteamId64 == player.SteamID && p.ScumServerId == serverId);
-                user ??= new();
-                user.X = player.X;
-                user.Y = player.Y;
-                user.Z = player.Z;
-                user.Name = player.Name;
-                user.SteamId64 = player.SteamID;
-                user.SteamName = player.SteamName;
-                user.Gold = player.GoldBalance;
-                user.Money = player.AccountBalance;
-                user.Fame = player.Fame;
-                if (user.Id == 0)
+                try
                 {
-                    await ctx.Players.AddAsync(user);
-                }
-                else
-                {
-                    ctx.Players.Update(user);
-                }
+                    var user = await ctx.Players
+                                    .Include(p => p.ScumServer)
+                                    .FirstOrDefaultAsync(p => p.SteamId64 == player.SteamID && p.ScumServerId == serverId);
 
-                await ctx.SaveChangesAsync();
+                    user ??= new();
+                    user.X = player.X;
+                    user.Y = player.Y;
+                    user.Z = player.Z;
+                    user.Name = player.Name;
+                    user.SteamId64 = player.SteamID;
+                    user.SteamName = player.SteamName;
+                    user.Gold = player.GoldBalance;
+                    user.Money = player.AccountBalance;
+                    user.Fame = player.Fame;
+                    user.ScumServer ??= (await ctx.ScumServers.FirstOrDefaultAsync(server => server.Id == serverId))!;
+
+                    if (user.Id == 0)
+                    {
+                        await ctx.Players.AddAsync(user);
+                    }
+                    else
+                    {
+                        ctx.Players.Update(user);
+                    }
+
+                    await ctx.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
             }
         }
 
@@ -230,21 +240,28 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (dto.DiscordRoleId.HasValue)
             {
-                player.AddDiscordRole(dto.Days, dto.DiscordRoleId.Value);
+                player.AddVip(dto.Days, dto.DiscordRoleId.Value);
                 await _discordService.AddUserRoleAsync(player.ScumServer!.Guild!.DiscordId, player.DiscordId!.Value, dto.DiscordRoleId.Value);
             }
-            player.AddVip(dto.Days);
-
-            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            else
             {
-                FileChangeType = Enums.EFileChangeType.Whitelist,
-                FileChangeMethod = Enums.EFileChangeMethod.AddLine,
-                Value = player.SteamId64!,
-                ServerId = player.ScumServerId
-            });
+                player.AddVip(dto.Days);
+            }
 
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
+
+            if (dto.Whitelist)
+            {
+                _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+                {
+                    Method = "vip",
+                    FileChangeType = Enums.EFileChangeType.Whitelist,
+                    FileChangeMethod = Enums.EFileChangeMethod.AddLine,
+                    Value = player.SteamId64!,
+                    ServerId = player.ScumServerId
+                });
+            }
 
             return _mapper.Map<PlayerDto>(player);
         }
@@ -259,6 +276,10 @@ namespace RagnarokBotWeb.Domain.Services
                 throw new DomainException("Player already has ongoing silence");
 
             player.AddSilence(dto.Days);
+
+            await _playerRepository.CreateOrUpdateAsync(player);
+            await _playerRepository.SaveAsync();
+
             _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
             {
                 FileChangeType = Enums.EFileChangeType.SilencedUsers,
@@ -266,9 +287,6 @@ namespace RagnarokBotWeb.Domain.Services
                 Value = player.SteamId64!,
                 ServerId = player.ScumServerId
             });
-
-            await _playerRepository.CreateOrUpdateAsync(player);
-            await _playerRepository.SaveAsync();
 
             return _mapper.Map<PlayerDto>(player);
         }
@@ -283,17 +301,18 @@ namespace RagnarokBotWeb.Domain.Services
                 throw new DomainException("Player already has ongoing ban");
 
             player.AddBan(dto.Days);
+            await _playerRepository.CreateOrUpdateAsync(player);
+            await _playerRepository.SaveAsync();
+
             _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
             {
                 FileChangeType = Enums.EFileChangeType.BannedUsers,
                 FileChangeMethod = Enums.EFileChangeMethod.AddLine,
                 Value = player.SteamId64!,
                 ServerId = player.ScumServerId,
-                BotCommand = new BotCommand().Kick(player.SteamId64!)
+                BotCommand = new BotCommand().Ban(player.SteamId64!)
             });
 
-            await _playerRepository.CreateOrUpdateAsync(player);
-            await _playerRepository.SaveAsync();
 
             return _mapper.Map<PlayerDto>(player);
         }
@@ -309,8 +328,22 @@ namespace RagnarokBotWeb.Domain.Services
             if (vip is null)
                 throw new DomainException("Player is not vip");
 
-            _unitOfWork.Vips.Remove(vip);
+            vip.Processed = true;
+            _unitOfWork.Vips.Update(vip);
             await _unitOfWork.SaveAsync();
+
+            if (vip.DiscordRoleId.HasValue)
+            {
+                await _discordService.RemoveUserRoleAsync(player.ScumServer.Guild!.DiscordId, player.DiscordId!.Value, vip.DiscordRoleId.Value);
+            }
+
+            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            {
+                FileChangeType = Enums.EFileChangeType.Whitelist,
+                FileChangeMethod = Enums.EFileChangeMethod.RemoveLine,
+                Value = player.SteamId64!,
+                ServerId = player.ScumServerId,
+            });
 
             return _mapper.Map<PlayerDto>(player);
         }
@@ -326,8 +359,18 @@ namespace RagnarokBotWeb.Domain.Services
             if (silence is null)
                 throw new DomainException("Player is not silenced");
 
-            _unitOfWork.Silences.Remove(silence);
+            silence.Processed = true;
+            _unitOfWork.Silences.Update(silence);
             await _unitOfWork.SaveAsync();
+
+            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            {
+                FileChangeType = Enums.EFileChangeType.SilencedUsers,
+                FileChangeMethod = Enums.EFileChangeMethod.RemoveLine,
+                Value = player.SteamId64!,
+                ServerId = player.ScumServerId,
+            });
+
 
             return _mapper.Map<PlayerDto>(player);
         }
@@ -343,8 +386,17 @@ namespace RagnarokBotWeb.Domain.Services
             if (ban is null)
                 throw new DomainException("Player is not banned");
 
-            _unitOfWork.Bans.Remove(ban);
+            ban.Processed = true;
+            _unitOfWork.Bans.Update(ban);
             await _unitOfWork.SaveAsync();
+
+            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            {
+                FileChangeType = Enums.EFileChangeType.BannedUsers,
+                FileChangeMethod = Enums.EFileChangeMethod.RemoveLine,
+                Value = player.SteamId64!,
+                ServerId = player.ScumServerId,
+            });
 
             return _mapper.Map<PlayerDto>(player);
         }
@@ -360,8 +412,15 @@ namespace RagnarokBotWeb.Domain.Services
             if (role is null)
                 throw new DomainException("Player is not banned");
 
-            _unitOfWork.DiscordRoles.Remove(role);
+            role.Processed = true;
+            _unitOfWork.DiscordRoles.Update(role);
             await _unitOfWork.SaveAsync();
+
+            try
+            {
+                await _discordService.RemoveUserRoleAsync(player.ScumServer.Guild.DiscordId, player.DiscordId.Value, role.DiscordId);
+            }
+            catch (Exception) { }
 
             return _mapper.Map<PlayerDto>(player);
         }

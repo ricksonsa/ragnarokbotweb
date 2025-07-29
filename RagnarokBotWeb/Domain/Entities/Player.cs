@@ -22,44 +22,51 @@ public class Player : BaseEntity
     public List<Silence> Silences { get; set; }
     public List<DiscordRole> DiscordRoles { get; set; }
 
-    public bool IsVip() => Vips?.Any(vip => vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
-    public bool IsSilenced() => Silences?.Any(silence => silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
-    public bool IsBanned() => Bans?.Any(ban => ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
+    public bool IsVip() => Vips?.Any(vip => vip.Indefinitely || vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !vip.Processed) ?? false;
+    public bool IsSilenced() => Silences?.Any(silence => silence.Indefinitely || silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !silence.Processed) ?? false;
+    public bool IsBanned() => Bans?.Any(ban => ban.Indefinitely || !ban.Processed && ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date > DateTime.UtcNow.Date) ?? false;
 
     public Vip? RemoveVip()
     {
-        return Vips?.FirstOrDefault(vip => vip.Indefinitely || vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date);
+        return Vips?.FirstOrDefault(vip => vip.Indefinitely || !vip.Processed);
     }
 
     public Silence? RemoveSilence()
     {
-        return Silences?.FirstOrDefault(silence => silence.Indefinitely || silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date > DateTime.UtcNow.Date);
+
+        return Silences?.FirstOrDefault(silence => silence.Indefinitely || !silence.Processed);
     }
 
     public Ban? RemoveBan()
     {
-        return Bans?.FirstOrDefault(ban => ban.Indefinitely || ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date > DateTime.UtcNow.Date);
+        return Bans?.FirstOrDefault(ban => ban.Indefinitely || !ban.Processed);
     }
 
 
-    public void AddVip(int? days)
+    public Vip AddVip(int? days, ulong? discordRoleId = null)
     {
         Vips ??= [];
-        if (days.HasValue)
+        if (days.HasValue && days.Value > 0)
         {
             var date = DateTime.UtcNow;
-            Vips.Add(new Vip(date.AddDays(days.Value)));
+            var vip = new Vip(date.AddDays(days.Value));
+            vip.DiscordRoleId = discordRoleId;
+            Vips.Add(vip);
+            return vip;
         }
         else
         {
-            Vips.Add(new Vip());
+            var vip = new Vip();
+            vip.DiscordRoleId = discordRoleId;
+            Vips.Add(vip);
+            return vip;
         }
     }
 
     public void AddSilence(int? days)
     {
         Silences ??= [];
-        if (days.HasValue)
+        if (days.HasValue && days.Value > 0)
         {
             var date = DateTime.UtcNow;
             Silences.Add(new Silence(date.AddDays(days.Value)));
@@ -73,7 +80,7 @@ public class Player : BaseEntity
     public void AddBan(int? days)
     {
         Bans ??= [];
-        if (days.HasValue)
+        if (days.HasValue && days.Value > 0)
         {
             var date = DateTime.UtcNow;
             Bans.Add(new Ban(date.AddDays(days.Value)));
@@ -91,7 +98,7 @@ public class Player : BaseEntity
         if (DiscordRoles.Any(role => role.DiscordId == discordId))
             return;
 
-        if (days.HasValue)
+        if (days.HasValue && days.Value > 0)
         {
             var date = DateTime.UtcNow;
             DiscordRoles.Add(new DiscordRole(date.AddDays(days.Value)) { DiscordId = discordId });

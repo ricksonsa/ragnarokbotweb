@@ -18,13 +18,14 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             ILogger<DiscordRoleExpireJob> logger) : base(scumServerRepository)
         {
             _unitOfWork = unitOfWork;
+            _unitOfWork.CreateDbContext();
             _discordService = discordService;
             _logger = logger;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogInformation("Triggered {} -> Execute at: {time}", nameof(DiscordRoleExpireJob), DateTimeOffset.Now);
+            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
             var server = await GetServerAsync(context, ftpRequired: false);
             var players = _unitOfWork.Players
@@ -36,7 +37,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     && player.ScumServer.Id == server.Id
                     && player.ScumServer.Guild != null
                     && player.DiscordId.HasValue
-                    && player.DiscordRoles.Any(role => !role.Indefinitely && role.ExpirationDate.HasValue && role.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
+                    && player.DiscordRoles.Any(role => !role.Processed && !role.Indefinitely && role.ExpirationDate.HasValue && role.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
 
             foreach (var player in players)
             {
@@ -45,12 +46,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     try
                     {
                         await _discordService.RemoveUserRoleAsync(player.ScumServer!.Guild!.DiscordId, player.DiscordId!.Value, role.DiscordId);
-                        _unitOfWork.DiscordRoles.Remove(role);
+                        role.Processed = true;
+                        _unitOfWork.DiscordRoles.Update(role);
                         await _unitOfWork.SaveAsync();
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError("Could not remove user role with id {} with exception {}", role.DiscordId, ex.Message);
+                        _logger.LogError("Could not remove user role with id {DiscordId} with exception {Ex}", role.DiscordId, ex.Message);
                     }
                 }
             }

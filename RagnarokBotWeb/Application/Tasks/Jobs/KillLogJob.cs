@@ -22,7 +22,7 @@ IFtpService ftpService
     {
         try
         {
-            logger.LogInformation("Triggered KillLogJob->Execute at: {time}", DateTimeOffset.Now);
+            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
@@ -45,7 +45,7 @@ IFtpService ftpService
 
                 var players = await playerRepository.GetAllByServerId(server.Id);
                 var kill = new KillLogParser(server).Parse(first, second);
-                logger.Log(LogLevel.Information, "Adding new kill entry: {} -> {}", kill.KillerName, kill.TargetName);
+                logger.Log(LogLevel.Information, "Adding new kill entry: {Killer} -> {Target}", kill.KillerName, kill.TargetName);
                 unitOfWork.ScumServers.Attach(server);
                 await unitOfWork.Kills.AddAsync(kill);
                 await unitOfWork.SaveAsync();

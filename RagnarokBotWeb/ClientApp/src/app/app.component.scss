@@ -181,6 +181,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+
 }
 
 .login-container {
@@ -189,6 +190,7 @@ body {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
   min-width: 380px;
+  max-width: 420px;
 }
 
 .login-form {

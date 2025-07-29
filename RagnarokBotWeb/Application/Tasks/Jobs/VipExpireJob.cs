@@ -18,22 +18,23 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             ICacheService cacheService) : base(scumServerRepository)
         {
             _unitOfWork = unitOfWork;
+            _unitOfWork.CreateDbContext();
             _logger = logger;
             _cacheService = cacheService;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.LogInformation("Triggered {} -> Execute at: {time}", nameof(VipExpireJob), DateTimeOffset.Now);
-
+            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
             var server = await GetServerAsync(context, ftpRequired: false);
+
             var players = _unitOfWork.Players
                 .Include(player => player.Vips)
                 .Where(player =>
                     player.ScumServer != null
                     && player.SteamId64 != null
                     && player.ScumServer.Id == server.Id
-                    && player.Vips.Any(vip => !vip.Indefinitely && vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
+                    && player.Vips.Any(vip => !vip.Processed && !vip.Indefinitely && vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
 
             foreach (var player in players)
             {
@@ -47,12 +48,15 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         ServerId = server.Id
                     });
 
-                    _unitOfWork.Vips.Remove(player.RemoveVip()!);
+                    var vip = player.RemoveVip();
+                    if (vip is null) return;
+                    vip.Processed = true;
+                    _unitOfWork.Vips.Update(vip);
                     await _unitOfWork.SaveAsync();
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Error trying to remove player vip -> {}", ex.Message);
+                    _logger.LogError("Error trying to remove player vip -> {Ex}", ex.Message);
                 }
             }
         }

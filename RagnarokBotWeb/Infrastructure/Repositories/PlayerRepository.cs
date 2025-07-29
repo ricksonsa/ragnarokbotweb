@@ -23,6 +23,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Guild)
             .FirstOrDefaultAsync(player => player.Id == id);
     }
 

@@ -5,6 +5,7 @@
         public DateTime? ExpirationDate { get; set; }
         public required ulong DiscordId { get; set; }
         public bool Indefinitely { get; set; }
+        public bool Processed { get; set; }
 
         public DiscordRole()
         {

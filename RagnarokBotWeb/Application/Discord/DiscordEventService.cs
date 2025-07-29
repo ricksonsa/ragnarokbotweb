@@ -40,14 +40,14 @@ public class DiscordEventService(
             var handler = messageHandlerFactory.GetHandler(component);
             handler?.HandleAsync(component);
 
-            logger.LogTrace("Handler for message with content '{}' was not found", component.Message.Content);
+            logger.LogTrace("Handler for message with content '{Content}' was not found", component.Message.Content);
 
             return;
         }
         catch (Exception e)
         {
             logger.LogWarning(e,
-                "Error when try process MessageReceived Action. Discord guild id = '{}', SocketMessage = '{}', ChannelType = '{}'",
+                "Error when try process MessageReceived Action. Discord guild id = '{GuildId}', SocketMessage = '{Message}', ChannelType = '{Type}'",
                 component.GuildId, component.Message.GetType().FullName, component.Message.Channel.GetType().FullName);
         }
     }
@@ -87,12 +87,12 @@ public class DiscordEventService(
             var handler = messageHandlerFactory.GetHandler(message);
             handler?.HandleAsync(message);
 
-            logger.LogTrace("Handler for message with content '{}' was not found", message.Content);
+            logger.LogTrace("Handler for message with content '{Content}' was not found", message.Content);
         }
         catch (Exception e)
         {
             logger.LogWarning(e,
-                "Error when try process MessageReceived Action. Discord guild id = '{}', SocketMessage = '{}', ChannelType = '{}'",
+                "Error when try process MessageReceived Action. Discord guild id = '{Id}', SocketMessage = '{Message}', ChannelType = '{Type}'",
                 discordId, message.GetType().FullName, message.Channel.GetType().FullName);
         }
     }
@@ -109,7 +109,7 @@ public class DiscordEventService(
         catch (Exception e)
         {
             logger.LogWarning(e,
-                "Error when try process InteractionCreated Action. Discord guild id = '{}', SocketInteraction = '{}', ChannelType = '{}'",
+                "Error when try process InteractionCreated Action. Discord guild id = '{Id}', SocketInteraction = '{Interaction}', ChannelType = '{Type}'",
                 interaction.GuildId, interaction.GetType().FullName, interaction.Channel.GetType().FullName);
         }
     }

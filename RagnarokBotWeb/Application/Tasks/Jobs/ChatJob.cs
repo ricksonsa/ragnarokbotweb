@@ -30,7 +30,7 @@ public class ChatJob(
             var server = await GetServerAsync(context);
 
             var jobName = context.JobDetail.Key.Name;
-            logger.LogInformation($"Executing job: {jobName} from serverId: {server.Id} at {DateTime.Now}");
+            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
             var fileType = GetFileTypeFromContext(context);
 
@@ -40,8 +40,13 @@ public class ChatJob(
                 var parsed = new ChatTextParser().Parse(line);
                 if (parsed is null)
                 {
-                    logger.LogInformation("line {} > Could not be parsed", line);
+                    logger.LogInformation("line {Line} > Could not be parsed", line);
                     continue;
+                }
+
+                if (parsed.Text == "rola")
+                {
+                    logger.LogInformation("rola");
                 }
 
                 if (parsed.ChatType == "Global" || parsed.ChatType == "Local" && (!parsed.Text.StartsWith("#") || !parsed.Text.StartsWith("!")))

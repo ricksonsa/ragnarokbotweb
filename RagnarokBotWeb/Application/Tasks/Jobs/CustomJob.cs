@@ -27,7 +27,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
             IEnumerable<string> commands = commandsString.ToString()!.Split(";");
 
-            _logger.LogInformation($"Executing job: {jobName} from serverId: {serverId.Value} at {DateTime.Now}");
+            _logger.LogDebug($"Executing job: {jobName} from serverId: {serverId.Value} at {DateTime.Now}");
 
 
             foreach (var command in commands)

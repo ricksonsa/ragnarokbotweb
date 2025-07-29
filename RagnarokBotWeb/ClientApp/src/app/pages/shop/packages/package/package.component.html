@@ -63,7 +63,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="discordChannelId">Discord Channel</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="discordChannelExtra">
-          <nz-select formControlName="discordChannelId" id="discordChannelId" formControlName="discordChannelId"
+          <nz-select formControlName="discordChannelId" id="discordChannelId"
             nzPlaceHolder="Select the discord channel in which this package will be displayed for purchase">
             <nz-option *ngFor="let ch of channels" [nzValue]="ch.discordId" [nzLabel]="ch.name"></nz-option>
           </nz-select>
