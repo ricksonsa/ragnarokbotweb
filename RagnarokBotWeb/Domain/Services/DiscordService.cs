@@ -116,9 +116,9 @@ namespace RagnarokBotWeb.Domain.Services
                 var embed = new EmbedBuilder()
                     .WithTitle(createEmbed.Title)
                     .WithDescription(createEmbed.Text)
-                    .WithThumbnailUrl("attachment://" + filename)
                     .WithImageUrl("attachment://" + filename)
-                    .WithColor(Color.Blue)
+                    .WithFooter(new EmbedFooterBuilder { Text = createEmbed.FooterText })
+                    .WithColor(createEmbed.Color)
                     .Build();
 
                 var builder = new ComponentBuilder();
@@ -147,7 +147,8 @@ namespace RagnarokBotWeb.Domain.Services
                     .WithTitle(createEmbed.Title)
                     .WithDescription(createEmbed.Text)
                     .WithImageUrl(createEmbed.ImageUrl)
-                    .WithColor(Color.Blue)
+                    .WithFooter(new EmbedFooterBuilder { Text = createEmbed.FooterText })
+                    .WithColor(createEmbed.Color)
                     .Build();
 
                 var builder = new ComponentBuilder();
@@ -207,6 +208,14 @@ namespace RagnarokBotWeb.Domain.Services
             }
 
             return null;
+        }
+
+        public Task<IGuildUser?> GetDiscordUser(ulong guildId, ulong userId)
+        {
+            var socketGuild = _client.GetGuild(guildId); // SocketGuild
+            IGuild guild = socketGuild; // Pode ser usado como IGuild
+
+            return guild.GetUserAsync(userId);
         }
 
         public async Task AddUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId)

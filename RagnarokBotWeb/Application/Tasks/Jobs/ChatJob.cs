@@ -19,6 +19,8 @@ public class ChatJob(
     IPlayerRepository playerRespository,
     IOrderService orderService,
     IDiscordService discordService,
+    ICacheService cacheService,
+    IBotRepository botRepository,
     IFtpService ftpService,
     DiscordChannelPublisher publisher
 ) : AbstractJob(scumServerRepository), IJob
@@ -40,32 +42,49 @@ public class ChatJob(
                 var parsed = new ChatTextParser().Parse(line);
                 if (parsed is null)
                 {
-                    logger.LogInformation("line {Line} > Could not be parsed", line);
+                    logger.LogError("line {Line} > Could not be parsed", line);
                     continue;
                 }
 
-                if (parsed.Text == "rola")
-                {
-                    logger.LogInformation("rola");
-                }
-
-                if (parsed.ChatType == "Global" || parsed.ChatType == "Local" && (!parsed.Text.StartsWith("#") || !parsed.Text.StartsWith("!")))
-                {
-                    await publisher.Publish(server,
-                       new ChannelPublishDto { Content = $"[{parsed.ChatType}]{parsed.PlayerName}: {parsed.Text}" },
-                       ChannelTemplateValues.GameChat);
-                }
-
                 var chatCommandHandler = new ExclamationCommandHandlerFactory(
+                    server,
+                    cacheService,
+                    scumServerRepository,
                     playerRespository,
                     playerRegisterRepository,
                     discordService,
-                    orderService).Create(parsed.Text);
+                    orderService
+                    ).Create(parsed.Text);
 
                 if (chatCommandHandler is not null)
                 {
                     await chatCommandHandler.ExecuteAsync(parsed);
                 }
+
+                if (parsed.Text.Contains("#check-state"))
+                {
+                    var guid = parsed.Text.Substring(parsed.Text.LastIndexOf("-"));
+                    var bot = await botRepository.FindOneAsync(bot => bot.Guid.ToString() == guid);
+                    if (bot is not null)
+                    {
+                        bot.SteamId = parsed.SteamId;
+                        bot.LastPinged = DateTime.UtcNow;
+                        parsed.Post = false;
+                        await botRepository.CreateOrUpdateAsync(bot);
+                        await botRepository.SaveAsync();
+                    }
+                }
+
+                if (!(parsed.Text.StartsWith("#") || parsed.Text.StartsWith("!"))
+                    && (parsed.ChatType == "Global" && server.SendGlobalChatToDiscord
+                    || parsed.ChatType == "Local" && server.SendLocalChatToDiscord) && parsed.Post)
+                {
+
+                    await publisher.Publish(server,
+                     new ChannelPublishDto { Content = $"[{parsed.ChatType}] {parsed.PlayerName.Substring(0, parsed.PlayerName.LastIndexOf("("))}: {parsed.Text}" },
+                     ChannelTemplateValues.GameChat);
+                }
+
             }
         }
         catch (Exception ex)

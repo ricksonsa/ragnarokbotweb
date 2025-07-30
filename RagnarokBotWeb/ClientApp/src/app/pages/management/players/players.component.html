@@ -24,8 +24,7 @@
           <th>VIP</th>
           <th>Banned</th>
           <th>Bot Coin</th>
-          <th>Scum Money</th>
-          <th>Scum Gold</th>
+          <th>Last Login</th>
           <th></th>
         </tr>
       </thead>
@@ -50,8 +49,7 @@
           </td>
           <td>No</td>
           <td>{{data.coin}}</td>
-          <td>{{data.money}}</td>
-          <td>{{data.gold}}</td>
+          <td>{{data.lastLoggedIn | date: 'mediumDate'}}</td>
           <td>
             <button nz-button nzType="link" [routerLink]="[data.id]">
               <nz-icon nzType="edit"></nz-icon>

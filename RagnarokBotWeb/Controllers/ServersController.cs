@@ -24,7 +24,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("{serverId}")]
         public async Task<IActionResult> GetServer(long serverId)
         {
-            _logger.LogInformation("Get request to fetch server data for serverId {Id}", serverId);
+            _logger.LogDebug("Get request to fetch server data for serverId {Id}", serverId);
             ScumServer server = await _serverService.GetServer(serverId);
             return Ok(server);
         }
@@ -32,7 +32,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpPatch("discord/config")]
         public async Task<IActionResult> ConfirmDiscord(SaveDiscordSettingsDto settings)
         {
-            _logger.LogInformation("Patch request to confirm discord settings");
+            _logger.LogDebug("Patch request to confirm discord settings");
             GuildDto guild = await _serverService.ConfirmDiscordToken(settings);
             return Ok(guild);
         }
@@ -40,7 +40,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpPatch("discord/channels/run-template")]
         public async Task<IActionResult> RunDiscordTemplate()
         {
-            _logger.LogInformation("Patch request to run default discord templates");
+            _logger.LogDebug("Patch request to run default discord templates");
             GuildDto guild = await _serverService.RunDiscordTemplate();
             return Ok(guild);
         }
@@ -48,7 +48,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("discord")]
         public async Task<IActionResult> GetDiscord()
         {
-            _logger.LogInformation("Patch request to confirm discord settings");
+            _logger.LogDebug("Patch request to confirm discord settings");
             GuildDto guild = await _serverService.GetServerDiscord();
             return Ok(guild);
         }
@@ -56,7 +56,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("discord/roles")]
         public async Task<IActionResult> GetDiscordRoles()
         {
-            _logger.LogInformation("Get request to fetch discord roles");
+            _logger.LogDebug("Get request to fetch discord roles");
             var roles = await _serverService.GetServerDiscordRoles();
             return Ok(roles);
         }
@@ -64,7 +64,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpPut("discord/channels")]
         public async Task<IActionResult> UpdateDiscordChannels(SaveChannelDto channel)
         {
-            _logger.LogInformation("Patch request to update discord channels");
+            _logger.LogDebug("Patch request to update discord channels");
             ScumServerDto? server = await _serverService.SaveServerDiscordChannel(channel);
             return Ok(server);
         }
@@ -72,7 +72,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("discord/channels")]
         public async Task<IActionResult> GetDiscordChannels()
         {
-            _logger.LogInformation("Get request to fetch discord channels");
+            _logger.LogDebug("Get request to fetch discord channels");
             var channels = await _serverService.GetServerDiscordChannels();
             return Ok(channels);
         }
@@ -80,8 +80,16 @@ namespace RagnarokBotWeb.Controllers
         [HttpPatch("ftp")]
         public async Task<IActionResult> UpdateServerFtp(FtpDto ftp)
         {
-            _logger.LogInformation("Patch request to update ftp data");
+            _logger.LogDebug("Patch request to update ftp data");
             var server = await _serverService.ChangeFtp(ftp);
+            return Ok(server);
+        }
+
+        [HttpPut("settings")]
+        public async Task<IActionResult> UpdateCoinAwardPeriodically(UpdateServerSettingsDto updateServer)
+        {
+            _logger.LogDebug("Put request to update server settings");
+            var server = await _serverService.UpdateServerSettings(updateServer);
             return Ok(server);
         }
     }

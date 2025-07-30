@@ -125,6 +125,7 @@ namespace RagnarokBotWeb.Domain.Services
             player.SteamId64 = steamId64;
             player.ScumId = scumId;
             player.Name = name;
+            player.LastLoggedIn = DateTime.Now;
             player.ScumServer = (await _scumServerRepository.FindByIdAsync(server.Id))!;
 
             await _playerRepository.CreateOrUpdateAsync(player);
@@ -162,6 +163,7 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     var user = await ctx.Players
                                     .Include(p => p.ScumServer)
+                                    .Include(p => p.ScumServer.Guild)
                                     .FirstOrDefaultAsync(p => p.SteamId64 == player.SteamID && p.ScumServerId == serverId);
 
                     user ??= new();
@@ -174,7 +176,13 @@ namespace RagnarokBotWeb.Domain.Services
                     user.Gold = player.GoldBalance;
                     user.Money = player.AccountBalance;
                     user.Fame = player.Fame;
-                    user.ScumServer ??= (await ctx.ScumServers.FirstOrDefaultAsync(server => server.Id == serverId))!;
+                    user.LastLoggedIn = DateTime.UtcNow;
+                    user.ScumServer ??= (await ctx.ScumServers.Include(server => server.Guild).FirstOrDefaultAsync(server => server.Id == serverId))!;
+                    if (!string.IsNullOrEmpty(user.DiscordName) && user.DiscordId.HasValue && user.ScumServer.Guild is not null)
+                    {
+                        var discordUser = await _discordService.GetDiscordUser(user.ScumServer.Guild.DiscordId, user.DiscordId.Value);
+                        user.DiscordName = discordUser?.DisplayName;
+                    }
 
                     if (user.Id == 0)
                     {

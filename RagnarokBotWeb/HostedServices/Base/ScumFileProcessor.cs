@@ -4,6 +4,7 @@ using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Serilog;
 using System.Diagnostics;
 using System.Text;
 
@@ -29,7 +30,9 @@ public class ScumFileProcessor
         EFileType fileType,
         IReaderPointerRepository readerPointerRepository)
     {
-        _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ScumFileProcessor>();
+        var loggerFactory = new LoggerFactory();
+        loggerFactory.AddSerilog();
+        _logger = loggerFactory.CreateLogger<ScumFileProcessor>();
         _readerPointerRepository = readerPointerRepository;
         _ftpService = ftpService;
         _scumServer = server;
@@ -108,8 +111,8 @@ public class ScumFileProcessor
 
         foreach (var file in filteredFiles)
         {
-            string filePath = Path.Combine(localPath, file.Item1.Name);
-            ReaderPointer pointer = file.Item2 ?? BuildReaderPointer(filePath, file.Item1?.Modified ?? DateTime.Now);
+            string filePath = Path.Combine(localPath, file.Item1!.Name);
+            ReaderPointer pointer = file.Item2 ?? BuildReaderPointer(filePath, file.Item1?.Modified ?? DateTime.Now)!;
 
             int lineNumber = 0;
             using var reader = new StreamReader(filePath, Encoding.Unicode);
@@ -118,15 +121,25 @@ public class ScumFileProcessor
             {
                 lineNumber++;
 
-                if (pointer.LineNumber >= lineNumber) continue;
+                if (pointer!.LineNumber >= lineNumber) continue;
                 if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line) || line.Contains("Game version")) continue;
 
+                _logger.LogDebug("Reading file File[{FileName}:{FileModified}] returning line {Line}", file.Item1!.Name, file.Item1!.Modified, line);
                 yield return line;
             }
 
-            pointer.LineNumber = lineNumber;
-            await _readerPointerRepository.CreateOrUpdateAsync(pointer);
-            await _readerPointerRepository.SaveAsync();
+            pointer!.LineNumber = lineNumber;
+
+            try
+            {
+                await _readerPointerRepository.CreateOrUpdateAsync(pointer);
+                await _readerPointerRepository.SaveAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("UnreadFileLinesAsync error {Exception}", ex);
+            }
+
         }
     }
 }

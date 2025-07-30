@@ -27,7 +27,7 @@ namespace RagnarokBotWeb.Controllers
         [ValidateAccessLevel(AccessLevel.Admin)]
         public async Task<IActionResult> CreateItem([FromBody] ItemDto item)
         {
-            _logger.Log(LogLevel.Information, "REST Request for creating a new Item with Data: " + JsonConvert.SerializeObject(item));
+            _logger.Log(LogLevel.Debug, "REST Request for creating a new Item with Data: " + JsonConvert.SerializeObject(item));
             return Ok(await _itemService.CreateItemAsync(item));
         }
 
@@ -45,7 +45,7 @@ namespace RagnarokBotWeb.Controllers
         [ValidateAccessLevel(AccessLevel.Admin)]
         public async Task<IActionResult> ActivateItem(long id)
         {
-            _logger.Log(LogLevel.Information, "REST Request for activating an Item with Id: " + id);
+            _logger.Log(LogLevel.Debug, "REST Request for activating an Item with Id: " + id);
             var item = await _itemService.ActivateItemAsync(id);
             if (item is null) return NotFound("Item not found");
             return Ok(item);
@@ -55,7 +55,7 @@ namespace RagnarokBotWeb.Controllers
         [ValidateAccessLevel(AccessLevel.Admin)]
         public async Task<IActionResult> DeactivateItem(long id)
         {
-            _logger.Log(LogLevel.Information, "REST Request for deactivating an Item with Id: " + id);
+            _logger.Log(LogLevel.Debug, "REST Request for deactivating an Item with Id: " + id);
             var item = await _itemService.DeactivateItemAsync(id);
             if (item is null) return NotFound("Item not found");
             return Ok(item);
@@ -64,7 +64,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> GetItems([FromQuery] Paginator paginator, string? filter)
         {
-            _logger.Log(LogLevel.Information, "REST Request to fetch all items by filter");
+            _logger.Log(LogLevel.Debug, "REST Request to fetch all items by filter");
             var items = await _itemService.GetItemsPageByFilterAsync(paginator, filter);
             return Ok(items);
         }
@@ -72,7 +72,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetItemById(long id)
         {
-            _logger.Log(LogLevel.Information, "REST Request to fetch with id: " + id);
+            _logger.Log(LogLevel.Debug, "REST Request to fetch with id: " + id);
             var item = await _itemService.FindItemByIdAsync(id);
             if (item is null) return NotFound("Item not found");
             return Ok(item);
@@ -83,7 +83,7 @@ namespace RagnarokBotWeb.Controllers
         [ValidateAccessLevel(AccessLevel.Admin)]
         public async Task<IActionResult> DeleteItem(long id)
         {
-            _logger.Log(LogLevel.Information, "REST Request to delete with id: " + id);
+            _logger.Log(LogLevel.Debug, "REST Request to delete with id: " + id);
             var item = await _itemService.DeleteItemAsync(id);
             if (item is null) return NotFound("Item not found");
             return Ok(item);

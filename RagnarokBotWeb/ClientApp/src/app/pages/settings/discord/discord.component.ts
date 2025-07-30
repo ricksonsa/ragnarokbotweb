@@ -140,7 +140,6 @@ export class DiscordComponent implements OnInit, OnDestroy {
                 .subscribe(
                   {
                     next: (value) => {
-                      console.log(control, value);
                       this.save({ key: control, value });
                     }
                   }
@@ -176,6 +175,7 @@ export class DiscordComponent implements OnInit, OnDestroy {
         next: (guild) => {
           this.runTemplate = guild.runTemplate;
           this.channels = guild.channels;
+          this.loadTemplateDiscordChannels();
         }
       });
   }

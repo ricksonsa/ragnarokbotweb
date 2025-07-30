@@ -53,10 +53,28 @@
       </nz-form-item>
 
       <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Last LogIn</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <p style="margin: 0;"><b>{{ playerForm.value.lastLoggedIn | date: 'fullDate' }}</b></p>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Registered on Discord</nz-form-label>
-        <nz-icon nz-popover [nzPopoverContent]="playerForm.value.discordId ? 'Yes' : 'No'" style="font-size: 18px;"
-          [nzType]="playerForm.value.discordId ? 'check' : 'close'"
-          [ngClass]="{ 'success': playerForm.value.discordId, 'danger': !playerForm.value.discordId}"></nz-icon>
+        <nz-form-control [nzSpan]="24">
+          <nz-icon nz-popover [nzPopoverContent]="playerForm.value.discordId ? 'Yes' : 'No'" style="font-size: 18px;"
+            [nzType]="playerForm.value.discordId ? 'check' : 'close'"
+            [ngClass]="{ 'success': playerForm.value.discordId, 'danger': !playerForm.value.discordId}"></nz-icon>
+        </nz-form-control>
+        <button *ngIf="playerForm.value.discordId" nz-button nzType="link" (click)="deliverWelcomepack()"
+          [nzLoading]="loadingWelcomepack">Deliver Welcomepack</button>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Discord Name</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <p style="margin: 0;"><b>{{ playerForm.value.discordName }}</b></p>
+        </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
@@ -107,14 +125,7 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="name">Discord Name</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <p style="margin: 0;"><b>{{ playerForm.value.discordName }}</b></p>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="name">Fame</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="name">Ingame Fame</nz-form-label>
         <nz-form-control [nzSpan]="24">
           <p style="margin: 0;"><b>{{ playerForm.value.fame }}</b></p>
         </nz-form-control>

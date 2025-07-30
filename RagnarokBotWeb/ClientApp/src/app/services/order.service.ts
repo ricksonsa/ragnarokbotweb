@@ -8,13 +8,16 @@ import { OrderDto } from '../models/order.dto';
   providedIn: 'root'
 })
 export class OrderService {
-
   constructor(private readonly http: HttpClient) { }
 
   getOrders(pageSize: number, pageNumber: number, filter: string | null = null) {
     var url = `${WEB_API.baseUrl}/api/orders?pageSize=${pageSize}&pageNumber=${pageNumber}`;
     if (filter) url += `&filter=${filter}`;
     return this.http.get<Page<OrderDto>>(url);
+  }
+
+  deliverWelcomePack(id: any) {
+    return this.http.patch<OrderDto>(`${WEB_API.baseUrl}/api/orders/players/${id}/welcomepack`, null);
   }
 
   getByOrderId(id: number) {

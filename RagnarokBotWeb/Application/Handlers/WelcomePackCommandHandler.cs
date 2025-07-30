@@ -43,7 +43,7 @@ namespace RagnarokBotWeb.Application.Handlers
                 player.SteamId64 = input.SteamId;
                 player.SteamName = await new SteamAccountResolver().Resolve(input.SteamId);
                 player.Name = input.PlayerName;
-                player.DiscordName = _discordService.GetDiscordUserName(register.DiscordId);
+                player.DiscordName = (await _discordService.GetDiscordUser(register.ScumServer.Guild!.DiscordId, register.DiscordId))?.DisplayName;
                 player.DiscordId = register.DiscordId;
                 player.ScumServer = register.ScumServer;
 

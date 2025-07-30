@@ -60,6 +60,16 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<PackDto>(pack);
         }
 
+        private string GetFooterText(Pack pack)
+        {
+            var text = $"Price: {pack.Price}";
+
+            if (pack.VipPrice > 0) text += $"\nVip price: {pack.VipPrice}";
+            if (pack.IsVipOnly) text = $"Price: {pack.VipPrice}";
+
+            return text;
+        }
+
         private async Task<ulong> GenerateDiscordPackButton(Pack pack)
         {
             var action = $"buy_package:{pack.Id}";
@@ -68,6 +78,8 @@ namespace RagnarokBotWeb.Domain.Services
                 Buttons = [new($"Buy {pack.Name}", action)],
                 DiscordId = ulong.Parse(pack.DiscordChannelId!),
                 Text = pack.Description,
+                FooterText = GetFooterText(pack),
+                Color = pack.IsVipOnly ? Color.Gold : Color.Blue,
                 ImageUrl = pack.ImageUrl,
                 Title = pack.Name
             };

@@ -23,7 +23,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("account")]
         public async Task<IActionResult> Account()
         {
-            _logger.LogInformation("Get request to retrieve authenticated user information");
+            _logger.LogDebug("Patch request to change amount ");
             var account = await _userService.GetAccount();
             return Ok(account);
         }
@@ -32,7 +32,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpPost("authenticate")]
         public async Task<IActionResult> Authenticate(AuthenticateDto auth)
         {
-            _logger.LogInformation("Post request for pre-authenticating user: " + auth.Email);
+            _logger.LogDebug("Post request for pre-authenticating user: " + auth.Email);
             var token = await _userService.PreAuthenticate(auth);
             return Ok(token);
         }
@@ -41,7 +41,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("login")]
         public async Task<IActionResult> Authenticate(long serverId)
         {
-            _logger.LogInformation("Post request for authenticating user for serverId: " + serverId);
+            _logger.LogDebug("Post request for authenticating user for serverId: " + serverId);
             var token = await _userService.Authenticate(serverId);
             return Ok(token);
         }
@@ -50,7 +50,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterUserDto register)
         {
-            _logger.LogInformation("Post request for registering user: " + register.Email);
+            _logger.LogDebug("Post request for registering user: " + register.Email);
             UserDto user = await _userService.Register(register);
             return Ok(user);
         }

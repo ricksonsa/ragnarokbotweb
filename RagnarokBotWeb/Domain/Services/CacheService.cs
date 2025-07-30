@@ -7,20 +7,28 @@ namespace RagnarokBotWeb.Domain.Services
 {
     public class CacheService : ICacheService
     {
-        private Dictionary<long, List<ScumPlayer>> _connectedPlayers;
         private readonly Dictionary<long, Queue<BotCommand>> _botCommandQueue;
         private readonly Dictionary<long, Queue<FileChangeCommand>> _fileChangeQueue;
+
+        private Dictionary<long, List<Guid>> _connectedBots;
+        private Dictionary<long, List<ScumPlayer>> _connectedPlayers;
 
         public CacheService()
         {
             _connectedPlayers = [];
             _botCommandQueue = [];
             _fileChangeQueue = [];
+            _connectedBots = [];
         }
 
         public List<ScumPlayer> GetConnectedPlayers(long serverId)
         {
             return _connectedPlayers[serverId];
+        }
+
+        public List<Guid> GetConnectedBots(long serverId)
+        {
+            return _connectedBots[serverId];
         }
 
         public Queue<BotCommand> GetCommandQueue(long serverId)
@@ -60,6 +68,11 @@ namespace RagnarokBotWeb.Domain.Services
                 if (!_fileChangeQueue.ContainsKey(server.Id))
                 {
                     _fileChangeQueue.Add(server.Id, []);
+                }
+
+                if (!_connectedBots.ContainsKey(server.Id))
+                {
+                    _connectedBots.Add(server.Id, []);
                 }
             }
         }

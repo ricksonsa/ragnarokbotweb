@@ -33,6 +33,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 }
                 var bots = await _botService.FindActiveBotsByServerId(serverId.Value);
 
+                _cacheService.ClearConnectedPlayers(serverId.Value);
+
                 foreach (var bot in bots)
                 {
                     if (!_cacheService.GetCommandQueue(bot.ScumServer.Id).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))

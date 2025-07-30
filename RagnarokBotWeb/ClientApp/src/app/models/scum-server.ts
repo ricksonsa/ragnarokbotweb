@@ -6,6 +6,8 @@ export class ScumServer {
     name?: string;
     ftp?: Ftp;
     discord?: DiscordDto;
+    coinAwardPeriodically: number = 0;
+    restartTimes: string[];
 }
 
 export class ScumServerResponse {

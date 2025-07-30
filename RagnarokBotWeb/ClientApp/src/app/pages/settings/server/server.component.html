@@ -34,6 +34,7 @@
       </nz-form-item>
     </form>
   </nz-card>
+
   <ng-template #saveFtpTemplate>
     <button nz-button nzType="primary" (click)="saveFtp()" [nzLoading]="savingFtp">Save</button>
   </ng-template>
@@ -41,17 +42,19 @@
   <ng-template #server>
     <nz-icon nzType="sliders" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Server Settings</span>
   </ng-template>
+
   <nz-card [nzTitle]="server" [nzExtra]="saveSettings">
     <ng-template #noFtp>
       <nz-alert nzMessage="Valid FTP configuration is required." nzType="error"></nz-alert>
     </ng-template>
-    <form nz-form *ngIf="accountDto?.server?.ftp; else noFtp">
+
+    <form nz-form [formGroup]="serverForm" *ngIf="accountDto?.server?.ftp; else noFtp">
       <nz-form-item>
         <p>Server Name: <b>{{accountDto?.server?.name}}</b></p>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="email">Server Restart Times</nz-form-label>
-        <nz-form-control [nzSpan]="24" [nzExtra]="serverRestart">
+        <nz-form-control [nzSpan]="24" nzExtra="Informational only. Bot does not control server restarts.">
           @for (time of getTimes(); track $index) {
           <div>
             <nz-space>
@@ -75,15 +78,29 @@
           </div>
         </nz-form-control>
       </nz-form-item>
-      <ng-template #serverRestart>
-        <p>Informational only. Bot does not control server restarts.</p>
-      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coinAwardPeriodically">Periodically Bot Shop Coins</nz-form-label>
+        <nz-form-control [nzSpan]="8" nzExtra="How much coin will be awarded perodically to online players."
+          nzErrorTip="Must be greater then 0">
+          <input nz-input formControlName="coinAwardPeriodically" name="coinAwardPeriodically" type="number"
+            id="coinAwardPeriodically" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="vipCoinAwardPeriodically">Vip Periodically Bot Shop Coins</nz-form-label>
+        <nz-form-control [nzSpan]="8" nzExtra="How much coin will be awarded perodically to online vip players."
+          nzErrorTip="Must be greater then 0">
+          <input nz-input formControlName="vipCoinAwardPeriodically" name="vipCoinAwardPeriodically" type="number"
+            id="vipCoinAwardPeriodically" />
+        </nz-form-control>
+      </nz-form-item>
     </form>
   </nz-card>
   <ng-template #saveSettings>
-    <button [disabled]="!accountDto?.server?.ftp" nz-button nzType="primary">Save</button>
+    <button [disabled]="!accountDto?.server?.ftp" nz-button nzType="primary" (click)="updateSettings()">Save</button>
   </ng-template>
-
 
   <!-- <div class="last"></div> -->
 

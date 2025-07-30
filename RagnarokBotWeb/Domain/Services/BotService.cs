@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.Internal;
 using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
@@ -63,13 +64,28 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<BotDto>(bot);
         }
 
+        public void PreRegisterBot(string guid)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            _cacheService.GetConnectedBots(serverId.Value).TryAdd(new Guid(guid));
+        }
+
+        public void DisconnectBot(string guid)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            _cacheService.GetConnectedBots(serverId.Value).TryAdd(new Guid(guid));
+        }
+
         public async Task UpdatePlayersOnline(PlayersListRequest input)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
             var players = ListPlayersParser.ParsePlayers(input.Value);
-            _cacheService.ClearConnectedPlayers(serverId.Value);
             _cacheService.SetConnectedPlayers(serverId.Value, players);
             await _playerService.UpdateFromScumPlayers(serverId.Value, players);
         }

@@ -24,6 +24,7 @@ import { Alert } from '../../../../models/alert';
 import { getDaysBetweenDates, getDaysBetweenNowAndFuture } from '../../../../core/functions/date.functions';
 import { PlayerService } from '../../../../services/player.service';
 import { ServerService } from '../../../../services/server.service';
+import { OrderService } from '../../../../services/order.service';
 
 @Component({
   selector: 'app-player',
@@ -68,6 +69,7 @@ export class PlayerComponent implements OnInit {
   whitelist = true;
   selectedDiscordId: any;
   discordRoles: { discordId: string; name: string; }[] = [];
+  loadingWelcomepack = false;
 
   constructor(
     private readonly authService: AuthenticationService,
@@ -75,6 +77,7 @@ export class PlayerComponent implements OnInit {
     private route: ActivatedRoute,
     private readonly playerService: PlayerService,
     private readonly serverService: ServerService,
+    private readonly orderService: OrderService,
     private readonly router: Router) {
     this.playerForm = this.fb.group({
       id: [null],
@@ -92,7 +95,8 @@ export class PlayerComponent implements OnInit {
       isBanned: [false],
       banExpiresAt: [null],
       isSilenced: [false],
-      silenceExpiresAt: [null]
+      silenceExpiresAt: [null],
+      lastLoggedIn: [null]
     });
   }
 
@@ -205,6 +209,21 @@ export class PlayerComponent implements OnInit {
         return getDaysBetweenNowAndFuture(new Date(this.selectedDate));
       default: return null;
     }
+  }
+
+  deliverWelcomepack() {
+    this.loadingWelcomepack = true;
+    this.orderService.deliverWelcomePack(this.playerForm.value.id)
+      .subscribe({
+        next: (value) => {
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Welcomepack', `Welcomepack will be delivered to player ${this.playerForm.value.name}`, 'success')));
+          this.loadingWelcomepack = false;
+        },
+        error: () => {
+          this.loadingWelcomepack = false;
+        }
+
+      });
   }
 
   disableCondition() {

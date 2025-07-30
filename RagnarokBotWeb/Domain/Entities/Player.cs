@@ -21,6 +21,7 @@ public class Player : BaseEntity
     public List<Ban> Bans { get; set; }
     public List<Silence> Silences { get; set; }
     public List<DiscordRole> DiscordRoles { get; set; }
+    public DateTime? LastLoggedIn { get; set; }
 
     public bool IsVip() => Vips?.Any(vip => vip.Indefinitely || vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !vip.Processed) ?? false;
     public bool IsSilenced() => Silences?.Any(silence => silence.Indefinitely || silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !silence.Processed) ?? false;

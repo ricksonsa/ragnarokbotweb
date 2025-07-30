@@ -88,6 +88,12 @@ namespace RagnarokBotWeb.Domain.Services
                 .Build();
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
+            job = JobBuilder.Create<CoinAwardJob>()
+                .WithIdentity($"{nameof(CoinAwardJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0/30 * * * ?"));
+
 
             _logger.LogInformation("Loaded server tasks for server id {Id}", server.Id);
         }
@@ -101,7 +107,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Chat.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, OneMinTrigger());
+            await scheduler.ScheduleJob(job, CronTrigger("0/30 * * * * ?"));
 
             job = JobBuilder.Create<KillLogJob>()
                    .WithIdentity($"KillLogJob({server.Id})", $"FtpJobs({server.Id})")

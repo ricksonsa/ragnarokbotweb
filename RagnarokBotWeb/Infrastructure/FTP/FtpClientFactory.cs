@@ -14,7 +14,10 @@ public static class FtpClientFactory
         {
             Config = new FtpConfig
             {
-                LogHost = true,
+                LogHost = false,
+                LogDurations = false,
+                LogPassword = false,
+                LogUserName = false,
                 LogToConsole = false,
                 SslProtocols = SslProtocols.Tls12,
                 EncryptionMode = FtpEncryptionMode.Auto,

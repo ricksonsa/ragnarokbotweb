@@ -58,6 +58,7 @@ export class ServerComponent implements OnInit {
   times: string[] = [];
   cron = new FormControl();
   ftpForm!: FormGroup;
+  serverForm!: FormGroup;
   accountDto?: AccountDto;
   channels: ChannelDto[] = [];
 
@@ -90,16 +91,34 @@ export class ServerComponent implements OnInit {
       address: [null, [Validators.required]],
       port: [null, [Validators.required]]
     });
+    this.serverForm = this.fb.group({
+      coinAwardPeriodically: [0, [Validators.min(0)]],
+      vipCoinAwardPeriodically: [0, [Validators.min(0)]]
+
+    });
   }
 
   ngOnInit() {
-    this.authService.account()
+    this.authService.account(true)
       .subscribe({
         next: (account) => {
           this.accountDto = account;
           if (account.server?.ftp) {
             this.ftpForm.patchValue(account.server.ftp);
           }
+          account.server.restartTimes?.forEach(time => this.times.push(time));
+          this.serverForm.patchValue(this.accountDto.server);
+        }
+      });
+  }
+
+  updateSettings() {
+    const form = this.serverForm.value;
+    form.restartTimes = this.times;
+    this.serverService.updateSettings(form)
+      .subscribe({
+        next: (server) => {
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('', 'Server Settings Updated', 'success')));
         }
       });
   }

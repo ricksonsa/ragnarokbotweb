@@ -1,4 +1,6 @@
-﻿namespace RagnarokBotWeb.Application.Models
+﻿using Discord;
+
+namespace RagnarokBotWeb.Application.Models
 {
     public class CreateEmbed
     {
@@ -6,6 +8,9 @@
         public string Title { get; set; }
         public string Text { get; set; }
         public string ImageUrl { get; set; }
+        public string FooterText { get; set; }
+        public Color Color { get; set; } = Color.Blue;
+
         public List<CreateEmbedButton> Buttons { get; set; }
     }
 

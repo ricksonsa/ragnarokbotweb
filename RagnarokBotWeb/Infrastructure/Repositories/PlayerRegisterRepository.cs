@@ -14,6 +14,7 @@ public class PlayerRegisterRepository(AppDbContext appDbContext)
     {
         return await _appDbContext.PlayerRegisters
             .Include(register => register.ScumServer)
+            .Include(register => register.ScumServer.Guild)
             .Where(register => register.WelcomePackId == welcomeId)
             .FirstOrDefaultAsync();
     }
@@ -22,8 +23,9 @@ public class PlayerRegisterRepository(AppDbContext appDbContext)
     {
         return await _appDbContext.PlayerRegisters
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Guild)
             .Where(player => player.DiscordId == discordId)
-            .Where(player => player.ScumServer.Guild.Id == guildId)
+            .Where(player => player.ScumServer != null && player.ScumServer.Guild != null && player.ScumServer.Guild.Id == guildId)
             .FirstOrDefaultAsync();
     }
 }

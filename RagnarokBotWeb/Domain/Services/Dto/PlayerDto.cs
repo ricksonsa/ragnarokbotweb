@@ -22,5 +22,6 @@
         public DateTime? VipExpiresAt { get; set; }
         public DateTime? BanExpiresAt { get; set; }
         public DateTime? SilenceExpiresAt { get; set; }
+        public DateTime? LastLoggedIn { get; set; }
     }
 }

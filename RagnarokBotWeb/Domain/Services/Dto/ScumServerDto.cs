@@ -25,5 +25,15 @@
         public bool SendVipLockpickAlert { get; set; }
 
         #endregion
+
+        #region Discord
+        public bool SendLocalChatToDiscord { get; set; } = true;
+        public bool SendGlobalChatToDiscord { get; set; } = true;
+        #endregion
+
+        #region Shop
+        public long CoinAwardPeriodically { get; set; }
+        public long VipCoinAwardPeriodically { get; set; }
+        #endregion
     }
 }

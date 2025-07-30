@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Entities;
@@ -17,6 +18,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IPackRepository _packRepository;
         private readonly IPlayerRepository _playerRepository;
         private readonly IWarzoneRepository _warzoneRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
         public OrderService(
@@ -26,7 +28,8 @@ namespace RagnarokBotWeb.Domain.Services
             IPackRepository packRepository,
             IPlayerRepository userRepository,
             IMapper mapper,
-            IWarzoneRepository warzoneRepository) : base(contextAccessor)
+            IWarzoneRepository warzoneRepository,
+            IUnitOfWork unitOfWork) : base(contextAccessor)
         {
             _logger = logger;
             _orderRepository = orderRepository;
@@ -34,6 +37,7 @@ namespace RagnarokBotWeb.Domain.Services
             _playerRepository = userRepository;
             _mapper = mapper;
             _warzoneRepository = warzoneRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<OrderDto> ConfirmOrderDelivered(long orderId)
@@ -56,6 +60,13 @@ namespace RagnarokBotWeb.Domain.Services
         {
             Page<Order> page = await _orderRepository.GetPageByFilter(paginator, filter);
             return new Page<OrderDto>(page.Content.Select(_mapper.Map<OrderDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
+        }
+
+        public async Task<OrderDto?> PlaceWelcomePackOrder(long playerId)
+        {
+            var player = await _playerRepository.FindByIdAsync(playerId);
+            if (player is null) throw new NotFoundException("Player not found");
+            return _mapper.Map<OrderDto>(await PlaceWelcomePackOrder(player));
         }
 
         public async Task<Order?> PlaceWelcomePackOrder(Player player)
@@ -96,11 +107,12 @@ namespace RagnarokBotWeb.Domain.Services
 
             var processor = new OrderPurchaseProcessor(_orderRepository);
             await processor.ValidateAsync(order);
-            processor.Charge(order);
+            var price = processor.Charge(order);
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
 
+            await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, price);
             return order;
         }
 
@@ -123,10 +135,12 @@ namespace RagnarokBotWeb.Domain.Services
 
             var processor = new OrderPurchaseProcessor(_orderRepository);
             await processor.ValidateAsync(order);
-            processor.Charge(order);
+            var price = processor.Charge(order);
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
+
+            await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, price);
 
             return order;
         }
@@ -149,10 +163,12 @@ namespace RagnarokBotWeb.Domain.Services
 
             var processor = new OrderPurchaseProcessor(_orderRepository);
             await processor.ValidateAsync(order);
-            processor.Charge(order);
+            var price = processor.Charge(order);
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
+
+            await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, price);
 
             return order;
         }

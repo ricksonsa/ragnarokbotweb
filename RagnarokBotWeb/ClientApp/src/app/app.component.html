@@ -44,9 +44,6 @@
             <a routerLink="servers/1/management/players">Players</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/management/vips">VIPs (Coming Soon)</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
             <a routerLink="servers/1/management/tickets">Tickets (Coming Soon)</a>
           </li>
         </ul>
@@ -54,9 +51,6 @@
 
       <li nz-submenu nzOpen nzTitle="Shop" nzIcon="dollar-circle">
         <ul>
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/shop/bank">Bank (Coming Soon)</a>
-          </li>
           <li nz-menu-item nzMatchRouter>
             <a routerLink="servers/1/shop/orders">Orders</a>
           </li>
@@ -84,7 +78,7 @@
             <a routerLink="servers/1/events/warzones">Warzones</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/management/players">Quests (Coming Soon)</a>
+            <a routerLink="servers/1/events/quests">Quests (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -148,14 +142,14 @@
               [nzType]="alert.type!"></nz-alert>
           </nz-affix>
         </div>
-        <nz-affix [nzOffsetBottom]="5" [nzOffsetTop]="10">
+        <!-- <nz-affix [nzOffsetBottom]="5" [nzOffsetTop]="10">
           <nz-breadcrumb style="margin-bottom: 20px;">
             @for (path of paths; track $index) {
             <nz-breadcrumb-item style="text-transform: capitalize;">{{path}}</nz-breadcrumb-item>
             }
 
           </nz-breadcrumb>
-        </nz-affix>
+        </nz-affix> -->
 
         <router-outlet></router-outlet>
       </div>

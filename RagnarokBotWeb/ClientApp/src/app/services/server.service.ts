@@ -9,6 +9,7 @@ import { GuildDto } from '../models/guild';
   providedIn: 'root'
 })
 export class ServerService {
+
   constructor(private readonly http: HttpClient, private readonly authService: AuthenticationService) { }
 
   updateFtp(updateForm: any) {
@@ -39,4 +40,7 @@ export class ServerService {
     return this.http.patch<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord/channels/run-template`, null);
   }
 
+  updateSettings(settings: any) {
+    return this.http.put<ScumServer>(`${WEB_API.baseUrl}/api/servers/settings`, settings);
+  }
 }

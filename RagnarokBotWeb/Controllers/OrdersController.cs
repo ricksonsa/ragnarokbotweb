@@ -36,5 +36,13 @@ namespace RagnarokBotWeb.Controllers
             var page = await _orderService.GetPacksPageByFilterAsync(paginator, filter);
             return Ok(page);
         }
+
+        [HttpPatch("players/{playerId}/welcomepack")]
+        public async Task<IActionResult> DeliverWelcomePack(long playerId)
+        {
+            _logger.LogInformation("Patch request to deliver welcomepack");
+            var order = await _orderService.PlaceWelcomePackOrder(playerId);
+            return Ok(order);
+        }
     }
 }

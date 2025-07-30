@@ -11,6 +11,7 @@
         Command,
         DestroyItems,
         ListPlayers,
-        MagazineDelivery
+        MagazineDelivery,
+        SayLocal
     }
 }

@@ -399,5 +399,21 @@ namespace RagnarokBotWeb.Domain.Services
             var channels = await _channelRepository.FindAllByServerId(serverId.Value);
             return channels.Select(channel => new SaveChannelDto { Key = channel.ChannelType!, Value = channel.DiscordId.ToString() }).ToList();
         }
+
+        public async Task<ScumServerDto> UpdateServerSettings(UpdateServerSettingsDto updateServer)
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            server.CoinAwardPeriodically = updateServer.CoinAwardPeriodically;
+            server.VipCoinAwardPeriodically = updateServer.VipCoinAwardPeriodically;
+            server.SetRestartTimes(updateServer.RestartTimes);
+
+            await _scumServerRepository.CreateOrUpdateAsync(server);
+            await _scumServerRepository.SaveAsync();
+
+            return _mapper.Map<ScumServerDto>(server);
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using RagnarokBotWeb.Domain.Services.Interfaces;
+﻿using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Handlers
@@ -8,6 +9,9 @@ namespace RagnarokBotWeb.Application.Handlers
         private readonly Dictionary<string, IExclamationCommandHandler> _handlers;
 
         public ExclamationCommandHandlerFactory(
+            ScumServer server,
+            ICacheService cacheService,
+            IScumServerRepository scumServerRepository,
             IPlayerRepository playerRepository,
             IPlayerRegisterRepository playerRegisterRepository,
             IDiscordService discordService,
@@ -16,7 +20,7 @@ namespace RagnarokBotWeb.Application.Handlers
             _handlers = new()
             {
                { "!welcomepack", new WelcomePackCommandHandler(playerRepository, playerRegisterRepository, discordService, orderService) },
-               { "!discord", new DiscordCommandHandler() }
+               { "!discord", new DiscordCommandHandler(server, scumServerRepository, cacheService) }
             };
         }
 

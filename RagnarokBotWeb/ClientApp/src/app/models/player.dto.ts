@@ -20,4 +20,5 @@ export class PlayerDto {
     vipExpiresAt?: Date;
     banExpiresAt?: Date;
     silenceExpiresAt?: Date;
+    lastLoggedIn?: Date;
 }

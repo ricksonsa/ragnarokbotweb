@@ -155,8 +155,14 @@ namespace RagnarokBotClient
         public Task Say(string text)
         {
             if (text.StartsWith("#")) text.TrimStart('#');
-            Logger.LogWrite($"Bot says {text}");
+            Logger.LogWrite($"Bot says: {text}");
             return RunCommand($"{text}", tab: 1);
+        }
+
+        public Task SayLocal(string text)
+        {
+            Logger.LogWrite($"Bot says locally: {text}");
+            return RunCommand($"{text}");
         }
 
         public Task Command(string text)

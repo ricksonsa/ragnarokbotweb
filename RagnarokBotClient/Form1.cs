@@ -25,6 +25,8 @@ namespace RagnarokBotClient
         private string _exePath;
         private List<ScumServer> _scumServers = [];
         private long _serverId = 0;
+        System.Windows.Forms.Timer _pingTimer;
+        public Guid Guid { get; set; }
 
 
         public Form1()
@@ -39,6 +41,21 @@ namespace RagnarokBotClient
             LoadCredentials();
             _iniFile = new();
             _scumManager = new ScumManager();
+            _pingTimer = new();
+            _pingTimer.Enabled = true;
+            _pingTimer.Interval = (int)TimeSpan.FromMinutes(10).TotalMilliseconds;
+            _pingTimer.Tick += _pingTimer_Tick;
+            Guid = Guid.NewGuid();
+        }
+
+        private void _pingTimer_Tick(object? sender, EventArgs e)
+        {
+            var command = new BotCommand();
+            command.Values = [new BotCommandValue {
+                Type = Shared.Enums.ECommandType.SayLocal,
+                Value = $"#check-state-{Guid}"
+            }];
+            _commandQueue.Enqueue(command);
         }
 
         private void Logger_OnLogging(object? sender, string e)

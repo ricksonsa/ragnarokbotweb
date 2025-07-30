@@ -110,8 +110,7 @@ namespace RagnarokBotWeb.Domain.Business
             else if (order.OrderType == Shared.Enums.EOrderType.Warzone)
                 price = order.Player!.IsVip() ? Convert.ToInt64(order.Warzone!.VipPrice) : Convert.ToInt64(order.Warzone!.Price);
 
-            order.Player!.Coin -= price;
-            return order.Player!.Coin;
+            return price;
         }
 
         private bool WasPurchasedWithinPurchaseCooldownSeconds(Order order)

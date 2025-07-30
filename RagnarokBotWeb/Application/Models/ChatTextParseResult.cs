@@ -6,6 +6,7 @@
         public string Text { get; set; }
         public string PlayerName { get; set; }
         public string ChatType { get; set; }
+        public bool Post { get; set; } = true;
         public DateTime Timestamp { get; set; }
     }
 }
