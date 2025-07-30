@@ -10,5 +10,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         Task<List<ScumServer>> FindActive();
         Task<List<ScumServer>> GetActiveServersWithFtp();
         Task<ScumServer?> FindByIdAsNoTrackingAsync(long id);
+        Task<ScumServer?> FindByGuildId(ulong value);
     }
 }

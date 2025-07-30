@@ -80,5 +80,14 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                .Where(server => server.Tenant.Enabled)
                .ToListAsync();
         }
+
+        public Task<ScumServer?> FindByGuildId(ulong value)
+        {
+            return _appDbContext.ScumServers
+            .Include(server => server.Guild)
+            .Include(server => server.Tenant)
+            .Include(server => server.Ftp)
+            .FirstOrDefaultAsync(server => server.Guild != null && server.Guild.DiscordId == value && server.Tenant.Enabled);
+        }
     }
 }

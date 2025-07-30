@@ -111,7 +111,6 @@ namespace RagnarokBotClient
 
         public async Task<bool> DeleteAsync(string url)
         {
-            _httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
             var response = await _httpClient.DeleteAsync(url);
             return response.IsSuccessStatusCode;
         }

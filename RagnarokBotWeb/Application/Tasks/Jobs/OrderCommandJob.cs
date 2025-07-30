@@ -11,17 +11,17 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         private readonly ILogger<OrderCommandJob> _logger;
         private readonly ICacheService _cacheService;
         private readonly IOrderRepository _orderRepository;
-        private readonly IBotRepository _botRepository;
+        private readonly IBotService _botService;
 
         public OrderCommandJob(
             ICacheService cacheService,
             IScumServerRepository scumServerRepository,
-            IBotRepository botRepository,
+            IBotService botService,
             IOrderRepository orderRepository,
             ILogger<OrderCommandJob> logger) : base(scumServerRepository)
         {
             _cacheService = cacheService;
-            _botRepository = botRepository;
+            _botService = botService;
             _orderRepository = orderRepository;
             _logger = logger;
         }
@@ -34,7 +34,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var order = await _orderRepository.FindOneByServer(server.Id);
 
             if (order is null) return;
-            if ((await _botRepository.FindByOnlineScumServerId(server.Id)) is null) return;
+            if (!_botService.IsBotOnline(server.Id)) return;
             if (order.Player?.SteamId64 is null) return;
 
             order.Status = EOrderStatus.Command;

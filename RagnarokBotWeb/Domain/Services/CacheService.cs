@@ -10,7 +10,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly Dictionary<long, Queue<BotCommand>> _botCommandQueue;
         private readonly Dictionary<long, Queue<FileChangeCommand>> _fileChangeQueue;
 
-        private Dictionary<long, List<Guid>> _connectedBots;
+        private Dictionary<long, Dictionary<Guid, BotUser>> _connectedBots;
         private Dictionary<long, List<ScumPlayer>> _connectedPlayers;
 
         public CacheService()
@@ -26,7 +26,7 @@ namespace RagnarokBotWeb.Domain.Services
             return _connectedPlayers[serverId];
         }
 
-        public List<Guid> GetConnectedBots(long serverId)
+        public Dictionary<Guid, BotUser> GetConnectedBots(long serverId)
         {
             return _connectedBots[serverId];
         }

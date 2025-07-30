@@ -1,6 +1,8 @@
 using Quartz;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
+using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Dto;
@@ -20,7 +22,6 @@ public class ChatJob(
     IOrderService orderService,
     IDiscordService discordService,
     ICacheService cacheService,
-    IBotRepository botRepository,
     IFtpService ftpService,
     DiscordChannelPublisher publisher
 ) : AbstractJob(scumServerRepository), IJob
@@ -63,23 +64,26 @@ public class ChatJob(
 
                 if (parsed.Text.Contains("#check-state"))
                 {
-                    var guid = parsed.Text.Substring(parsed.Text.LastIndexOf("-"));
-                    var bot = await botRepository.FindOneAsync(bot => bot.Guid.ToString() == guid);
+                    var guid = new Guid(parsed.Text.Substring(parsed.Text.LastIndexOf("-")));
+                    var bot = cacheService.GetConnectedBots(server.Id)
+                        .Where(bot => bot.Key == guid)
+                        .Select(b => b.Value)
+                        .FirstOrDefault();
+
                     if (bot is not null)
                     {
                         bot.SteamId = parsed.SteamId;
                         bot.LastPinged = DateTime.UtcNow;
                         parsed.Post = false;
-                        await botRepository.CreateOrUpdateAsync(bot);
-                        await botRepository.SaveAsync();
+                        cacheService.GetConnectedBots(server.Id)[guid] = bot;
                     }
                 }
 
-                if (!(parsed.Text.StartsWith("#") || parsed.Text.StartsWith("!"))
-                    && (parsed.ChatType == "Global" && server.SendGlobalChatToDiscord
-                    || parsed.ChatType == "Local" && server.SendLocalChatToDiscord) && parsed.Post)
+                if (!IsCommand(parsed)
+                    && IsServerAllowed(server, parsed)
+                    && !IsBotSteamId(cacheService, server, parsed)
+                    && parsed.Post)
                 {
-
                     await publisher.Publish(server,
                      new ChannelPublishDto { Content = $"[{parsed.ChatType}] {parsed.PlayerName.Substring(0, parsed.PlayerName.LastIndexOf("("))}: {parsed.Text}" },
                      ChannelTemplateValues.GameChat);
@@ -92,5 +96,21 @@ public class ChatJob(
             Debug.WriteLine(ex.Message);
             throw;
         }
+    }
+
+    private static bool IsCommand(ChatTextParseResult parsed)
+    {
+        return parsed.Text.StartsWith("#") || parsed.Text.StartsWith("!");
+    }
+
+    private static bool IsServerAllowed(ScumServer server, ChatTextParseResult parsed)
+    {
+        return parsed.ChatType == "Global" && server.SendGlobalChatToDiscord
+            || parsed.ChatType == "Local" && server.SendLocalChatToDiscord;
+    }
+
+    private static bool IsBotSteamId(ICacheService cacheService, ScumServer server, ChatTextParseResult parsed)
+    {
+        return cacheService.GetConnectedBots(server.Id).Any(b => b.Value.SteamId == parsed.SteamId);
     }
 }

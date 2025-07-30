@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord.Events.Messages;
 
@@ -22,8 +23,10 @@ public class BuyPackageEvent : IMessageEventHandler
         using var scope = _serviceProvider.CreateScope();
         var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
         var botService = scope.ServiceProvider.GetRequiredService<IBotService>();
+        var scumRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
+        var server = await scumRepository.FindByGuildId(component.GuildId!.Value);
 
-        if (!await botService.IsBotOnline(component.GuildId!.Value))
+        if (!botService.IsBotOnline(server!.Id))
         {
             var embed = new EmbedBuilder()
                  .WithTitle("Order failed")

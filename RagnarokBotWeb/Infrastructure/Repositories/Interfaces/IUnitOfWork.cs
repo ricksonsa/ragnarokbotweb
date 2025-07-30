@@ -12,7 +12,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         DbSet<Bunker> Bunkers { get; }
         DbSet<ReaderPointer> ReaderPointers { get; }
         DbSet<Kill> Kills { get; }
-        DbSet<Bot> Bots { get; }
         DbSet<Tenant> Tenants { get; }
         DbSet<ScumServer> ScumServers { get; }
         DbSet<ScheduledTask> ScheduledTasks { get; }

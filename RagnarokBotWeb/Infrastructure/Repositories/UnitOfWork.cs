@@ -15,7 +15,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<Bunker> Bunkers { get; }
         public DbSet<ReaderPointer> ReaderPointers { get; }
         public DbSet<Kill> Kills { get; }
-        public DbSet<Bot> Bots { get; }
         public DbSet<Tenant> Tenants { get; }
         public DbSet<ScumServer> ScumServers { get; }
         public DbSet<ScheduledTask> ScheduledTasks { get; }
@@ -39,7 +38,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             Bunkers = _context.Bunkers;
             ReaderPointers = _context.ReaderPointers;
             Kills = _context.Kills;
-            Bots = _context.Bots;
             Tenants = _context.Tenants;
             ScumServers = _context.ScumServers;
             Ftps = _context.Ftps;

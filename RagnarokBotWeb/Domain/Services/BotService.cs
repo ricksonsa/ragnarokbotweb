@@ -1,83 +1,57 @@
-﻿using AutoMapper;
-using AutoMapper.Internal;
-using RagnarokBotWeb.Application;
+﻿using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Application.Models;
-using RagnarokBotWeb.Domain.Entities;
-using RagnarokBotWeb.Domain.Exceptions;
-using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
-using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
-using Shared.Enums;
 using Shared.Parser;
 
 namespace RagnarokBotWeb.Domain.Services
 {
     public class BotService : BaseService, IBotService
     {
-        private readonly IBotRepository _botRepository;
-        private readonly IScumServerRepository _scumServerRepository;
+        private readonly ILogger<BotService> _logger;
         private readonly ICacheService _cacheService;
         private readonly IPlayerService _playerService;
         private readonly IOrderService _orderService;
-        private readonly IMapper _mapper;
 
         public BotService(
             IHttpContextAccessor httpContext,
-            IBotRepository botRepository,
             ICacheService cacheService,
             IPlayerService playerService,
-            IScumServerRepository scumServerRepository,
-            IMapper mapper,
-            IOrderService orderService) : base(httpContext)
+            IOrderService orderService,
+            ILogger<BotService> logger) : base(httpContext)
         {
-            _botRepository = botRepository;
             _cacheService = cacheService;
             _playerService = playerService;
-            _scumServerRepository = scumServerRepository;
-            _mapper = mapper;
             _orderService = orderService;
+            _logger = logger;
         }
 
-        public async Task<BotDto> RegisterBot()
+        public void ConnectBot(Guid guid)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            var bot = await _botRepository.FindByScumServerId(serverId.Value);
-            //if (bot is null) throw new DomainException($"No active bot found for server [{serverId.Value}]");
-
-            if (bot is null)
+            try
             {
-                bot = new Bot
+                if (_cacheService.GetConnectedBots(serverId.Value).TryGetValue(guid, out var bot))
                 {
-                    ScumServer = await _scumServerRepository.FindActiveById(serverId.Value),
-                };
-                await _botRepository.CreateOrUpdateAsync(bot);
-                await _botRepository.SaveAsync();
+                    bot.LastInteracted = DateTime.Now;
+                    _cacheService.GetConnectedBots(serverId.Value)[guid] = bot;
+                }
+                else
+                {
+                    _cacheService.GetConnectedBots(serverId.Value)[guid] = new BotUser(guid);
+                }
+
             }
-
-            bot.State = EBotState.Online;
-            bot.Active = true;
-            bot.LastInteracted = DateTime.UtcNow;
-            _botRepository.Update(bot);
-            await _botRepository.SaveAsync();
-            return _mapper.Map<BotDto>(bot);
+            catch (Exception) { }
         }
 
-        public void PreRegisterBot(string guid)
+        public void DisconnectBot(Guid guid)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            _cacheService.GetConnectedBots(serverId.Value).TryAdd(new Guid(guid));
-        }
-
-        public void DisconnectBot(string guid)
-        {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
-
-            _cacheService.GetConnectedBots(serverId.Value).TryAdd(new Guid(guid));
+            _cacheService.GetConnectedBots(serverId.Value).Remove(guid);
         }
 
         public async Task UpdatePlayersOnline(PlayersListRequest input)
@@ -90,67 +64,26 @@ namespace RagnarokBotWeb.Domain.Services
             await _playerService.UpdateFromScumPlayers(serverId.Value, players);
         }
 
-        public async Task UpdateInteraction()
+        public bool IsBotOnline()
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            var bot = await _botRepository.FindByScumServerId(serverId.Value);
-            if (bot is null) throw new DomainException($"No active bot found for server [{serverId.Value}]");
-
-            bot.UpdateInteraction();
-            _botRepository.Update(bot);
-            await _botRepository.SaveAsync();
+            return _cacheService.GetConnectedBots(serverId.Value).Any();
         }
 
-        public async Task<BotDto?> UnregisterBot()
+        public bool IsBotOnline(long serverId)
+        {
+            return _cacheService.GetConnectedBots(serverId).Any();
+        }
+
+        public BotCommand? GetCommand(Guid guid)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            var bot = await _botRepository.FindByScumServerId(serverId.Value);
-            if (bot is null) throw new DomainException($"No active bot found for server [{serverId.Value}]");
+            ConnectBot(guid);
 
-            bot.State = EBotState.Offline;
-            _botRepository.Update(bot);
-            await _botRepository.SaveAsync();
-            return _mapper.Map<BotDto>(bot);
-        }
-
-        public async Task CheckBotState(long serverId)
-        {
-            var bots = await _botRepository.FindByServerIdOnlineAndLastInteraction(serverId);
-            foreach (var bot in bots)
-            {
-                bot.State = EBotState.Offline;
-                _botRepository.Update(bot);
-            }
-            await _botRepository.SaveAsync();
-        }
-
-        public async Task CheckBotState(ulong guildId)
-        {
-            var bots = await _botRepository.FindByServerIdOnlineAndLastInteraction(guildId);
-            foreach (var bot in bots)
-            {
-                bot.State = EBotState.Offline;
-                _botRepository.Update(bot);
-            }
-            await _botRepository.SaveAsync();
-        }
-
-        public async Task<bool> IsBotOnline(ulong guildId)
-        {
-            var bots = await _botRepository.FindOnlineBotByGuild(guildId);
-            return bots.Any();
-        }
-
-        public async Task<BotCommand?> GetCommand()
-        {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
-
-            await UpdateInteraction();
             if (_cacheService.GetCommandQueue(serverId.Value).TryDequeue(out var command))
             {
                 return command;
@@ -159,27 +92,38 @@ namespace RagnarokBotWeb.Domain.Services
             return null;
         }
 
-        public async Task PutCommand(BotCommand command)
+        public void PutCommand(BotCommand command)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            await UpdateInteraction();
             _cacheService.GetCommandQueue(serverId.Value).Enqueue(command);
-        }
-
-        public Task<List<Bot>> FindActiveBotsByServerId(long serverId)
-        {
-            return _botRepository.FindActiveBotsByServerId(serverId);
         }
 
         public async Task ConfirmDelivery(long orderId)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
-
-            await UpdateInteraction();
             await _orderService.ConfirmOrderDelivered(orderId);
+        }
+
+        public List<BotUser> FindActiveBotsByServerId(long serverId)
+        {
+            return _cacheService.GetConnectedBots(serverId).Values.ToList();
+        }
+
+        public void ResetBotState(long serverId)
+        {
+            var now = DateTime.Now;
+            var bots = _cacheService.GetConnectedBots(serverId).Values.ToList();
+            foreach (var bot in bots)
+            {
+                TimeSpan difference = now - bot.LastInteracted;
+                if (difference.Minutes >= 2)
+                {
+                    _cacheService.GetConnectedBots(serverId).Remove(bot.Guid);
+                }
+            }
         }
     }
 }

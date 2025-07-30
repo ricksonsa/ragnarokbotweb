@@ -29,7 +29,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     return;
                 }
 
-                await _botService.CheckBotState(serverId.Value);
+                _botService.ResetBotState(serverId.Value);
             }
             catch (Exception ex)
             {

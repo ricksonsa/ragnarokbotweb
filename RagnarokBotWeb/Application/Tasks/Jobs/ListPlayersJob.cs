@@ -31,18 +31,16 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     _logger.LogError("No value for variable serverId");
                     return;
                 }
-                var bots = await _botService.FindActiveBotsByServerId(serverId.Value);
 
                 _cacheService.ClearConnectedPlayers(serverId.Value);
 
-                foreach (var bot in bots)
+                if (!_botService.IsBotOnline(serverId.Value)) return;
+
+                if (!_cacheService.GetCommandQueue(serverId.Value).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
                 {
-                    if (!_cacheService.GetCommandQueue(bot.ScumServer.Id).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
-                    {
-                        var command = new BotCommand();
-                        command.ListPlayers();
-                        _cacheService.GetCommandQueue(bot.ScumServer.Id).Enqueue(command);
-                    }
+                    var command = new BotCommand();
+                    command.ListPlayers();
+                    _cacheService.GetCommandQueue(serverId.Value).Enqueue(command);
                 }
             }
             catch (Exception ex)

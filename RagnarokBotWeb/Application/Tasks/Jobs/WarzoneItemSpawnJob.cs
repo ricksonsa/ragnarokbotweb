@@ -10,18 +10,18 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
     {
         private readonly ILogger<WarzoneItemSpawnJob> _logger;
         private readonly ICacheService _cacheService;
-        private readonly IBotRepository _botRepository;
+        private readonly IBotService _botService;
         private readonly IUnitOfWork _unitOfWork;
 
         public WarzoneItemSpawnJob(
           ICacheService cacheService,
           IScumServerRepository scumServerRepository,
-          IBotRepository botRepository,
+          IBotService botService,
           ILogger<WarzoneItemSpawnJob> logger,
           IUnitOfWork unitOfWork) : base(scumServerRepository)
         {
             _cacheService = cacheService;
-            _botRepository = botRepository;
+            _botService = botService;
             _logger = logger;
             _unitOfWork = unitOfWork;
         }
@@ -31,7 +31,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
             var server = await GetServerAsync(context, ftpRequired: false);
-            if ((await _botRepository.FindByOnlineScumServerId(server.Id)) is null) return;
+            if (!_botService.IsBotOnline(server.Id)) return;
             var warzoneId = GetValueFromContext<long>(context, "warzone_id");
             if (warzoneId == 0) return;
 

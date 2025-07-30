@@ -22,9 +22,9 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet("commands")]
-        public async Task<IActionResult> GetReadyCommands()
+        public IActionResult GetReadyCommands(string guid)
         {
-            return Ok(await _botService.GetCommand());
+            return Ok(_botService.GetCommand(new Guid(guid)));
         }
 
         [HttpPost("players")]
@@ -35,18 +35,12 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPost("commands")]
-        public async Task<IActionResult> CreateCommand(BotCommand command)
+        public IActionResult CreateCommand(BotCommand command)
         {
-            await _botService.PutCommand(command);
+            _botService.PutCommand(command);
             return Ok();
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterBot()
-        {
-            var bot = await _botService.RegisterBot();
-            return Ok(bot);
-        }
 
         [HttpPatch("deliveries/{id}/confirm")]
         public async Task<IActionResult> ConfirmDelivery(long id)
@@ -56,10 +50,10 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpDelete("unregister")]
-        public async Task<IActionResult> UnregisterBot()
+        public IActionResult UnregisterBot(string guid)
         {
-            var bot = await _botService.UnregisterBot();
-            return Ok(bot);
+            _botService.DisconnectBot(new Guid(guid));
+            return Ok();
         }
     }
 }

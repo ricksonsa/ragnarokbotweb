@@ -7,16 +7,16 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
     public class CloseWarzoneJob : AbstractJob, IJob
     {
         private readonly ILogger<CloseWarzoneJob> _logger;
-        private readonly IBotRepository _botRepository;
+        private readonly IBotService _botService;
         private readonly IWarzoneService _warzoneService;
 
         public CloseWarzoneJob(
           IScumServerRepository scumServerRepository,
-          IBotRepository botRepository,
+          IBotService botService,
           ILogger<CloseWarzoneJob> logger,
           IWarzoneService warzoneService) : base(scumServerRepository)
         {
-            _botRepository = botRepository;
+            _botService = botService;
             _logger = logger;
             _warzoneService = warzoneService;
         }
@@ -26,7 +26,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
             var server = await GetServerAsync(context, ftpRequired: false);
-            if ((await _botRepository.FindByOnlineScumServerId(server.Id)) is null) return;
+            if (!_botService.IsBotOnline(server.Id)) return;
 
             var warzoneId = GetValueFromContext<long>(context, "warzone_id");
             if (warzoneId == 0) return;

@@ -32,7 +32,6 @@ namespace RagnarokBotClient
         public Form1()
         {
             InitializeComponent();
-            _remote = new WebApi(new Settings("http://localhost:5000"));
             Logger.OnLogging += Logger_OnLogging;
             _identifier = Environment.UserName;
             PasswordBox.UseSystemPasswordChar = true;
@@ -43,9 +42,10 @@ namespace RagnarokBotClient
             _scumManager = new ScumManager();
             _pingTimer = new();
             _pingTimer.Enabled = true;
-            _pingTimer.Interval = (int)TimeSpan.FromMinutes(10).TotalMilliseconds;
+            _pingTimer.Interval = (int)TimeSpan.FromMinutes(5).TotalMilliseconds;
             _pingTimer.Tick += _pingTimer_Tick;
             Guid = Guid.NewGuid();
+            _remote = new WebApi(new Settings("http://localhost:5000"));
         }
 
         private void _pingTimer_Tick(object? sender, EventArgs e)
@@ -166,6 +166,7 @@ namespace RagnarokBotClient
                 var token = _cancellationTokenSource.Token;
                 _scumManager.Token = token;
                 StartButton.Text = "Stop";
+                _pingTimer.Start();
                 HealthCheck(token)
                     .ContinueWith((_) => GameCheck(token))
                     .ContinueWith((_) => Task.WaitAll(ReceiveCommand(token), ProcessCommand(token)));
@@ -180,9 +181,10 @@ namespace RagnarokBotClient
 
         public void Stop()
         {
-            _remote.DeleteAsync($"api/bots/unregister");
+            _ = _remote.DeleteAsync($"api/bots/unregister?guid={Guid}");
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
+            _pingTimer.Stop();
             if (StatusValue.InvokeRequired)
             {
 
@@ -252,14 +254,13 @@ namespace RagnarokBotClient
 
         private async Task ReceiveCommand(CancellationToken token)
         {
-            await _remote.PostAsync($"api/bots/register", null);
             UpdateStatus("Ready...");
             UpdateStatus("Listening for commands...");
             while (!token.IsCancellationRequested)
             {
                 try
                 {
-                    var command = await _remote.GetAsync($"api/bots/commands");
+                    var command = await _remote.GetAsync($"api/bots/commands?guid={Guid}");
                     if (!string.IsNullOrEmpty(command))
                     {
                         _commandQueue.Enqueue(JsonConvert.DeserializeObject<BotCommand>(command)!);
