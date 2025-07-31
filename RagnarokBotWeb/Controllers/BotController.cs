@@ -21,6 +21,19 @@ namespace RagnarokBotWeb.Controllers
             _botService = botService;
         }
 
+        [HttpPost("register")]
+        public IActionResult RegisterBot(string guid)
+        {
+            _botService.RegisterBot(new Guid(guid));
+            return Ok();
+        }
+
+        [HttpGet("guid/{guid}")]
+        public IActionResult GetBotByGuid(string guid)
+        {
+            return Ok(_botService.FindBotByGuid(new Guid(guid)));
+        }
+
         [HttpGet("commands")]
         public IActionResult GetReadyCommands(string guid)
         {

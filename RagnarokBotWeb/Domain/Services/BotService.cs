@@ -34,7 +34,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 if (_cacheService.GetConnectedBots(serverId.Value).TryGetValue(guid, out var bot))
                 {
-                    bot.LastInteracted = DateTime.Now;
+                    bot.LastInteracted = DateTime.UtcNow;
                     _cacheService.GetConnectedBots(serverId.Value)[guid] = bot;
                 }
                 else
@@ -114,7 +114,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public void ResetBotState(long serverId)
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var bots = _cacheService.GetConnectedBots(serverId).Values.ToList();
             foreach (var bot in bots)
             {
@@ -124,6 +124,44 @@ namespace RagnarokBotWeb.Domain.Services
                     _cacheService.GetConnectedBots(serverId).Remove(bot.Guid);
                 }
             }
+        }
+
+        public BotUser? FindBotByGuid(Guid guid)
+        {
+
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            try
+            {
+                return _cacheService.GetConnectedBots(serverId.Value)[guid];
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public void RegisterBot(Guid guid)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            try
+            {
+                if (_cacheService.GetConnectedBots(serverId.Value).TryGetValue(guid, out var bot))
+                {
+                    bot.LastInteracted = DateTime.UtcNow;
+                    bot.LastPinged = DateTime.UtcNow;
+                    _cacheService.GetConnectedBots(serverId.Value)[guid] = bot;
+                }
+                else
+                {
+                    _cacheService.GetConnectedBots(serverId.Value)[guid] = new BotUser(guid);
+                }
+
+            }
+            catch (Exception) { }
         }
     }
 }

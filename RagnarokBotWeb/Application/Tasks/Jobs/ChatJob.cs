@@ -10,6 +10,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs;
 
@@ -62,20 +63,29 @@ public class ChatJob(
                     await chatCommandHandler.ExecuteAsync(parsed);
                 }
 
-                if (parsed.Text.Contains("#check-state"))
+                if (parsed.Text.Contains("!check-state"))
                 {
-                    var guid = new Guid(parsed.Text.Substring(parsed.Text.LastIndexOf("-")));
-                    var bot = cacheService.GetConnectedBots(server.Id)
-                        .Where(bot => bot.Key == guid)
-                        .Select(b => b.Value)
-                        .FirstOrDefault();
 
-                    if (bot is not null)
+                    var match = Regex.Match(parsed.Text, @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+                    if (match.Success)
                     {
-                        bot.SteamId = parsed.SteamId;
-                        bot.LastPinged = DateTime.UtcNow;
-                        parsed.Post = false;
-                        cacheService.GetConnectedBots(server.Id)[guid] = bot;
+                        var guid = new Guid(match.Value);
+                        var bot = cacheService.GetConnectedBots(server.Id)
+                          .Where(bot => bot.Key == guid)
+                          .Select(b => b.Value)
+                          .FirstOrDefault();
+
+                        if (bot is not null)
+                        {
+                            bot.SteamId = parsed.SteamId;
+                            bot.LastPinged = DateTime.UtcNow;
+                            parsed.Post = false;
+                            cacheService.GetConnectedBots(server.Id)[guid] = bot;
+                        }
+                    }
+                    else
+                    {
+                        logger.LogError("Could not parse the string [{}] to Guid", parsed.Text);
                     }
                 }
 

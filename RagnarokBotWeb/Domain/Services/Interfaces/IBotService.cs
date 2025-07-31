@@ -15,5 +15,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task ConfirmDelivery(long orderId);
         List<BotUser> FindActiveBotsByServerId(long serverId);
         void ResetBotState(long value);
+        BotUser? FindBotByGuid(Guid guid);
+        void RegisterBot(Guid guid);
     }
 }

@@ -8,6 +8,7 @@ namespace RagnarokBotClient
         private readonly IniFile _iniFile = new();
         private string chatKey = "t";
         private int delayBetweenInteractions = 0;
+        private bool firstRun = true;
 
         public CancellationToken Token { get; set; }
 
@@ -91,13 +92,6 @@ namespace RagnarokBotClient
             return Task.CompletedTask;
         }
 
-        public static Task Start()
-        {
-            if (!User32.ReconnectToServer()) { return Task.CompletedTask; }
-
-            return Task.CompletedTask;
-        }
-
         public Task Teleport(string steamID, string x, string y, string z)
         {
             Logger.LogWrite($"Teleporting {steamID} to {x}, {y}, {z}");
@@ -161,7 +155,6 @@ namespace RagnarokBotClient
 
         public Task SayLocal(string text)
         {
-            Logger.LogWrite($"Bot says locally: {text}");
             return RunCommand($"{text}");
         }
 
@@ -190,24 +183,20 @@ namespace RagnarokBotClient
 
         public Task DumpListPlayers()
         {
-            Logger.LogWrite($"DumpListPlayers");
+            //Logger.LogWrite($"DumpListPlayers");
             return RunCommand("#ListPlayers true");
+        }
+
+        public Task ReconnectToServer()
+        {
+            Logger.LogWrite($"Connecting to server");
+            var task = User32.ReconnectToServer(firstRun);
+            firstRun = false;
+            return task;
         }
 
         private class User32
         {
-            [StructLayout(LayoutKind.Sequential)]
-            struct INPUT
-            {
-                public uint type;
-                public InputUnion u;
-            }
-
-            [StructLayout(LayoutKind.Explicit)]
-            struct InputUnion
-            {
-                [FieldOffset(0)] public KEYBDINPUT ki;
-            }
 
             [StructLayout(LayoutKind.Sequential)]
             struct KEYBDINPUT
@@ -217,6 +206,13 @@ namespace RagnarokBotClient
                 public uint dwFlags;
                 public uint time;
                 public IntPtr dwExtraInfo;
+            }
+
+            [StructLayout(LayoutKind.Explicit)]
+            struct InputUnion
+            {
+                [FieldOffset(0)] public MOUSEINPUT mi;
+                [FieldOffset(0)] public KEYBDINPUT ki;
             }
 
             const uint INPUT_KEYBOARD = 1;
@@ -257,74 +253,114 @@ namespace RagnarokBotClient
             [DllImport("user32.dll")]
             static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
 
-            private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
-            private const uint MOUSEEVENTF_LEFTUP = 0x0004;
-
-            internal static void SendCtrlV()
+            [StructLayout(LayoutKind.Sequential)]
+            struct INPUT
             {
-                INPUT[] inputs = new INPUT[4];
+                public uint type;
+                public InputUnion u;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            struct MOUSEINPUT
+            {
+                public int dx;
+                public int dy;
+                public uint mouseData;
+                public uint dwFlags;
+                public uint time;
+                public IntPtr dwExtraInfo;
+            }
+
+
+            const uint INPUT_MOUSE = 0;
+            const uint MOUSEEVENTF_MOVE = 0x0001;
+            const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+            const uint MOUSEEVENTF_LEFTUP = 0x0004;
+
+            private static void SendCtrlD()
+            {
+                var inputs = new INPUT[4];
 
                 // Ctrl down
-                inputs[0] = new INPUT
+                inputs[0].type = INPUT_KEYBOARD;
+                inputs[0].u.ki = new KEYBDINPUT
                 {
-                    type = INPUT_KEYBOARD,
-                    u = new InputUnion
-                    {
-                        ki = new KEYBDINPUT
-                        {
-                            wVk = VK_CONTROL,
-                            dwFlags = 0,
-                        }
-                    }
+                    wVk = 0x11, // VK_CONTROL
+                    wScan = 0,
+                    dwFlags = 0,
+                    time = 0,
+                    dwExtraInfo = IntPtr.Zero
                 };
 
-                // V down
-                inputs[1] = new INPUT
+                // D down
+                inputs[1].type = INPUT_KEYBOARD;
+                inputs[1].u.ki = new KEYBDINPUT
                 {
-                    type = INPUT_KEYBOARD,
-                    u = new InputUnion
-                    {
-                        ki = new KEYBDINPUT
-                        {
-                            wVk = VK_V,
-                            dwFlags = 0,
-                        }
-                    }
+                    wVk = 0x44, // 'D'
+                    wScan = 0,
+                    dwFlags = 0,
+                    time = 0,
+                    dwExtraInfo = IntPtr.Zero
                 };
 
-                // V up
-                inputs[2] = new INPUT
+                // D up
+                inputs[2].type = INPUT_KEYBOARD;
+                inputs[2].u.ki = new KEYBDINPUT
                 {
-                    type = INPUT_KEYBOARD,
-                    u = new InputUnion
-                    {
-                        ki = new KEYBDINPUT
-                        {
-                            wVk = VK_V,
-                            dwFlags = KEYEVENTF_KEYUP,
-                        }
-                    }
+                    wVk = 0x44,
+                    wScan = 0,
+                    dwFlags = KEYEVENTF_KEYUP,
+                    time = 0,
+                    dwExtraInfo = IntPtr.Zero
                 };
 
                 // Ctrl up
-                inputs[3] = new INPUT
+                inputs[3].type = INPUT_KEYBOARD;
+                inputs[3].u.ki = new KEYBDINPUT
                 {
-                    type = INPUT_KEYBOARD,
-                    u = new InputUnion
-                    {
-                        ki = new KEYBDINPUT
-                        {
-                            wVk = VK_CONTROL,
-                            dwFlags = KEYEVENTF_KEYUP,
-                        }
-                    }
+                    wVk = 0x11,
+                    wScan = 0,
+                    dwFlags = KEYEVENTF_KEYUP,
+                    time = 0,
+                    dwExtraInfo = IntPtr.Zero
+                };
+
+                SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+            }
+
+            private static void SendMouseClick()
+            {
+                var inputs = new INPUT[2];
+
+                // Left button down
+                inputs[0].type = INPUT_MOUSE;
+                inputs[0].u.mi = new MOUSEINPUT
+                {
+                    dx = 0,
+                    dy = 0,
+                    mouseData = 0,
+                    dwFlags = MOUSEEVENTF_LEFTDOWN,
+                    time = 0,
+                    dwExtraInfo = IntPtr.Zero
+                };
+
+                // Left button up
+                inputs[1].type = INPUT_MOUSE;
+                inputs[1].u.mi = new MOUSEINPUT
+                {
+                    dx = 0,
+                    dy = 0,
+                    mouseData = 0,
+                    dwFlags = MOUSEEVENTF_LEFTUP,
+                    time = 0,
+                    dwExtraInfo = IntPtr.Zero
                 };
 
                 SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
             }
 
 
-            internal static bool ReconnectToServer()
+            public static async Task ReconnectToServer(bool firstRun)
             {
                 Process[] procs = Process.GetProcessesByName("SCUM");
                 if (procs.Length > 0)
@@ -333,41 +369,37 @@ namespace RagnarokBotClient
                     {
                         MoveWindow(procs[0].MainWindowHandle, 0, 0, 800, 600, false);
                         SetForegroundWindow(procs[0].MainWindowHandle);
+                        await Task.Delay(2000);
 
                         if (GetWindowRect(procs[0].MainWindowHandle, out RECT rect))
                         {
                             int centerX = (rect.Left + rect.Right) / 2;
-                            int centerY = (rect.Top + rect.Bottom) / 2;
+                            int centerY = ((rect.Top + rect.Bottom) / 2);
+
+                            SetCursorPos(centerX, centerY + 25);
+                            await Task.Delay(300);
+
+                            if (firstRun) SendCtrlD();
+
+                            SendMouseClick(); // Click "OK"
+                            await Task.Delay(3000);
 
                             SetCursorPos(centerX, centerY);
+                            await Task.Delay(300);
 
-                            Thread.Sleep(3000); // Optional delay
+                            SetCursorPos(centerX - 300, centerY + 60);
+                            await Task.Delay(300);
 
-                            // Click ok on the center of the screen
-                            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
-                            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
-
-                            Thread.Sleep(5000); // Optional delay
-
-                            SetCursorPos(centerX - 300, centerY + 80);
-
-                            Thread.Sleep(2000); // Optional delay
-
-                            // Click continue
-                            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
-                            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
+                            SendMouseClick(); // Click "Continue"
                         }
-
-                        return true;
                     }
-                    return false;
                 }
                 else
                 {
-                    Logger.LogWrite($"Couldnt find SCUM Window.");
-                    return false;
+                    Logger.LogWrite($"Couldn't find SCUM Window.");
                 }
             }
+
 
             private static void User32_Exited(object? sender, EventArgs e)
             {

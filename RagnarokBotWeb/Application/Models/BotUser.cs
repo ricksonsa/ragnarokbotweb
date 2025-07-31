@@ -10,7 +10,8 @@
         public BotUser(Guid guid)
         {
             Guid = guid;
-            LastInteracted = DateTime.Now;
+            LastInteracted = DateTime.UtcNow;
+            LastPinged = DateTime.UtcNow;
         }
 
     }

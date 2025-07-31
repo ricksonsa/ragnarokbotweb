@@ -42,6 +42,7 @@
             ServersPanel = new Panel();
             label1 = new Label();
             ServerListBox = new ListBox();
+            debugCheckBox = new CheckBox();
             AuthPanel.SuspendLayout();
             ServersPanel.SuspendLayout();
             SuspendLayout();
@@ -70,10 +71,10 @@
             // LogBox
             // 
             LogBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            LogBox.Location = new Point(12, 108);
+            LogBox.Location = new Point(12, 111);
             LogBox.Name = "LogBox";
             LogBox.ReadOnly = true;
-            LogBox.Size = new Size(776, 330);
+            LogBox.Size = new Size(495, 330);
             LogBox.TabIndex = 2;
             LogBox.Text = "";
             // 
@@ -89,7 +90,7 @@
             // 
             // AuthPanel
             // 
-            AuthPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            AuthPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             AuthPanel.Controls.Add(AuthFeedback);
             AuthPanel.Controls.Add(PasswordLabel);
             AuthPanel.Controls.Add(EmailLabel);
@@ -98,7 +99,7 @@
             AuthPanel.Controls.Add(EmailBox);
             AuthPanel.Location = new Point(12, 9);
             AuthPanel.Name = "AuthPanel";
-            AuthPanel.Size = new Size(776, 93);
+            AuthPanel.Size = new Size(495, 93);
             AuthPanel.TabIndex = 4;
             // 
             // AuthFeedback
@@ -162,7 +163,7 @@
             ServersPanel.Controls.Add(ServerListBox);
             ServersPanel.Location = new Point(12, 9);
             ServersPanel.Name = "ServersPanel";
-            ServersPanel.Size = new Size(776, 429);
+            ServersPanel.Size = new Size(495, 432);
             ServersPanel.TabIndex = 5;
             ServersPanel.Visible = false;
             // 
@@ -186,22 +187,34 @@
             ServerListBox.ItemHeight = 30;
             ServerListBox.Location = new Point(13, 68);
             ServerListBox.Name = "ServerListBox";
-            ServerListBox.Size = new Size(748, 362);
+            ServerListBox.Size = new Size(467, 332);
             ServerListBox.TabIndex = 0;
             ServerListBox.SelectedIndexChanged += ServerListBox_SelectedIndexChanged;
+            // 
+            // debugCheckBox
+            // 
+            debugCheckBox.AutoSize = true;
+            debugCheckBox.Location = new Point(12, 83);
+            debugCheckBox.Name = "debugCheckBox";
+            debugCheckBox.Size = new Size(83, 19);
+            debugCheckBox.TabIndex = 6;
+            debugCheckBox.Text = "Show Logs";
+            debugCheckBox.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(519, 453);
             Controls.Add(ServersPanel);
             Controls.Add(AuthPanel);
             Controls.Add(StartButton);
             Controls.Add(LogBox);
             Controls.Add(StatusValue);
             Controls.Add(StatusText);
+            Controls.Add(debugCheckBox);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
             Name = "Form1";
             Text = "Ragnarok Bot";
             Load += Form1_Load;
@@ -229,5 +242,6 @@
         private Panel ServersPanel;
         private Label label1;
         private ListBox ServerListBox;
+        private CheckBox debugCheckBox;
     }
 }

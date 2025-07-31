@@ -41,6 +41,19 @@ namespace RagnarokBotClient
 
         }
 
+        public async Task<string> PostAsync(string url)
+        {
+            using StringContent jsonContent = new(JsonConvert.SerializeObject(new { Value = 1 }), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync(url, jsonContent);
+            Debug.WriteLine($"Http Request [{url}] responded with status [{response.StatusCode}]");
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsStringAsync();
+            }
+
+            return default!;
+        }
+
         public async Task<string> PostAsync(string url, object body)
         {
             using StringContent jsonContent = new(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
