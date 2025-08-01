@@ -1,7 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Options;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -12,6 +14,7 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly ILogger<DiscordService> _logger;
         private readonly DiscordSocketClient _client;
+        private readonly AppSettings _appSettings;
         private readonly IGuildService _guildService;
         private readonly StartupDiscordTemplate _startupDiscordTemplate;
         private readonly IChannelService _channelService;
@@ -21,13 +24,15 @@ namespace RagnarokBotWeb.Domain.Services
             DiscordSocketClient client,
             IGuildService guildService,
             StartupDiscordTemplate startupDiscordTemplate,
-            IChannelService channelService)
+            IChannelService channelService,
+            IOptions<AppSettings> appSettings)
         {
             _logger = logger;
             _client = client;
             _guildService = guildService;
             _startupDiscordTemplate = startupDiscordTemplate;
             _channelService = channelService;
+            _appSettings = appSettings.Value;
         }
 
         public async Task<Guild> CreateChannelTemplates(long serverId)
@@ -146,7 +151,8 @@ namespace RagnarokBotWeb.Domain.Services
                 var embed = new EmbedBuilder()
                     .WithTitle(createEmbed.Title)
                     .WithDescription(createEmbed.Text)
-                    .WithImageUrl(createEmbed.ImageUrl)
+                    .WithAuthor(new EmbedAuthorBuilder().WithName("Ragnarok Bot").WithIconUrl(_appSettings.BaseUrl + "/images/ragnarok-logo.png"))
+                    .WithImageUrl(_appSettings.BaseUrl + "/" + createEmbed.ImageUrl)
                     .WithFooter(new EmbedFooterBuilder { Text = createEmbed.FooterText })
                     .WithColor(createEmbed.Color)
                     .Build();

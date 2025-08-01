@@ -2,8 +2,8 @@
   <nz-sider [nzTheme]="darkMode ? 'dark': 'light'" class="menu-sidebar" nzCollapsible nzWidth="256px" nzBreakpoint="md"
     [(nzCollapsed)]="isCollapsed" [nzTrigger]="null">
     <div class="sidebar-logo">
-      <a href="https://ng.ant.design/" target="_blank">
-        <img src="https://ng.ant.design/assets/img/logo.svg" alt="logo">
+      <a href="/" target="_blank">
+        <img src="assets/images/ragnarok-logo-transparent.png" alt="logo">
         <h1 [ngClass]="{'top-actions-button-light': !darkMode}" nz-typography>{{ account?.server?.name ?? 'Ragnarok Bot'
           }}</h1>
       </a>
@@ -160,8 +160,12 @@
 
 <div class="login" *ngIf="!logged && !register">
   <nz-card class="login-container">
-    <h4 nz-typography>Ragnarok Bot</h4>
-    <p nz-typography class="description-color"> Manage your SCUM private server with automation tools and insights powered by Ragnarok Bot. Log in to configure events, spawns, and more.</p>
+    <div class="logo">
+      <img width="24" height="24" src="assets/images/ragnarok-logo-transparent.png" alt="">
+      <h4 nz-typography>Ragnarok Bot</h4>
+    </div>
+    <p nz-typography> Manage your SCUM private server with automation tools and insights
+      powered by Ragnarok Bot. Log in to configure events, spawns, and more.</p>
     <br>
     <form nz-form [formGroup]="loginForm">
       <nz-space style="width: 100%;" nzDirection="vertical">
@@ -185,7 +189,8 @@
 
         <button *nzSpaceItem nz-button type="button" nzType="link" (click)="register = true">Don't have an account?
           Sign up one here</button>
-        <button *nzSpaceItem (click)="login()" [nzBlock]="true" nz-button nzType="primary" nzSize="large">Login</button>
+        <button *nzSpaceItem (click)="login()" [nzBlock]="true" nz-button nzType="primary" nzSize="large">Sign
+          In</button>
       </nz-space>
     </form>
   </nz-card>
@@ -193,7 +198,10 @@
 
 <div class="login" *ngIf="!logged && register">
   <nz-card class="login-container">
-    <h4 nz-typography>Ragnarok Bot</h4>
+    <div class="logo">
+      <img width="80" height="80" src="assets/images/ragnarok-logo-transparent.png" alt="">
+      <h4 nz-typography>Ragnarok Bot</h4>
+    </div>
     <h5 nz-typography>Sign Up</h5>
     <br>
     <form nz-form [formGroup]="registerForm" (action)="signup()">
@@ -235,8 +243,8 @@
           <button *nzSpaceItem nz-button type="button" [nzBlock]="true" nzType="link" (click)="register = false">
             Already have an account? Sign In
           </button>
-          <button *nzSpaceItem (click)="signup()" [nzBlock]="true" nz-button nzType="primary"
-            nzSize="large">Register</button>
+          <button *nzSpaceItem (click)="signup()" [nzBlock]="true" nz-button nzType="primary" nzSize="large">Sign
+            Up</button>
         </nz-space>
       </nz-space>
     </form>

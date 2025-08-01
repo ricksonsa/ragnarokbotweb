@@ -19,10 +19,11 @@ public static class FtpClientFactory
                 LogPassword = false,
                 LogUserName = false,
                 LogToConsole = false,
-                SslProtocols = SslProtocols.Tls12,
+                SslProtocols = SslProtocols.None,
                 EncryptionMode = FtpEncryptionMode.Auto,
-                ConnectTimeout = 50000,
-                DataConnectionType = FtpDataConnectionType.PASV
+                ConnectTimeout = 5000,
+                DataConnectionType = FtpDataConnectionType.AutoPassive
+
             }
         };
 

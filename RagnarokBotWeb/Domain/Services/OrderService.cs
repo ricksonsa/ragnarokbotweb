@@ -122,7 +122,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (pack is null) throw new DomainException("Pack not found");
 
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
-            if (player is null) throw new NotFoundException("Player not found");
+            if (player is null) throw new NotFoundException("You are not registered, please register using the Welcome Pack.");
 
 
             var order = new Order
@@ -151,7 +151,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (warzone is null) throw new DomainException("Warzone not found");
 
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
-            if (player is null) throw new NotFoundException("Player not found");
+            if (player is null) throw new NotFoundException("You are not registered, please register using the Welcome Pack.");
 
             var order = new Order
             {

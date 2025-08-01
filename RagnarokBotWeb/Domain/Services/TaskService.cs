@@ -107,7 +107,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Chat.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0/30 * * * * ?"));
+            await scheduler.ScheduleJob(job, CronTrigger("0/10 * * * * ?"));
 
             job = JobBuilder.Create<KillLogJob>()
                    .WithIdentity($"KillLogJob({server.Id})", $"FtpJobs({server.Id})")

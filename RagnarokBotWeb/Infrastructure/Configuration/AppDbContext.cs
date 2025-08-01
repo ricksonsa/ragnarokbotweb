@@ -69,6 +69,30 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
                     }
                 }
             }
+
+            modelBuilder.Entity<PackItem>()
+            .HasOne(wi => wi.Item)
+            .WithMany()
+            .HasForeignKey(wi => wi.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarzoneItem>()
+            .HasOne(wi => wi.Item)
+            .WithMany()
+            .HasForeignKey(wi => wi.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarzoneSpawn>()
+            .HasOne(wi => wi.Teleport)
+            .WithMany()
+            .HasForeignKey(wi => wi.TeleportId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WarzoneTeleport>()
+            .HasOne(wi => wi.Teleport)
+            .WithMany()
+            .HasForeignKey(wi => wi.TeleportId)
+            .OnDelete(DeleteBehavior.Cascade);
         }
 
         public void MigrateDatabase()

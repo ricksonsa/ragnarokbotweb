@@ -81,6 +81,8 @@ export class WarzoneComponent implements OnInit {
   channels: ChannelDto[] = [];
   avatarUrl: string;
   uploading = false;
+  isUploaded = false;
+  loading = false;
 
   get searchControl() {
     return this.packageItemForm.controls['searchControl'];
@@ -140,6 +142,7 @@ export class WarzoneComponent implements OnInit {
     this.route.data.subscribe(data => {
       var item = data['warzone'];
       if (item) {
+        this.isUploaded = true;
         const warzone = item as WarzoneDto;
         this.packageForm.patchValue(item);
         this.avatarUrl = this.packageForm.value.imageUrl;
@@ -148,6 +151,11 @@ export class WarzoneComponent implements OnInit {
         this.teleports = warzone.teleports;
       }
     });
+  }
+
+  removeImage() {
+    this.packageForm.controls['imageUrl'].patchValue(null);
+    this.avatarUrl = null;
   }
 
   loadDiscordChannels() {
@@ -325,6 +333,7 @@ export class WarzoneComponent implements OnInit {
       return;
     }
 
+    this.loading = true;
     var warzone = this.packageForm.value as WarzoneDto;
     warzone.warzoneItems = this.items;
     warzone.teleports = this.teleports;
@@ -340,10 +349,13 @@ export class WarzoneComponent implements OnInit {
 
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', message, 'success')));
           this.goBack();
+          this.loading = false;
+
         },
         error: (err) => {
           var msg = err.error?.details ?? 'One or more validation errors ocurred.';
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', msg, 'error')));
+          this.loading = false;
         }
       });
   }
@@ -362,6 +374,7 @@ export class WarzoneComponent implements OnInit {
       this.avatarUrl = arrayBufferToBase64(e.target?.result as ArrayBuffer);
       toBase64(this.imageFile).then((value: string) => {
         this.avatarUrl = value;
+        this.isUploaded = false;
         this.packageForm.controls['imageUrl'].setValue(value);
       });
     };

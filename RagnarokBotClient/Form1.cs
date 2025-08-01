@@ -234,7 +234,9 @@ namespace RagnarokBotClient
                         {
                             await GameCheck(token);
                             await _scumManager.ReconnectToServer();
-                            await Task.Delay(TimeSpan.FromSeconds(Math.Max(_timeToLoadWorld, 1)), token);
+                            await Task.Delay(TimeSpan.FromSeconds(Math.Max(_timeToLoadWorld, 1)), token); // Wait
+                            await _scumManager.TeleportBotToCoordinates("0 0 0");
+                            await Task.Delay(TimeSpan.FromSeconds(5), token); // Wait
 
                             await Task.WhenAll
                             (
@@ -387,15 +389,27 @@ namespace RagnarokBotClient
         private void UpdateStatus(string status, bool changeLabel = true)
         {
             var action = new Action(() => LogBox.Text += $"\n {new DateTimeOffset(DateTime.Now)} {status}");
+            var clearTextAction = new Action(() =>
+            {
+                if (LogBox.Text.Length >= 500) LogBox.Text = string.Empty;
+            });
             if (StatusValue.InvokeRequired)
             {
                 if (changeLabel) StatusValue.Invoke(new Action(() => StatusValue.Text = status));
-                if (debugCheckBox.Checked) StatusValue.Invoke(action);
+                if (debugCheckBox.Checked)
+                {
+                    StatusValue.Invoke(action);
+                    StatusValue.Invoke(clearTextAction);
+                }
             }
             else
             {
                 if (changeLabel) StatusValue.Text = status;
-                if (debugCheckBox.Checked) action?.Invoke();
+                if (debugCheckBox.Checked)
+                {
+                    action?.Invoke();
+                    clearTextAction?.Invoke();
+                }
             }
         }
 

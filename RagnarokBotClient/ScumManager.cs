@@ -110,10 +110,16 @@ namespace RagnarokBotClient
             return RunCommand($"#teleportto {playerSteamID} {adminSteamID}");
         }
 
-        public Task TeleportBotTo(string playerSteamID)
+        public Task TeleportBotToCoordinates(string coordinates)
         {
-            Logger.LogWrite($"Teleporting bot to {playerSteamID}");
-            return RunCommand($"#teleportto {playerSteamID}");
+            Logger.LogWrite($"Teleporting bot to {coordinates}");
+            return RunCommand($"#teleport {coordinates}");
+        }
+
+        public Task TeleportBotToPlayer(string steamId)
+        {
+            Logger.LogWrite($"Teleporting bot to {steamId}");
+            return RunCommand($"#teleportto {steamId}");
         }
 
         public Task SpawnItem(string item, int amount)

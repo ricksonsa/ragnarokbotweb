@@ -17,16 +17,16 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public override Task CreateOrUpdateAsync(Warzone entity)
         {
 
-            if (entity.ScumServer != null) _appDbContext.ScumServers.Attach(entity.ScumServer);
-            if (_appDbContext.ChangeTracker.Entries<Warzone>().Any(e => e.Entity.Id == entity.Id))
-            {
-                _appDbContext.ChangeTracker.Entries<Warzone>().FirstOrDefault(e => e.Entity.Id == entity.Id)!.State = EntityState.Detached;
-            }
+            //if (entity.ScumServer != null) _appDbContext.ScumServers.Attach(entity.ScumServer);
+            //if (_appDbContext.ChangeTracker.Entries<Warzone>().Any(e => e.Entity.Id == entity.Id))
+            //{
+            //    _appDbContext.ChangeTracker.Entries<Warzone>().FirstOrDefault(e => e.Entity.Id == entity.Id)!.State = EntityState.Detached;
+            //}
 
-            foreach (var warzoneItem in entity.WarzoneItems)
-            {
-                _appDbContext.Items.Attach(warzoneItem.Item);
-            }
+            //foreach (var warzoneItem in entity.WarzoneItems)
+            //{
+            //    _appDbContext.Items.Attach(warzoneItem.Item);
+            //}
 
             return base.CreateOrUpdateAsync(entity);
         }
@@ -42,7 +42,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public Task<Warzone?> FindByIdAsNoTrackingAsync(long id)
         {
             return DbSet()
-                .AsNoTracking()
                 .Include(warzone => warzone.ScumServer)
                 .Include(warzone => warzone.WarzoneItems)
                     .ThenInclude(warzone => warzone.Item)
@@ -50,6 +49,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                     .ThenInclude(warzone => warzone.Teleport)
                 .Include(warzone => warzone.Teleports)
                     .ThenInclude(warzone => warzone.Teleport)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(warzone => warzone.Id == id);
         }
 

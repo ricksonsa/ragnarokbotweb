@@ -66,16 +66,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public override Task CreateOrUpdateAsync(Pack entity)
         {
-            foreach (var packItem in entity.PackItems)
-            {
-                if (_appDbContext.ChangeTracker.Entries<Item>().Any(e => e.Entity.Id == packItem.Id))
-                {
-                    _appDbContext.ChangeTracker.Entries<Item>().FirstOrDefault(e => e.Entity.Id == packItem.Id)!.State = EntityState.Detached;
-                }
-
-                _appDbContext.Items.Attach(packItem.Item);
-            }
-
             return base.CreateOrUpdateAsync(entity);
         }
     }

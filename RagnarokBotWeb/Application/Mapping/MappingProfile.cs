@@ -38,7 +38,9 @@ namespace RagnarokBotWeb.Application.Mapping
             .ForPath((pack) => pack.Item.Name, opt => opt.MapFrom(dto => dto.ItemName))
             .ForPath((pack) => pack.Item.Id, opt => opt.MapFrom(dto => dto.ItemId));
 
-            CreateMap<Pack, PackDto>().ReverseMap();
+            CreateMap<Pack, PackDto>()
+                .ReverseMap()
+                .ForMember(dest => dest.PackItems, opt => opt.Ignore());
 
             CreateMap<Player, PlayerDto>()
                 .ForMember((dto) => dto.IsVip, opt => opt.MapFrom(player => player.IsVip()))
@@ -80,7 +82,11 @@ namespace RagnarokBotWeb.Application.Mapping
             CreateMap<Warzone, WarzoneDto>()
                  .ForPath((dto) => dto.ScumServerId, opt => opt.MapFrom(warzone => warzone.ScumServer.Id))
             .ReverseMap()
-               .ForPath((warzone) => warzone.ScumServer.Id, opt => opt.MapFrom(dto => dto.ScumServerId));
+               .ForPath((warzone) => warzone.ScumServer.Id, opt => opt.MapFrom(dto => dto.ScumServerId))
+               .ForMember(dest => dest.WarzoneItems, opt => opt.Ignore())
+               .ForMember(dest => dest.SpawnPoints, opt => opt.Ignore())
+               .ForMember(dest => dest.Teleports, opt => opt.Ignore())
+               .ForMember(dest => dest.ScumServer, opt => opt.Ignore());
         }
     }
 }

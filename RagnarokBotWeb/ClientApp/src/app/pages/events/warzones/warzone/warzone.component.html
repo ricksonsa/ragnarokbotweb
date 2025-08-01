@@ -10,7 +10,7 @@
     <nz-icon nzType="delete"></nz-icon>
     Delete Warzone
   </button>
-  <button *nzSpaceItem nz-button nzType="primary" (click)="save()">
+  <button *nzSpaceItem nz-button nzType="primary" (click)="save()" [nzLoading]="loading">
     Save Warzone
   </button>
 </nz-space>
@@ -45,15 +45,21 @@
       <nz-form-item nzAlign="bottom">
         <nz-form-label [nzSpan]="0" nzFor="warzoneThumbnail">Warzone Thumbnail</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="uploadBtn">
-          <img *ngIf="avatarUrl" nz-image width="200px" height="200px" [nzSrc]="avatarUrl" alt="" />
+          <img *ngIf="avatarUrl" nz-image width="200px" height="200px"  [nzSrc]="!isUploaded ? avatarUrl : 'http://localhost:8080/' + avatarUrl" alt="" />
           <ng-template #uploadBtn>
             <nz-upload nzAction="https://www.mocky.io/v2/5cc8019d300000980a055e76"
               [nzBeforeUpload]="handleBeforeUpload">
-              <button nz-button>
-                <nz-icon nzType="upload" />
-                Select Image
-              </button>
+              <button style="display: none;" #upload></button>
             </nz-upload>
+
+            <button nz-button (click)="upload.click()">
+              <nz-icon nzType="upload" />
+              Upload
+            </button>
+            <button *ngIf="packageForm.value.imageUrl != null" style="margin-left: 1px;" nz-button nzDanger
+              (click)="removeImage()">
+              Remove
+            </button>
           </ng-template>
 
         </nz-form-control>

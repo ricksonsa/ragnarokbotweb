@@ -1,5 +1,4 @@
 using FluentFTP;
-using RagnarokBotWeb.Crosscutting.Utils;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -48,8 +47,9 @@ public class ScumFileProcessor
 
         try
         {
-            return client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/")
-              .Where(file => file.Name.StartsWith(prefixFileNameYesterday)
+            return client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/",
+                          FtpListOption.Modify | FtpListOption.Size)
+               .Where(file => file.Name.StartsWith(prefixFileNameYesterday)
                             || file.Name.StartsWith(prefixFileNameToday)
                             || file.Name.StartsWith(prefixFileNameTomorrow))
               .OrderBy(file => file.Created)
@@ -67,32 +67,43 @@ public class ScumFileProcessor
         return LocalPathFunc.Invoke($"server_{_scumServer.Id}");
     }
 
-    private ReaderPointer BuildReaderPointer(string filepath, DateTime modified)
+    private ReaderPointer BuildReaderPointer(FtpListItem item)
     {
-        var fileInfo = new FileInfo(filepath);
         return new ReaderPointer
         {
             LineNumber = 0,
-            FileName = fileInfo.Name,
-            FileSize = fileInfo.Length,
-            LastUpdated = modified,
+            FileName = item.Name,
+            FileSize = item.Size,
+            LastUpdated = item.Modified,
             ScumServer = _scumServer,
-            FileDate = ScumUtils.ParseDateTime(fileInfo.Name)
+            FileDate = item.Created
         };
+    }
+
+    private ReaderPointer UpdateReaderPointer(ReaderPointer pointer, FtpListItem item)
+    {
+        pointer.FileSize = item.Size;
+        pointer.LastUpdated = item.Modified;
+        return pointer;
     }
 
     public async IAsyncEnumerable<string> UnreadFileLinesAsync()
     {
+        if (_ftp is null) yield break;
+
         FtpClient client = _ftpService.GetClient(_ftp);
         DateTime today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
 
         List<FtpListItem> ftpFiles = GetLogFiles(client, _ftp.RootFolder, today, _fileType);
 
         List<(FtpListItem, ReaderPointer?)> filteredFiles = [];
+
+        // Filter to read only files that are new or were modified
         foreach (var file in ftpFiles)
         {
+            _logger.LogDebug("File fetched {File}", file.Name);
             var pointer = await _readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
-            if (pointer == null || pointer.LastUpdated != file.Modified)
+            if (pointer == null || pointer.LastUpdated != file.Modified || pointer.FileSize != file.Size)
             {
                 filteredFiles.Add((file, pointer));
             }
@@ -107,39 +118,78 @@ public class ScumFileProcessor
         string localPath = GetLocalPath();
         Directory.CreateDirectory(localPath);
 
-        _ftpService.CopyFiles(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList());
+        DeleteLocalFiles(localPath, filteredFiles.Select(f => f.Item1.Name));
+        try
+        {
+            _ftpService.CopyFiles(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error trying to copy files");
+            _logger.LogError("Exception [{Ex}]", ex.Message);
+            _logger.LogError("Inner Exception [{Ex}]", ex.InnerException?.Message);
+            throw;
+        }
 
         foreach (var file in filteredFiles)
         {
+            ReaderPointer pointer = file.Item2 is not null ? UpdateReaderPointer(file.Item2, file.Item1) : BuildReaderPointer(file.Item1);
             string filePath = Path.Combine(localPath, file.Item1!.Name);
-            ReaderPointer pointer = file.Item2 ?? BuildReaderPointer(filePath, file.Item1?.Modified ?? DateTime.Now)!;
 
             int lineNumber = 0;
             using var reader = new StreamReader(filePath, Encoding.Unicode);
 
             while (await reader.ReadLineAsync() is { } line)
             {
-                lineNumber++;
+                if (lineNumber < pointer.LineNumber)
+                {
+                    lineNumber++;
+                    continue;
+                }
 
-                if (pointer!.LineNumber >= lineNumber) continue;
-                if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line) || line.Contains("Game version")) continue;
+                if (string.IsNullOrWhiteSpace(line) || line.Contains("Game version"))
+                {
+                    lineNumber++;
+                    continue;
+                }
 
-                _logger.LogDebug("Reading file File[{FileName}:{FileModified}] returning line {Line}", file.Item1!.Name, file.Item1!.Modified, line);
                 yield return line;
+                _logger.LogDebug("Reading file File[{FileName}:{FileModified}]", file.Item1!.Name, file.Item1!.Modified);
+                _logger.LogDebug("Yielding: {V}", line);
+
+                lineNumber++;
             }
 
-            pointer!.LineNumber = lineNumber;
+            if (lineNumber != pointer.LineNumber)
+            {
+                pointer.LineNumber = lineNumber;
 
+                try
+                {
+                    await _readerPointerRepository.CreateOrUpdateAsync(pointer);
+                    await _readerPointerRepository.SaveAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("UnreadFileLinesAsync error {Exception}", ex);
+                }
+            }
+        }
+    }
+
+    private void DeleteLocalFiles(string localPath, IEnumerable<string> files)
+    {
+        foreach (var file in files)
+        {
+            var path = Path.Combine(localPath + file);
             try
             {
-                await _readerPointerRepository.CreateOrUpdateAsync(pointer);
-                await _readerPointerRepository.SaveAsync();
+                File.Delete(path);
             }
             catch (Exception ex)
             {
-                _logger.LogError("UnreadFileLinesAsync error {Exception}", ex);
+                _logger.LogError("Unable to delete file {Path} with error {Ex}", path, ex.Message);
             }
-
         }
     }
 }

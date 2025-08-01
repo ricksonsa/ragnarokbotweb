@@ -74,6 +74,8 @@ export class PackageComponent implements OnInit {
   channels: ChannelDto[] = [];
   avatarUrl: string;
   uploading = false;
+  isUploaded = false;
+  loading = false;
 
   get searchControl() {
     return this.packageItemForm.controls['searchControl'];
@@ -118,12 +120,18 @@ export class PackageComponent implements OnInit {
     this.route.data.subscribe(data => {
       var item = data['package'];
       if (item) {
+        this.isUploaded = true;
         const pack = item as PackageDto;
         this.packageForm.patchValue(pack);
         this.avatarUrl = this.packageForm.value.imageUrl;
         this.items = pack.packItems;
       }
     });
+  }
+
+  removeImage() {
+    this.packageForm.controls['imageUrl'].patchValue(null);
+    this.avatarUrl = null;
   }
 
   loadDiscordChannels() {
@@ -239,6 +247,7 @@ export class PackageComponent implements OnInit {
       return;
     }
 
+    this.loading = true;
     var pack = this.packageForm.value as PackageDto;
     pack.packItems = this.items;
 
@@ -252,10 +261,12 @@ export class PackageComponent implements OnInit {
 
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', message, 'success')));
           this.goBack();
+          this.loading = false;
         },
         error: (err) => {
           var msg = err.error?.details ?? 'One or more validation errors ocurred.';
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', msg, 'error')));
+          this.loading = false;
         }
       });
   }
@@ -274,6 +285,7 @@ export class PackageComponent implements OnInit {
       this.avatarUrl = arrayBufferToBase64(e.target?.result as ArrayBuffer);
       toBase64(this.imageFile).then((value: string) => {
         this.avatarUrl = value;
+        this.isUploaded = false;
         this.packageForm.controls['imageUrl'].setValue(value);
       });
     };

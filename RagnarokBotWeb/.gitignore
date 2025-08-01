@@ -46,3 +46,6 @@ msbuild.wrn
 app.db
 app.db-shm
 app.db-wal
+
+cdn-storage/
+launchSettings.json

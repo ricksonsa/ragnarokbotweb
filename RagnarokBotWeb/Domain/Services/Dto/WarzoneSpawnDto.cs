@@ -5,5 +5,6 @@
         public long Id { get; set; }
         public long WarzoneId { get; set; }
         public TeleportDto Teleport { get; set; }
+        public long TeleportId { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using Quartz;
 using RagnarokBotWeb.Application.Discord;
@@ -150,6 +151,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IWarzoneRepository, WarzoneRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IFileService, FileService>();
             builder.Services.AddScoped<ILockpickService, LockpickService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IBunkerService, BunkerService>();
@@ -225,6 +227,16 @@ namespace RagnarokBotWeb
 
             // Redirect to Angular for non-API requests
             app.MapFallbackToFile("index.html");
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "cdn-storage")),
+                RequestPath = "/images",
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");
+                }
+            });
 
             try
             {

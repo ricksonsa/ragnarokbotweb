@@ -19,6 +19,7 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly ILogger<WarzoneService> _logger;
         private readonly IWarzoneRepository _warzoneRepository;
+        private readonly IFileService _fileService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDiscordService _discordService;
         private readonly IScumServerRepository _scumServerRepository;
@@ -37,7 +38,8 @@ namespace RagnarokBotWeb.Domain.Services
             IDiscordService discordService,
             ITaskService taskService,
             ICacheService cacheService,
-            ISchedulerFactory schedulerFactory) : base(httpContextAccessor)
+            ISchedulerFactory schedulerFactory,
+            IFileService fileService) : base(httpContextAccessor)
         {
             _logger = logger;
             _warzoneRepository = warzoneRepository;
@@ -48,6 +50,7 @@ namespace RagnarokBotWeb.Domain.Services
             _taskService = taskService;
             _cacheService = cacheService;
             _schedulerFactory = schedulerFactory;
+            _fileService = fileService;
         }
 
         public async Task<WarzoneDto> CreateWarzoneAsync(WarzoneDto createWarzone)
@@ -59,6 +62,11 @@ namespace RagnarokBotWeb.Domain.Services
             if (server is null) throw new DomainException("Server tenant is not enabled");
 
             warzone.ScumServer = server;
+
+            if (!string.IsNullOrEmpty(warzone.ImageUrl))
+            {
+                warzone.ImageUrl = await _fileService.SaveCompressedBase64ImageAsync(warzone.ImageUrl);
+            }
 
             await _warzoneRepository.CreateOrUpdateAsync(warzone);
             await _warzoneRepository.SaveAsync();
@@ -73,17 +81,26 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 Buttons = [new($"Buy {warzone.Name} Teleport", action)],
                 DiscordId = ulong.Parse(warzone.DiscordChannelId!),
+                FooterText = GetFooterText(warzone),
+                Color = warzone.IsVipOnly ? Color.Gold : Color.Blue,
                 Text = warzone.Description,
                 ImageUrl = warzone.ImageUrl,
                 Title = warzone.Name
             };
-            IUserMessage message;
-            if (embed.ImageUrl != null)
-                message = await _discordService.SendEmbedWithBase64Image(embed);
-            else
-                message = await _discordService.SendEmbedToChannel(embed);
 
+            IUserMessage message = await _discordService.SendEmbedToChannel(embed);
             return message.Id;
+        }
+
+        private static string GetFooterText(Warzone warzone)
+        {
+            string text = string.Empty;
+
+            if (warzone.Price > 0) text = $"Price: {warzone.Price}";
+            if (warzone.VipPrice > 0) text += $"\nVip price: {warzone.VipPrice}";
+            if (warzone.IsVipOnly) text = $"Price: {warzone.VipPrice}";
+
+            return text;
         }
 
         public async Task DeleteDiscordMessage(Warzone? warzone)
@@ -96,90 +113,184 @@ namespace RagnarokBotWeb.Domain.Services
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
 
-            var warzoneNotTracked = await _warzoneRepository.FindByIdAsNoTrackingAsync(id);
-            if (warzoneNotTracked is null) throw new NotFoundException("Pack not found");
+            var warzone = await _warzoneRepository.FindByIdAsync(id);
 
-            if (warzoneNotTracked.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
+            if (warzone == null)
+                throw new NotFoundException("Warzone not found");
 
-            if (warzoneNotTracked.WarzoneItems.Any())
+
+            var previousImage = warzone.ImageUrl;
+            var previousDiscordId = warzone.DiscordChannelId;
+            _mapper.Map(warzoneDto, warzone);
+
+            if (!string.IsNullOrEmpty(warzone.ImageUrl) && warzone.ImageUrl != previousImage)
             {
-                warzoneNotTracked.WarzoneItems.ForEach(wi => wi.Item = null);
-                _unitOfWork.WarzoneItems.RemoveRange(warzoneNotTracked.WarzoneItems);
+                if (!string.IsNullOrEmpty(previousImage)) _fileService.DeleteFile(previousImage);
+                warzone.ImageUrl = await _fileService.SaveCompressedBase64ImageAsync(warzone.ImageUrl);
+            }
+            RemoveWarzoneItems(warzoneDto, warzone);
+            RemoveWarzoneSpawnPoints(warzoneDto, warzone);
+            RemoveWarzoneTeleports(warzoneDto, warzone);
+
+            if (warzone.IsRunning && !warzoneDto.Enabled)
+            {
+                await CloseWarzone(warzone.ScumServer);
             }
 
-            if (warzoneNotTracked.Teleports.Any())
+            if (warzone.Enabled)
             {
-                _unitOfWork.Teleports.RemoveRange(warzoneNotTracked.Teleports.Select(x => x.Teleport));
-                _unitOfWork.WarzoneTeleports.RemoveRange(warzoneNotTracked.Teleports);
-            }
-
-            if (warzoneNotTracked.SpawnPoints.Any())
-            {
-                _unitOfWork.Teleports.RemoveRange(warzoneNotTracked.SpawnPoints.Select(x => x.Teleport));
-                _unitOfWork.WarzoneSpawns.RemoveRange(warzoneNotTracked.SpawnPoints);
-            }
-
-            var warzone = _mapper.Map<Warzone>(warzoneDto);
-            warzone.ScumServer = warzoneNotTracked.ScumServer;
-
-            if (warzoneNotTracked.IsRunning && !warzoneDto.Enabled)
-            {
-                await CloseWarzone(warzoneNotTracked.ScumServer);
-            }
-
-            if (!string.IsNullOrEmpty(warzoneDto.DiscordChannelId) && warzoneDto.DiscordChannelId != warzoneNotTracked.DiscordChannelId)
-            {
-                if (warzoneNotTracked.DiscordMessageId != null)
+                try
                 {
-                    await _discordService.RemoveMessage(ulong.Parse(warzoneNotTracked.DiscordChannelId!), warzoneNotTracked.DiscordMessageId!.Value);
+                    await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), warzone.DiscordMessageId!.Value);
                 }
+                catch (Exception)
+                { }
 
-                warzone.DiscordChannelId = warzoneDto.DiscordChannelId;
-
-                if (warzoneNotTracked.IsRunning)
+                if (warzone.IsRunning)
                 {
                     warzone.DiscordMessageId = await GenerateDiscordWarzoneButton(warzone);
                 }
             }
+            else if (!string.IsNullOrEmpty(warzoneDto.DiscordChannelId) && warzoneDto.DiscordChannelId != previousDiscordId)
+            {
+                try
+                {
+                    await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), warzone.DiscordMessageId!.Value);
+                }
+                catch (Exception)
+                { }
+            }
 
-            await _warzoneRepository.CreateOrUpdateAsync(warzone);
-            await _warzoneRepository.SaveAsync();
+            _unitOfWork.Warzones.Update(warzone);
+            await _unitOfWork.SaveAsync();
 
             return _mapper.Map<WarzoneDto>(warzone);
+        }
+
+        private void RemoveWarzoneItems(WarzoneDto warzoneDto, Warzone existingWarzone)
+        {
+            var updatedItemIds = warzoneDto.WarzoneItems.Select(wi => wi.ItemId).ToHashSet();
+
+            // Remove WarzoneItems no longer present
+            foreach (var existingItem in existingWarzone.WarzoneItems.ToList())
+            {
+                if (!updatedItemIds.Contains(existingItem.ItemId))
+                {
+                    _unitOfWork.AppDbContext.WarzoneItems.Remove(existingItem);
+                }
+            }
+
+            // Add new WarzoneItems
+            foreach (var updatedItem in warzoneDto.WarzoneItems)
+            {
+                if (!existingWarzone.WarzoneItems.Any(wi => wi.ItemId == updatedItem.ItemId))
+                {
+                    existingWarzone.WarzoneItems.Add(new WarzoneItem
+                    {
+                        ItemId = updatedItem.ItemId,
+                        WarzoneId = existingWarzone.Id
+                    });
+                }
+            }
+        }
+
+        private void RemoveWarzoneTeleports(WarzoneDto warzoneDto, Warzone existingWarzone)
+        {
+            var updatedItemIds = warzoneDto.Teleports.Select(wi => wi.TeleportId).ToHashSet();
+
+            // Remove WarzoneItems no longer present
+            foreach (var existingItem in existingWarzone.Teleports.ToList())
+            {
+                if (!updatedItemIds.Contains(existingItem.TeleportId))
+                {
+                    _unitOfWork.AppDbContext.WarzoneTeleports.Remove(existingItem);
+                }
+            }
+
+            // Add new WarzoneItems
+            foreach (var dto in warzoneDto.Teleports)
+            {
+                if (!existingWarzone.Teleports.Any(wi => wi.TeleportId == dto.TeleportId))
+                {
+                    existingWarzone.Teleports.Add(new WarzoneTeleport
+                    {
+                        Teleport = _mapper.Map<Teleport>(dto.Teleport),
+                        WarzoneId = existingWarzone.Id
+                    });
+                }
+            }
+        }
+
+        private void RemoveWarzoneSpawnPoints(WarzoneDto warzoneDto, Warzone existingWarzone)
+        {
+            var updatedItemIds = warzoneDto.SpawnPoints.Select(wi => wi.TeleportId).ToHashSet();
+
+            // Remove WarzoneItems no longer present
+            foreach (var existingItem in existingWarzone.SpawnPoints.ToList())
+            {
+                if (!updatedItemIds.Contains(existingItem.TeleportId))
+                {
+                    _unitOfWork.AppDbContext.WarzoneSpawns.Remove(existingItem);
+                }
+            }
+
+            // Add new WarzoneItems
+            foreach (var dto in warzoneDto.SpawnPoints)
+            {
+                if (!existingWarzone.SpawnPoints.Any(wi => wi.TeleportId == dto.TeleportId))
+                {
+                    existingWarzone.SpawnPoints.Add(new WarzoneSpawn
+                    {
+                        Teleport = _mapper.Map<Teleport>(dto.Teleport),
+                        WarzoneId = existingWarzone.Id
+                    });
+                }
+            }
         }
 
         public async Task DeleteWarzoneAsync(long id)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+            await CheckAuthority(id, serverId);
 
-            var warzoneNotTracked = await _warzoneRepository.FindByIdAsNoTrackingAsync(id);
-            if (warzoneNotTracked is null) throw new NotFoundException("Package not found");
-            if (warzoneNotTracked.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
+            var warzone = await _unitOfWork.AppDbContext.Warzones
+              .Include(w => w.WarzoneItems)
+              .Include(w => w.SpawnPoints)
+                  .ThenInclude(sp => sp.Teleport)
+              .Include(w => w.Teleports)
+                  .ThenInclude(w => w.Teleport)
+              .FirstOrDefaultAsync(w => w.Id == id);
 
-            if (warzoneNotTracked.WarzoneItems.Any())
+            if (warzone == null)
+                throw new NotFoundException("Warzone not found");
+
+            // Optionally clean up Discord message
+            if (!string.IsNullOrEmpty(warzone.DiscordChannelId) && warzone.DiscordMessageId.HasValue)
             {
-                warzoneNotTracked.WarzoneItems.ForEach(wi => wi.Item = null);
-                _unitOfWork.WarzoneItems.RemoveRange(warzoneNotTracked.WarzoneItems);
+                try
+                {
+                    await _discordService.RemoveMessage(
+                        ulong.Parse(warzone.DiscordChannelId),
+                        warzone.DiscordMessageId.Value
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Failed to remove Discord message: {0}", ex.Message);
+                }
             }
 
-            if (warzoneNotTracked.Teleports.Any())
-            {
-                _unitOfWork.Teleports.RemoveRange(warzoneNotTracked.Teleports.Select(x => x.Teleport));
-                _unitOfWork.WarzoneTeleports.RemoveRange(warzoneNotTracked.Teleports);
-            }
+            // === Remove related entities ===
 
-            if (warzoneNotTracked.SpawnPoints.Any())
-            {
-                _unitOfWork.Teleports.RemoveRange(warzoneNotTracked.SpawnPoints.Select(x => x.Teleport));
-                _unitOfWork.WarzoneSpawns.RemoveRange(warzoneNotTracked.SpawnPoints);
-            }
-            await _warzoneRepository.SaveAsync();
+            _unitOfWork.AppDbContext.WarzoneItems.RemoveRange(warzone.WarzoneItems);
+            _unitOfWork.AppDbContext.WarzoneSpawns.RemoveRange(warzone.SpawnPoints);
+            _unitOfWork.AppDbContext.Teleports.RemoveRange(warzone.SpawnPoints.Select(sp => sp.Teleport));
 
-            var warzone = await _warzoneRepository.FindByIdAsync(id);
-            warzone!.Deleted = DateTime.UtcNow;
-            await _warzoneRepository.CreateOrUpdateAsync(warzoneNotTracked);
-            await _warzoneRepository.SaveAsync();
+            // === Remove main entity ===
+
+            _unitOfWork.AppDbContext.Warzones.Remove(warzone);
+            await _unitOfWork.AppDbContext.SaveChangesAsync();
 
             try
             {
@@ -194,6 +305,14 @@ namespace RagnarokBotWeb.Domain.Services
             catch (Exception) { }
 
             return;
+        }
+
+        private async Task CheckAuthority(long id, long? serverId)
+        {
+            if (!await _unitOfWork.AppDbContext.Warzones.AsNoTracking().Include(wz => wz.ScumServer).AnyAsync(wz => wz.ScumServer.Id == serverId && wz.Id == id))
+            {
+                throw new UnauthorizedException("Invalid warzone");
+            }
         }
 
         public async Task<WarzoneDto> FetchWarzoneById(long id)
@@ -311,7 +430,7 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var warzone = await _unitOfWork.Warzones
                 .Include(warzone => warzone.ScumServer)
-                .FirstOrDefaultAsync(warzone => warzone.ScumServer.Id == server.Id && warzone.IsRunning, cancellationToken: token);
+                .FirstOrDefaultAsync(warzone => warzone.ScumServer.Id == server.Id && warzone.StopAt.HasValue && DateTime.Now < warzone.StopAt.Value, cancellationToken: token);
 
             if (warzone == null) return;
 

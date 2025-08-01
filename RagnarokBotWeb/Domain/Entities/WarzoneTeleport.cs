@@ -2,7 +2,9 @@
 {
     public class WarzoneTeleport : BaseEntity
     {
-        public required Warzone Warzone { get; set; }
-        public required Teleport Teleport { get; set; }
+        public Warzone Warzone { get; set; }
+        public long WarzoneId { get; set; }
+        public Teleport Teleport { get; set; }
+        public long TeleportId { get; set; }
     }
 }
