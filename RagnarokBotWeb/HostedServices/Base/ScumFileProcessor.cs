@@ -38,6 +38,27 @@ public class ScumFileProcessor
         _ftp = server.Ftp!;
     }
 
+    private static bool IsIrrelevantLine(string line)
+    {
+        return string.IsNullOrWhiteSpace(line) || line.Contains("Game version");
+    }
+
+    private void DeleteLocalFiles(string localPath, IEnumerable<string> files)
+    {
+        foreach (var file in files)
+        {
+            var path = Path.Combine(localPath + file);
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Unable to delete file {Path} with error {Ex}", path, ex.Message);
+            }
+        }
+    }
+
     private List<FtpListItem> GetLogFiles(FtpClient client, string? rootFolder, DateTime today, EFileType fileType)
     {
         var prefixFileNameYesterday = fileType.ToString().ToLower() + "_" + today.AddDays(-1).ToString("yyyyMMdd");
@@ -146,7 +167,7 @@ public class ScumFileProcessor
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(line) || line.Contains("Game version"))
+                if (IsIrrelevantLine(line))
                 {
                     lineNumber++;
                     continue;
@@ -176,21 +197,5 @@ public class ScumFileProcessor
         }
 
         client.Disconnect();
-    }
-
-    private void DeleteLocalFiles(string localPath, IEnumerable<string> files)
-    {
-        foreach (var file in files)
-        {
-            var path = Path.Combine(localPath + file);
-            try
-            {
-                File.Delete(path);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Unable to delete file {Path} with error {Ex}", path, ex.Message);
-            }
-        }
     }
 }
