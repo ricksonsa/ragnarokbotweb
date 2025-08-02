@@ -17,6 +17,7 @@
         public static string OneMinCron { get; set; } = "0 0/1 * * * ?";
         public static string TwoMinCron { get; set; } = "0 0/2 * * * ?";
         public static string TenSecondsCron { get; set; } = "0/10 * * * * ?";
+        public static string ThirtySecondsCron { get; set; } = "0/30 * * * * ?";
         public static string EveryDayCron { get; set; } = "0 0 * * * ?";
     }
 }

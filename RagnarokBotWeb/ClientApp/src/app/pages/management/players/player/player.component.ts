@@ -313,7 +313,7 @@ export class PlayerComponent implements OnInit {
 
 
   goBack() {
-    this.router.navigate(['servers', this.account!.serverId, 'management', 'players']);
+    this.router.navigate(['management', 'players']);
   }
 
   save() {

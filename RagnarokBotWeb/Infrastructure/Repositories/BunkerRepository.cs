@@ -16,21 +16,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public override Task CreateOrUpdateAsync(Bunker entity)
         {
-            //if (entity.ScumServer is not null)
-            //{
-            //    var tracked = _appDbContext.ChangeTracker.Entries<ScumServer>()
-            //        .FirstOrDefault(e => e.Entity.Id == entity.ScumServer.Id);
-
-            //    if (tracked == null)
-            //    {
-            //        _appDbContext.ScumServers.Attach(entity.ScumServer);
-            //    }
-            //    else
-            //    {
-            //        entity.ScumServer = tracked.Entity;
-            //    }
-            //}
-
+            _appDbContext.ScumServers.Attach(entity.ScumServer);
             return base.CreateOrUpdateAsync(entity);
         }
 

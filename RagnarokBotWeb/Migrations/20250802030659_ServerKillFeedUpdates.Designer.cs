@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RagnarokBotWeb.Infrastructure.Configuration;
@@ -11,9 +12,11 @@ using RagnarokBotWeb.Infrastructure.Configuration;
 namespace RagnarokBotWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250802030659_ServerKillFeedUpdates")]
+    partial class ServerKillFeedUpdates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -835,8 +838,11 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<long?>("GuildId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("KillAnnounceText")
-                        .HasColumnType("text");
+                    b.Property<bool>("HideKillerName")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HideMineKill")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
@@ -868,16 +874,10 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<bool>("ShowKillWeapon")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("ShowKillerName")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("ShowLockpickContainerName")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ShowLockpickSector")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShowMineKill")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ShowSameSquadKill")

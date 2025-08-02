@@ -19,12 +19,20 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var bunker = await _bunkerRepository.FindOneWithServerAsync(b => b.Sector == sector && b.ScumServer.Id == server.Id);
             bunker ??= new(sector);
-            bunker.ScumServer = server;
             bunker.Locked = locked;
             bunker.Available = DateTime.UtcNow.Add(activation);
+            bunker.ScumServer ??= server;
 
-            await _bunkerRepository.CreateOrUpdateAsync(bunker);
-            await _bunkerRepository.SaveAsync();
+            try
+            {
+                await _bunkerRepository.CreateOrUpdateAsync(bunker);
+                await _bunkerRepository.SaveAsync();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
         }
     }
 }

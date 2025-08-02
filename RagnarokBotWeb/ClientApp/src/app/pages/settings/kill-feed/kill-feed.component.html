@@ -1,0 +1,114 @@
+<div class="main single">
+  <ng-template #noDiscord>
+    <nz-alert nzMessage="Discord configuration is required." nzType="error"></nz-alert>
+  </ng-template>
+
+  <ng-template #saveKillfeed>
+    <button [disabled]="account?.server.discord == null" nz-button nzType="primary" (click)="save()" [nzLoading]="loading">Save</button>
+  </ng-template>
+
+  <ng-template #killfeed>
+    <nz-icon nzType="aim" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Kill Feed</span>
+  </ng-template>
+
+  <nz-card [nzTitle]="killfeed" [nzExtra]="saveKillfeed">
+    <form nz-form *ngIf="account?.server.discord; else noDiscord" [formGroup]="killfeedForm">
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="killFeedExtra">
+          <label nz-checkbox formControlName="useKillFeed" nzFor="useKillFeed">Post Kills in Discord</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #killFeedExtra>
+        <p>Notify kills on the selected Kill Feed Discord channel.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="distance">
+          <label nz-checkbox formControlName="showKillDistance" nzFor="showKillDistance">Show distance</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #distance>
+        <p>Displays the distance of the kill on discord Kill Feed</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="sector">
+          <label nz-checkbox formControlName="showKillSector" nzFor="showKillSector">Show sector</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #sector>
+        <p>Displays sector on discord Kill Feed</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="weapon">
+          <label nz-checkbox formControlName="showKillWeapon" nzFor="showKillWeapon">Show weapon</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #weapon>
+        <p>Displays the weapon used on discord Kill Feed</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="showKillerName">
+          <label nz-checkbox formControlName="showKillerName" nzFor="showKillerName">Show Killer Name</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #showKillerName>
+        <p>Show killer name on discord Kill Feed</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="hideMine">
+          <label nz-checkbox formControlName="showMineKill" nzFor="showMineKill">Show Mines in Kill</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #hideMine>
+        <p>Show mine/trap kill on discord Kill Feed</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="sameSquad">
+          <label nz-checkbox formControlName="showSameSquadKill" nzFor="showSameSquadKill">Show Same Squad Kill</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #sameSquad>
+        <p>Show same squad kill on discord Kill Feed</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="showCoordinates">
+          <label nz-checkbox formControlName="showKillCoordinates" nzFor="showKillCoordinates">Show Coordinates</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #showCoordinates>
+        <p>Show killer and victim coordinates on discord Kill Feed</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" [nzExtra]="showMap">
+          <label nz-checkbox formControlName="showKillOnMap" nzFor="showKillOnMap">Show Map</label>
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #showMap>
+        <p>Show map image with kill locations on discord Kill Feed</p>
+      </ng-template>
+
+      <br>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="token">Kill Text</nz-form-label>
+        <nz-form-control [nzSpan]="null" [nzExtra]="killText">
+          <input nz-input name="killAnnounceText" formControlName="killAnnounceText"
+            placeholder="{killer_name} killed {victim_name} with {weapon} at a distance of {distance} sector {sector}" type="text"
+            id="killAnnounceText" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #killText>
+        <p>The text that the bot you send in game when a kill happens.</p>
+        <p>Available template variables: {{'{killer_name}'}} {{'{victim_name}'}} {{'{sector}'}} {{'{weapon}'}}
+          {{'{distance}'}}.
+        </p>
+      </ng-template>
+    </form>
+  </nz-card>
+</div>

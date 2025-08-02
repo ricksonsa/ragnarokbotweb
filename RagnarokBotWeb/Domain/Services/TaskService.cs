@@ -56,6 +56,10 @@ namespace RagnarokBotWeb.Domain.Services
                             .WithCronSchedule(AppSettingsStatic.TenSecondsCron)
                             .Build();
 
+        private static ITrigger ThirtySecondsTrigger() => TriggerBuilder.Create()
+                          .WithCronSchedule(AppSettingsStatic.ThirtySecondsCron)
+                          .Build();
+
         private static ITrigger EveryDayTrigger() => TriggerBuilder.Create()
                           .WithCronSchedule(AppSettingsStatic.EveryDayCron)
                           .Build();
@@ -114,7 +118,7 @@ namespace RagnarokBotWeb.Domain.Services
                    .UsingJobData("server_id", server.Id)
                    .UsingJobData("file_type", EFileType.Kill.ToString())
                    .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            await scheduler.ScheduleJob(job, ThirtySecondsTrigger());
 
             job = JobBuilder.Create<EconomyJob>()
                 .WithIdentity($"EconomyJob({server.Id})", $"FtpJobs({server.Id})")
@@ -128,38 +132,31 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Gameplay.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
-
-            job = JobBuilder.Create<LoginJob>()
-                .WithIdentity($"LoginJob({server.Id})", $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("file_type", EFileType.Login.ToString())
-                .Build();
-            await scheduler.ScheduleJob(job, DefaultTrigger());
+            await scheduler.ScheduleJob(job, ThirtySecondsTrigger());
 
             job = JobBuilder.Create<VipExpireJob>()
                 .WithIdentity($"VipExpireJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TwoMinTrigger());
+            await scheduler.ScheduleJob(job, TenMinTrigger());
 
             job = JobBuilder.Create<BanExpireJob>()
                 .WithIdentity($"BanExpireJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TwoMinTrigger());
+            await scheduler.ScheduleJob(job, TenMinTrigger());
 
             job = JobBuilder.Create<SilenceExpireJob>()
                 .WithIdentity($"SilenceExpireJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TwoMinTrigger());
+            await scheduler.ScheduleJob(job, TenMinTrigger());
 
             job = JobBuilder.Create<DiscordRoleExpireJob>()
                 .WithIdentity($"DiscordRoleExpireJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TwoMinTrigger());
+            await scheduler.ScheduleJob(job, TenMinTrigger());
 
             job = JobBuilder.Create<FileChangeJob>()
                 .WithIdentity($"FileChangeJob({server.Id})", $"FtpJobs({server.Id})")

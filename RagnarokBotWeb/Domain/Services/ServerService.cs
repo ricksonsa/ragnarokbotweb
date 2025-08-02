@@ -415,5 +415,19 @@ namespace RagnarokBotWeb.Domain.Services
 
             return _mapper.Map<ScumServerDto>(server);
         }
+
+        public async Task<ScumServerDto> UpdateKillFeed(UpdateKillFeedDto updateKillFeed)
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            server = _mapper.Map(updateKillFeed, server);
+
+            await _scumServerRepository.CreateOrUpdateAsync(server);
+            await _scumServerRepository.SaveAsync();
+
+            return _mapper.Map<ScumServerDto>(server);
+        }
     }
 }

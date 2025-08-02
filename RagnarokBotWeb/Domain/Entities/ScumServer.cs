@@ -13,13 +13,16 @@ namespace RagnarokBotWeb.Domain.Entities
         public string? TimeZoneId { get; set; }
 
         #region Kill Feed
-        public bool UseKillFeed { get; set; }
-        public bool ShowKillDistance { get; set; }
-        public bool ShowKillSector { get; set; }
-        public bool ShowKillWeapon { get; set; }
-        public bool HideKillerName { get; set; }
-        public bool HideMineKill { get; set; }
-        public bool ShowSameSquadKill { get; set; }
+        public bool UseKillFeed { get; set; } = true;
+        public bool ShowKillDistance { get; set; } = true;
+        public bool ShowKillSector { get; set; } = true;
+        public bool ShowKillWeapon { get; set; } = true;
+        public bool ShowKillerName { get; set; } = true;
+        public bool ShowMineKill { get; set; } = true;
+        public bool ShowSameSquadKill { get; set; } = true;
+        public bool ShowKillCoordinates { get; set; } = true;
+        public bool ShowKillOnMap { get; set; } = true;
+        public string? KillAnnounceText { get; set; }
         #endregion
 
         #region Lockpick Feed
@@ -27,6 +30,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public bool ShowLockpickSector { get; set; }
         public bool ShowLockpickContainerName { get; set; }
         public bool SendVipLockpickAlert { get; set; }
+
 
         #endregion
 
@@ -44,9 +48,13 @@ namespace RagnarokBotWeb.Domain.Entities
         public ScumServer(Tenant tenant)
         {
             Tenant = tenant;
+            KillAnnounceText = "{killer_name} killed {victim_name} with {weapon} at a distance of {distance} sector {sector}";
         }
 
-        public ScumServer() { }
+        public ScumServer()
+        {
+            KillAnnounceText = "{killer_name} killed {victim_name} with {weapon} at a distance of {distance} sector {sector}";
+        }
 
         public void SetRestartTimes(List<string> restartTimes)
         {

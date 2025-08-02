@@ -4,7 +4,6 @@ using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Serilog;
-using System.Diagnostics;
 using System.Text;
 
 namespace RagnarokBotWeb.HostedServices.Base;
@@ -39,7 +38,7 @@ public class ScumFileProcessor
         _ftp = server.Ftp!;
     }
 
-    private static List<FtpListItem> GetLogFiles(FtpClient client, string? rootFolder, DateTime today, EFileType fileType)
+    private List<FtpListItem> GetLogFiles(FtpClient client, string? rootFolder, DateTime today, EFileType fileType)
     {
         var prefixFileNameYesterday = fileType.ToString().ToLower() + "_" + today.AddDays(-1).ToString("yyyyMMdd");
         var prefixFileNameToday = fileType.ToString().ToLower() + "_" + today.ToString("yyyyMMdd");
@@ -57,7 +56,7 @@ public class ScumFileProcessor
         }
         catch (Exception ex)
         {
-            Debug.WriteLine(ex.Message);
+            _logger.LogDebug("Error GetLogFiles type {Type} -> {Ex}", fileType.ToString(), ex.Message);
             throw;
         }
     }
@@ -76,7 +75,7 @@ public class ScumFileProcessor
             FileSize = item.Size,
             LastUpdated = item.Modified,
             ScumServer = _scumServer,
-            FileDate = item.Created
+            FileDate = DateTime.Now
         };
     }
 
@@ -111,7 +110,7 @@ public class ScumFileProcessor
 
         if (filteredFiles.Count == 0)
         {
-            _logger.LogWarning("No unread or updated files found. Skipping UnreadFileLinesAsync.");
+            _logger.LogDebug("No unread or updated files found for {Type}. Skipping UnreadFileLinesAsync.", _fileType);
             yield break;
         }
 
@@ -175,6 +174,8 @@ public class ScumFileProcessor
                 }
             }
         }
+
+        client.Disconnect();
     }
 
     private void DeleteLocalFiles(string localPath, IEnumerable<string> files)

@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RagnarokBotClient", "Ragnar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{570C706C-7A13-4FE3-B963-ADDEE57E5BC1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleAppTest", "ConsoleAppTest\ConsoleAppTest.csproj", "{DAD0E3B3-3213-4938-949F-9F666B5842A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{570C706C-7A13-4FE3-B963-ADDEE57E5BC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{570C706C-7A13-4FE3-B963-ADDEE57E5BC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{570C706C-7A13-4FE3-B963-ADDEE57E5BC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DAD0E3B3-3213-4938-949F-9F666B5842A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAD0E3B3-3213-4938-949F-9F666B5842A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAD0E3B3-3213-4938-949F-9F666B5842A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAD0E3B3-3213-4938-949F-9F666B5842A1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

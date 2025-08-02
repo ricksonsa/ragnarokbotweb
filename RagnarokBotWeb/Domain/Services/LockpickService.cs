@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -18,9 +17,6 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<Lockpick> AddLockpickAttemptAsync(Lockpick lockpick)
         {
-            var user = await _uow.Players.FirstOrDefaultAsync(user => user.SteamId64 == lockpick.SteamId64);
-
-            //_uow.AppDbContext.ScumServers.Attach(lockpick.ScumServer);
             await _uow.Lockpicks.AddAsync(lockpick);
             await _uow.SaveAsync();
             return lockpick;

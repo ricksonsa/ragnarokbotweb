@@ -90,7 +90,7 @@ export class ItemComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['servers', this.account!.serverId, 'shop', 'items']);
+    this.router.navigate(['shop', 'items']);
   }
 
   save() {

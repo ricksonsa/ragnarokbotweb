@@ -13,13 +13,13 @@
       <li nz-submenu nzOpen nzTitle="Dashboard" nzIcon="dashboard">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/dashboard/home">Home</a>
+            <a routerLink="dashboard/home">Home</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/dashboard/console">Console (Coming Soon)</a>
+            <a routerLink="dashboard/console">Console (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/dashboard/chat">Chat (Coming Soon)</a>
+            <a routerLink="dashboard/chat">Chat (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -27,13 +27,23 @@
       <li nz-submenu nzOpen nzTitle="Settings" nzIcon="form">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/settings/server">Server</a>
+            <a routerLink="settings/server">Server</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/settings/discord">Discord</a>
+            <a routerLink="settings/discord">Discord</a>
           </li>
+
+          <li nz-menu-item nzMatchRouter>
+            <a routerLink="settings/kill-feed">Kill Feed</a>
+          </li>
+
+          <li nz-menu-item nzMatchRouter>
+            <a routerLink="settings/lockpick-feed">Lockpick</a>
+          </li>
+
+
           <!-- <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/settings/rankings">Rankings (Coming Soon)</a>
+            <a routerLink="settings/rankings">Rankings (Coming Soon)</a>
           </li> -->
         </ul>
       </li>
@@ -41,10 +51,10 @@
       <li nz-submenu nzOpen nzTitle="Management" nzIcon="user">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/management/players">Players</a>
+            <a routerLink="management/players">Players</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/management/tickets">Tickets (Coming Soon)</a>
+            <a routerLink="management/tickets">Tickets (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -52,19 +62,22 @@
       <li nz-submenu nzOpen nzTitle="Shop" nzIcon="dollar-circle">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/shop/orders">Orders</a>
+            <a routerLink="shop/orders">Orders</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/shop/packages">Packages</a>
+            <a routerLink="shop/packages">Packages</a>
           </li>
           <li *ngIf="account.accessLevel > 0" nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/shop/items">Items</a>
+            <a routerLink="shop/items">Items</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/shop/welcome-pack">Welcome Pack</a>
+            <a routerLink="shop/welcome-pack">Welcome Pack</a>
           </li>
           <li nz-menu-item nzMatchRouter>
             <a>Taxi (Coming Soon)</a>
+          </li>
+          <li nz-menu-item nzMatchRouter>
+            <a>UAV (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -75,10 +88,10 @@
             <a>Air Drops (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/events/warzones">Warzones</a>
+            <a routerLink="events/warzones">Warzones</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/events/quests">Quests (Coming Soon)</a>
+            <a routerLink="events/quests">Quests (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -86,10 +99,10 @@
       <li nz-submenu nzOpen nzTitle="Scheduled Tasks" nzIcon="clock-circle">
         <ul>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/scheduled-tasks/default">Default (Coming Soon)</a>
+            <a routerLink="scheduled-tasks/default">Default (Coming Soon)</a>
           </li>
           <li nz-menu-item nzMatchRouter>
-            <a routerLink="servers/1/scheduled-tasks/custom">Custom (Coming Soon)</a>
+            <a routerLink="scheduled-tasks/custom">Custom (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -160,9 +173,9 @@
 
 <div class="login" *ngIf="!logged && !register">
   <nz-card class="login-container">
-    <div class="logo">
-      <img width="24" height="24" src="assets/images/ragnarok-logo-transparent.png" alt="">
-      <h4 nz-typography>Ragnarok Bot</h4>
+    <div class="logo-holder">
+      <img width="48" height="48" src="assets/images/ragnarok-logo-transparent.png" alt="">
+      <h4 style="margin: 0;" nz-typography>Ragnarok Bot</h4>
     </div>
     <p nz-typography> Manage your SCUM private server with automation tools and insights
       powered by Ragnarok Bot. Log in to configure events, spawns, and more.</p>
@@ -198,9 +211,9 @@
 
 <div class="login" *ngIf="!logged && register">
   <nz-card class="login-container">
-    <div class="logo">
-      <img width="80" height="80" src="assets/images/ragnarok-logo-transparent.png" alt="">
-      <h4 nz-typography>Ragnarok Bot</h4>
+    <div class="logo-holder">
+      <img width="48" height="48" src="assets/images/ragnarok-logo-transparent.png" alt="">
+      <h4 style="margin: 0;" nz-typography>Ragnarok Bot</h4>
     </div>
     <h5 nz-typography>Sign Up</h5>
     <br>

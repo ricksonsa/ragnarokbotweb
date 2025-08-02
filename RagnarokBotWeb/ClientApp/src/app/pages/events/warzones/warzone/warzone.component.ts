@@ -259,7 +259,7 @@ export class WarzoneComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['servers', this.account!.serverId, 'events', 'warzones']);
+    this.router.navigate(['events', 'warzones']);
   }
 
   addItem() {

@@ -26,6 +26,8 @@ namespace RagnarokBotWeb.Application.Mapping
                 .ReverseMap()
                     .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
 
+            CreateMap<UpdateKillFeedDto, ScumServer>();
+
             CreateMap<Item, ItemDto>();
             CreateMap<Order, OrderDto>();
 

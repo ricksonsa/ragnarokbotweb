@@ -27,9 +27,6 @@ public class GamePlayJob(
             var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository);
             await foreach (var line in processor.UnreadFileLinesAsync())
             {
-                if (string.IsNullOrEmpty(line)) continue;
-                if (line.Contains("Game version")) continue;
-
                 if (line.Contains("[LogBunkerLock]") && line.Contains(" is "))
                 {
                     var (sector, state, time) = new BunkerLogParser().Parse(line);

@@ -16,5 +16,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<List<SaveChannelDto>> GetServerDiscordChannels();
         Task<List<DiscordRolesDto>> GetServerDiscordRoles();
         Task<ScumServerDto> UpdateServerSettings(UpdateServerSettingsDto updateServer);
+        Task<ScumServerDto> UpdateKillFeed(UpdateKillFeedDto updateKillFeed);
     }
 }

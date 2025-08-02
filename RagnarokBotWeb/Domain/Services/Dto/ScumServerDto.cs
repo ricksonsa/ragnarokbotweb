@@ -9,13 +9,16 @@
         public DiscordDto? Discord { get; set; }
 
         #region Kill Feed
-        public bool UseKillFeed { get; set; }
-        public bool ShowKillDistance { get; set; }
-        public bool ShowKillSector { get; set; }
-        public bool ShowKillWeapon { get; set; }
-        public bool HideKillerName { get; set; }
-        public bool HideMineKill { get; set; }
-        public bool ShowSameSquadKill { get; set; }
+        public bool UseKillFeed { get; set; } = true;
+        public bool ShowKillDistance { get; set; } = true;
+        public bool ShowKillSector { get; set; } = true;
+        public bool ShowKillWeapon { get; set; } = true;
+        public bool ShowKillerName { get; set; } = true;
+        public bool ShowMineKill { get; set; } = true;
+        public bool ShowSameSquadKill { get; set; } = true;
+        public bool ShowKillCoordinates { get; set; } = true;
+        public bool ShowKillOnMap { get; set; } = true;
+        public string? KillAnnounceText { get; set; }
         #endregion
 
         #region Lockpick Feed

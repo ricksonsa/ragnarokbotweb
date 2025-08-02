@@ -170,17 +170,16 @@ namespace RagnarokBotWeb.Domain.Services
 
             RemovePackItems(packDto, pack);
 
-
             if (pack.Enabled)
             {
                 try
                 {
                     await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), pack.DiscordMessageId ?? 0);
+
+                    pack.DiscordChannelId = packDto.DiscordChannelId;
+                    pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
                 }
                 catch (Exception) { }
-
-                pack.DiscordChannelId = packDto.DiscordChannelId;
-                pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
 
             }
             else
@@ -217,6 +216,12 @@ namespace RagnarokBotWeb.Domain.Services
             await _packRepository.CreateOrUpdateAsync(pack);
             await _packRepository.SaveAsync();
 
+            try
+            {
+                if (!string.IsNullOrEmpty(pack.ImageUrl)) _fileService.DeleteFile(pack.ImageUrl);
+            }
+            catch (Exception)
+            { }
             return;
         }
 

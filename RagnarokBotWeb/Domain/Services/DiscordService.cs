@@ -5,8 +5,10 @@ using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using Color = Discord.Color;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -51,6 +53,11 @@ namespace RagnarokBotWeb.Domain.Services
             return (await _guildService.FindByServerIdAsync(serverId))!;
         }
 
+        private EmbedAuthorBuilder GetAuthor()
+        {
+            return new EmbedAuthorBuilder().WithName("RAGNAROK BOT").WithIconUrl(_appSettings.BaseUrl + "/images/ragnarok-logo.png");
+        }
+
         private async Task ClearBefore(Guild guild)
         {
             guild.RunTemplate = false;
@@ -76,12 +83,8 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task SendEmbedToUserDM(CreateEmbed createEmbed)
         {
-            var user = _client.GetUser(createEmbed.DiscordId);
-            if (user is null)
-            {
-                _logger.LogInformation("User with discordId: {DiscordId} was not found", createEmbed.DiscordId);
-                return;
-            }
+            var user = await GetDiscordUser(createEmbed.GuildId, createEmbed.DiscordId);
+            if (user is null) return;
 
             var dmChannel = await user.CreateDMChannelAsync();
 
@@ -151,7 +154,7 @@ namespace RagnarokBotWeb.Domain.Services
                 var embed = new EmbedBuilder()
                     .WithTitle(createEmbed.Title)
                     .WithDescription(createEmbed.Text)
-                    .WithAuthor(new EmbedAuthorBuilder().WithName("Ragnarok Bot").WithIconUrl(_appSettings.BaseUrl + "/images/ragnarok-logo.png"))
+                    .WithAuthor(GetAuthor())
                     .WithImageUrl(_appSettings.BaseUrl + "/" + createEmbed.ImageUrl)
                     .WithFooter(new EmbedFooterBuilder { Text = createEmbed.FooterText })
                     .WithColor(createEmbed.Color)
@@ -172,6 +175,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             return null;
         }
+
+
 
         public async Task RemoveMessage(ulong channelId, ulong messageId)
         {
@@ -268,6 +273,63 @@ namespace RagnarokBotWeb.Domain.Services
 
             await user.RemoveRoleAsync(role);
             _logger.LogInformation("Removed Discord Role Id[{Role}] to user[{User}]", roleId, userDiscordId);
+        }
+
+        public async Task SendKillFeedEmbed(ScumServer server, Kill kill)
+        {
+            var killFeedChannel = await _channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.KillFeed);
+            if (killFeedChannel is null) return;
+            var channel = await _client.GetChannelAsync(killFeedChannel.DiscordId) as IMessageChannel;
+            if (channel is null) return;
+
+            var embedBuilder = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithAuthor(GetAuthor())
+                .WithCurrentTimestamp();
+
+            if (server.ShowKillerName)
+            {
+                embedBuilder.AddField("Killer", kill.KillerName, true);
+                embedBuilder.AddField("Victim", kill.TargetName, true);
+            }
+            else
+            {
+                embedBuilder.AddField("Victim", kill.TargetName, false);
+            }
+
+            if (server.ShowKillWeapon)
+                embedBuilder.AddField("Weapon", kill.DisplayWeapon, false);
+
+            if (server.ShowKillDistance)
+                embedBuilder.AddField("Distance", kill.Distance, false);
+
+            if (server.ShowKillSector)
+                embedBuilder.AddField("Sector", kill.Sector, false);
+
+            if (server.ShowKillCoordinates)
+            {
+                embedBuilder.AddField("Killer Coordinates", $"{kill.KillerX} {kill.KillerY} {kill.KillerZ}", true);
+                embedBuilder.AddField("Victim Coordinates", $"{kill.VictimX} {kill.VictimY} {kill.VictimZ}", true);
+            }
+
+            if (server.ShowKillOnMap)
+            {
+                try
+                {
+                    embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{kill.ImageUrl}");
+                }
+                catch (Exception)
+                { }
+            }
+
+            try
+            {
+                embedBuilder.WithThumbnailUrl($"{_appSettings.BaseUrl}/images/scum_images/{kill.Weapon!.Substring(0, kill.Weapon.LastIndexOf("_C"))}.webp");
+            }
+            catch (Exception)
+            { }
+
+            await channel.SendMessageAsync(embed: embedBuilder.Build());
         }
     }
 }

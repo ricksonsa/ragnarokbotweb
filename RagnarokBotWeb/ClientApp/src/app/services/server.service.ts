@@ -43,4 +43,8 @@ export class ServerService {
   updateSettings(settings: any) {
     return this.http.put<ScumServer>(`${WEB_API.baseUrl}/api/servers/settings`, settings);
   }
+
+  updateKillFeed(settings: any) {
+    return this.http.put<ScumServer>(`${WEB_API.baseUrl}/api/servers/kill-feed`, settings);
+  }
 }

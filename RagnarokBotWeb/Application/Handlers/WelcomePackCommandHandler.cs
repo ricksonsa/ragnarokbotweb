@@ -54,7 +54,7 @@ namespace RagnarokBotWeb.Application.Handlers
                 await _playerRegisterRepository.CreateOrUpdateAsync(register);
                 await _playerRegisterRepository.SaveAsync();
 
-                string text = $"You were registered at {register.ScumServer.Name}.";
+                string text = $"You are registered at {register.ScumServer.Name}.";
                 var order = await _orderService.PlaceWelcomePackOrder(player);
                 if (order != null)
                 {
@@ -63,6 +63,7 @@ namespace RagnarokBotWeb.Application.Handlers
 
                 await _discordService.SendEmbedToUserDM(new CreateEmbed
                 {
+                    GuildId = register.ScumServer.Guild!.DiscordId,
                     DiscordId = register.DiscordId,
                     Title = "Registration",
                     Text = text,

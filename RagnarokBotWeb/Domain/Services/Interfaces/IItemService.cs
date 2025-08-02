@@ -13,6 +13,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<IEnumerable<Item>> FetchAllItemsAsync();
         Task<Page<ItemDto>> GetItemsPageByFilterAsync(Paginator paginator, string? filter);
         Task<Item?> FindItemByNameAsync(string name);
+        Task<Item?> FindItemByCodeAsync(string code);
         Task<Item?> FindItemByIdAsync(long id);
         Task<Item?> DeleteItemAsync(long id);
     }

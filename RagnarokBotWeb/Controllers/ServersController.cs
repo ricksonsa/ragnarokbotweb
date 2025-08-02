@@ -92,5 +92,13 @@ namespace RagnarokBotWeb.Controllers
             var server = await _serverService.UpdateServerSettings(updateServer);
             return Ok(server);
         }
+
+        [HttpPut("kill-feed")]
+        public async Task<IActionResult> UpdateKillFeed(UpdateKillFeedDto updateKillFeed)
+        {
+            _logger.LogDebug("Put request to update kill feed");
+            ScumServerDto server = await _serverService.UpdateKillFeed(updateKillFeed);
+            return Ok(server);
+        }
     }
 }

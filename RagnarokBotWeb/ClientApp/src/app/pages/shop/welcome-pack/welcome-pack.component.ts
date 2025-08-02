@@ -186,7 +186,7 @@ export class WelcomePackComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['servers', this.account!.serverId, 'shop', 'packages']);
+    this.router.navigate(['shop', 'packages']);
   }
 
 

@@ -46,6 +46,26 @@ namespace RagnarokBotWeb.Domain.Services
             return $"{cdnUrlPrefix}/{fileName}";
         }
 
+        public async Task<string> SaveImageStreamAsync(
+         Stream imageStream,
+         string contentType,
+         string storagePath = "cdn-storage",
+         string cdnUrlPrefix = "images")
+        {
+            if (string.IsNullOrWhiteSpace(contentType) || !contentType.StartsWith("image/"))
+                throw new ArgumentException("Invalid or missing image content type.", nameof(contentType));
+
+            var fileExtension = contentType.Split('/').Last();
+            var fileName = $"{Guid.NewGuid():N}.{fileExtension}";
+            var filePath = Path.Combine(storagePath, fileName);
+
+            Directory.CreateDirectory(storagePath);
+
+            await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+            await imageStream.CopyToAsync(fileStream);
+
+            return $"{cdnUrlPrefix}/{fileName}";
+        }
 
         public async Task<string> SaveCompressedBase64ImageAsync(
             string base64Image,

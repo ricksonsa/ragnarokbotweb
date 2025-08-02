@@ -14,7 +14,7 @@ namespace RagnarokBotWeb.Application.LogParser
             _server = server;
         }
 
-        public Kill Parse(string line1, string line2)
+        public Kill? Parse(string line1, string line2)
         {
             string pattern = @"Distance: ([0-9]*\.?[0-9]+) m";
             var match = Regex.Match(line1, pattern);
@@ -32,6 +32,8 @@ namespace RagnarokBotWeb.Application.LogParser
             var json = line2.Substring(line2.IndexOf(":") + 2);
             var preParseKill = JsonConvert.DeserializeObject<PreParseKill>(json)!;
 
+            if (preParseKill.Killer.IsInGameEvent || preParseKill.Victim.IsInGameEvent) return null;
+
             return new Kill
             {
                 CreateDate = date,
@@ -42,9 +44,12 @@ namespace RagnarokBotWeb.Application.LogParser
                 TargetName = preParseKill.Victim.ProfileName,
                 Weapon = preParseKill.Weapon,
                 ScumServer = _server,
+                Sector = new ScumCoordinate(preParseKill.Victim.ClientLocation.X, preParseKill.Victim.ClientLocation.Y).GetSectorReference(),
+
                 KillerX = preParseKill.Killer.ClientLocation.X,
                 KillerY = preParseKill.Killer.ClientLocation.Y,
                 KillerZ = preParseKill.Killer.ClientLocation.Z,
+
                 VictimX = preParseKill.Victim.ClientLocation.X,
                 VictimY = preParseKill.Victim.ClientLocation.Y,
                 VictimZ = preParseKill.Victim.ClientLocation.Z

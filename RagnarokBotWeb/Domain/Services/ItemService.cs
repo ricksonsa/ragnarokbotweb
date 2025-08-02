@@ -71,6 +71,11 @@ namespace RagnarokBotWeb.Domain.Services
             return await _itemRepository.FindOneAsync(item => item.Name == name);
         }
 
+        public async Task<Item?> FindItemByCodeAsync(string code)
+        {
+            return await _itemRepository.FindOneAsync(item => item.Code == code);
+        }
+
         public async Task<Item?> FindItemByIdAsync(long id)
         {
             return await _itemRepository.FindByIdAsync(id);
