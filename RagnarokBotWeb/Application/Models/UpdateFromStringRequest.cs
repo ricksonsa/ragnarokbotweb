@@ -1,6 +1,6 @@
 ﻿namespace RagnarokBotWeb.Application.Models
 {
-    public class PlayersListRequest
+    public class UpdateFromStringRequest
     {
         public string Value { get; set; }
     }

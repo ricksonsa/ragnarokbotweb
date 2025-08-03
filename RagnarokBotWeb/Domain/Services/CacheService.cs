@@ -12,6 +12,8 @@ namespace RagnarokBotWeb.Domain.Services
 
         private Dictionary<long, Dictionary<Guid, BotUser>> _connectedBots;
         private Dictionary<long, List<ScumPlayer>> _connectedPlayers;
+        private Dictionary<long, List<Squad>> _squads;
+        private Dictionary<long, RaidTimes?> _raidTimes;
 
         public CacheService()
         {
@@ -19,11 +21,33 @@ namespace RagnarokBotWeb.Domain.Services
             _botCommandQueue = [];
             _fileChangeQueue = [];
             _connectedBots = [];
+            _raidTimes = [];
+            _squads = [];
         }
 
         public List<ScumPlayer> GetConnectedPlayers(long serverId)
         {
             return _connectedPlayers[serverId];
+        }
+
+        public RaidTimes? GetRaidTimes(long serverId)
+        {
+            return _raidTimes[serverId];
+        }
+
+        public List<Squad> GetSquads(long serverId)
+        {
+            return _squads[serverId];
+        }
+
+        public void SetRaidTimes(long serverId, RaidTimes config)
+        {
+            _raidTimes[serverId] = config;
+        }
+
+        public void SetSquads(long serverId, List<Squad> squads)
+        {
+            _squads[serverId] = squads;
         }
 
         public Dictionary<Guid, BotUser> GetConnectedBots(long serverId)
@@ -74,6 +98,17 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     _connectedBots.Add(server.Id, []);
                 }
+
+                if (!_squads.ContainsKey(server.Id))
+                {
+                    _squads.Add(server.Id, []);
+                }
+
+                if (!_raidTimes.ContainsKey(server.Id))
+                {
+                    _raidTimes.Add(server.Id, null);
+                }
+
             }
         }
     }

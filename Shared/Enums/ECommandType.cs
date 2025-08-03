@@ -12,6 +12,7 @@
         DestroyItems,
         ListPlayers,
         MagazineDelivery,
-        SayLocal
+        SayLocal,
+        ListSquads
     }
 }

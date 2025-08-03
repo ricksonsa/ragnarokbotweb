@@ -27,6 +27,7 @@ import { EventManager, EventWithContent } from '../../../services/event-manager.
 import { Alert } from '../../../models/alert';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { ChannelDto } from '../../../models/channel.dto';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 registerLocaleData(localePT);
 registerLocaleData(localeES);
 registerLocaleData(localeDE);
@@ -50,6 +51,7 @@ registerLocaleData(localeFR);
     NzTypographyModule,
     NzIconModule,
     NzSpaceModule,
+    NzCheckboxModule,
     CronEditorModule
   ]
 })
@@ -89,12 +91,15 @@ export class ServerComponent implements OnInit {
       userName: [null, [Validators.required]],
       password: [null, [Validators.required]],
       address: [null, [Validators.required]],
-      port: [null, [Validators.required]]
+      port: [null, [Validators.required]],
     });
     this.serverForm = this.fb.group({
       coinAwardPeriodically: [0, [Validators.min(0)]],
-      vipCoinAwardPeriodically: [0, [Validators.min(0)]]
-
+      vipCoinAwardPeriodically: [0, [Validators.min(0)]],
+      coinReductionPerInvalidMineKill: [0],
+      announceMineOutsideFlag: [true],
+      allowMinesOutsideFlag: [true],
+      sendVipLockpickAlert: [true]
     });
   }
 
@@ -166,6 +171,7 @@ export class ServerComponent implements OnInit {
           this.ftpForm.patchValue(value.ftp!);
           this.savingFtp = false;
           this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('', 'Ftp Settings Success', 'success')));
+          location.reload();
         },
         error: (err) => {
           this.savingFtp = false;

@@ -577,8 +577,8 @@ namespace RagnarokBotWeb.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                    b.Property<long>("Price")
+                        .HasColumnType("bigint");
 
                     b.Property<long?>("PurchaseCooldownSeconds")
                         .HasColumnType("bigint");
@@ -589,8 +589,8 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<long?>("StockPerPlayer")
                         .HasColumnType("bigint");
 
-                    b.Property<decimal>("VipPrice")
-                        .HasColumnType("numeric");
+                    b.Property<long>("VipPrice")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -823,7 +823,16 @@ namespace RagnarokBotWeb.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<bool>("AllowMinesOutsideFlag")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AnnounceMineOutsideFlag")
+                        .HasColumnType("boolean");
+
                     b.Property<long>("CoinAwardPeriodically")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CoinReductionPerInvalidMineKill")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreateDate")

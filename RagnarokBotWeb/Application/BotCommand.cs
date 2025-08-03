@@ -28,6 +28,15 @@ namespace RagnarokBotWeb.Application
             return this;
         }
 
+        public BotCommand ListSquads()
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ListSquads
+            });
+            return this;
+        }
+
         public BotCommand Kick(string steamId)
         {
             Values.Add(new BotCommandValue

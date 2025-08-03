@@ -60,5 +60,13 @@ namespace RagnarokBotWeb.Domain.Entities
                 Title = Name
             };
         }
+
+        public string ResolveDeliveryText(WarzoneItem warzoneItem, WarzoneSpawn warzoneSpawn)
+        {
+            if (DeliveryText is null) return "";
+            return DeliveryText
+                .Replace("{item_name}", warzoneItem.Item.Name)
+                .Replace("{spawn_point_name}", warzoneSpawn.Teleport.Name);
+        }
     }
 }

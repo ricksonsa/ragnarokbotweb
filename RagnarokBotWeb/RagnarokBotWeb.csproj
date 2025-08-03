@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <Folder Include="cdn-storage\eliminations\" />
+    <Folder Include="cdn-storage\lockpicks\" />
     <Folder Include="Logs\" />
     <Folder Include="Migrations\" />
     <Folder Include="wwwroot\" />

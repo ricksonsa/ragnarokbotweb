@@ -1,5 +1,6 @@
 ﻿using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
+using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Domain.Business
@@ -7,10 +8,25 @@ namespace RagnarokBotWeb.Domain.Business
     public class OrderPurchaseProcessor
     {
         private readonly IOrderRepository _orderRepository;
+        private readonly ICacheService _cacheService;
 
-        public OrderPurchaseProcessor(IOrderRepository orderRepository)
+        public OrderPurchaseProcessor(IOrderRepository orderRepository, ICacheService cacheService)
         {
             _orderRepository = orderRepository;
+            _cacheService = cacheService;
+        }
+
+        private bool WasPurchasedWithinPurchaseCooldownSeconds(Order order)
+        {
+            if (order.OrderType == Shared.Enums.EOrderType.Warzone)
+            {
+                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Warzone!.PurchaseCooldownSeconds;
+            }
+            else if (order.OrderType == Shared.Enums.EOrderType.Pack)
+            {
+                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Pack!.PurchaseCooldownSeconds;
+            }
+            return false;
         }
 
         private async Task ValidatePack(Order order)
@@ -47,11 +63,14 @@ namespace RagnarokBotWeb.Domain.Business
 
             if (order.Pack.IsBlockPurchaseRaidTime)
             {
-                // TODO: Get server raid time and throw error
+                var raidTimes = _cacheService.GetRaidTimes(order.ScumServer.Id);
+                if (raidTimes is not null && raidTimes.IsInRaidTime(order.ScumServer))
+                {
+                    throw new DomainException("This Pack cannot be purchased during Raid Period.");
+                }
             }
 
-            var price = order.Player!.IsVip() ? Convert.ToInt64(order.Pack!.VipPrice) : Convert.ToInt64(order.Pack!.Price);
-            if (order.Player.Coin < price) throw new DomainException("Player does not have enough bot coin");
+            if (order.Player!.Coin < order.ResolvedPrice) throw new DomainException("You don't have enough bot coins.");
         }
 
         private async Task ValidateWarzone(Order order)
@@ -83,15 +102,24 @@ namespace RagnarokBotWeb.Domain.Business
 
             if (order.Warzone.IsBlockPurchaseRaidTime)
             {
-                // TODO: Get server raid time and throw error
+                var raidTimes = _cacheService.GetRaidTimes(order.ScumServer.Id);
+                if (raidTimes is not null && raidTimes.IsInRaidTime(order.ScumServer))
+                {
+                    throw new DomainException("This Warzone Teleport cannot be purchased during Raid Period.");
+                }
             }
 
             var price = order.Player!.IsVip() ? Convert.ToInt64(order.Warzone!.VipPrice) : Convert.ToInt64(order.Warzone!.Price);
-            if (order.Player.Coin < price) throw new DomainException("User does not have enough bot coin.");
+            if (order.Player.Coin < price) throw new DomainException("You don't have enough bot coins.");
         }
 
         public async Task ValidateAsync(Order order)
         {
+            if (order.Player is null)
+            {
+                throw new DomainException("Player not yet registered, please register using the Welcome Pack.");
+            }
+
             if (order.OrderType == Shared.Enums.EOrderType.Pack)
             {
                 await ValidatePack(order);
@@ -100,30 +128,6 @@ namespace RagnarokBotWeb.Domain.Business
             {
                 await ValidateWarzone(order);
             }
-        }
-
-        public long Charge(Order order)
-        {
-            long price = 0;
-            if (order.OrderType == Shared.Enums.EOrderType.Pack)
-                price = order.Player!.IsVip() ? Convert.ToInt64(order.Pack!.VipPrice) : Convert.ToInt64(order.Pack!.Price);
-            else if (order.OrderType == Shared.Enums.EOrderType.Warzone)
-                price = order.Player!.IsVip() ? Convert.ToInt64(order.Warzone!.VipPrice) : Convert.ToInt64(order.Warzone!.Price);
-
-            return price;
-        }
-
-        private bool WasPurchasedWithinPurchaseCooldownSeconds(Order order)
-        {
-            if (order.OrderType == Shared.Enums.EOrderType.Warzone)
-            {
-                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Warzone!.PurchaseCooldownSeconds;
-            }
-            else if (order.OrderType == Shared.Enums.EOrderType.Pack)
-            {
-                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Pack!.PurchaseCooldownSeconds;
-            }
-            return false;
         }
 
         public bool WasPurchasedWithinLast24Hours(Order order)

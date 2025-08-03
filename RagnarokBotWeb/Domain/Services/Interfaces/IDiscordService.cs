@@ -1,6 +1,9 @@
 ﻿using Discord;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
+using static RagnarokBotWeb.Application.Tasks.Jobs.KillRankJob;
+using static RagnarokBotWeb.Application.Tasks.Jobs.LockpickRankJob;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
@@ -17,5 +20,9 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task RemoveUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId);
         Task<IGuildUser?> GetDiscordUser(ulong guildId, ulong userId);
         Task SendKillFeedEmbed(ScumServer server, Kill kilL);
+        Task DeleteAllMessagesInChannel(ulong channelId);
+        Task SendTopPlayersKillsEmbed(ulong channelId, List<PlayerStatsDto> players, ERankingPeriod period, int topCount);
+        Task SendTopDistanceKillsEmbed(ulong channelId, List<PlayerStatsDto> players, int topCount);
+        Task SendLockpickRankEmbed(ulong channelId, List<LockpickStatsDto> stats, string lockType);
     }
 }

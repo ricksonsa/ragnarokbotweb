@@ -71,20 +71,21 @@ namespace RagnarokBotClient
             Token.ThrowIfCancellationRequested();
 
             SendKeys.SendWait("{enter}");
-            Sleep().Wait();
 
             switch (tab)
             {
                 case 0:
                 default:
+                    Sleep(1000).Wait();
                     break;
                 case 1:
+                    Sleep(1000).Wait();
                     SendKeys.SendWait("{tab}");
                     Sleep(1000).Wait();
                     SendKeys.SendWait("{tab}");
+                    Sleep(1000).Wait();
                     break;
             }
-            Sleep().Wait();
 
             SendKeys.SendWait("{escape}");
 

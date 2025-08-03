@@ -1,10 +1,13 @@
-﻿using Quartz;
+﻿using Newtonsoft.Json;
+using Quartz;
 using Quartz.Impl.Matchers;
+using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Domain.Services
@@ -28,9 +31,16 @@ namespace RagnarokBotWeb.Domain.Services
             _logger = logger;
         }
 
-        private static ITrigger CronTrigger(string cron) => TriggerBuilder.Create()
-                        .WithCronSchedule(cron)
-                        .Build();
+        private static ITrigger CronTrigger(string cron, bool startNow = false)
+        {
+            var trigger = TriggerBuilder.Create()
+                        .WithCronSchedule(cron);
+
+            if (startNow)
+                trigger.StartNow();
+
+            return trigger.Build();
+        }
 
         private static ITrigger OneMinTrigger() => TriggerBuilder.Create()
                          .WithCronSchedule(AppSettingsStatic.OneMinCron)
@@ -69,35 +79,58 @@ namespace RagnarokBotWeb.Domain.Services
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
 
             var job = JobBuilder.Create<BotAliveJob>()
-                   .WithIdentity($"BotAliveJob({server.Id})", $"ServerJobs({server.Id})")
-                   .UsingJobData("server_id", server.Id)
-                   .Build();
+                .WithIdentity($"{nameof(BotAliveJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
             await scheduler.ScheduleJob(job, DefaultTrigger());
 
             job = JobBuilder.Create<ListPlayersJob>()
-                .WithIdentity($"ListPlayersJob({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity($"{nameof(ListPlayersJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            await scheduler.ScheduleJob(job, TwoMinTrigger());
+
+            job = JobBuilder.Create<ListSquadsJob>()
+                .WithIdentity($"{nameof(ListSquadsJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?"));
 
             job = JobBuilder.Create<OrderCommandJob>()
-                 .WithIdentity($"OrderCommandJob({server.Id})", $"ServerJobs({server.Id})")
+                 .WithIdentity($"{nameof(OrderCommandJob)}({server.Id})", $"ServerJobs({server.Id})")
                  .UsingJobData("server_id", server.Id)
                  .Build();
             await scheduler.ScheduleJob(job, TenSecondsTrigger());
 
             job = JobBuilder.Create<WarzoneBootstartJob>()
-                .WithIdentity($"WarzoneBootstartJob({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity($"{nameof(WarzoneBootstartJob)}({server.Id})", $"WarzoneJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            await scheduler.ScheduleJob(job, CronTrigger("0 0/10 * * * ?", startNow: true));
 
-            job = JobBuilder.Create<CoinAwardJob>()
-                .WithIdentity($"{nameof(CoinAwardJob)}({server.Id})", $"ServerJobs({server.Id})")
+            job = JobBuilder.Create<BunkerStateJob>()
+                .WithIdentity($"{nameof(BunkerStateJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * * * ?", startNow: true));
+
+            job = JobBuilder.Create<KillRankJob>()
+                .WithIdentity($"{nameof(KillRankJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?", startNow: true));
+
+            job = JobBuilder.Create<LockpickRankJob>()
+                .WithIdentity($"{nameof(LockpickRankJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?", startNow: true));
+
+            job = JobBuilder.Create<PaydayJob>()
+                .WithIdentity($"{nameof(PaydayJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0/30 * * * ?"));
-
 
             _logger.LogInformation("Loaded server tasks for server id {Id}", server.Id);
         }
@@ -158,6 +191,12 @@ namespace RagnarokBotWeb.Domain.Services
                 .Build();
             await scheduler.ScheduleJob(job, TenMinTrigger());
 
+            job = JobBuilder.Create<RaidTimesJob>()
+               .WithIdentity($"{nameof(RaidTimesJob)}({server.Id})", $"FtpJobs({server.Id})")
+               .UsingJobData("server_id", server.Id)
+               .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * * * ?", startNow: true));
+
             job = JobBuilder.Create<FileChangeJob>()
                 .WithIdentity($"FileChangeJob({server.Id})", $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
@@ -216,6 +255,106 @@ namespace RagnarokBotWeb.Domain.Services
             foreach (var server in await _scumServerRepository.GetActiveServersWithFtp())
             {
                 await ScheduleFtpServerTasks(server, cancellationToken);
+            }
+        }
+
+        public async Task LoadRaidTimes(CancellationToken stoppingToken)
+        {
+
+            foreach (var server in await _scumServerRepository.FindActive())
+            {
+                var processor = new ScumFileProcessor(server);
+
+                try
+                {
+                    var raidTimeString = await processor.ReadLocalRaidTimesAsync();
+                    if (raidTimeString != null)
+                    {
+                        var raidTimes = JsonConvert.DeserializeObject<RaidTimes>(raidTimeString);
+                        if (raidTimes != null) _cacheService.SetRaidTimes(server.Id, raidTimes);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("LoadRaidTimesHostedService error reading server initial files -> {Ex}", ex.Message);
+                }
+            }
+        }
+
+        public async Task LoadSquads(CancellationToken stoppingToken)
+        {
+
+            foreach (var server in await _scumServerRepository.FindActive())
+            {
+                var processor = new ScumFileProcessor(server);
+
+                try
+                {
+                    var squadListString = await processor.ReadSquadListAsync();
+                    if (squadListString != null)
+                    {
+                        var squads = JsonConvert.DeserializeObject<List<Shared.Models.Squad>>(squadListString);
+                        if (squads != null) _cacheService.SetSquads(server.Id, squads);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("LoadSquadsHostedService error reading server initial files -> {Ex}", ex.Message);
+                }
+            }
+        }
+
+        public async Task CreateWarzoneJobs(ScumServer server, Warzone warzone)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+
+            var closeWarzoneJob = JobBuilder.Create<CloseWarzoneJob>()
+              .WithIdentity($"CloseWarzoneJob({server.Id})", $"WarzoneJobs({server.Id})")
+              .UsingJobData("server_id", server.Id)
+              .UsingJobData("warzone_id", warzone.Id)
+              .Build();
+
+            ITrigger warzoneClosingTrigger = TriggerBuilder.Create()
+                .WithIdentity("$CloseWarzoneJobTrigger({server.Id})", $"WarzoneJobs({server.Id})")
+                .StartAt(new DateTimeOffset(warzone.StopAt!.Value))
+                .WithSimpleSchedule(x => x.WithRepeatCount(0)) // only once
+                .Build();
+
+            await scheduler.ScheduleJob(closeWarzoneJob, warzoneClosingTrigger);
+
+            var warzoneItemSpawnJob = JobBuilder.Create<WarzoneItemSpawnJob>()
+                .WithIdentity($"WarzoneItemSpawnJob({server.Id})", $"WarzoneJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .UsingJobData("warzone_id", warzone.Id)
+                .Build();
+
+            ITrigger warzoneItemSpawnJobTrigger = TriggerBuilder.Create()
+               .WithIdentity($"WarzoneItemSpawnJobTrigger({server.Id})", $"WarzoneJobs({server.Id})")
+               .StartNow() // Start immediately
+                .WithSimpleSchedule(x => x
+                       .WithIntervalInMinutes((int)warzone.ItemSpawnInterval)
+                .RepeatForever())
+                .Build();
+
+            await scheduler.ScheduleJob(warzoneItemSpawnJob, warzoneItemSpawnJobTrigger);
+        }
+
+        public async Task DeleteWarzoneJobs(ScumServer server)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+
+            try
+            {
+                var jobKeys = await scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals($"WarzoneJobs({server.Id})"));
+
+                if (jobKeys.Any())
+                {
+                    await scheduler.DeleteJobs(jobKeys.ToList());
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
             }
         }
     }

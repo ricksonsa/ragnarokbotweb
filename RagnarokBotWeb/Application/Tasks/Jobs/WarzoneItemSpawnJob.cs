@@ -50,11 +50,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
             var command = new BotCommand();
 
+            // coordinates needs double quote
             command.Delivery($"\"{spawnPoint.Teleport.Coordinates}\"", warzoneItem.Item.Code, 1);
 
             if (!string.IsNullOrEmpty(warzone.DeliveryText))
             {
-                command.Say(warzone.DeliveryText);
+                command.Say(warzone.ResolveDeliveryText(warzoneItem, spawnPoint));
             }
 
             _cacheService.GetCommandQueue(server.Id).Enqueue(command);

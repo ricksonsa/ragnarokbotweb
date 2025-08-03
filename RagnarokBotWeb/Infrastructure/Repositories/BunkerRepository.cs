@@ -26,5 +26,13 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(bunker => bunker.ScumServer)
                 .FirstOrDefaultAsync(predicate);
         }
+
+        public Task<List<Bunker>> FindWithServerAsync(Expression<Func<Bunker, bool>> predicate)
+        {
+            return _appDbContext.Bunkers
+                .Include(bunker => bunker.ScumServer)
+                .Where(predicate)
+                .ToListAsync();
+        }
     }
 }

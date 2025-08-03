@@ -89,7 +89,7 @@ namespace RagnarokBotWeb.Domain.Services
                 DiscordId = ulong.Parse(pack.DiscordChannelId!),
                 Text = pack.Description,
                 FooterText = GetFooterText(pack),
-                Color = pack.IsVipOnly ? Color.Gold : Color.Blue,
+                Color = pack.IsVipOnly ? Color.Gold : Color.DarkPurple,
                 ImageUrl = pack.ImageUrl,
                 Title = pack.Name
             };

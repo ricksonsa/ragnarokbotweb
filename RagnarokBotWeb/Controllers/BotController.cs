@@ -21,6 +21,12 @@ namespace RagnarokBotWeb.Controllers
             _botService = botService;
         }
 
+        [HttpGet]
+        public IActionResult Get()
+        {
+            return Ok(_botService.GetBots());
+        }
+
         [HttpPost("register")]
         public IActionResult RegisterBot(string guid)
         {
@@ -41,9 +47,16 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPost("players")]
-        public IActionResult UpdatePlayers(PlayersListRequest input)
+        public IActionResult UpdatePlayers(UpdateFromStringRequest input)
         {
             _botService.UpdatePlayersOnline(input);
+            return Ok();
+        }
+
+        [HttpPost("squads")]
+        public IActionResult UpdateSquads(UpdateFromStringRequest input)
+        {
+            _botService.UpdateSquads(input);
             return Ok();
         }
 

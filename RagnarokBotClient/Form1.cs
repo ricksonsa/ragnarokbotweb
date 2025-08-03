@@ -40,7 +40,7 @@ namespace RagnarokBotClient
             LoadCredentials();
             _scumManager = new ScumManager();
             Guid = Guid.NewGuid();
-            _remote = new WebApi(new Settings("http://localhost:5000"));
+            _remote = new WebApi(new Settings("http://localhost:8080"));
             LoadIni();
         }
 
@@ -235,8 +235,6 @@ namespace RagnarokBotClient
                             await GameCheck(token);
                             await _scumManager.ReconnectToServer();
                             await Task.Delay(TimeSpan.FromSeconds(Math.Max(_timeToLoadWorld, 1)), token); // Wait
-                            await _scumManager.TeleportBotToCoordinates("0 0 0");
-                            await Task.Delay(TimeSpan.FromSeconds(5), token); // Wait
 
                             await Task.WhenAll
                             (
@@ -341,7 +339,6 @@ namespace RagnarokBotClient
                 try
                 {
                     var command = await _remote.GetAsync($"api/bots/commands?guid={Guid}");
-                    UpdateStatus("Get Command", false);
 
                     if (!string.IsNullOrEmpty(command))
                     {
@@ -391,7 +388,7 @@ namespace RagnarokBotClient
             var action = new Action(() => LogBox.Text += $"\n {new DateTimeOffset(DateTime.Now)} {status}");
             var clearTextAction = new Action(() =>
             {
-                if (LogBox.Text.Length >= 500) LogBox.Text = string.Empty;
+                if (LogBox.Text.Length >= 5000) LogBox.Text = string.Empty;
             });
             if (StatusValue.InvokeRequired)
             {

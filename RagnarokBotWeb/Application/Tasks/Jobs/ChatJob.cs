@@ -9,7 +9,6 @@ using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs;
@@ -38,8 +37,8 @@ public class ChatJob(
 
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository);
-            await foreach (var line in processor.UnreadFileLinesAsync())
+            var processor = new ScumFileProcessor(server);
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService))
             {
                 var parsed = new ChatTextParser().Parse(line);
                 if (parsed is null)
@@ -103,7 +102,7 @@ public class ChatJob(
         }
         catch (Exception ex)
         {
-            Debug.WriteLine(ex.Message);
+            logger.LogError("{Job} Exception -> {Ex}", context.JobDetail.Key.Name, ex.Message);
             throw;
         }
     }

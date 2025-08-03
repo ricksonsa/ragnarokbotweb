@@ -635,7 +635,7 @@ public struct ScumCoordinate
     {
         X = x;
         Y = y;
-        Color = Color.Blue;
+        Color = Color.Red;
     }
 
     public ScumCoordinate(double x, double y, Color color)

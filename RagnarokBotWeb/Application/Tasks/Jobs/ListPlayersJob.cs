@@ -19,7 +19,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             _botService = botService;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public Task Execute(IJobExecutionContext context)
         {
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
             try
@@ -29,12 +29,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 if (!serverId.HasValue)
                 {
                     _logger.LogError("No value for variable serverId");
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 _cacheService.ClearConnectedPlayers(serverId.Value);
 
-                if (!_botService.IsBotOnline(serverId.Value)) return;
+                if (!_botService.IsBotOnline(serverId.Value)) return Task.CompletedTask;
 
                 if (!_cacheService.GetCommandQueue(serverId.Value).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
                 {
@@ -47,6 +47,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             {
                 _logger.LogError(ex.Message);
             }
+            return Task.CompletedTask;
         }
     }
 }

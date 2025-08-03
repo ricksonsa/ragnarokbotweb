@@ -1,4 +1,5 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Domain.Entities;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -14,48 +15,32 @@ namespace RagnarokBotWeb.Application.LogParser
             _scumServer = scumServer;
         }
 
-        public Lockpick? Parse(string line)
+        public static LockpickLog? Parse(string logLine)
         {
-            string pattern = @"User:\s*(.*?)\s*\((\d+),\s*(\d+)\)";
+            var pattern = @"User:\s(?<user>.+?)\s\((?<scumId>\d+),\s(?<steamId>\d+)\)\.\sSuccess:\s(?<success>Yes|No)\.\sElapsed time:\s(?<elapsed>[\d.]+)\.\sFailed attempts:\s(?<failed>\d+)\.\sTarget object:\s(?<target>.+?)\(ID:\s(?<targetId>.+?)\)\.\sLock type:\s(?<lockType>\w+)\.\sUser owner:\s(?<ownerScumId>\d+)\(\[(?<ownerSteamId>\d+)\]\s(?<ownerName>.+?)\)\.\sLocation:\sX=(?<x>[-\d.]+)\sY=(?<y>[-\d.]+)\sZ=(?<z>[-\d.]+)";
 
-            Match match = Regex.Match(line, pattern);
+            var match = Regex.Match(logLine, pattern);
 
-            if (match.Success)
+            if (!match.Success) return null;
+
+            return new LockpickLog
             {
-                var successSection = line.Split("Success: ")[1];
-                successSection = successSection.Substring(0, successSection.IndexOf("."));
-
-                var attemptSection = line.Split("Failed attempts: ")[1];
-                attemptSection = attemptSection.Substring(0, attemptSection.IndexOf("."));
-
-                var lockTypeSection = line.Split("Lock type: ")[1];
-                lockTypeSection = lockTypeSection.Substring(0, lockTypeSection.IndexOf("."));
-
-                var dateSection = line.Split(":")[0];
-
-                string name = match.Groups[1].Value;
-                long scumId = long.Parse(match.Groups[2].Value);
-                string steamId64 = match.Groups[3].Value;
-                var lockType = lockTypeSection;
-                string format = "yyyy.MM.dd-HH.mm.ss";
-                var date = DateTime.ParseExact(dateSection, format, CultureInfo.InvariantCulture);
-                bool succes = successSection == "Yes";
-                int attempts = int.Parse(attemptSection);
-
-                return new()
-                {
-                    LockType = lockType,
-                    Name = name,
-                    SteamId64 = steamId64,
-                    ScumId = scumId,
-                    AttemptDate = date,
-                    Attempts = attempts,
-                    Success = succes,
-                    ScumServer = _scumServer
-                };
-            }
-
-            return null;
+                User = match.Groups["user"].Value,
+                ScumId = int.Parse(match.Groups["scumId"].Value),
+                SteamId = match.Groups["steamId"].Value,
+                Success = match.Groups["success"].Value == "Yes",
+                ElapsedTime = float.Parse(match.Groups["elapsed"].Value, CultureInfo.InvariantCulture),
+                FailedAttempts = int.Parse(match.Groups["failed"].Value),
+                TargetObject = match.Groups["target"].Value,
+                TargetId = match.Groups["targetId"].Value,
+                LockType = match.Groups["lockType"].Value,
+                OwnerScumId = int.Parse(match.Groups["ownerScumId"].Value),
+                OwnerSteamId = match.Groups["ownerSteamId"].Value,
+                OwnerName = match.Groups["ownerName"].Value,
+                X = float.Parse(match.Groups["x"].Value, CultureInfo.InvariantCulture),
+                Y = float.Parse(match.Groups["y"].Value, CultureInfo.InvariantCulture),
+                Z = float.Parse(match.Groups["z"].Value, CultureInfo.InvariantCulture)
+            };
         }
     }
 }

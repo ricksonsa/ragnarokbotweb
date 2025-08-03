@@ -19,7 +19,7 @@ import { Alert } from '../../../models/alert';
 import { ChannelDto } from '../../../models/channel.dto';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { Subscription } from 'rxjs';
+import { Observable, pipe, Subscription, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-discord',
@@ -99,7 +99,9 @@ export class DiscordComponent implements OnInit, OnDestroy {
       "login": [],
       "buried-chest": [],
       "mine-kill": [],
-      "lockpick-alert": []
+      "lockpick-alert": [],
+      "admin-alert": [],
+      "lockpick-admin": []
     });
   }
   ngOnDestroy(): void {
@@ -108,7 +110,7 @@ export class DiscordComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadAccount();
-    this.loadDiscordChannels();
+    // this.loadDiscordChannels();
     this.loadTemplateDiscordChannels();
   }
 
@@ -126,28 +128,43 @@ export class DiscordComponent implements OnInit, OnDestroy {
   }
 
   loadTemplateDiscordChannels() {
-    this.serverService.getDiscordChannels()
+    this.serverService.getDiscordServer()
+      .pipe(
+        switchMap((guild) => {
+          this.runTemplate = guild.runTemplate;
+          this.channels = guild.channels;
+          return this.serverService.getDiscordChannels()
+        })
+      )
       .subscribe({
         next: (response) => {
           response.forEach(item => {
             this.channelsForm.controls[item.key].patchValue(item.value);
+            this.channels.find(channel => channel.discordId === item.value).disabled = true;
           });
-        },
-        complete: () => {
-          for (const control in this.channelsForm.controls) {
-            this.subs.push(
-              this.channelsForm.controls[control].valueChanges
-                .subscribe(
-                  {
-                    next: (value) => {
-                      this.save({ key: control, value });
-                    }
-                  }
-                )
-            );
-          }
+
+          this.registerFormChanges();
         }
       });
+  }
+
+  private unregisterFormChanges() {
+    this.subs.forEach(sub => sub.unsubscribe());
+  }
+
+  private registerFormChanges() {
+    for (const control in this.channelsForm.controls) {
+      this.subs.push(
+        this.channelsForm.controls[control].valueChanges
+          .subscribe(
+            {
+              next: (value) => {
+                this.save({ key: control, value });
+              }
+            }
+          )
+      );
+    }
   }
 
   loadDiscordChannels() {
@@ -161,11 +178,22 @@ export class DiscordComponent implements OnInit, OnDestroy {
   }
 
   save(value: any) {
+    this.unregisterFormChanges();
     this.serverService.updateChannels(value)
-      .subscribe({
-        next: (response: any) => {
-          // this.eventManager.broadcast(new EventWithContent('alert', new Alert('Server', `Channels updated`, 'success')));
-        }
+      .pipe(
+        switchMap(response => {
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Server', `Channel updated`, 'success')));
+          return this.serverService.getDiscordChannels();
+        })
+      ).subscribe({
+        next: (response) => {
+          this.channels.forEach(channel => channel.disabled = false);
+          response.forEach(item => {
+            this.channelsForm.controls[item.key].patchValue(item.value);
+            this.channels.find(channel => channel.discordId === item.value).disabled = true;
+          });
+        },
+        complete: () => this.registerFormChanges()
       });
   }
 
@@ -175,7 +203,6 @@ export class DiscordComponent implements OnInit, OnDestroy {
         next: (guild) => {
           this.runTemplate = guild.runTemplate;
           this.channels = guild.channels;
-          this.loadTemplateDiscordChannels();
         }
       });
   }
@@ -200,7 +227,7 @@ export class DiscordComponent implements OnInit, OnDestroy {
           this.discordForm.patchValue(value);
           this.discordForm.controls['token'].disable();
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Discord Settings', 'Discord server successfully configured.', 'success')));
-          setTimeout(() => this.loadAccount(true), 1000);
+          setTimeout(() => (this.loadAccount(true), location.reload()), 1000);
         },
         error: (err) => {
           this.isDiscordSettingsSaving = false;

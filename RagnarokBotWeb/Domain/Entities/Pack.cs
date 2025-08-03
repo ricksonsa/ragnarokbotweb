@@ -6,8 +6,8 @@ namespace RagnarokBotWeb.Domain.Entities
         public string Name { get; set; }
         public string Description { get; set; }
         public string? DeliveryText { get; set; }
-        public decimal Price { get; set; } = 0;
-        public decimal VipPrice { get; set; } = 0;
+        public long Price { get; set; } = 0;
+        public long VipPrice { get; set; } = 0;
         public string? Commands { get; set; }
         public string? ImageUrl { get; set; }
         public string? DiscordChannelId { get; set; }

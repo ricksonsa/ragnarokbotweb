@@ -1,6 +1,9 @@
-﻿using RagnarokBotWeb.Application;
+﻿using Newtonsoft.Json;
+using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.HostedServices.Base;
+using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Parser;
 
 namespace RagnarokBotWeb.Domain.Services
@@ -11,18 +14,21 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ICacheService _cacheService;
         private readonly IPlayerService _playerService;
         private readonly IOrderService _orderService;
+        private readonly IScumServerRepository _scumServerRepository;
 
         public BotService(
             IHttpContextAccessor httpContext,
             ICacheService cacheService,
             IPlayerService playerService,
             IOrderService orderService,
-            ILogger<BotService> logger) : base(httpContext)
+            ILogger<BotService> logger,
+            IScumServerRepository scumServerRepository) : base(httpContext)
         {
             _cacheService = cacheService;
             _playerService = playerService;
             _orderService = orderService;
             _logger = logger;
+            _scumServerRepository = scumServerRepository;
         }
 
         public void ConnectBot(Guid guid)
@@ -54,14 +60,27 @@ namespace RagnarokBotWeb.Domain.Services
             _cacheService.GetConnectedBots(serverId.Value).Remove(guid);
         }
 
-        public async Task UpdatePlayersOnline(PlayersListRequest input)
+        public async Task UpdatePlayersOnline(UpdateFromStringRequest input)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            var players = ListPlayersParser.ParsePlayers(input.Value);
+            var players = ListPlayersParser.Parse(input.Value);
             _cacheService.SetConnectedPlayers(serverId.Value, players);
             await _playerService.UpdateFromScumPlayers(serverId.Value, players);
+        }
+
+        public async Task UpdateSquads(UpdateFromStringRequest input)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server == null) return;
+
+            var squads = ListSquadsParser.Parse(input.Value);
+            _cacheService.SetSquads(serverId.Value, squads);
+            await new ScumFileProcessor(server).SaveSquadList(JsonConvert.SerializeObject(squads));
         }
 
         public bool IsBotOnline()
@@ -112,14 +131,23 @@ namespace RagnarokBotWeb.Domain.Services
             return _cacheService.GetConnectedBots(serverId).Values.ToList();
         }
 
+        public List<BotUser> GetBots()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            return _cacheService.GetConnectedBots(serverId.Value).Values.ToList();
+        }
+
         public void ResetBotState(long serverId)
         {
             var now = DateTime.UtcNow;
             var bots = _cacheService.GetConnectedBots(serverId).Values.ToList();
             foreach (var bot in bots)
             {
-                TimeSpan difference = now - bot.LastInteracted;
-                if (difference.Minutes >= 2)
+
+                var diff = (now - bot.LastPinged!.Value).TotalMinutes;
+                if (diff >= 10)
                 {
                     _cacheService.GetConnectedBots(serverId).Remove(bot.Guid);
                 }

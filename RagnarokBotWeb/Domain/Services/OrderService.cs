@@ -19,6 +19,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IPlayerRepository _playerRepository;
         private readonly IWarzoneRepository _warzoneRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICacheService _cacheService;
         private readonly IMapper _mapper;
 
         public OrderService(
@@ -29,7 +30,8 @@ namespace RagnarokBotWeb.Domain.Services
             IPlayerRepository userRepository,
             IMapper mapper,
             IWarzoneRepository warzoneRepository,
-            IUnitOfWork unitOfWork) : base(contextAccessor)
+            IUnitOfWork unitOfWork,
+            ICacheService cacheService) : base(contextAccessor)
         {
             _logger = logger;
             _orderRepository = orderRepository;
@@ -38,6 +40,7 @@ namespace RagnarokBotWeb.Domain.Services
             _mapper = mapper;
             _warzoneRepository = warzoneRepository;
             _unitOfWork = unitOfWork;
+            _cacheService = cacheService;
         }
 
         public async Task<OrderDto> ConfirmOrderDelivered(long orderId)
@@ -105,9 +108,9 @@ namespace RagnarokBotWeb.Domain.Services
                 ScumServer = player.ScumServer
             };
 
-            var processor = new OrderPurchaseProcessor(_orderRepository);
+            var processor = new OrderPurchaseProcessor(_orderRepository, _cacheService);
             await processor.ValidateAsync(order);
-            var price = processor.Charge(order);
+            var price = order.ResolvedPrice;
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
@@ -133,9 +136,9 @@ namespace RagnarokBotWeb.Domain.Services
                 ScumServer = player.ScumServer
             };
 
-            var processor = new OrderPurchaseProcessor(_orderRepository);
+            var processor = new OrderPurchaseProcessor(_orderRepository, _cacheService);
             await processor.ValidateAsync(order);
-            var price = processor.Charge(order);
+            var price = order.ResolvedPrice;
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
@@ -161,9 +164,9 @@ namespace RagnarokBotWeb.Domain.Services
                 ScumServer = player.ScumServer
             };
 
-            var processor = new OrderPurchaseProcessor(_orderRepository);
+            var processor = new OrderPurchaseProcessor(_orderRepository, _cacheService);
             await processor.ValidateAsync(order);
-            var price = processor.Charge(order);
+            var price = order.ResolvedPrice;
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();

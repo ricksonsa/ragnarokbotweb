@@ -21,6 +21,9 @@
           <li nz-menu-item nzMatchRouter>
             <a routerLink="dashboard/chat">Chat (Coming Soon)</a>
           </li>
+          <li nz-menu-item nzMatchRouter>
+            <a routerLink="dashboard/">Logs (Coming Soon)</a>
+          </li>
         </ul>
       </li>
 
@@ -29,18 +32,13 @@
           <li nz-menu-item nzMatchRouter>
             <a routerLink="settings/server">Server</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.ftp == null">
             <a routerLink="settings/discord">Discord</a>
           </li>
 
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="settings/kill-feed">Kill Feed</a>
           </li>
-
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="settings/lockpick-feed">Lockpick</a>
-          </li>
-
 
           <!-- <li nz-menu-item nzMatchRouter>
             <a routerLink="settings/rankings">Rankings (Coming Soon)</a>
@@ -50,10 +48,10 @@
 
       <li nz-submenu nzOpen nzTitle="Management" nzIcon="user">
         <ul>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="management/players">Players</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="management/tickets">Tickets (Coming Soon)</a>
           </li>
         </ul>
@@ -61,22 +59,22 @@
 
       <li nz-submenu nzOpen nzTitle="Shop" nzIcon="dollar-circle">
         <ul>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="shop/orders">Orders</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="shop/packages">Packages</a>
           </li>
           <li *ngIf="account.accessLevel > 0" nz-menu-item nzMatchRouter>
             <a routerLink="shop/items">Items</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="shop/welcome-pack">Welcome Pack</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a>Taxi (Coming Soon)</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a>UAV (Coming Soon)</a>
           </li>
         </ul>
@@ -84,13 +82,13 @@
 
       <li nz-submenu nzOpen nzTitle="Events" nzIcon="star">
         <ul>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a>Air Drops (Coming Soon)</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="events/warzones">Warzones</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="events/quests">Quests (Coming Soon)</a>
           </li>
         </ul>
@@ -98,10 +96,10 @@
 
       <li nz-submenu nzOpen nzTitle="Scheduled Tasks" nzIcon="clock-circle">
         <ul>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="scheduled-tasks/default">Default (Coming Soon)</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="scheduled-tasks/custom">Custom (Coming Soon)</a>
           </li>
         </ul>

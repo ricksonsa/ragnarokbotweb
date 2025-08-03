@@ -408,6 +408,10 @@ namespace RagnarokBotWeb.Domain.Services
 
             server.CoinAwardPeriodically = updateServer.CoinAwardPeriodically;
             server.VipCoinAwardPeriodically = updateServer.VipCoinAwardPeriodically;
+            server.CoinReductionPerInvalidMineKill = updateServer.CoinReductionPerInvalidMineKill;
+            server.AllowMinesOutsideFlag = updateServer.AllowMinesOutsideFlag;
+            server.AnnounceMineOutsideFlag = updateServer.AnnounceMineOutsideFlag;
+            server.SendVipLockpickAlert = updateServer.SendVipLockpickAlert;
             server.SetRestartTimes(updateServer.RestartTimes);
 
             await _scumServerRepository.CreateOrUpdateAsync(server);

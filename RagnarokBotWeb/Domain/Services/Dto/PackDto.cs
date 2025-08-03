@@ -5,8 +5,8 @@
         public long? Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public decimal? Price { get; set; } = decimal.Zero;
-        public decimal? VipPrice { get; set; } = decimal.Zero;
+        public long? Price { get; set; } = 0;
+        public long? VipPrice { get; set; } = 0;
         public List<PackItemDto>? PackItems { get; set; }
         public List<string>? Commands { get; set; }
         public string? ImageUrl { get; set; }

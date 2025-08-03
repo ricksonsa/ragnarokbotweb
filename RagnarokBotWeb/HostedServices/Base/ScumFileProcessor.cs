@@ -15,26 +15,15 @@ public class ScumFileProcessor
         server => Path.Combine(Path.GetTempPath(), "ragnarok", server, "ftp_files");
 
     private readonly ILogger<ScumFileProcessor> _logger;
-    private readonly IReaderPointerRepository _readerPointerRepository;
-    private readonly IFtpService _ftpService;
-
     private readonly ScumServer _scumServer;
-    private readonly EFileType _fileType;
     private readonly Ftp _ftp;
 
-    public ScumFileProcessor(
-        IFtpService ftpService,
-        ScumServer server,
-        EFileType fileType,
-        IReaderPointerRepository readerPointerRepository)
+    public ScumFileProcessor(ScumServer server)
     {
         var loggerFactory = new LoggerFactory();
         loggerFactory.AddSerilog();
         _logger = loggerFactory.CreateLogger<ScumFileProcessor>();
-        _readerPointerRepository = readerPointerRepository;
-        _ftpService = ftpService;
         _scumServer = server;
-        _fileType = fileType;
         _ftp = server.Ftp!;
     }
 
@@ -107,14 +96,17 @@ public class ScumFileProcessor
         return pointer;
     }
 
-    public async IAsyncEnumerable<string> UnreadFileLinesAsync()
+    public async IAsyncEnumerable<string> UnreadFileLinesAsync(
+        EFileType fileType,
+        IReaderPointerRepository readerPointerRepository,
+        IFtpService ftpService)
     {
         if (_ftp is null) yield break;
 
-        FtpClient client = _ftpService.GetClient(_ftp);
+        FtpClient client = ftpService.GetClient(_ftp);
         DateTime today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
 
-        List<FtpListItem> ftpFiles = GetLogFiles(client, _ftp.RootFolder, today, _fileType);
+        List<FtpListItem> ftpFiles = GetLogFiles(client, _ftp.RootFolder, today, fileType);
 
         List<(FtpListItem, ReaderPointer?)> filteredFiles = [];
 
@@ -122,7 +114,7 @@ public class ScumFileProcessor
         foreach (var file in ftpFiles)
         {
             _logger.LogDebug("File fetched {File}", file.Name);
-            var pointer = await _readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
+            var pointer = await readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
             if (pointer == null || pointer.LastUpdated != file.Modified || pointer.FileSize != file.Size)
             {
                 filteredFiles.Add((file, pointer));
@@ -131,7 +123,7 @@ public class ScumFileProcessor
 
         if (filteredFiles.Count == 0)
         {
-            _logger.LogDebug("No unread or updated files found for {Type}. Skipping UnreadFileLinesAsync.", _fileType);
+            _logger.LogDebug("No unread or updated files found for {Type}. Skipping UnreadFileLinesAsync.", fileType);
             yield break;
         }
 
@@ -141,7 +133,7 @@ public class ScumFileProcessor
         DeleteLocalFiles(localPath, filteredFiles.Select(f => f.Item1.Name));
         try
         {
-            _ftpService.CopyFiles(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList());
+            ftpService.CopyFiles(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList());
         }
         catch (Exception ex)
         {
@@ -186,8 +178,8 @@ public class ScumFileProcessor
 
                 try
                 {
-                    await _readerPointerRepository.CreateOrUpdateAsync(pointer);
-                    await _readerPointerRepository.SaveAsync();
+                    await readerPointerRepository.CreateOrUpdateAsync(pointer);
+                    await readerPointerRepository.SaveAsync();
                 }
                 catch (Exception ex)
                 {
@@ -197,5 +189,38 @@ public class ScumFileProcessor
         }
 
         client.Disconnect();
+    }
+
+    public Task<string> DownloadRaidTimes(IFtpService ftpService)
+    {
+        var client = ftpService.GetClient(_ftp);
+        var remotePath = $"{_ftp.RootFolder}/Saved/Config/WindowsServer/RaidTimes.json";
+        var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ragnarokbot", "servers", _scumServer.Id.ToString());
+        ftpService.CopyFiles(client, localPath, [remotePath]);
+        _logger.LogDebug("Downloaded RaidTimes.json from server {Server}", _scumServer.Id);
+        using var reader = new StreamReader(Path.Combine(localPath, "RaidTimes.json"));
+        return reader.ReadToEndAsync();
+    }
+
+    public Task<string> ReadLocalRaidTimesAsync()
+    {
+        var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ragnarokbot", "servers", _scumServer.Id.ToString(), "RaidTimes.json");
+        using var reader = new StreamReader(localPath);
+        return reader.ReadToEndAsync();
+    }
+
+    public Task SaveSquadList(string squadList)
+    {
+        var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ragnarokbot", "servers", _scumServer.Id.ToString(), "squadlist.json");
+        _logger.LogDebug("Saving SquadList from server {Server}", _scumServer.Id);
+        using var reader = new StreamWriter(localPath, false);
+        return reader.WriteAsync(squadList);
+    }
+
+    public Task<string> ReadSquadListAsync()
+    {
+        var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ragnarokbot", "servers", _scumServer.Id.ToString(), "squadlist.json");
+        using var reader = new StreamReader(localPath);
+        return reader.ReadToEndAsync();
     }
 }

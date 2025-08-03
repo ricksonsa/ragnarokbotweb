@@ -79,6 +79,8 @@
         </nz-form-control>
       </nz-form-item>
 
+      <nz-divider nzText="Shop"></nz-divider>
+
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="coinAwardPeriodically">Periodically Bot Shop Coins</nz-form-label>
         <nz-form-control [nzSpan]="8" nzExtra="How much coin will be awarded perodically to online players."
@@ -96,6 +98,46 @@
             id="vipCoinAwardPeriodically" />
         </nz-form-control>
       </nz-form-item>
+
+      <nz-divider nzText="Mine"></nz-divider>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null" nzExtra="Allow players to arm mines outside their flag area, if not allowed, the player will be teleported to their
+          own mine. This feature depends on an active bot.">
+          <label nz-checkbox formControlName="allowMinesOutsideFlag" nzFor="allowMinesOutsideFlag">Allow Mines Outside
+            Flag</label>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coinReductionPerInvalidMineKill">Coin Reduction Per Mine
+          Penalty</nz-form-label>
+        <nz-form-control [nzSpan]="8"
+          nzExtra="The amount of coins that will be reduced for the player when mine outside flag penalty is applied."
+          nzErrorTip="Must be greater then 0">
+          <input nz-input formControlName="coinReductionPerInvalidMineKill" name="coinReductionPerInvalidMineKill"
+            type="number" id="coinReductionPerInvalidMineKill" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-divider nzText="Alerts"></nz-divider>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null"
+          nzExtra="This will make the bot notify in game when a player arms a mine outside their flag area.">
+          <label nz-checkbox formControlName="announceMineOutsideFlag" nzFor="announceMineOutsideFlag">Announce Mines
+            Outside Flag Penalty</label>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-control [nzSpan]="null"
+          nzExtra="Send Discord DM message to vip players when their locks are beign picked.">
+          <label nz-checkbox formControlName="sendVipLockpickAlert" nzFor="sendVipLockpickAlert">Send Lockpick Alert To
+            Vip Players</label>
+        </nz-form-control>
+      </nz-form-item>
+
     </form>
   </nz-card>
   <ng-template #saveSettings>

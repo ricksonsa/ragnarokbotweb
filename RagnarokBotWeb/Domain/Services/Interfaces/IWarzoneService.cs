@@ -15,5 +15,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<ulong> GenerateDiscordWarzoneButton(Warzone warzone);
         Task OpenWarzone(ScumServer server, CancellationToken token = default);
         Task CloseWarzone(ScumServer server, CancellationToken token = default);
+        Task OpenWarzone();
+        Task CloseWarzone();
     }
 }

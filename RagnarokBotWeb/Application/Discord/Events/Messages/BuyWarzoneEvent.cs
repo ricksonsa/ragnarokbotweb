@@ -44,7 +44,7 @@ public class BuyWarzoneEvent : IMessageEventHandler
             var embed = new EmbedBuilder()
               .WithTitle(order!.Warzone!.Name)
               .WithDescription(
-                $"Your order with number #{order!.Id} was registered. You will be teleported to the event soon.{order.ResolveWarzoneCooldownText()}")
+                $"Your order with number #{order!.Id} was registered. You will be teleported to the event soon.{order.ResolveWarzoneCooldownText()}\nYour current coin balance: {order.BalancePreview}\n{order.ResolveWarzoneCooldownText()}")
               .WithColor(Color.Green)
               .Build();
 

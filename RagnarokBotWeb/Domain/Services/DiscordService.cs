@@ -8,6 +8,9 @@ using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using System.Text;
+using static RagnarokBotWeb.Application.Tasks.Jobs.KillRankJob;
+using static RagnarokBotWeb.Application.Tasks.Jobs.LockpickRankJob;
 using Color = Discord.Color;
 
 namespace RagnarokBotWeb.Domain.Services
@@ -91,8 +94,10 @@ namespace RagnarokBotWeb.Domain.Services
             var embed = new EmbedBuilder()
                 .WithTitle(createEmbed.Title)
                 .WithDescription(createEmbed.Text)
+                .WithAuthor(GetAuthor())
+                .WithCurrentTimestamp()
                 .WithImageUrl(createEmbed.ImageUrl)
-                .WithColor(Color.Blue)
+                .WithColor(Color.DarkPurple)
                 .Build();
 
             var builder = new ComponentBuilder();
@@ -145,20 +150,160 @@ namespace RagnarokBotWeb.Domain.Services
             return null;
         }
 
+        public async Task DeleteAllMessagesInChannel(ulong channelId)
+        {
+            var channel = _client.GetChannel(channelId) as IMessageChannel;
+            if (channel == null)
+            {
+                Console.WriteLine("Channel not found or is not a message channel.");
+                return;
+            }
+
+            int deletedCount = 0;
+            bool hasMore = true;
+
+            while (hasMore)
+            {
+                var messages = await channel.GetMessagesAsync(100).FlattenAsync();
+                var messageList = messages.ToList();
+
+                if (messageList.Count == 0)
+                {
+                    hasMore = false;
+                    break;
+                }
+
+                foreach (var msg in messageList)
+                {
+                    try
+                    {
+                        await msg.DeleteAsync();
+                        deletedCount++;
+                        await Task.Delay(500); // Avoid rate limit
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to delete message: {ex.Message}");
+                    }
+                }
+            }
+
+            Console.WriteLine($"Deleted {deletedCount} messages.");
+        }
+
+        public async Task SendLockpickRankEmbed(
+            ulong channelId,
+           List<LockpickStatsDto> stats,
+           string lockType)
+        {
+            var channel = _client.GetChannel(channelId) as IMessageChannel;
+            if (channel == null) return;
+
+            var builder = new EmbedBuilder()
+                .WithTitle($"🔐 BEST LOCK PICKERS - {lockType}")
+                .WithColor(Color.DarkPurple)
+                .WithCurrentTimestamp();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("```");
+            sb.AppendLine("RANK | Player               | Success | Fails |   %");
+            sb.AppendLine("-----|----------------------|---------|-------|--------");
+
+            int rank = 1;
+            foreach (var p in stats)
+            {
+                sb.AppendLine($"{rank,4} | {Truncate(p.PlayerName, 20),-20} | {p.SuccessCount,7} | {p.FailCount,5} | {p.SuccessRate,6:F2}%");
+                rank++;
+            }
+
+            sb.AppendLine("```");
+
+            builder.WithDescription(sb.ToString());
+
+            await channel.SendMessageAsync(embed: builder.Build());
+        }
+
+        public async Task SendTopDistanceKillsEmbed(
+            ulong channelId,
+            List<PlayerStatsDto> players,
+            int topCount)
+        {
+            var channel = _client.GetChannel(channelId) as IMessageChannel;
+            if (channel == null) return;
+
+            var builder = new EmbedBuilder()
+             .WithTitle("SNIPER RANK")
+             .WithColor(Color.DarkPurple)
+             .WithCurrentTimestamp();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("```");
+            sb.AppendLine("#  | Player             | Distance (m) | Weapon");
+            sb.AppendLine("---|--------------------|--------------|----------------");
+
+            int rank = 1;
+            foreach (var p in players)
+            {
+                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {p.KillDistance,12:F1} | {Truncate(p.WeaponName, 16)}");
+                rank++;
+            }
+
+            sb.AppendLine("```");
+
+            builder.WithDescription(sb.ToString());
+
+            await channel.SendMessageAsync(embed: builder.Build());
+        }
+
+
+        public async Task SendTopPlayersKillsEmbed(ulong channelId, List<PlayerStatsDto> players, ERankingPeriod period, int topCount)
+        {
+            var channel = _client.GetChannel(channelId) as IMessageChannel;
+            if (channel == null) return;
+
+            var builder = new EmbedBuilder()
+            .WithTitle($"🏆 Top {topCount} Killers ({period})")
+            .WithColor(Color.Purple)
+            .WithCurrentTimestamp();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("```");
+            sb.AppendLine("#  | Player             | Kills | Deaths");
+            sb.AppendLine("---|--------------------|-------|--------");
+
+            int rank = 1;
+            foreach (var p in players)
+            {
+                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {p.KillCount,5} | {p.DeathCount,6}");
+                rank++;
+            }
+
+            sb.AppendLine("```");
+
+            builder.WithDescription(sb.ToString());
+
+            await channel.SendMessageAsync(embed: builder.Build());
+        }
+
+        private string Truncate(string value, int maxLength)
+        {
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength - 1) + "…";
+        }
+
+
         public async Task<IUserMessage> SendEmbedToChannel(CreateEmbed createEmbed)
         {
             var channel = _client.GetChannel(createEmbed.DiscordId) as IMessageChannel;
 
             if (channel != null)
             {
-                var embed = new EmbedBuilder()
+                var embedBuilder = new EmbedBuilder()
                     .WithTitle(createEmbed.Title)
                     .WithDescription(createEmbed.Text)
                     .WithAuthor(GetAuthor())
                     .WithImageUrl(_appSettings.BaseUrl + "/" + createEmbed.ImageUrl)
                     .WithFooter(new EmbedFooterBuilder { Text = createEmbed.FooterText })
-                    .WithColor(createEmbed.Color)
-                    .Build();
+                    .WithColor(createEmbed.Color);
 
                 var builder = new ComponentBuilder();
 
@@ -170,7 +315,17 @@ namespace RagnarokBotWeb.Domain.Services
                         style: ButtonStyle.Primary);
                 });
 
-                return await channel.SendMessageAsync(embed: embed, components: builder.Build());
+
+                createEmbed.Fields.ForEach(field =>
+                {
+                    embedBuilder.AddField(
+                        new EmbedFieldBuilder()
+                        .WithName(field.Title)
+                        .WithValue(field.Message)
+                        .WithIsInline(field.Inline));
+                });
+
+                return await channel.SendMessageAsync(embed: embedBuilder.Build(), components: builder.Build());
             }
 
             return null;
@@ -283,7 +438,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (channel is null) return;
 
             var embedBuilder = new EmbedBuilder()
-                .WithColor(Color.Red)
+                .WithColor(Color.DarkPurple)
                 .WithAuthor(GetAuthor())
                 .WithCurrentTimestamp();
 

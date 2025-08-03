@@ -30,8 +30,6 @@ namespace RagnarokBotWeb.Domain.Entities
         public bool ShowLockpickSector { get; set; }
         public bool ShowLockpickContainerName { get; set; }
         public bool SendVipLockpickAlert { get; set; }
-
-
         #endregion
 
         #region Discord
@@ -42,7 +40,12 @@ namespace RagnarokBotWeb.Domain.Entities
         #region Shop
         public long CoinAwardPeriodically { get; set; }
         public long VipCoinAwardPeriodically { get; set; }
+        #endregion
 
+        #region Trap
+        public bool AllowMinesOutsideFlag { get; set; } = true;
+        public bool AnnounceMineOutsideFlag { get; set; } = true;
+        public long CoinReductionPerInvalidMineKill { get; set; }
         #endregion
 
         public ScumServer(Tenant tenant)

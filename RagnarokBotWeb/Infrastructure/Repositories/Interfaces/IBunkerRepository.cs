@@ -6,5 +6,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
     public interface IBunkerRepository : IRepository<Bunker>
     {
         Task<Bunker?> FindOneWithServerAsync(Expression<Func<Bunker, bool>> predicate);
+        Task<List<Bunker>> FindWithServerAsync(Expression<Func<Bunker, bool>> predicate);
     }
 }

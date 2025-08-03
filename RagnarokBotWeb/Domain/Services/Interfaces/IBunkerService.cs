@@ -4,6 +4,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
     public interface IBunkerService
     {
+        Task<List<Bunker>> FindBunkersByServer(long serverId);
         Task UpdateBunkerState(ScumServer server, string sector, bool locked, TimeSpan activation);
     }
 }

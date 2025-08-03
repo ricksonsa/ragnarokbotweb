@@ -1,0 +1,79 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Quartz;
+using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
+using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+
+namespace RagnarokBotWeb.Application.Tasks.Jobs
+{
+    public class LockpickRankJob(
+        ILogger<KillRankJob> logger,
+        IScumServerRepository scumServerRepository,
+        IDiscordService discordService,
+        IUnitOfWork unitOfWork,
+        IChannelService channelService
+        ) : AbstractJob(scumServerRepository), IJob
+    {
+        public async Task Execute(IJobExecutionContext context)
+        {
+            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            var server = await GetServerAsync(context);
+
+            var channel = await channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.LockPickRank);
+            if (channel is null) return;
+
+            await discordService.DeleteAllMessagesInChannel(channel.DiscordId);
+
+            var killBoxRank = await GetLockpickRank(unitOfWork, server, "KillBox");
+            await discordService.SendLockpickRankEmbed(channel.DiscordId, killBoxRank, "Kill Box");
+
+            var dialLockRank = await GetLockpickRank(unitOfWork, server, "DialLock");
+            await discordService.SendLockpickRankEmbed(channel.DiscordId, dialLockRank, "Dial Lock");
+
+            var basicRank = await GetLockpickRank(unitOfWork, server, "Basic");
+            await discordService.SendLockpickRankEmbed(channel.DiscordId, basicRank, "Iron");
+
+            var mediumRank = await GetLockpickRank(unitOfWork, server, "Medium");
+            await discordService.SendLockpickRankEmbed(channel.DiscordId, mediumRank, "Silver");
+
+            var advancedRank = await GetLockpickRank(unitOfWork, server, "Advanced");
+            await discordService.SendLockpickRankEmbed(channel.DiscordId, advancedRank, "Gold");
+        }
+
+        private static async Task<List<LockpickStatsDto>> GetLockpickRank(
+            IUnitOfWork unitOfWork,
+            ScumServer server,
+            string lockType)
+        {
+            var lockpicks = unitOfWork.Lockpicks
+                .Where(l => l.ScumServer.Id == server.Id && l.LockType == lockType);
+
+            var stats = await lockpicks
+                .GroupBy(l => l.Name)
+                .Select(g => new LockpickStatsDto
+                {
+                    PlayerName = g.Key,
+                    SuccessCount = g.Count(l => l.Success),
+                    FailCount = g.Count(l => !l.Success),
+                    SuccessRate = g.Any() ? (double)g.Count(l => l.Success) / g.Count() * 100 : 0
+                })
+                .OrderByDescending(p => p.SuccessCount)
+                .ThenByDescending(p => p.SuccessRate)
+                .Take(10)
+                .ToListAsync();
+
+            return stats;
+        }
+
+
+        public class LockpickStatsDto
+        {
+            public string PlayerName { get; set; }
+            public int SuccessCount { get; set; }
+            public int FailCount { get; set; }
+            public double SuccessRate { get; set; } // As a percentage
+        }
+
+    }
+}

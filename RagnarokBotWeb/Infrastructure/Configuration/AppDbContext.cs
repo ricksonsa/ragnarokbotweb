@@ -52,6 +52,8 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         {
             // TODO: Load from env config
             options.UseNpgsql("Host=localhost;Database=ragnarokbot;Username=postgres;Password=ragnarokbot");
+            //.EnableSensitiveDataLogging() // Optional: shows parameters in logs
+            //.LogTo(Log.Logger.Information, new[] { DbLoggerCategory.Database.Command.Name }, LogLevel.Information);
             //options.UseSqlite("Data Source=app.db");
         }
 

@@ -45,7 +45,8 @@
       <nz-form-item nzAlign="bottom">
         <nz-form-label [nzSpan]="0" nzFor="warzoneThumbnail">Warzone Thumbnail</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="uploadBtn">
-          <img *ngIf="avatarUrl" nz-image width="200px" height="200px"  [nzSrc]="!isUploaded ? avatarUrl : 'http://localhost:8080/' + avatarUrl" alt="" />
+          <img *ngIf="avatarUrl" nz-image width="200px" height="200px"
+            [nzSrc]="!isUploaded ? avatarUrl : 'http://localhost:8080/' + avatarUrl" alt="" />
           <ng-template #uploadBtn>
             <nz-upload nzAction="https://www.mocky.io/v2/5cc8019d300000980a055e76"
               [nzBeforeUpload]="handleBeforeUpload">
@@ -115,7 +116,7 @@
         <nz-form-control [nzSpan]="2">
           <label nz-checkbox formControlName="isVipOnly"></label>
         </nz-form-control>
-        <p nz-typography class="description-color">Determine whether the teleport will only be available for
+        <p class="description-color">Determine whether the teleport will only be available for
           VIP Players.</p>
       </nz-form-item>
 
@@ -169,7 +170,8 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #minPlayerOnlineExtra>
-        <p>The minimum number of players online required to start the event. Leave it blank for always start
+        <p>The minimum number of players online required to start the event. Leave it blank for always
+          start
           idepentently of players online.</p>
       </ng-template>
 
@@ -180,7 +182,8 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #dailyPackageExtra>
-        <p>You can set how many times a player can use the teleport per day. Leave it blank for infinite stock.</p>
+        <p>You can set how many times a player can use the teleport per day. Leave it blank for infinite
+          stock.</p>
       </ng-template>
 
       <nz-form-item>
@@ -190,9 +193,12 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #packageDeliveryExtra>
-        <p style="margin: 0">Text that the bot will send in global chat when an item is spawned at the Warzone. Leave
+        <p style="margin: 0">Text that the bot will send in global chat when an item is spawned at the
+          Warzone. Leave
           it blank
           for no text.</p>
+        <p style="margin: 0;">Available template variables: {{'{item_name}'}}, {{'{spawn_point_name}'}}
+        </p>
       </ng-template>
 
       <nz-form-item>
@@ -202,7 +208,8 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #startMessageExtra>
-        <p style="margin: 0">The text that you be used to announce the start of the Warzone. Leave it blank for no
+        <p style="margin: 0">The text that you be used to announce the start of the Warzone. Leave it
+          blank for no
           announcements.</p>
       </ng-template>
     </form>
@@ -292,7 +299,8 @@
         </nz-form-control>
       </nz-form-item>
       <ng-template #itemSpawnCoordinatesExtra>
-        <p style="margin: 0">The ingame coordinates for the items to spawn to. You can press control-c inside the game
+        <p style="margin: 0">The ingame coordinates for the items to spawn to. You can press control-c
+          inside the game
           to
           get the
           coordinates.</p>

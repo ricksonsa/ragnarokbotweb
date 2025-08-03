@@ -118,6 +118,8 @@ namespace RagnarokBotWeb
 
             builder.Services.AddHostedService<LoadServerTaskService>();
             builder.Services.AddHostedService<LoadFtpTaskService>();
+            builder.Services.AddHostedService<LoadRaidTimesHostedService>();
+            builder.Services.AddHostedService<LoadSquadsHostedService>();
 
             builder.Services.AddHostedService<DiscordBotService>();
             builder.Services.AddHostedService<DiscordEventService>();

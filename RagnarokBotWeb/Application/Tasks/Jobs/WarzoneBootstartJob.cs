@@ -9,16 +9,19 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         private readonly ILogger<WarzoneBootstartJob> _logger;
         private readonly IBotService _botService;
         private readonly IWarzoneService _warzoneService;
+        private readonly ISchedulerFactory _schedulerFactory;
 
         public WarzoneBootstartJob(
           IScumServerRepository scumServerRepository,
           IBotService botService,
           IWarzoneService warzoneService,
-          ILogger<WarzoneBootstartJob> logger) : base(scumServerRepository)
+          ILogger<WarzoneBootstartJob> logger,
+          ISchedulerFactory schedulerFactory) : base(scumServerRepository)
         {
             _botService = botService;
             _warzoneService = warzoneService;
             _logger = logger;
+            _schedulerFactory = schedulerFactory;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -27,7 +30,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var server = await GetServerAsync(context, ftpRequired: false);
 
             if (!_botService.IsBotOnline(server.Id)) return;
-            await _warzoneService.OpenWarzone(server, context.CancellationToken);
+
+            var scheduler = await _schedulerFactory.GetScheduler();
+            if (!await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({server.Id})")))
+            {
+                await _warzoneService.OpenWarzone(server, context.CancellationToken);
+
+            }
         }
     }
 }

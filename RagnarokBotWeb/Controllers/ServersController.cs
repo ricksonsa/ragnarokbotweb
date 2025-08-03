@@ -86,7 +86,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPut("settings")]
-        public async Task<IActionResult> UpdateCoinAwardPeriodically(UpdateServerSettingsDto updateServer)
+        public async Task<IActionResult> UpdateServerSettings(UpdateServerSettingsDto updateServer)
         {
             _logger.LogDebug("Put request to update server settings");
             var server = await _serverService.UpdateServerSettings(updateServer);

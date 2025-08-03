@@ -23,6 +23,7 @@ namespace RagnarokBotWeb.Domain.Enums
         public static readonly ChannelTemplateValue MineKill = new("mine-kill");
         public static readonly ChannelTemplateValue LockpickAlert = new("lockpick-alert");
         public static readonly ChannelTemplateValue AdminKill = new("admin-kill");
+        public static readonly ChannelTemplateValue LockpickAdmin = new("lockpick-admin");
     }
 
     public class ChannelTemplateValue

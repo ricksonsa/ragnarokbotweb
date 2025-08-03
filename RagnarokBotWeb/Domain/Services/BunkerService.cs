@@ -15,6 +15,11 @@ namespace RagnarokBotWeb.Domain.Services
             _bunkerRepository = bunkerRepository;
         }
 
+        public async Task<List<Bunker>> FindBunkersByServer(long serverId)
+        {
+            return await _bunkerRepository.FindWithServerAsync(bunker => bunker.ScumServer.Id == serverId);
+        }
+
         public async Task UpdateBunkerState(ScumServer server, string sector, bool locked, TimeSpan activation)
         {
             var bunker = await _bunkerRepository.FindOneWithServerAsync(b => b.Sector == sector && b.ScumServer.Id == server.Id);

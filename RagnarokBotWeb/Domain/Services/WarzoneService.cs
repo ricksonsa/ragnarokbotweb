@@ -5,7 +5,6 @@ using Quartz;
 using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Pagination;
-using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -82,7 +81,7 @@ namespace RagnarokBotWeb.Domain.Services
                 Buttons = [new($"Buy {warzone.Name} Teleport", action)],
                 DiscordId = ulong.Parse(warzone.DiscordChannelId!),
                 FooterText = GetFooterText(warzone),
-                Color = warzone.IsVipOnly ? Color.Gold : Color.Blue,
+                Color = warzone.IsVipOnly ? Color.Gold : Color.DarkPurple,
                 Text = warzone.Description,
                 ImageUrl = warzone.ImageUrl,
                 Title = warzone.Name
@@ -103,7 +102,7 @@ namespace RagnarokBotWeb.Domain.Services
             return text;
         }
 
-        public async Task DeleteDiscordMessage(Warzone? warzone)
+        public async Task DeleteDiscordMessage(Warzone warzone)
         {
             await _discordService.RemoveMessage(ulong.Parse(warzone.DiscordChannelId!), warzone.DiscordMessageId!.Value);
         }
@@ -132,7 +131,8 @@ namespace RagnarokBotWeb.Domain.Services
             RemoveWarzoneSpawnPoints(warzoneDto, warzone);
             RemoveWarzoneTeleports(warzoneDto, warzone);
 
-            if (warzone.IsRunning && !warzoneDto.Enabled)
+            var scheduler = await _schedulerFactory.GetScheduler();
+            if (await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({serverId.Value})")) && !warzoneDto.Enabled)
             {
                 await CloseWarzone(warzone.ScumServer);
             }
@@ -281,6 +281,11 @@ namespace RagnarokBotWeb.Domain.Services
                 }
             }
 
+            if (warzone.IsRunning)
+            {
+                await CloseWarzone(warzone.ScumServer);
+            }
+
             // === Remove related entities ===
 
             _unitOfWork.AppDbContext.WarzoneItems.RemoveRange(warzone.WarzoneItems);
@@ -291,18 +296,6 @@ namespace RagnarokBotWeb.Domain.Services
 
             _unitOfWork.AppDbContext.Warzones.Remove(warzone);
             await _unitOfWork.AppDbContext.SaveChangesAsync();
-
-            try
-            {
-                await _taskService.DeleteJob($"WarzoneItemSpawnJob({serverId.Value})");
-            }
-            catch (Exception) { }
-
-            try
-            {
-                await _taskService.DeleteJob($"CloseWarzoneJob({serverId.Value})");
-            }
-            catch (Exception) { }
 
             return;
         }
@@ -318,6 +311,7 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<WarzoneDto> FetchWarzoneById(long id)
         {
             var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
             var warzone = await _warzoneRepository.FindByIdAsync(id);
             if (warzone is null) throw new NotFoundException("Warzone not found");
 
@@ -331,6 +325,24 @@ namespace RagnarokBotWeb.Domain.Services
             var serverId = ServerId();
             var page = await _warzoneRepository.GetPageByServerAndFilter(paginator, serverId!.Value, filter);
             return new Page<WarzoneDto>(page.Content.Select(_mapper.Map<WarzoneDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
+        }
+
+        public async Task OpenWarzone()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+            var server = await _scumServerRepository.FindByIdAsync(serverId!.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+            await OpenWarzone(server);
+        }
+
+        public async Task CloseWarzone()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
+            var server = await _scumServerRepository.FindByIdAsync(serverId!.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+            await CloseWarzone(server);
         }
 
         public async Task OpenWarzone(ScumServer server, CancellationToken token = default)
@@ -352,26 +364,10 @@ namespace RagnarokBotWeb.Domain.Services
             }
 
             var scheduler = await _schedulerFactory.GetScheduler();
-
             if (await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({server.Id})"), token))
             {
                 await CloseWarzone(server, token);
             }
-
-            var closeWarzoneJob = JobBuilder.Create<CloseWarzoneJob>()
-                  .WithIdentity($"CloseWarzoneJob({server.Id})")
-                  .UsingJobData("server_id", server.Id)
-                  .UsingJobData("warzone_id", warzone.Id)
-                  .Build();
-
-            ITrigger warzoneClosingTrigger = TriggerBuilder.Create()
-                .WithIdentity("CloseWarzoneJobTrigger", server.Id.ToString())
-                .StartAt(new DateTimeOffset(warzone.StopAt!.Value))
-                .WithSimpleSchedule(x => x.WithRepeatCount(0)) // only once
-                .Build();
-
-
-            await scheduler.ScheduleJob(closeWarzoneJob, warzoneClosingTrigger);
 
             if (!string.IsNullOrEmpty(warzone.StartMessage))
             {
@@ -392,13 +388,8 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     CreateEmbed embed = warzone.WarzoneButtonEmbed();
                     IUserMessage message;
-                    if (embed.ImageUrl != null)
-                        message = await _discordService.SendEmbedWithBase64Image(embed);
-                    else
-                        message = await _discordService.SendEmbedToChannel(embed);
-
+                    message = await _discordService.SendEmbedToChannel(embed);
                     warzone.DiscordMessageId = message.Id;
-
                 }
                 catch (Exception) { }
 
@@ -409,28 +400,16 @@ namespace RagnarokBotWeb.Domain.Services
 
             }
 
-            var warzoneItemSpawnJob = JobBuilder.Create<WarzoneItemSpawnJob>()
-                  .WithIdentity($"WarzoneItemSpawnJob({server.Id})")
-                  .UsingJobData("server_id", server.Id)
-                  .UsingJobData("warzone_id", warzone.Id)
-                  .Build();
-
-            ITrigger warzoneItemSpawnJobTrigger = TriggerBuilder.Create()
-               .WithIdentity("WarzoneItemSpawnJobTrigger", server.Id.ToString())
-               .StartNow() // Start immediately
-               .WithSimpleSchedule(x => x
-                   .WithIntervalInMinutes((int)warzone.ItemSpawnInterval)
-                   .RepeatForever())
-               .Build();
-
-            await scheduler.ScheduleJob(warzoneItemSpawnJob, warzoneItemSpawnJobTrigger);
+            await _taskService.CreateWarzoneJobs(server, warzone);
         }
 
         public async Task CloseWarzone(ScumServer server, CancellationToken token = default)
         {
-            var warzone = await _unitOfWork.Warzones
+            var warzones = await _unitOfWork.Warzones
                 .Include(warzone => warzone.ScumServer)
-                .FirstOrDefaultAsync(warzone => warzone.ScumServer.Id == server.Id && warzone.StopAt.HasValue && DateTime.Now < warzone.StopAt.Value, cancellationToken: token);
+                .ToListAsync();
+
+            var warzone = warzones.FirstOrDefault(wz => wz.IsRunning);
 
             if (warzone == null) return;
 
@@ -438,27 +417,13 @@ namespace RagnarokBotWeb.Domain.Services
             _unitOfWork.Warzones.Update(warzone);
             await _unitOfWork.SaveAsync();
 
-            var scheduler = await _schedulerFactory.GetScheduler(token);
-            JobKey warzoneItemSpawnJobKey = new($"WarzoneItemSpawnJob({server.Id})");
-            JobKey closeWarzoneJobKey = new($"CloseWarzoneJob({server.Id})");
-
             try
             {
-                await scheduler.DeleteJob(warzoneItemSpawnJobKey, token);
+                await _taskService.DeleteWarzoneJobs(server);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                _logger.LogWarning("Tried delete inexisting jobs {Job}", closeWarzoneJobKey.Name);
-            }
-
-            try
-            {
-                await scheduler.DeleteJob(closeWarzoneJobKey, token);
-            }
-            catch (Exception)
-            {
-
-                _logger.LogWarning("Tried delete inexisting jobs {Job}", warzoneItemSpawnJobKey.Name);
+                _logger.LogError("Failed to delete warzone jobs for server {Server} -> {Ex}", server.Id, ex.Message);
             }
 
             if (warzone.DiscordChannelId != null)

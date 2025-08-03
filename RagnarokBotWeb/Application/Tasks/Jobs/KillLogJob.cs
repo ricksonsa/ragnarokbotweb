@@ -25,14 +25,13 @@ public class KillLogJob(
         logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
         var server = await GetServerAsync(context);
-        var fileType = GetFileTypeFromContext(context);
 
         try
         {
-            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository);
+            var processor = new ScumFileProcessor(server);
             List<string> lines = [];
 
-            await foreach (var line in processor.UnreadFileLinesAsync())
+            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService))
             {
                 lines.Add(line);
             }
@@ -48,26 +47,44 @@ public class KillLogJob(
                 {
                     kill = new KillLogParser(server).Parse(first, second);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    logger.LogError("Error parsing kill -> {Ex}", ex.Message);
                     continue;
                 }
+
                 if (kill is null) continue;
 
-                logger.LogDebug("Adding new kill entry: {Killer} -> {Target}", kill.KillerName, kill.TargetName);
+                if (!server.ShowSameSquadKill)
+                {
+                    var squads = cacheService.GetSquads(server.Id);
+
+                    bool killerInSquad = false;
+                    bool targetInSameSquad = false;
+
+                    foreach (var squad in squads)
+                    {
+                        var memberIds = squad.Members.Select(m => m.SteamId).ToHashSet();
+
+                        if (memberIds.Contains(kill.KillerSteamId64!))
+                            killerInSquad = true;
+
+                        if (memberIds.Contains(kill.TargetSteamId64!))
+                            targetInSameSquad = true;
+
+                        if (killerInSquad && targetInSameSquad)
+                        {
+                            // Both are in the same squad, skip
+                            continue;
+                        }
+                    }
+                }
 
                 if (server.UseKillFeed)
                 {
                     if (server.ShowKillOnMap)
                     {
-                        try
-                        {
-                            await ExtractMap(fileService, kill);
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.LogError("Error generating coordinates image -> {Ex}", ex.Message);
-                        }
+                        await HandleShowMap(logger, fileService, kill);
                     }
 
                     await discordService.SendKillFeedEmbed(server, kill);
@@ -85,6 +102,7 @@ public class KillLogJob(
                     cacheService.GetCommandQueue(server.Id).Enqueue(new BotCommand().Say(msg));
                 }
 
+                logger.LogDebug("Adding new kill entry: {Killer} -> {Target}", kill.KillerName, kill.TargetName);
                 unitOfWork.ScumServers.Attach(server);
                 await unitOfWork.Kills.AddAsync(kill);
                 await unitOfWork.SaveAsync();
@@ -96,6 +114,18 @@ public class KillLogJob(
         }
     }
 
+    private static async Task HandleShowMap(ILogger<KillLogJob> logger, IFileService fileService, Kill? kill)
+    {
+        try
+        {
+            await ExtractMap(fileService, kill);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Error generating coordinates image -> {Ex}", ex.Message);
+        }
+    }
+
     private static async Task ExtractMap(IFileService fileService, Kill kill)
     {
         var midPoint = ScumMapExtractor.GetMidpoint((kill.KillerX, kill.KillerY), (kill.VictimX, kill.VictimY));
@@ -104,7 +134,7 @@ public class KillLogJob(
             new ScumCoordinate(midPoint.x, midPoint.y),
             [
                 new ScumCoordinate(kill.KillerX, kill.KillerY, Color.Red),
-                                    new ScumCoordinate(kill.VictimX, kill.VictimY, Color.Black),
+                new ScumCoordinate(kill.VictimX, kill.VictimY, Color.Black)
             ],
             128);
         kill.ImageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/eliminations", cdnUrlPrefix: "images/eliminations");

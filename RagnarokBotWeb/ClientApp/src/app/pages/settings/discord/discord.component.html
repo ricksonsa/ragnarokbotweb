@@ -119,8 +119,9 @@
         <nz-form-control [nzSpan]="24">
           <nz-select id="register" formControlName="register" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
-            @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            @for (channel of channels ; track $index) {
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -132,7 +133,8 @@
           <nz-select id="chat" formControlName="game-chat" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -144,7 +146,8 @@
           <nz-select id="taxi" formControlName="taxi" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -158,7 +161,8 @@
           <nz-select id="abusePublic" nzPlaceHolder="Select a discord channel" formControlName="no-admin-abuse-public">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -170,7 +174,8 @@
           <nz-select id="killFeed" nzPlaceHolder="Select a discord channel" formControlName="kill-feed">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -182,7 +187,8 @@
           <nz-select id="sniperRank" nzPlaceHolder="Select a discord channel" formControlName="sniper-rank">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -194,7 +200,8 @@
           <nz-select id="killRank" nzPlaceHolder="Select a discord channel" formControlName="kill-rank">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -206,7 +213,8 @@
           <nz-select id="lockpickRank" nzPlaceHolder="Select a discord channel" formControlName="lockpick-rank">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -218,11 +226,14 @@
           <nz-select id="bunkerState" nzPlaceHolder="Select a discord channel" formControlName="bunker-states">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
       </nz-form-item>
+
+      <nz-divider nzText="Admin Channels"></nz-divider>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="login">Login</nz-form-label>
@@ -230,104 +241,28 @@
           <nz-select id="login" nzPlaceHolder="Select a discord channel" formControlName="login">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="buriedChest">Buried Chest</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="adminAlert">Admin Alert</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="buriedChest" nzPlaceHolder="Select a discord channel" formControlName="buried-chest">
+          <nz-select id="adminAlert" nzPlaceHolder="Select a discord channel" formControlName="admin-alert">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
-            }
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="mineKill">Mine Kill</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <nz-select id="mineKill" nzPlaceHolder="Select a discord channel" formControlName="mine-kill">
-            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
-            @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
-            }
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="lockpickAlert">Lockpick Alert</nz-form-label>
-        <nz-form-control [nzSpan]="24">
-          <nz-select id="lockpickAlert" nzPlaceHolder="Select a discord channel" formControlName="lockpick-alert">
-            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
-            @for (channel of channels; track $index) {
-            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"></nz-option>
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
             }
           </nz-select>
         </nz-form-control>
       </nz-form-item>
     </form>
   </nz-card>
-
-  <ng-template #lock>
-    <nz-icon nzType="lock" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Lockpick Feed</span>
+  <ng-template #noDiscord>
+    <nz-alert nzMessage="Discord configuration is required." nzType="error"></nz-alert>
   </ng-template>
-  <ng-template #saveLockpickFeed>
-    <button nz-button [disabled]="!account?.server.discord" nzType="primary">Save</button>
-  </ng-template>
-  <nz-card [nzTitle]="lock">
-    <ng-template #noDiscord>
-      <nz-alert nzMessage="Discord configuration is required." nzType="error"></nz-alert>
-    </ng-template>
-    <form nz-form *ngIf="account?.server.discord; else noDiscord" [formGroup]="lockpickFeed">
-      <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="useLockpickFeed">Post Lockpick Attempt in Discord</nz-form-label>
-        <nz-form-control [nzSpan]="null" [nzExtra]="lockpickAttempt">
-          <nz-switch formControlName="useLockpickFeed"></nz-switch>
-        </nz-form-control>
-      </nz-form-item>
-      <ng-template #lockpickAttempt>
-        <p>Notify when someone is attempting to lockpick a player lock in the selected Lockpick Alert Discord channel.
-        </p>
-      </ng-template>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="showLockpickSector">Show sector</nz-form-label>
-        <nz-form-control [nzSpan]="null" [nzExtra]="lockpickSector">
-          <nz-switch formControlName="showLockpickSector"></nz-switch>
-        </nz-form-control>
-      </nz-form-item>
-      <ng-template #lockpickSector>
-        <p>Displays sector of the lockpick attempt</p>
-      </ng-template>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="showLockpickContainerName">Show locked container</nz-form-label>
-        <nz-form-control [nzSpan]="null" [nzExtra]="lockContainer">
-          <nz-switch formControlName="showLockpickContainerName"></nz-switch>
-        </nz-form-control>
-      </nz-form-item>
-      <ng-template #lockContainer>
-        <p>Displays the type of container that is being unlocked.</p>
-      </ng-template>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="null" nzFor="sendVipLockpickAlert">Send alert to vip players</nz-form-label>
-        <nz-form-control [nzSpan]="null" [nzExtra]="vipPlayerLockAlert">
-          <nz-switch formControlName="sendVipLockpickAlert"></nz-switch>
-        </nz-form-control>
-      </nz-form-item>
-      <ng-template #vipPlayerLockAlert>
-        <p>Send message to the lock owner's discord if they are vip</p>
-      </ng-template>
-
-    </form>
-  </nz-card>
-  <!-- <div class="last"></div> -->
-
 </div>

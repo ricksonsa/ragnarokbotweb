@@ -26,9 +26,9 @@ public class EconomyJob(
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(ftpService, server, fileType, readerPointerRepository);
+            var processor = new ScumFileProcessor(server);
 
-            await foreach (var line in processor.UnreadFileLinesAsync())
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService))
             {
                 if (line.Contains("changed their name"))
                 {

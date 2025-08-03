@@ -6,8 +6,8 @@ using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 namespace RagnarokBotWeb.Application.Tasks.Jobs;
 
 
-public class CoinAwardJob(
-    ILogger<CoinAwardJob> logger,
+public class PaydayJob(
+    ILogger<PaydayJob> logger,
     IScumServerRepository scumServerRepository,
     IUnitOfWork unitOfWork,
     ICacheService cacheService

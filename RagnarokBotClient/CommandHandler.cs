@@ -56,6 +56,10 @@ namespace RagnarokBotClient
                     case ECommandType.ListPlayers:
                         tasks.Add(HandleListPlayers);
                         break;
+
+                    case ECommandType.ListSquads:
+                        tasks.Add(HandleListSquads);
+                        break;
                 }
             }
 
@@ -73,23 +77,42 @@ namespace RagnarokBotClient
             await _scumManager.DumpListPlayers();
             await Task.Delay(1000);
 
-            string clipboardContent = string.Empty;
+            string clipboardContent = await GetClipboardTextAsync();
+
+            var response = await _remote.PostAsync("api/bots/players", new { Value = clipboardContent });
+        }
+
+        private async Task HandleListSquads()
+        {
+            await _scumManager.DumpAllSquadsInfoList();
+            await Task.Delay(1000);
+
+            string clipboardContent = await GetClipboardTextAsync();
+
+            var response = await _remote.PostAsync("api/bots/squads", new { Value = clipboardContent });
+        }
+
+        private Task<string> GetClipboardTextAsync()
+        {
+            var tcs = new TaskCompletionSource<string>();
+
             var thread = new Thread(() =>
             {
                 try
                 {
-                    clipboardContent = Clipboard.GetText();
+                    string text = Clipboard.GetText();
+                    tcs.SetResult(text);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error accessing clipboard: " + ex.Message);
+                    tcs.SetException(ex);
                 }
             });
 
-            thread.SetApartmentState(ApartmentState.STA); // Ensure STA for clipboard access
+            thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
-            thread.Join(); // Wait for the thread to complete
-            var response = await _remote.PostAsync($"api/bots/players", new { Value = clipboardContent });
+
+            return tcs.Task;
         }
     }
 }

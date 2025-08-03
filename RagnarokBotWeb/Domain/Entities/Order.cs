@@ -8,6 +8,39 @@ namespace RagnarokBotWeb.Domain.Entities
         public Warzone? Warzone { get; set; }
         public EOrderStatus Status { get; set; }
         public EOrderType OrderType { get; set; }
+        public long ResolvedPrice
+        {
+            get
+            {
+                long price = 0;
+                long vipPrice = 0;
+                switch (OrderType)
+                {
+                    case EOrderType.Pack:
+                        price = Pack!.Price;
+                        vipPrice = Pack!.VipPrice;
+                        break;
+                    case EOrderType.Warzone:
+                        price = Warzone!.Price;
+                        vipPrice = Warzone!.VipPrice;
+                        break;
+                    default: break;
+                }
+                if (Player is null) return price;
+                return Player.IsVip() ? vipPrice : price;
+            }
+
+        }
+
+        public long BalancePreview
+        {
+            get
+            {
+                if (Player is null) return 0;
+                return Player.Coin - ResolvedPrice;
+            }
+
+        }
 
         public Player? Player { get; set; }
         public ScumServer ScumServer { get; set; }

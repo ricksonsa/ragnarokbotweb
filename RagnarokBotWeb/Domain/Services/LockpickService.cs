@@ -17,6 +17,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<Lockpick> AddLockpickAttemptAsync(Lockpick lockpick)
         {
+            _uow.ScumServers.Attach(lockpick.ScumServer);
             await _uow.Lockpicks.AddAsync(lockpick);
             await _uow.SaveAsync();
             return lockpick;

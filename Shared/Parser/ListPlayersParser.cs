@@ -5,18 +5,18 @@ namespace Shared.Parser
 {
     public static class ListPlayersParser
     {
-        public static List<ScumPlayer> ParsePlayers(string data)
+        public static List<ScumPlayer> Parse(string data)
         {
             var players = new List<ScumPlayer>();
-            string[] lines = Regex.Split(data.TrimStart().TrimEnd(), $"\r\n\r\n");
+            string[] values = Regex.Split(data.TrimStart().TrimEnd(), $"\r\n\r\n");
 
             try
             {
-                foreach (var line in lines)
+                foreach (var value in values)
                 {
                     var pattern = @"^\d+\.\s*(?<name>.+)\r?\nSteam: (?<steamName>.+) \((?<steamId>\d+)\)\r?\nFame: (?<fame>\d+)\s*\r?\nAccount balance: (?<accountBalance>\d+)\r?\nGold balance: (?<goldBalance>\d+)\r?\nLocation: X=(?<x>-?\d+\.?\d*) Y=(?<y>-?\d+\.?\d*) Z=(?<z>-?\d+\.?\d*)";
 
-                    var match = Regex.Match(line, pattern, RegexOptions.Multiline);
+                    var match = Regex.Match(value, pattern, RegexOptions.Multiline);
                     if (match.Success)
                     {
                         var player = new ScumPlayer();

@@ -18,8 +18,9 @@ public abstract class AbstractJob
     {
         var serverId = GetServerIdFromContext(context);
         var server = await _scumServerRepository.FindByIdAsNoTrackingAsync(serverId);
-        if (server?.Ftp is null && ftpRequired)
-            throw new Exception("Invalid server: the server is non existent or does not have a ftp configuration");
+        if (server is null) throw new Exception("Invalid server: server does not exist");
+        if (server!.Ftp is null && ftpRequired)
+            throw new Exception("Invalid server: server does not have a ftp configuration");
         return server;
     }
 
