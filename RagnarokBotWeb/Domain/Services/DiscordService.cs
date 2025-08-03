@@ -91,14 +91,14 @@ namespace RagnarokBotWeb.Domain.Services
 
             var dmChannel = await user.CreateDMChannelAsync();
 
-            var embed = new EmbedBuilder()
+            var embedBuilder = new EmbedBuilder()
                 .WithTitle(createEmbed.Title)
                 .WithDescription(createEmbed.Text)
                 .WithAuthor(GetAuthor())
                 .WithCurrentTimestamp()
-                .WithImageUrl(createEmbed.ImageUrl)
-                .WithColor(Color.DarkPurple)
-                .Build();
+                .WithColor(Color.DarkPurple);
+
+            if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl(createEmbed.ImageUrl);
 
             var builder = new ComponentBuilder();
 
@@ -110,7 +110,7 @@ namespace RagnarokBotWeb.Domain.Services
                     style: ButtonStyle.Primary);
             });
 
-            await dmChannel.SendMessageAsync(embed: embed, components: builder.Build());
+            await dmChannel.SendMessageAsync(embed: embedBuilder.Build(), components: builder.Build());
         }
 
         public async Task<IUserMessage> SendEmbedWithBase64Image(CreateEmbed createEmbed)
@@ -128,6 +128,7 @@ namespace RagnarokBotWeb.Domain.Services
 
                 var embed = new EmbedBuilder()
                     .WithTitle(createEmbed.Title)
+                    .WithAuthor(GetAuthor())
                     .WithDescription(createEmbed.Text)
                     .WithImageUrl("attachment://" + filename)
                     .WithFooter(new EmbedFooterBuilder { Text = createEmbed.FooterText })
@@ -200,7 +201,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (channel == null) return;
 
             var builder = new EmbedBuilder()
-                .WithTitle($"🔐 BEST LOCK PICKERS - {lockType}")
+                .WithTitle($"🔐 TOP LOCK PICKERS - {lockType}")
                 .WithColor(Color.DarkPurple)
                 .WithCurrentTimestamp();
 
@@ -232,7 +233,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (channel == null) return;
 
             var builder = new EmbedBuilder()
-             .WithTitle("SNIPER RANK")
+             .WithTitle($"{DiscordEmoji.Dart} SNIPER RANK")
              .WithColor(Color.DarkPurple)
              .WithCurrentTimestamp();
 

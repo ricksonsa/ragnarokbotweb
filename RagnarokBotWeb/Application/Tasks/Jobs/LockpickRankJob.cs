@@ -32,13 +32,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             await discordService.SendLockpickRankEmbed(channel.DiscordId, dialLockRank, "Dial Lock");
 
             var basicRank = await GetLockpickRank(unitOfWork, server, "Basic");
-            await discordService.SendLockpickRankEmbed(channel.DiscordId, basicRank, "Iron");
+            await discordService.SendLockpickRankEmbed(channel.DiscordId, basicRank, "Iron Lock");
 
             var mediumRank = await GetLockpickRank(unitOfWork, server, "Medium");
-            await discordService.SendLockpickRankEmbed(channel.DiscordId, mediumRank, "Silver");
+            await discordService.SendLockpickRankEmbed(channel.DiscordId, mediumRank, "Silver Lock");
 
             var advancedRank = await GetLockpickRank(unitOfWork, server, "Advanced");
-            await discordService.SendLockpickRankEmbed(channel.DiscordId, advancedRank, "Gold");
+            await discordService.SendLockpickRankEmbed(channel.DiscordId, advancedRank, "Gold Lock");
         }
 
         private static async Task<List<LockpickStatsDto>> GetLockpickRank(

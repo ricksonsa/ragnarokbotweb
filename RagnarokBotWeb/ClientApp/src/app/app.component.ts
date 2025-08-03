@@ -66,6 +66,7 @@ export class AppComponent implements OnInit {
   alert?: Alert;
   account?: AccountDto;
   darkMode = false;
+  loading = false;
   theme: string | null;
 
   private readonly notification = inject(NzNotificationService);
@@ -173,6 +174,7 @@ export class AppComponent implements OnInit {
       return;
     }
 
+    this.loading = true;
     this.authenticationService.authenticate(this.loginForm!.value)
       .pipe(
         (switchMap((value) => {
@@ -184,6 +186,7 @@ export class AppComponent implements OnInit {
       )
       .subscribe({
         next: (account) => {
+          this.loading = false;
           this.logged = true;
           this.account = account;
         },
@@ -204,6 +207,7 @@ export class AppComponent implements OnInit {
       return;
     }
 
+    this.loading = true;
     this.authenticationService.register(this.registerForm.value)
       .subscribe({
         next: (value: any) => {
@@ -215,5 +219,6 @@ export class AppComponent implements OnInit {
   logout() {
     this.authenticationService.logout();
     this.logged = false;
+    this.loading = false;
   }
 }

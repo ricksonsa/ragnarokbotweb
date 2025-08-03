@@ -46,6 +46,34 @@ namespace RagnarokBotWeb.Controllers
             return Ok(player);
         }
 
+        [HttpPatch("{id}/coins")]
+        public async Task<IActionResult> UpdatePlayerCoins(long id, ChangeAmountDto dto)
+        {
+            var player = await _playerService.UpdateCoins(id, dto);
+            return Ok(player);
+        }
+
+        [HttpPatch("{id}/fame")]
+        public async Task<IActionResult> UpdatePlayerFame(long id, ChangeAmountDto dto)
+        {
+            var player = await _playerService.UpdateFame(id, dto);
+            return Ok(player);
+        }
+
+        [HttpPatch("{id}/gold")]
+        public async Task<IActionResult> UpdatePlayerGold(long id, ChangeAmountDto dto)
+        {
+            var player = await _playerService.UpdateGold(id, dto);
+            return Ok(player);
+        }
+
+        [HttpPatch("{id}/money")]
+        public async Task<IActionResult> UpdatePlayerMoney(long id, ChangeAmountDto dto)
+        {
+            var player = await _playerService.UpdateMoney(id, dto);
+            return Ok(player);
+        }
+
         [HttpPost("{id}/silence")]
         public async Task<IActionResult> AddPlayerSilence(long id, PlayerVipDto dto)
         {

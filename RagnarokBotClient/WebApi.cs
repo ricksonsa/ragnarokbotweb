@@ -67,10 +67,9 @@ namespace RagnarokBotClient
             return default!;
         }
 
-        public async Task<HttpResponseMessage> PatchAsync(string url, string body)
+        public async Task<HttpResponseMessage> PatchAsync(string url)
         {
-            using StringContent jsonContent = new(body, Encoding.UTF8, "text/plain");
-            _httpClient.DefaultRequestHeaders.Add("Content-Type", "text/plain");
+            using StringContent jsonContent = new(JsonConvert.SerializeObject(new { Value = 1 }), Encoding.UTF8, "application/json");
             var response = await _httpClient.PatchAsync(url, jsonContent);
             return response;
         }

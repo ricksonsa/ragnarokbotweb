@@ -31,5 +31,9 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<PlayerDto> AddDiscordRole(long id, PlayerVipDto dto);
         Task<PlayerDto> AddSilence(long id, PlayerVipDto dto);
         Task<PlayerDto> AddVip(long id, PlayerVipDto dto);
+        Task<PlayerDto> UpdateCoins(long id, ChangeAmountDto dto);
+        Task<PlayerDto> UpdateFame(long id, ChangeAmountDto dto);
+        Task<PlayerDto> UpdateGold(long id, ChangeAmountDto dto);
+        Task<PlayerDto> UpdateMoney(long id, ChangeAmountDto dto);
     }
 }

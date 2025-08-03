@@ -13,6 +13,9 @@
         ListPlayers,
         MagazineDelivery,
         SayLocal,
-        ListSquads
+        ListSquads,
+        ChangeFame,
+        ChangeGold,
+        ChangeMoney
     }
 }

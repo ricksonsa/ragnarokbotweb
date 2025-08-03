@@ -60,12 +60,24 @@ namespace RagnarokBotClient
                     case ECommandType.ListSquads:
                         tasks.Add(HandleListSquads);
                         break;
+
+                    case ECommandType.ChangeGold:
+                        tasks.Add(() => _scumManager.ChangeCurrency("Gold", commandValue.Target!, commandValue.Value));
+                        break;
+
+                    case ECommandType.ChangeMoney:
+                        tasks.Add(() => _scumManager.ChangeCurrency("Normal", commandValue.Target!, commandValue.Value));
+                        break;
+
+                    case ECommandType.ChangeFame:
+                        tasks.Add(() => _scumManager.ChangeFame(commandValue.Target!, commandValue.Value));
+                        break;
                 }
             }
 
             if (command.Values.Any(values => values.Type == ECommandType.SimpleDelivery))
             {
-                tasks.Add(() => _remote.PatchAsync($"api/bots/deliveries/{command.Data.Split("_")[1]}/confirm", null));
+                tasks.Add(() => _remote.PatchAsync($"api/bots/deliveries/{command.Data.Split("_")[1]}/confirm"));
             }
 
 

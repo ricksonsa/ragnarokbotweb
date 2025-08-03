@@ -62,7 +62,6 @@ export class PlayerComponent implements OnInit {
   addingMoney = false;
   addingFame = false;
   banningPlayer = false;
-  addingCoinsLoader = false;
   dateType = 0;
   days = 30;
   selectedDate: Date = new Date();
@@ -150,7 +149,7 @@ export class PlayerComponent implements OnInit {
   }
 
   confirmVip() {
-    this.addingCoinsLoader = true;
+    this.addingLoader = true;
     this.playerService.vip(this.playerForm.value.id, {
       days: this.resolveDays(),
       whitelist: this.whitelist,
@@ -160,14 +159,18 @@ export class PlayerComponent implements OnInit {
         next: (player) => {
           this.playerForm.patchValue(player);
           this.addingVip = false;
+          this.addingLoader = false;
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Vip added to ${player.name}`, 'success')));
         },
-        complete: () => this.addingCoinsLoader = false
+        error: (err) => {
+          this.addingLoader = false;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err?.error?.details ?? `Something went wrong, please try again later.`, 'error')));
+        }
       });
   }
 
   confirmBan() {
-    this.addingCoinsLoader = true;
+    this.addingLoader = true;
     this.playerService.ban(this.playerForm.value.id, {
       days: this.resolveDays(),
     })
@@ -175,14 +178,18 @@ export class PlayerComponent implements OnInit {
         next: (player) => {
           this.playerForm.patchValue(player);
           this.banningPlayer = false;
+          this.addingLoader = false;
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `${player.name} banned`, 'success')));
         },
-        complete: () => this.addingCoinsLoader = false
+        error: (err) => {
+          this.addingLoader = false;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err?.error?.details ?? `Something went wrong, please try again later.`, 'error')));
+        }
       });
   }
 
   confirmSilence() {
-    this.addingCoinsLoader = true;
+    this.addingLoader = true;
     this.playerService.silence(this.playerForm.value.id, {
       days: this.resolveDays(),
     })
@@ -190,9 +197,13 @@ export class PlayerComponent implements OnInit {
         next: (player) => {
           this.playerForm.patchValue(player);
           this.silencingPlayer = false;
+          this.addingLoader = false;
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `${player.name} silenced`, 'success')));
         },
-        complete: () => this.addingCoinsLoader = false
+        error: (err) => {
+          this.addingLoader = false;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err?.error?.details ?? `Something went wrong, please try again later.`, 'error')));
+        }
       });
   }
 
@@ -279,36 +290,90 @@ export class PlayerComponent implements OnInit {
   }
 
 
+  addingLoader = false;
   addCoinsValue = 0;
   addCoins() {
-    this.addingCoins = false;
+    this.addingLoader = true;
     this.playerForm.controls['coin'].patchValue(+this.playerForm.controls['coin'].value + this.addCoinsValue);
-    this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addCoinsValue} bot coins to the player ${this.playerForm.value.name}`, 'success')));
-    this.addCoinsValue = 0;
+    this.playerService.updateCoins(this.playerForm.value.id, this.addCoinsValue)
+      .subscribe({
+        next: (player) => {
+          this.addingCoins = false;
+          this.addingLoader = false;
+          this.playerForm.patchValue(player);
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have added ${this.addCoinsValue} bot coins to the player ${this.playerForm.value.name}`, 'success')));
+          this.addCoinsValue = 0;
+
+        },
+        error: (err) => {
+          this.addingCoins = false;
+          this.addingLoader = false;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err?.error?.details ?? `Something went wrong, please try again later.`, 'error')));
+        }
+      });
   }
 
   addGoldValue = 0;
   addGold() {
-    this.addingGold = false;
+    this.addingLoader = true;
     this.playerForm.controls['gold'].patchValue(+this.playerForm.controls['gold'].value + this.addGoldValue);
-    this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addGoldValue} ingame gold to the player ${this.playerForm.value.name}`, 'success')));
-    this.addGoldValue = 0;
+    this.playerService.updateGold(this.playerForm.value.id, this.addGoldValue)
+      .subscribe({
+        next: (player) => {
+          this.addingGold = false;
+          this.addingLoader = false;
+          this.playerForm.patchValue(player);
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addGoldValue} ingame gold to the player ${this.playerForm.value.name}`, 'success')));
+          this.addGoldValue = 0;
+        },
+        error: (err) => {
+          this.addingGold = false;
+          this.addingLoader = false;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err?.error?.details ?? `Something went wrong, please try again later.`, 'error')));
+        }
+      });
   }
 
   addFameValue = 0;
   addFame() {
-    this.addingGold = false;
+    this.addingLoader = true;
     this.playerForm.controls['fame'].patchValue(+this.playerForm.controls['fame'].value + this.addFameValue);
-    this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addFameValue} ingame fame to the player ${this.playerForm.value.name}`, 'success')));
-    this.addFameValue = 0;
+    this.playerService.updateFame(this.playerForm.value.id, this.addFameValue)
+      .subscribe({
+        next: (player) => {
+          this.addingFame = false;
+          this.addingLoader = false;
+          this.playerForm.patchValue(player);
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addFameValue} ingame fame to the player ${this.playerForm.value.name}`, 'success')));
+          this.addFameValue = 0;
+        },
+        error: (err) => {
+          this.addingLoader = false;
+          this.addingFame = false;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err?.error?.details ?? `Something went wrong, please try again later.`, 'error')));
+        }
+      });
   }
 
   addMoneyValue = 0;
   addMoney() {
-    this.addingMoney = false;
+    this.addingLoader = true;
     this.playerForm.controls['money'].patchValue(+this.playerForm.controls['money'].value + this.addMoneyValue);
-    this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addMoneyValue} ingame money to the player ${this.playerForm.value.name}`, 'success')));
-    this.addMoneyValue = 0;
+    this.playerService.updateFame(this.playerForm.value.id, this.addMoneyValue)
+      .subscribe({
+        next: (player) => {
+          this.addingMoney = false;
+          this.addingLoader = false;
+          this.playerForm.patchValue(player);
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addMoneyValue} ingame money to the player ${this.playerForm.value.name}`, 'success')));
+          this.addMoneyValue = 0;
+        },
+        error: (err) => {
+          this.addingMoney = false;
+          this.addingLoader = false;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err?.error?.details ?? `Something went wrong, please try again later.`, 'error')));
+        }
+      });
   }
 
 

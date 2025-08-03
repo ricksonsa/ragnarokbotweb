@@ -8,6 +8,7 @@ import { Page } from '../core/pagination/pager';
   providedIn: 'root'
 })
 export class PlayerService {
+
   constructor(private readonly http: HttpClient) { }
 
   getPlayers(pageSize: number, pageNumber: number, filter: string = null) {
@@ -44,6 +45,22 @@ export class PlayerService {
 
   vip(id: any, dto: any) {
     return this.http.post<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/vip`, dto);
+  }
+
+  updateCoins(id: number, value: number) {
+    return this.http.patch<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/coins`, { amount: value });
+  }
+
+  updateFame(id: number, value: number) {
+    return this.http.patch<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/fame`, { amount: value });
+  }
+
+  updateMoney(id: number, value: number) {
+    return this.http.patch<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/money`, { amount: value });
+  }
+
+  updateGold(id: number, value: number) {
+    return this.http.patch<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/gold`, { amount: value });
   }
 
 }

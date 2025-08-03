@@ -202,6 +202,18 @@ namespace RagnarokBotClient
             return task;
         }
 
+        public Task ChangeCurrency(string type, string target, string value)
+        {
+            Logger.LogWrite($"ChangeCurrencyBalance {type} {value} {target}");
+            return RunCommand($"#ChangeCurrencyBalance {type} {value} {target}");
+        }
+
+        public Task ChangeFame(string target, string value)
+        {
+            Logger.LogWrite($"ChangeFamePoints {value} {target}");
+            return RunCommand($"#ChangeFamePoints {value} {target}");
+        }
+
         private class User32
         {
 

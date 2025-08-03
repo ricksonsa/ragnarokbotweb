@@ -200,7 +200,8 @@
 
         <button *nzSpaceItem nz-button type="button" nzType="link" (click)="register = true">Don't have an account?
           Sign up one here</button>
-        <button *nzSpaceItem (click)="login()" [nzBlock]="true" nz-button nzType="primary" nzSize="large">Sign
+        <button *nzSpaceItem (click)="login()" [nzBlock]="true" nz-button nzType="primary" nzSize="large"
+          [nzLoading]="loading">Sign
           In</button>
       </nz-space>
     </form>
@@ -254,7 +255,8 @@
           <button *nzSpaceItem nz-button type="button" [nzBlock]="true" nzType="link" (click)="register = false">
             Already have an account? Sign In
           </button>
-          <button *nzSpaceItem (click)="signup()" [nzBlock]="true" nz-button nzType="primary" nzSize="large">Sign
+          <button *nzSpaceItem (click)="signup()" [nzLoading]="loading" [nzBlock]="true" nz-button nzType="primary"
+            nzSize="large">Sign
             Up</button>
         </nz-space>
       </nz-space>

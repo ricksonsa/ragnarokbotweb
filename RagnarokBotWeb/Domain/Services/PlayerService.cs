@@ -44,6 +44,14 @@ namespace RagnarokBotWeb.Domain.Services
             _discordService = discordService;
         }
 
+        private bool IsBotConnected()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            return _cacheService.GetConnectedBots(serverId.Value).Any();
+        }
+
         public async Task<PlayerDto> GetPlayer(long id)
         {
             var serverId = ServerId();
@@ -454,6 +462,80 @@ namespace RagnarokBotWeb.Domain.Services
 
             return _mapper.Map<PlayerDto>(player);
 
+        }
+
+        public async Task<PlayerDto> UpdateCoins(long id, ChangeAmountDto dto)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            if (dto.Amount > 0)
+            {
+                await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT addcoinstoplayer({0}, {1})", player.Id, dto.Amount);
+            }
+            else
+            {
+                await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, dto.Amount);
+            }
+
+            player.Coin += dto.Amount;
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+
+
+        public async Task<PlayerDto> UpdateFame(long id, ChangeAmountDto dto)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            if (!IsBotConnected())
+                throw new DomainException("There is no bots online at the moment");
+
+            _cacheService.GetCommandQueue(player.ScumServerId).Enqueue(new BotCommand().ChangeFame(player.SteamId64!, dto.Amount));
+
+            player.Fame += dto.Amount;
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> UpdateGold(long id, ChangeAmountDto dto)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            if (!IsBotConnected())
+                throw new DomainException("There is no bots online at the moment");
+
+            _cacheService.GetCommandQueue(player.ScumServerId).Enqueue(new BotCommand().ChangeGold(player.SteamId64!, dto.Amount));
+
+            player.Fame += dto.Amount;
+
+            return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<PlayerDto> UpdateMoney(long id, ChangeAmountDto dto)
+        {
+            var player = await _playerRepository.FindByIdAsync(id);
+
+            if (player is null)
+                throw new NotFoundException("Player not found");
+
+            if (!IsBotConnected())
+                throw new DomainException("There is no bots online at the moment");
+
+            _cacheService.GetCommandQueue(player.ScumServerId).Enqueue(new BotCommand().ChangeMoney(player.SteamId64!, dto.Amount));
+
+            player.Fame += dto.Amount;
+
+            return _mapper.Map<PlayerDto>(player);
         }
     }
 }

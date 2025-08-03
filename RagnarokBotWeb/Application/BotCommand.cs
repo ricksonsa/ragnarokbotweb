@@ -137,5 +137,38 @@ namespace RagnarokBotWeb.Application
             });
             return this;
         }
+
+        public BotCommand ChangeFame(string target, long amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ChangeFame,
+                Target = target,
+                Value = amount.ToString()
+            });
+            return this;
+        }
+
+        public BotCommand ChangeGold(string target, long amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ChangeGold,
+                Target = target,
+                Value = amount.ToString()
+            });
+            return this;
+        }
+
+        public BotCommand ChangeMoney(string target, long amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ChangeMoney,
+                Target = target,
+                Value = amount.ToString()
+            });
+            return this;
+        }
     }
 }
