@@ -112,19 +112,19 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity($"{nameof(BunkerStateJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * * * ?", startNow: true));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
 
             job = JobBuilder.Create<KillRankJob>()
                 .WithIdentity($"{nameof(KillRankJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?", startNow: true));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
 
             job = JobBuilder.Create<LockpickRankJob>()
                 .WithIdentity($"{nameof(LockpickRankJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?", startNow: true));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
 
             job = JobBuilder.Create<PaydayJob>()
                 .WithIdentity($"{nameof(PaydayJob)}({server.Id})", $"ServerJobs({server.Id})")
@@ -190,6 +190,12 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, TenMinTrigger());
+
+            job = JobBuilder.Create<UpdateServerDataJob>()
+               .WithIdentity($"{nameof(UpdateServerDataJob)}({server.Id})", $"FtpJobs({server.Id})")
+               .UsingJobData("server_id", server.Id)
+               .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 */6 * * ?"));
 
             job = JobBuilder.Create<RaidTimesJob>()
                .WithIdentity($"{nameof(RaidTimesJob)}({server.Id})", $"FtpJobs({server.Id})")

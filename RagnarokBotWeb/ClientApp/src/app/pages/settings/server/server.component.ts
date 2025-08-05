@@ -99,7 +99,8 @@ export class ServerComponent implements OnInit {
       coinReductionPerInvalidMineKill: [0],
       announceMineOutsideFlag: [true],
       allowMinesOutsideFlag: [true],
-      sendVipLockpickAlert: [true]
+      sendVipLockpickAlert: [true],
+      battleMetricsId: [null]
     });
   }
 

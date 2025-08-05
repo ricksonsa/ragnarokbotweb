@@ -1,4 +1,4 @@
-<nz-space nzSize="middle">
+<nz-space [nzWrap]="true" nzSize="middle">
   <button (click)="goBack()" *nzSpaceItem nz-button nzType="default">
     <nz-icon nzType="arrow-left"></nz-icon>
     Players
@@ -81,12 +81,12 @@
         <nz-form-label [nzSpan]="0" nzFor="name">Silenced</nz-form-label>
         <nz-icon *ngIf="!playerForm.value.isSilenced" nz-popover nzPopoverContent="No" style="font-size: 18px;"
           nzType="close" class="danger"></nz-icon>
-        <p style="margin: 0; text-emphasis: ' ';" class="description-color"
+        <p style="margin: 0; text-emphasis: ' ';" nzType="secondary"
           *ngIf="playerForm.value.isSilenced && playerForm.value.silenceExpiresAt" nz-typography>
           Until {{date(playerForm.value.silenceExpiresAt) | date: 'fullDate'}}
         </p>
 
-        <p style="margin: 0; text-emphasis: ' ';" class="description-color"
+        <p style="margin: 0; text-emphasis: ' ';" nzType="secondary"
           *ngIf="playerForm.value.isSilenced && !playerForm.value.silenceExpiresAt" nz-typography>Forever</p>
       </nz-form-item>
 
@@ -94,12 +94,12 @@
         <nz-form-label [nzSpan]="0" nzFor="name">Banned</nz-form-label>
         <nz-icon *ngIf="!playerForm.value.isBanned" nz-popover nzPopoverContent="No" style="font-size: 18px;"
           nzType="close" class="danger"></nz-icon>
-        <p style="margin: 0; text-emphasis: ' ';" class="description-color"
+        <p style="margin: 0; text-emphasis: ' ';" nzType="secondary"
           *ngIf="playerForm.value.isBanned && playerForm.value.banExpiresAt" nz-typography>
           Until {{date(playerForm.value.banExpiresAt) | date: 'fullDate'}}
         </p>
 
-        <p style="margin: 0; text-emphasis: ' ';" class="description-color"
+        <p style="margin: 0; text-emphasis: ' ';" nzType="secondary"
           *ngIf="playerForm.value.isBanned && !playerForm.value.banExpiresAt" nz-typography>Forever</p>
       </nz-form-item>
 
@@ -108,12 +108,12 @@
         <nz-form-control [nzSpan]="24">
           <nz-icon *ngIf="!playerForm.value.isVip" nz-popover nzPopoverContent="No" style="font-size: 18px;"
             nzType="close" class="danger"></nz-icon>
-          <p style="margin: 0;" class="description-color"
+          <p style="margin: 0;" nzType="secondary"
             *ngIf="playerForm.value.isVip && playerForm.value.vipExpiresAt" nz-typography>
             Until {{date(playerForm.value.vipExpiresAt) | date: 'fullDate'}}
           </p>
 
-          <p style="margin: 0;" class="description-color"
+          <p style="margin: 0;" nzType="secondary"
             *ngIf="playerForm.value.isVip && !playerForm.value.vipExpiresAt" nz-typography>Forever</p>
         </nz-form-control>
         <button nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove {{ playerForm.value.name }}'s vip?"
@@ -232,13 +232,13 @@
     }
 
     <label nz-checkbox [(ngModel)]="whitelist">Add player to whitelist</label>
-    <p nz-typography class="description-color">Players added to whitelist will have priority on joining the server, and
+    <p nz-typography nzType="secondary">Players added to whitelist will have priority on joining the server, and
       the game will kick a non whitelisted players when it's full.</p>
     <br>
     <nz-select [(ngModel)]="selectedDiscordId" style="width: 100%;" nzPlaceHolder="Select the discord role">
       <nz-option *ngFor="let role of discordRoles" [nzValue]="role.discordId" [nzLabel]="role.name"></nz-option>
     </nz-select>
-    <p nz-typography class="description-color">The selected role will be applied to the player on discord and will be
+    <p nz-typography nzType="secondary">The selected role will be applied to the player on discord and will be
       applied until the expiration of the vip. Leave it blank if not needed.</p>
   </div>
   <div *nzModalFooter>

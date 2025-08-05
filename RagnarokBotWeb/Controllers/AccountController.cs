@@ -23,7 +23,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("account")]
         public async Task<IActionResult> Account()
         {
-            _logger.LogDebug("Patch request to change amount ");
+            _logger.LogDebug("Get request to retrieve account");
             var account = await _userService.GetAccount();
             return Ok(account);
         }

@@ -19,10 +19,13 @@
 
     public class PreParseKill
     {
+        public DateTime Date { get; set; }
+        public double Distance { get; set; }
         public Killer Killer { get; set; }
         public Victim Victim { get; set; }
         public string Weapon { get; set; }
         public string TimeOfDay { get; set; }
+        public string Line { get; internal set; }
     }
 
     public class ServerLocation

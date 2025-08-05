@@ -350,7 +350,13 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (vip.DiscordRoleId.HasValue)
             {
-                await _discordService.RemoveUserRoleAsync(player.ScumServer.Guild!.DiscordId, player.DiscordId!.Value, vip.DiscordRoleId.Value);
+                try
+                {
+
+                    await _discordService.RemoveUserRoleAsync(player.ScumServer.Guild!.DiscordId, player.DiscordId!.Value, vip.DiscordRoleId.Value);
+                }
+                catch (Exception)
+                { }
             }
 
             _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand

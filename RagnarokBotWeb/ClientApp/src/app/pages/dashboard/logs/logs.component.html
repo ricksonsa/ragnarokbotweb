@@ -1,0 +1,178 @@
+<nz-space nzSize="middle">
+  <nz-segmented [(ngModel)]="selectedSegment" (ngModelChange)="changeSegment($event)" *nzSpaceItem
+    [nzOptions]="options"></nz-segmented>
+</nz-space>
+<br>
+<br>
+
+<ng-template #searchButton>
+  <!-- <button nz-button nzType="primary" nzSearch (click)="search()"><nz-icon nzType="search" /></button> -->
+</ng-template>
+<ng-template #extra>
+  <nz-space nzSize="small">
+    <nz-input-group *nzSpaceItem nzSearch [nzAddOnAfter]="searchButton">
+      <input type="text" nz-input placeholder="input search text" [formControl]="searchControl" />
+    </nz-input-group>
+    <nz-divider *nzSpaceItem nzType="vertical"></nz-divider>
+    <p *nzSpaceItem nz-typography style="margin: 0;">Range of logs:</p>
+    <nz-date-picker *nzSpaceItem [(ngModel)]="selectedDateFrom" [nzShowNow]="true"
+      [nzAllowClear]="false"></nz-date-picker>
+    <p *nzSpaceItem nz-typography style="margin: 0;">To</p>
+    <nz-date-picker *nzSpaceItem [(ngModel)]="selectedDateTo" [nzShowNow]="true"
+      [nzAllowClear]="false"></nz-date-picker>
+    <button *nzSpaceItem nz-button nzType="primary" (click)="loadLogs()"><nz-icon nzType="reload" /> Reload
+      Logs</button>
+  </nz-space>
+</ng-template>
+
+<div class="main">
+  <nz-card [nzTitle]="'Logs - ' + selectedSegment" [nzExtra]="extra">
+    <div class="console">
+      <div *ngIf="loading">
+        <nz-skeleton [nzActive]="true"></nz-skeleton>
+      </div>
+
+      <ng-container *ngIf="!loading" [ngSwitch]="selectedSegment">
+        <ng-container *ngSwitchCase="'Login'" [ngTemplateOutlet]="loginTemplate"></ng-container>
+        <ng-container *ngSwitchCase="'Kills'" [ngTemplateOutlet]="killsTemplate"></ng-container>
+        <ng-container *ngSwitchCase="'Lockpick'" [ngTemplateOutlet]="lockPicksTemplate"></ng-container>
+        <ng-container *ngSwitchCase="'Economy'" [ngTemplateOutlet]="economyTemplate"></ng-container>
+        <ng-container *ngSwitchCase="'Vehicles'" [ngTemplateOutlet]="vehiclesTemplate"></ng-container>
+        <ng-container *ngSwitchCase="'Chests'" [ngTemplateOutlet]="buriedChestsTemplate"></ng-container>
+        <ng-container *ngSwitchCase="'Violations'" [ngTemplateOutlet]="violationsTemplate"></ng-container>
+      </ng-container>
+    </div>
+  </nz-card>
+</div>
+
+<ng-template #violationsTemplate>
+  <div class="empty" *ngIf="getViolations().length === 0">
+    <nz-empty></nz-empty>
+  </div>
+  @for (value of getViolations(); track $index) {
+  <p style="margin: 0;">Date: <span style="font-weight: bold;">{{value.date | date: 'MM/dd/yyyy hh:MM:ss'}}</span></p>
+  <p style="margin: 0;"><span style="font-weight: bold;">{{value.line}}</span>
+  </p>
+  <nz-divider></nz-divider>
+  }
+</ng-template>
+
+<ng-template #buriedChestsTemplate>
+  <div class="empty" *ngIf="getBuriedChests().length === 0">
+    <nz-empty></nz-empty>
+  </div>
+  @for (value of getBuriedChests(); track $index) {
+  <p style="margin: 0;">Date: <span style="font-weight: bold;">{{value.date | date: 'MM/dd/yyyy hh:MM:ss'}}</span></p>
+  <p style="margin: 0;"><span style="font-weight: bold;">{{value.line}}</span>
+  </p>
+  <nz-divider></nz-divider>
+  }
+</ng-template>
+
+<ng-template #loginTemplate>
+  <div class="empty" *ngIf="getLogins().length === 0">
+    <nz-empty></nz-empty>
+  </div>
+  @for (value of getLogins(); track $index) {
+  <p style="margin: 0;">Date: <span style="font-weight: bold;">{{value.date | date: 'MM/dd/yyyy hh:MM:ss'}}</span></p>
+  <p style="margin: 0;"><span style="font-weight: bold;">{{value.line}}</span>
+  </p>
+  <nz-divider></nz-divider>
+  }
+</ng-template>
+
+<ng-template #vehiclesTemplate>
+  <div class="empty" *ngIf="getVehicles().length === 0">
+    <nz-empty></nz-empty>
+  </div>
+  @for (value of getVehicles(); track $index) {
+  <p style="margin: 0;">Date: <span style="font-weight: bold;">{{value.date | date: 'MM/dd/yyyy hh:MM:ss'}}</span></p>
+  <p style="margin: 0;"><span style="font-weight: bold;">{{value.line}}</span>
+  </p>
+  <nz-divider></nz-divider>
+  }
+</ng-template>
+
+<ng-template #economyTemplate>
+  <div class="empty" *ngIf="getEconomy().length === 0">
+    <nz-empty></nz-empty>
+  </div>
+  @for (value of getEconomy(); track $index) {
+  <p style="margin: 0;">Date: <span style="font-weight: bold;">{{value.date | date: 'MM/dd/yyyy hh:MM:ss'}}</span></p>
+  <p style="margin: 0;"><span style="font-weight: bold;">{{value.line}}</span>
+  </p>
+  <nz-divider></nz-divider>
+  }
+</ng-template>
+
+<ng-template #lockPicksTemplate>
+  <div class="empty" *ngIf="getLockpicks().length === 0">
+    <nz-empty></nz-empty>
+  </div>
+  @for (lockpick of getLockpicks(); track $index) {
+  <p style="margin: 0;">Date: <span style="font-weight: bold;">{{lockpick.date | date: 'MM/dd/yyyy hh:MM:ss'}}</span>
+  </p>
+  <p style="margin: 0;">Player: <span style="font-weight: bold;">{{lockpick.user}}</span> SteamID: <span
+      style="font-weight: bold;">{{lockpick.steamId}}</span></p>
+  <p style="margin: 0;">Lock Owner: <span style="font-weight: bold;">{{lockpick.ownerName || 'N/A'}}</span> SteamID:
+    <span style="font-weight: bold;">{{lockpick.ownerSteamId || 'N/A'}}</span>
+  </p>
+  <p style="margin: 0;">Attempts: <span style="font-weight: bold;">{{lockpick.failedAttempts}}</span> Success: <span
+      style="font-weight: bold;">{{lockpick.success}}</span> Elapsed Time: <span
+      style="font-weight: bold;">{{lockpick.elapsedTime}}</span></p>
+  <p style="margin: 0;">Coordinates: X=<span style="font-weight: bold;">{{lockpick.x}}</span> Y=<span
+      style="font-weight: bold;">{{lockpick.y}}</span> Z=<span style="font-weight: bold;">{{lockpick.z}}</span></p>
+  <p style="margin: 0;">Lock type: <span style="font-weight: bold;">{{lockpick.lockType}}</span></p>
+  <p style="margin: 0;">Object: <span style="font-weight: bold;">{{lockpick.targetObject}}</span></p>
+  <nz-divider></nz-divider>
+  }
+</ng-template>
+
+<ng-template #killsTemplate>
+  <div class="empty" *ngIf="getKills().length === 0">
+    <nz-empty></nz-empty>
+  </div>
+  @for (kill of getKills(); track $index) {
+  <p style="margin: 0;">Date: <span style="font-weight: bold;">{{kill.date | date: 'MM/dd/yyyy hh:MM:ss'}}</span></p>
+  <p style="margin: 0;">Time Of DaY=<span style="font-weight: bold;">{{kill.timeOfDay}}</span></p>
+  <p style="margin: 0;">Weapon: <span style="font-weight: bold;">{{kill.weapon}}</span></p>
+  <br>
+  <p style="margin: 0;">Killer</p>
+  <p style="margin: 0;">Has ImmortalitY=<span style="font-weight: bold;">{{kill.killer.hasImmortality}}</span></p>
+  <p style="margin: 0;">Is Inside Game Event: <span style="font-weight: bold;">{{kill.killer.isInGameEvent}}</span>
+  </p>
+  <p style="margin: 0;">Name: <span style="font-weight: bold;">{{kill.killer.profileName}}</span> SteamID: <span
+      style="font-weight: bold;"> {{kill.killer.userId}}</span></p>
+  <p style="margin: 0;">
+    Server Location:
+    X=<span style="font-weight: bold;">{{kill.killer.serverLocation.x}}</span>
+    Y=<span style="font-weight: bold;">{{kill.killer.serverLocation.y}}</span>
+    Z=<span style="font-weight: bold;">{{kill.killer.serverLocation.z}}</span>
+  </p>
+  <p style="margin: 0;">
+    Client Location:
+    X=<span style="font-weight: bold;">{{kill.killer.clientLocation.x}}</span>
+    Y=<span style="font-weight: bold;">{{kill.killer.clientLocation.y}}</span>
+    Z=<span style="font-weight: bold;">{{kill.killer.clientLocation.z}}</span>
+  </p>
+  <br>
+  <p style="margin: 0;">Victim</p>
+  <p style="margin: 0;">Is Inside Game Event: <span style="font-weight: bold;">{{kill.victim.isInGameEvent}}</span>
+  </p>
+  <p style="margin: 0;">Name: <span style="font-weight: bold;">{{kill.victim.profileName}}</span> SteamID: <span
+      style="font-weight: bold;"> {{kill.victim.userId}}</span></p>
+  <p style="margin: 0;">
+    Server Location:
+    X=<span style="font-weight: bold;">{{kill.victim.serverLocation.x}}</span>
+    Y=<span style="font-weight: bold;">{{kill.victim.serverLocation.y}}</span>
+    Z=<span style="font-weight: bold;">{{kill.victim.serverLocation.z}}</span>
+  </p>
+  <p style="margin: 0;">
+    Client Location:
+    X=<span style="font-weight: bold;">{{kill.victim.clientLocation.x}}</span>
+    Y=<span style="font-weight: bold;">{{kill.victim.clientLocation.y}}</span>
+    Z=<span style="font-weight: bold;">{{kill.victim.clientLocation.z}}</span>
+  </p>
+  <nz-divider></nz-divider>
+  }
+</ng-template>

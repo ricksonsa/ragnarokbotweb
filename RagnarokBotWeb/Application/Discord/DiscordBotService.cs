@@ -11,7 +11,7 @@ public class DiscordBotService : BackgroundService
     private readonly ILogger<DiscordBotService> _logger;
 
     // private readonly string? _token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
-    private readonly string? _token = "MTM0MDE3NjI0MTA5NzE4MzM0Mw.Gc4T14.hCHQkbzmeJRToivaS4vs8HA8EbS_yXAc53b4iE";
+    private readonly string? _token = "MTQwMTY5Mzk0MjgyMjQ3Mzc5OQ.GKZ-4Q.1qmkfDUR6YJTEgpnFatvet8addAAQwO96LnMQI";
 
     public DiscordBotService(ILogger<DiscordBotService> logger, DiscordSocketClient client)
     {

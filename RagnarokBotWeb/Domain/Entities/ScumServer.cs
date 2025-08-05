@@ -5,6 +5,8 @@ namespace RagnarokBotWeb.Domain.Entities
     public class ScumServer : BaseEntity
     {
         public string? Name { get; set; }
+        public int? Slots { get; set; }
+        public string? BattleMetricsId { get; set; }
         public Tenant Tenant { get; set; }
         [ForeignKey("GuildId")]
         public Guild? Guild { get; set; }

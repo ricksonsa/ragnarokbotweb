@@ -28,6 +28,10 @@ export class ServerService {
     return this.http.get<GuildDto>(`${WEB_API.baseUrl}/api/servers/discord`);
   }
 
+  getPlayerCount() {
+    return this.http.get<any>(`${WEB_API.baseUrl}/api/servers/player-count`);
+  }
+
   getDiscordChannels() {
     return this.http.get<{ key: string, value: string }[]>(`${WEB_API.baseUrl}/api/servers/discord/channels`);
   }

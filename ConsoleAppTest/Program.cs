@@ -32,14 +32,14 @@ namespace ConsoleAppTest
 
                 var points = new List<ScumCoordinate>
                 {
-                    new ScumCoordinate(137592.1875f, -31476.5983f, Color.Black),
-                    new ScumCoordinate(285811.59375f, -21049.46875f, Color.Red),
+                    new ScumCoordinate(137592.1875f, -31476.5983f, Color.Black.WithAlpha(200)),
+                    new ScumCoordinate(285811.59375f, -21049.46875f, Color.Red.WithAlpha(200)),
                 };
                 var mid = ScumMapExtractor.GetMidpoint((285811.59375f, -21049.46875f), (137592.1875f, -31476.5983f));
                 mapExtractor.ExtractMapWithPoints(
                     new ScumCoordinate(mid.x, mid.y),
                     points,
-                    extractSize: 128,
+                    extractSize: 256,
                     outputPath: "scum_map_extracted.png"
                 );
 

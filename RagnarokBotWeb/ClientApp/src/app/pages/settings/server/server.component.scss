@@ -1,0 +1,7 @@
+.main {
+    flex-direction: column;
+    nz-card {
+        flex-grow: 1 !important;
+        width: 100%;
+    }
+}

@@ -4,7 +4,7 @@
     <div class="sidebar-logo">
       <a href="/" target="_blank">
         <img src="assets/images/ragnarok-logo-transparent.png" alt="logo">
-        <h1 [ngClass]="{'top-actions-button-light': !darkMode}" nz-typography>{{ account?.server?.name ?? 'Ragnarok Bot'
+        <h1 [ngClass]="{'top-actions-button-light': !darkMode}" nz-typography>{{ account?.server?.name ?? 'The SCUM Bot'
           }}</h1>
       </a>
     </div>
@@ -15,14 +15,11 @@
           <li nz-menu-item nzMatchRouter>
             <a routerLink="dashboard/home">Home</a>
           </li>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.ftp == null">
+            <a routerLink="dashboard/logs">Logs</a>
+          </li>
           <li nz-menu-item nzMatchRouter>
             <a routerLink="dashboard/console">Console (Coming Soon)</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="dashboard/chat">Chat (Coming Soon)</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="dashboard/">Logs (Coming Soon)</a>
           </li>
         </ul>
       </li>
@@ -60,16 +57,16 @@
       <li nz-submenu nzOpen nzTitle="Shop" nzIcon="dollar-circle">
         <ul>
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="shop/welcome-pack">Welcome Pack</a>
+          </li>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="shop/orders">Orders</a>
           </li>
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="shop/packages">Packages</a>
           </li>
           <li *ngIf="account.accessLevel > 0" nz-menu-item nzMatchRouter>
-            <a routerLink="shop/items">Items</a>
-          </li>
-          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
-            <a routerLink="shop/welcome-pack">Welcome Pack</a>
+            <a routerLink="shop/items">Items (Admin)</a>
           </li>
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a>Taxi (Coming Soon)</a>
@@ -173,10 +170,10 @@
   <nz-card class="login-container">
     <div class="logo-holder">
       <img width="48" height="48" src="assets/images/ragnarok-logo-transparent.png" alt="">
-      <h4 style="margin: 0;" nz-typography>Ragnarok Bot</h4>
+      <h4 style="margin: 0;" nz-typography>The SCUM Bot</h4>
     </div>
     <p nz-typography> Manage your SCUM private server with automation tools and insights
-      powered by Ragnarok Bot. Log in to configure events, spawns, and more.</p>
+      powered by The SCUM Bot. Log in to configure events, spawns, and more.</p>
     <br>
     <form nz-form [formGroup]="loginForm">
       <nz-space style="width: 100%;" nzDirection="vertical">
@@ -212,7 +209,7 @@
   <nz-card class="login-container">
     <div class="logo-holder">
       <img width="48" height="48" src="assets/images/ragnarok-logo-transparent.png" alt="">
-      <h4 style="margin: 0;" nz-typography>Ragnarok Bot</h4>
+      <h4 style="margin: 0;" nz-typography>The SCUM Bot</h4>
     </div>
     <h5 nz-typography>Sign Up</h5>
     <br>

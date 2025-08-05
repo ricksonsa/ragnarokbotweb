@@ -216,7 +216,7 @@
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             Name = "Form1";
-            Text = "Ragnarok Bot";
+            Text = "The SCUM Bot";
             Load += Form1_Load;
             AuthPanel.ResumeLayout(false);
             AuthPanel.PerformLayout();

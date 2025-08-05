@@ -48,20 +48,34 @@ public class ScumFileProcessor
         }
     }
 
-    private List<FtpListItem> GetLogFiles(FtpClient client, string? rootFolder, DateTime today, EFileType fileType)
+    private List<FtpListItem> GetLogFiles(FtpClient client, string? rootFolder, EFileType fileType)
     {
-        var prefixFileNameYesterday = fileType.ToString().ToLower() + "_" + today.AddDays(-1).ToString("yyyyMMdd");
-        var prefixFileNameToday = fileType.ToString().ToLower() + "_" + today.ToString("yyyyMMdd");
-        var prefixFileNameTomorrow = fileType.ToString().ToLower() + "_" + today.AddDays(+1).ToString("yyyyMMdd");
+        DateTime today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
+        var from = today.AddDays(-10);
 
         try
         {
             return client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/",
                           FtpListOption.Modify | FtpListOption.Size)
-               .Where(file => file.Name.StartsWith(prefixFileNameYesterday)
-                            || file.Name.StartsWith(prefixFileNameToday)
-                            || file.Name.StartsWith(prefixFileNameTomorrow))
-              .OrderBy(file => file.Created)
+              .Where(file => file.Name.StartsWith(fileType.ToString().ToLower() + "_") && file.RawModified.Date >= from && file.RawModified.Date <= today.AddDays(2))
+              .OrderBy(file => file.RawModified)
+              .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("Error GetLogFiles type {Type} -> {Ex}", fileType.ToString(), ex.Message);
+            throw;
+        }
+    }
+
+    private List<FtpListItem> GetLogFiles(FtpClient client, string? rootFolder, DateTime from, DateTime to, EFileType fileType)
+    {
+        try
+        {
+            return client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/",
+                          FtpListOption.Modify | FtpListOption.Size)
+              .Where(file => file.Name.StartsWith(fileType.ToString().ToLower() + "_") && file.RawModified.Date >= from && file.RawModified.Date <= to)
+              .OrderBy(file => file.RawModified)
               .ToList();
         }
         catch (Exception ex)
@@ -104,10 +118,7 @@ public class ScumFileProcessor
         if (_ftp is null) yield break;
 
         FtpClient client = ftpService.GetClient(_ftp);
-        DateTime today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
-
-        List<FtpListItem> ftpFiles = GetLogFiles(client, _ftp.RootFolder, today, fileType);
-
+        List<FtpListItem> ftpFiles = GetLogFiles(client, _ftp.RootFolder, fileType);
         List<(FtpListItem, ReaderPointer?)> filteredFiles = [];
 
         // Filter to read only files that are new or were modified
@@ -129,8 +140,6 @@ public class ScumFileProcessor
 
         string localPath = GetLocalPath();
         Directory.CreateDirectory(localPath);
-
-        DeleteLocalFiles(localPath, filteredFiles.Select(f => f.Item1.Name));
         try
         {
             ftpService.CopyFiles(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList());
@@ -185,6 +194,61 @@ public class ScumFileProcessor
                 {
                     _logger.LogError("UnreadFileLinesAsync error {Exception}", ex);
                 }
+            }
+        }
+
+        client.Disconnect();
+    }
+
+    public async IAsyncEnumerable<string> FileLinesAsync(
+       EFileType fileType,
+       IFtpService ftpService,
+       DateTime from,
+       DateTime to)
+    {
+        if (_ftp is null) yield break;
+
+        FtpClient client = ftpService.GetClient(_ftp);
+        List<FtpListItem> ftpFiles = GetLogFiles(client, _ftp.RootFolder, from, to, fileType);
+        List<FtpListItem> filteredFiles = [];
+
+        string localPath = GetLocalPath();
+        Directory.CreateDirectory(localPath);
+
+        foreach (FtpListItem ftpFile in ftpFiles)
+        {
+            var localFile = new FileInfo(Path.Combine(localPath, ftpFile.Name));
+            if (!File.Exists(localFile.FullName) || ftpFile.Size != localFile.Length)
+                filteredFiles.Add(ftpFile);
+        }
+
+        try
+        {
+            ftpService.CopyFiles(client, localPath, filteredFiles.Select(f => f.FullName).ToList());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error trying to copy files");
+            _logger.LogError("Exception [{Ex}]", ex.Message);
+            _logger.LogError("Inner Exception [{Ex}]", ex.InnerException?.Message);
+            throw;
+        }
+
+        foreach (var file in ftpFiles)
+        {
+            var localFile = new FileInfo(Path.Combine(localPath, file.Name));
+            int lineNumber = 0;
+            using var reader = new StreamReader(localFile.FullName, Encoding.Unicode);
+            while (await reader.ReadLineAsync() is { } line)
+            {
+                if (IsIrrelevantLine(line))
+                {
+                    lineNumber++;
+                    continue;
+                }
+
+                yield return line;
+                lineNumber++;
             }
         }
 

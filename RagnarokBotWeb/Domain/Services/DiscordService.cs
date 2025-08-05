@@ -58,7 +58,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         private EmbedAuthorBuilder GetAuthor()
         {
-            return new EmbedAuthorBuilder().WithName("RAGNAROK BOT").WithIconUrl(_appSettings.BaseUrl + "/images/ragnarok-logo.png");
+            return new EmbedAuthorBuilder().WithName("THE SCUM BOT").WithIconUrl(_appSettings.BaseUrl + "/images/ragnarok-logo.png");
         }
 
         private async Task ClearBefore(Guild guild)
@@ -213,7 +213,7 @@ namespace RagnarokBotWeb.Domain.Services
             int rank = 1;
             foreach (var p in stats)
             {
-                sb.AppendLine($"{rank,4} | {Truncate(p.PlayerName, 20),-20} | {p.SuccessCount,7} | {p.FailCount,5} | {p.SuccessRate,6:F2}%");
+                sb.AppendLine($"{rank,4}  {Truncate(p.PlayerName, 20),-20}  {p.SuccessCount,7}  {p.FailCount,5}  {p.SuccessRate,6:F2}%");
                 rank++;
             }
 
@@ -275,7 +275,7 @@ namespace RagnarokBotWeb.Domain.Services
             int rank = 1;
             foreach (var p in players)
             {
-                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {p.KillCount,5} | {p.DeathCount,6}");
+                sb.AppendLine($"{rank,2}  {Truncate(p.PlayerName, 18),-18}  {p.KillCount,5}  {p.DeathCount,6}");
                 rank++;
             }
 
@@ -445,8 +445,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (server.ShowKillerName)
             {
-                embedBuilder.AddField("Killer", kill.KillerName, true);
-                embedBuilder.AddField("Victim", kill.TargetName, true);
+                embedBuilder.AddField(server.ShowKillOnMap ? "Killer [red]" : "Killer", kill.KillerName, true);
+                embedBuilder.AddField(server.ShowKillOnMap ? "Victim [black]" : "Victim", kill.TargetName, true);
             }
             else
             {

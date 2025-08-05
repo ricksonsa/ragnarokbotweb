@@ -9,6 +9,7 @@ export class ThemeService {
   private style: HTMLLinkElement;
   private cssFile: string;
   private themeCSSID: string = 'themeCSS';
+  themeChanged = false;
   constructor(
     @Inject(DOCUMENT) private document: Document
   ) {
@@ -79,6 +80,8 @@ export class ThemeService {
   }
 
   public setTheme(theme: string, renderer2: Renderer2) {
+    if (this.themeChanged) return;
+    this.themeChanged = true;
     this.themeChangeBehaviourSubject.next(theme);
 
     this.cssFile = `${theme}.css`;
@@ -94,5 +97,6 @@ export class ThemeService {
 
     // Add the style to the head section
     renderer2.appendChild(this.document.head, this.style);
+    setTimeout(() => this.themeChanged = false, 200);
   }
 }

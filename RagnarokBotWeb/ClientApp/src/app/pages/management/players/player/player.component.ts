@@ -289,12 +289,10 @@ export class PlayerComponent implements OnInit {
       });
   }
 
-
   addingLoader = false;
   addCoinsValue = 0;
   addCoins() {
     this.addingLoader = true;
-    this.playerForm.controls['coin'].patchValue(+this.playerForm.controls['coin'].value + this.addCoinsValue);
     this.playerService.updateCoins(this.playerForm.value.id, this.addCoinsValue)
       .subscribe({
         next: (player) => {
@@ -316,13 +314,13 @@ export class PlayerComponent implements OnInit {
   addGoldValue = 0;
   addGold() {
     this.addingLoader = true;
-    this.playerForm.controls['gold'].patchValue(+this.playerForm.controls['gold'].value + this.addGoldValue);
     this.playerService.updateGold(this.playerForm.value.id, this.addGoldValue)
       .subscribe({
         next: (player) => {
           this.addingGold = false;
           this.addingLoader = false;
           this.playerForm.patchValue(player);
+          this.playerForm.controls['gold'].patchValue(+this.playerForm.controls['gold'].value + this.addGoldValue);
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addGoldValue} ingame gold to the player ${this.playerForm.value.name}`, 'success')));
           this.addGoldValue = 0;
         },
@@ -337,13 +335,13 @@ export class PlayerComponent implements OnInit {
   addFameValue = 0;
   addFame() {
     this.addingLoader = true;
-    this.playerForm.controls['fame'].patchValue(+this.playerForm.controls['fame'].value + this.addFameValue);
     this.playerService.updateFame(this.playerForm.value.id, this.addFameValue)
       .subscribe({
         next: (player) => {
           this.addingFame = false;
           this.addingLoader = false;
           this.playerForm.patchValue(player);
+          this.playerForm.controls['fame'].patchValue(+this.playerForm.controls['fame'].value + this.addFameValue);
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addFameValue} ingame fame to the player ${this.playerForm.value.name}`, 'success')));
           this.addFameValue = 0;
         },
@@ -358,13 +356,13 @@ export class PlayerComponent implements OnInit {
   addMoneyValue = 0;
   addMoney() {
     this.addingLoader = true;
-    this.playerForm.controls['money'].patchValue(+this.playerForm.controls['money'].value + this.addMoneyValue);
     this.playerService.updateFame(this.playerForm.value.id, this.addMoneyValue)
       .subscribe({
         next: (player) => {
           this.addingMoney = false;
           this.addingLoader = false;
           this.playerForm.patchValue(player);
+          this.playerForm.controls['money'].patchValue(+this.playerForm.controls['money'].value + this.addMoneyValue);
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addMoneyValue} ingame money to the player ${this.playerForm.value.name}`, 'success')));
           this.addMoneyValue = 0;
         },

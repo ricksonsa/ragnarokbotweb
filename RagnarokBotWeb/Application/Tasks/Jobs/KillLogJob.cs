@@ -23,7 +23,6 @@ public class KillLogJob(
     public async Task Execute(IJobExecutionContext context)
     {
         logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-
         var server = await GetServerAsync(context);
 
         try
@@ -75,7 +74,7 @@ public class KillLogJob(
                         if (killerInSquad && targetInSameSquad)
                         {
                             // Both are in the same squad, skip
-                            continue;
+                            return;
                         }
                     }
                 }
@@ -114,7 +113,7 @@ public class KillLogJob(
         }
     }
 
-    private static async Task HandleShowMap(ILogger<KillLogJob> logger, IFileService fileService, Kill? kill)
+    private static async Task HandleShowMap(ILogger<KillLogJob> logger, IFileService fileService, Kill kill)
     {
         try
         {
@@ -129,14 +128,14 @@ public class KillLogJob(
     private static async Task ExtractMap(IFileService fileService, Kill kill)
     {
         var midPoint = ScumMapExtractor.GetMidpoint((kill.KillerX, kill.KillerY), (kill.VictimX, kill.VictimY));
-        var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island.jpg"));
+        var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
         var result = await extractor.ExtractMapWithPoints(
             new ScumCoordinate(midPoint.x, midPoint.y),
             [
-                new ScumCoordinate(kill.KillerX, kill.KillerY, Color.Red),
-                new ScumCoordinate(kill.VictimX, kill.VictimY, Color.Black)
+                new ScumCoordinate(kill.KillerX, kill.KillerY, Color.Red).WithLabel(kill.KillerName!),
+                new ScumCoordinate(kill.VictimX, kill.VictimY, Color.Black).WithLabel(kill.TargetName!)
             ],
-            128);
+            256);
         kill.ImageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/eliminations", cdnUrlPrefix: "images/eliminations");
     }
 }

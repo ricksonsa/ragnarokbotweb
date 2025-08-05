@@ -1,3 +1,23 @@
-<p>
-  home works!
-</p>
+<div class="top-bar">
+  <nz-card class="statistics-card">
+    <nz-statistic [nzValue]="getSlotsText().count || 0" nzTitle="Players Online"
+      [nzSuffix]="getSlotsText().maxSlots || ''"></nz-statistic>
+  </nz-card>
+
+  <ng-template #botPrefix>
+    <nz-badge [nzStatus]="botsOnline < 1 ? 'error' : 'processing'">
+      <span nz-typography nzType="secondary" style="color: #c0c0c0ec">Bots Online</span>
+    </nz-badge>
+  </ng-template>
+  <nz-card class="statistics-card">
+    <nz-statistic [nzValue]="botsOnline" [nzTitle]="botPrefix"></nz-statistic>
+  </nz-card>
+</div>
+
+<br>
+
+<div class="main">
+  <nz-card>
+
+  </nz-card>
+</div>

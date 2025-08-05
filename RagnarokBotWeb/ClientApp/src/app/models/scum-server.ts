@@ -8,7 +8,7 @@ export class ScumServer {
     discord?: DiscordDto;
     coinAwardPeriodically: number = 0;
     restartTimes: string[];
-
+    battleMetricsId?: string;
     useKillFeed: boolean;
     showKillDistance: boolean;
     showKillSector: boolean;

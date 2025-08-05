@@ -7,28 +7,28 @@
     <form nz-form [formGroup]="ftpForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="address">IP Address</nz-form-label>
-        <nz-form-control nzErrorTip="Please input your FTP IP Address!" [nzSpan]="24">
+        <nz-form-control [nzSpan]="8" nzErrorTip="Please input your FTP IP Address!">
           <input formControlName="address" nz-input name="address" type="text" id="address" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="port">Port</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input your FTP Port!">
+        <nz-form-control [nzSpan]="8" nzErrorTip="Please input your FTP Port!">
           <input nz-input formControlName="port" name="port" type="text" id="port" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="username">Username</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input your FTP Username!">
+        <nz-form-control [nzSpan]="8" nzErrorTip="Please input your FTP Username!">
           <input nz-input formControlName="userName" name="username" type="text" id="username" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="password">Password</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input your FTP Password!">
+        <nz-form-control [nzSpan]="8" nzErrorTip="Please input your FTP Password!">
           <input nz-input formControlName="password" name="password" type="password" id="password" />
         </nz-form-control>
       </nz-form-item>
@@ -76,6 +76,15 @@
               <button *nzSpaceItem nz-button nzType="primary" (click)="addTime()">Add time</button>
             </nz-space>
           </div>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="battlemetricsId">BattleMetrics ID</nz-form-label>
+        <nz-form-control [nzSpan]="8" nzExtra="Look for the BattleMetrics ID that is in the url at BattleMetrics Site. https://www.battlemetrics.com/servers/search?game=scum"
+          nzErrorTip="Must be greater then 0">
+          <input nz-input formControlName="battleMetricsId" name="battlemetricsId" type="text"
+            id="battlemetricsId" />
         </nz-form-control>
       </nz-form-item>
 

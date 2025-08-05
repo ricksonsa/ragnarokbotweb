@@ -9,5 +9,7 @@ public enum EFileType
     LockPick,
     Login,
     Economy,
-    Gameplay
+    Gameplay,
+    Vehicle_Destruction,
+    Violations
 }

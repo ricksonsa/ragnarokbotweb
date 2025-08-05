@@ -1,12 +1,12 @@
 ﻿using AutoMapper;
 using Discord.WebSocket;
-using FluentFTP;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using System.Text;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -24,6 +24,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IDiscordService _discordService;
         private readonly IChannelTemplateRepository _channelTemplateRepository;
         private readonly IChannelRepository _channelRepository;
+        private readonly ICacheService _cacheService;
 
 
         public ServerService(
@@ -39,7 +40,8 @@ namespace RagnarokBotWeb.Domain.Services
             DiscordSocketClient discordClient,
             IDiscordService discordService,
             IChannelTemplateRepository channelTemplateRepository,
-            IChannelRepository channelRepository) : base(httpContext)
+            IChannelRepository channelRepository,
+            ICacheService cacheService) : base(httpContext)
         {
             _logger = logger;
             _scumServerRepository = scumServerRepository;
@@ -53,6 +55,7 @@ namespace RagnarokBotWeb.Domain.Services
             _discordService = discordService;
             _channelTemplateRepository = channelTemplateRepository;
             _channelRepository = channelRepository;
+            _cacheService = cacheService;
         }
 
         public async Task<ScumServerDto> ChangeFtp(FtpDto ftpDto)
@@ -92,7 +95,12 @@ namespace RagnarokBotWeb.Domain.Services
                 RootFolder = rootPath
             };
 
-            server.Name = GetServerConfigLineValue(newFtp, "ServerName");
+            Dictionary<string, string> data = [];
+            data.Add("ServerName", "");
+            data.Add("MaxPlayers", "");
+            await GetServerConfigLineValue(server.Ftp!, data);
+            server.Name = data["ServerName"];
+            server.Slots = int.Parse(data["MaxPlayers"]);
 
             if (server.Ftp is not null)
             {
@@ -109,32 +117,52 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<ScumServerDto>(server);
         }
 
-        public string GetServerConfigLineValue(Ftp ftp, string config)
+        public async Task UpdateServerData(ScumServer server)
+        {
+            if (server.Ftp is null) return;
+            Dictionary<string, string> data = [];
+            data.Add("MaxPlayers", "");
+            data.Add("ServerName", "");
+            await GetServerConfigLineValue(server.Ftp!, data);
+            server.Name = data["ServerName"];
+            server.Slots = int.Parse(data["MaxPlayers"]);
+            await _scumServerRepository.CreateOrUpdateAsync(server);
+            await _scumServerRepository.SaveAsync();
+        }
+
+        public async Task<PlayerCountDto> GetServerPlayerCount()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
+
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server is null) return new PlayerCountDto();
+
+            return new PlayerCountDto
+            {
+                MaxSlots = server.Slots,
+                OnlineCount = _cacheService.GetConnectedPlayers(serverId.Value).Count,
+            };
+        }
+
+        public async Task GetServerConfigLineValue(Ftp ftp, Dictionary<string, string> data)
         {
             if (ftp is null) throw new DomainException("Invalid ftp server");
             try
             {
                 var client = _ftpService.GetClient(ftp);
-                using (var stream = client.OpenRead($@"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini", FtpDataType.ASCII))
-                using (var reader = new StreamReader(stream))
-                {
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        var fixedLine = line.Replace("\0", "");
-                        if (fixedLine.Contains($"scum.{config}="))
-                        {
-                            return fixedLine.Split("=")[1];
-                        }
-                    }
-                }
+                using (var stream = client.OpenRead($@"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini"))
+                using (var reader = new StreamReader(stream, encoding: Encoding.UTF8))
+                    while (await reader.ReadLineAsync() is { } line)
+                        foreach (var item in data)
+                            if (line.Contains($"scum.{item.Key}="))
+                                data[item.Key] = line.Split("=")[1];
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 throw new DomainException("Invalid FTP server");
             }
-            return null;
         }
 
         public async Task AddGuild(ChangeGuildDto guildDto)
@@ -163,6 +191,16 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var server = await _scumServerRepository.FindByIdAsync(serverId);
             if (server is null) throw new NotFoundException("Server not found");
+            if (!server.Tenant.Enabled) throw new DomainException("Server tenant is not avaiable");
+            return server;
+        }
+
+        public async Task<ScumServer> GetServer()
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
             if (!server.Tenant.Enabled) throw new DomainException("Server tenant is not avaiable");
             return server;
         }
@@ -221,7 +259,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             guildDto.Channels = channels
                 .Where(channel => channel.ChannelType == Discord.ChannelType.Text)
-                .Select(channel => new Dto.ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name })
+                .Select(channel => new ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name })
                 .Reverse()
                 .ToList();
 
@@ -238,7 +276,7 @@ namespace RagnarokBotWeb.Domain.Services
             var roles = _discordClient.GetGuild(guild.DiscordId).Roles;
 
             return roles
-                .Where(role => role.Name != "@everyone")
+                .Where(role => role.Name != "@everyone" && role.Name != "The SCUM Bot")
                 .Select(role => new DiscordRolesDto { DiscordId = role.Id.ToString(), Name = role.Name })
                 .ToList();
         }
@@ -412,6 +450,7 @@ namespace RagnarokBotWeb.Domain.Services
             server.AllowMinesOutsideFlag = updateServer.AllowMinesOutsideFlag;
             server.AnnounceMineOutsideFlag = updateServer.AnnounceMineOutsideFlag;
             server.SendVipLockpickAlert = updateServer.SendVipLockpickAlert;
+            server.BattleMetricsId = updateServer.BattleMetricsId;
             server.SetRestartTimes(updateServer.RestartTimes);
 
             await _scumServerRepository.CreateOrUpdateAsync(server);
@@ -433,5 +472,6 @@ namespace RagnarokBotWeb.Domain.Services
 
             return _mapper.Map<ScumServerDto>(server);
         }
+
     }
 }

@@ -72,11 +72,11 @@ public class GamePlayJob(
                     if (player is not null && player.IsVip() && player.DiscordId.HasValue)
                     {
                         var centerCoord = new ScumCoordinate(lockpick.X, lockpick.Y);
-                        var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island.jpg"));
+                        var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
                         var result = await extractor.ExtractMapWithPoints(
                             centerCoord,
-                            [new ScumCoordinate(lockpick.X, lockpick.Y)],
-                            128);
+                            [new ScumCoordinate(lockpick.X, lockpick.Y).WithLabel(lockpick.TargetObject)],
+                            256);
 
                         var imageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/lockpicks", cdnUrlPrefix: "images/lockpicks");
                         var embed = new CreateEmbed()
@@ -89,7 +89,7 @@ public class GamePlayJob(
                                 new CreateEmbedField("Sector", centerCoord.GetSectorReference(), true),
                                 new CreateEmbedField("Lock", lockpick.DisplayLockType, true),
                                 new CreateEmbedField("Unlocked", lockpick.Success ? "Yes" : "No", true)],
-                            Title = "RAGNAROK BOT ALERT",
+                            Title = "THE SCUM BOT ALERT",
                             Text = "Warning!!! Someone is trying to pick one of your locks!!!"
                         };
                         await discordService.SendEmbedToUserDM(embed);

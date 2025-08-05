@@ -14,6 +14,31 @@ namespace RagnarokBotWeb.Application.LogParser
             _server = server;
         }
 
+        public static PreParseKill? KillParse(string line1, string line2)
+        {
+            string pattern = @"Distance: ([0-9]*\.?[0-9]+) m";
+            var match = Regex.Match(line1, pattern);
+
+            if (!float.TryParse(match.Groups[1].Value, out float distance))
+            {
+                distance = 0;
+            }
+
+            var dateString = line1.Substring(0, line1.IndexOf(":"));
+            string format = "yyyy.MM.dd-HH.mm.ss";
+            var date = DateTime.ParseExact(dateString, format, CultureInfo.InvariantCulture);
+
+            var json = line2.Substring(line2.IndexOf(":") + 2);
+            var preParseKill = JsonConvert.DeserializeObject<PreParseKill>(json)!;
+
+            if (preParseKill.Killer.IsInGameEvent || preParseKill.Victim.IsInGameEvent) return null;
+
+            preParseKill.Distance = distance;
+            preParseKill.Date = date;
+            preParseKill.Line = line2;
+            return preParseKill;
+        }
+
         public Kill? Parse(string line1, string line2)
         {
             string pattern = @"Distance: ([0-9]*\.?[0-9]+) m";

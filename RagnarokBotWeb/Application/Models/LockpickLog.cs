@@ -17,6 +17,8 @@
         public float X { get; set; }
         public float Y { get; set; }
         public float Z { get; set; }
+        public DateTime? Date { get; set; }
+        public string Line { get; set; }
         public string DisplayLockType
         {
             get

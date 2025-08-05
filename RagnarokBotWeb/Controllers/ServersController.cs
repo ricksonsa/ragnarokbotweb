@@ -45,10 +45,18 @@ namespace RagnarokBotWeb.Controllers
             return Ok(guild);
         }
 
+        [HttpGet("player-count")]
+        public async Task<IActionResult> GetPlayerCount()
+        {
+            _logger.LogDebug("Get request to fetch player count");
+            var count = await _serverService.GetServerPlayerCount();
+            return Ok(count);
+        }
+
         [HttpGet("discord")]
         public async Task<IActionResult> GetDiscord()
         {
-            _logger.LogDebug("Patch request to confirm discord settings");
+            _logger.LogDebug("Get request fetch discord settings");
             GuildDto guild = await _serverService.GetServerDiscord();
             return Ok(guild);
         }

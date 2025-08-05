@@ -56,6 +56,26 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
         }
     }
 
+
+    public Stream? DownloadFile(FtpClient client, string remoteFilePath)
+    {
+        try
+        {
+            MemoryStream stream = new();
+            if (client.DownloadStream(stream, remoteFilePath))
+            {
+                stream.Position = 0;
+                client.Disconnect();
+                return stream;
+            }
+            return null;
+
+        }
+        catch (Exception)
+        {
+            throw new DomainException("Invalid ftp server");
+        }
+    }
     public async Task RemoveLine(FtpClient client, string remotePath, string lineToRemove)
     {
         using var downloadStream = new MemoryStream();
@@ -99,5 +119,10 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
         }
 
         client.Disconnect();
+    }
+
+    public Task<Stream> DownloadFile(FtpClient client)
+    {
+        throw new NotImplementedException();
     }
 }

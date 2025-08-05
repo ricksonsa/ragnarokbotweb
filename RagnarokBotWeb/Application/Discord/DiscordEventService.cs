@@ -64,7 +64,7 @@ public class DiscordEventService(
         });
 
         var embed = new EmbedBuilder()
-            .WithTitle("Ragnarok Bot Discord Server Confirmation")
+            .WithTitle("The SCUM Bot Discord Server Confirmation")
             .WithDescription($"Here is your confirmation token: `{guild.Token}`")
             .WithColor(Color.Green)
             .WithTimestamp(DateTimeOffset.UtcNow)

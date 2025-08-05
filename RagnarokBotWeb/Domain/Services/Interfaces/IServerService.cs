@@ -7,6 +7,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     {
         Task<ScumServerDto> ChangeFtp(FtpDto ftpDto);
         Task AddGuild(ChangeGuildDto guildDto);
+        Task<ScumServer> GetServer();
         Task<ScumServer> GetServer(long serverId);
         Task<GuildDto> ConfirmDiscordToken(SaveDiscordSettingsDto settings);
         Task<GuildDto> RunDiscordTemplate();
@@ -17,5 +18,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<List<DiscordRolesDto>> GetServerDiscordRoles();
         Task<ScumServerDto> UpdateServerSettings(UpdateServerSettingsDto updateServer);
         Task<ScumServerDto> UpdateKillFeed(UpdateKillFeedDto updateKillFeed);
+        Task UpdateServerData(ScumServer server);
+        Task<PlayerCountDto> GetServerPlayerCount();
     }
 }

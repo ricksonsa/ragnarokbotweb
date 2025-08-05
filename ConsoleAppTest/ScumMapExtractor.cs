@@ -499,6 +499,126 @@ public class ScumMapExtractor
         originalMap.Save(outputPath);
         Console.WriteLine($"Mapa com grid salvo em: {outputPath}");
     }
+
+    /// <summary>
+    /// Calcula distância entre dois pontos
+    /// </summary>
+    private float CalculateDistance(PointF point1, PointF point2)
+    {
+        float deltaX = point2.X - point1.X;
+        float deltaY = point2.Y - point1.Y;
+        return (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+    }
+
+    /// <summary>
+    /// Estrutura para armazenar dados de pontos ajustados
+    /// </summary>
+    private class AdjustedPoint
+    {
+        public ScumCoordinate OriginalCoordinate { get; set; }
+        public Color Color { get; set; }
+        public PointF PixelPosition { get; set; }
+        public string? Label { get; internal set; }
+    }
+
+
+    /// <summary>
+    /// Resolve sobreposições de pontos reposicionando-os
+    /// </summary>
+    private List<AdjustedPoint> ResolveOverlappingPoints(List<ScumCoordinate> points)
+    {
+        var adjustedPoints = new List<AdjustedPoint>();
+        const int minDistance = 25; // Distância mínima em pixels entre pontos
+        const int maxIterations = 100; // Evita loop infinito
+
+        // Converte todos os pontos para pixels
+        var allCoordinates = new List<ScumCoordinate>(points);
+
+        foreach (var coord in allCoordinates)
+        {
+            var pixel = GameCoordinateToPixel(coord);
+            adjustedPoints.Add(new AdjustedPoint
+            {
+                OriginalCoordinate = coord,
+                PixelPosition = new PointF(pixel.X, pixel.Y)
+            });
+        }
+
+        // Algoritmo de separação de pontos
+        for (int iteration = 0; iteration < maxIterations; iteration++)
+        {
+            bool hadCollision = false;
+
+            for (int i = 0; i < adjustedPoints.Count; i++)
+            {
+                for (int j = i + 1; j < adjustedPoints.Count; j++)
+                {
+                    var point1 = adjustedPoints[i];
+                    var point2 = adjustedPoints[j];
+
+                    float distance = CalculateDistance(point1.PixelPosition, point2.PixelPosition);
+
+                    if (distance < minDistance)
+                    {
+                        hadCollision = true;
+
+                        // Calcula vetor de separação
+                        float deltaX = point2.PixelPosition.X - point1.PixelPosition.X;
+                        float deltaY = point2.PixelPosition.Y - point1.PixelPosition.Y;
+
+                        // Evita divisão por zero
+                        if (Math.Abs(deltaX) < 0.1f && Math.Abs(deltaY) < 0.1f)
+                        {
+                            deltaX = 1f;
+                            deltaY = 0f;
+                        }
+
+                        float length = (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+                        deltaX /= length;
+                        deltaY /= length;
+
+                        // Calcula o deslocamento necessário
+                        float overlap = minDistance - distance;
+                        float moveDistance = overlap / 2f;
+
+                        // Move os pontos para lados opostos
+                        // Ponto central tem prioridade (move menos)
+                        float factor1 = 0.8f;
+                        float factor2 = 0.8f;
+
+                        adjustedPoints[i] = new AdjustedPoint
+                        {
+                            OriginalCoordinate = point1.OriginalCoordinate,
+                            PixelPosition = new PointF(
+                                point1.PixelPosition.X - deltaX * moveDistance * factor1,
+                                point1.PixelPosition.Y - deltaY * moveDistance * factor1
+                            ),
+                            Color = point1.Color,
+                            Label = point1.Label
+                        };
+
+                        adjustedPoints[j] = new AdjustedPoint
+                        {
+                            OriginalCoordinate = point2.OriginalCoordinate,
+                            PixelPosition = new PointF(
+                                point2.PixelPosition.X + deltaX * moveDistance * factor2,
+                                point2.PixelPosition.Y + deltaY * moveDistance * factor2
+                            ),
+                            Color = point2.Color,
+                            Label = point2.Label
+                        };
+                    }
+                }
+            }
+
+            // Se não houve colisões, termina
+            if (!hadCollision)
+                break;
+        }
+
+        return adjustedPoints;
+    }
+
     private Rectangle CalculateOptimalExtractionArea(ScumCoordinate centerCoordinate, List<ScumCoordinate> points, int minSize)
     {
         var allPoints = new List<ScumCoordinate>(points) { centerCoordinate };
@@ -531,40 +651,87 @@ public class ScumMapExtractor
         return new Rectangle(minX, minY, width, height);
     }
 
+    ///// <summary>
+    ///// Desenha todos os pontos no mapa original
+    ///// </summary>
+    //private void DrawPointsOnOriginalMap(Image<Rgba32> originalMap, List<ScumCoordinate> points)
+    //{
+    //    originalMap.Mutate(ctx =>
+    //    {
+    //        // Desenha ponto central (vermelho com borda branca)
+    //        //var centerPixel = GameCoordinateToPixel(centerCoordinate);
+    //        //ctx.Fill(Color.White, new EllipsePolygon(centerPixel.X, centerPixel.Y, 12f));
+    //        //ctx.Fill(Color.Red, new EllipsePolygon(centerPixel.X, centerPixel.Y, 10f));
+
+    //        // Desenha outros pontos (azul com borda branca)
+    //        foreach (var point in points)
+    //        {
+    //            var pointPixel = GameCoordinateToPixel(point);
+
+    //            ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 3f));
+    //            ctx.Fill(point.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 2.5f));
+
+    //            // Label com setor
+    //            //var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
+    //            //var sectorText = point.GetSectorReference();
+    //            //if (!string.IsNullOrEmpty(sectorText))
+    //            //{
+    //            //    // Fundo semi-transparente para o texto
+    //            //    var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
+    //            //    var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
+    //            //    ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
+    //            //    ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
+    //            //}
+    //        }
+    //    });
+    //}
+
     /// <summary>
     /// Desenha todos os pontos no mapa original
     /// </summary>
     private void DrawPointsOnOriginalMap(Image<Rgba32> originalMap, List<ScumCoordinate> points)
     {
+        // Resolve sobreposições antes de desenhar
+        var adjustedPoints = ResolveOverlappingPoints(points);
+
         originalMap.Mutate(ctx =>
         {
-            // Desenha ponto central (vermelho com borda branca)
-            //var centerPixel = GameCoordinateToPixel(centerCoordinate);
-            //ctx.Fill(Color.White, new EllipsePolygon(centerPixel.X, centerPixel.Y, 12f));
-            //ctx.Fill(Color.Red, new EllipsePolygon(centerPixel.X, centerPixel.Y, 10f));
-
-            // Desenha outros pontos (azul com borda branca)
-            foreach (var point in points)
+            // Desenha pontos
+            foreach (var pointData in adjustedPoints)
             {
-                var pointPixel = GameCoordinateToPixel(point);
+                var pointPixel = pointData.PixelPosition;
 
-                ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 3f));
-                ctx.Fill(point.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 2.5f));
+                ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 4.5f));
+                ctx.Fill(pointData.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 4f));
 
-                // Label com setor
-                //var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
-                //var sectorText = point.GetSectorReference();
-                //if (!string.IsNullOrEmpty(sectorText))
-                //{
-                //    // Fundo semi-transparente para o texto
-                //    var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
-                //    var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
-                //    ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
-                //    ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
-                //}
+                // Linha conectando posição original com ajustada (se moveu)
+                var originalPointPixel = GameCoordinateToPixel(pointData.OriginalCoordinate);
+                if (Math.Abs(pointPixel.X - originalPointPixel.X) > 2 || Math.Abs(pointPixel.Y - originalPointPixel.Y) > 2)
+                {
+                    ctx.DrawLine(Color.FromRgba(0, 0, 255, 150), 1f,
+                        new PointF(originalPointPixel.X, originalPointPixel.Y),
+                        new PointF(pointPixel.X, pointPixel.Y));
+                }
+
+                if (!string.IsNullOrEmpty(pointData.Label))
+                {
+                    // Label com setor
+                    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
+                    var sectorText = pointData.OriginalCoordinate.GetSectorReference();
+                    if (!string.IsNullOrEmpty(sectorText))
+                    {
+                        // Fundo semi-transparente para o texto
+                        var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
+                        var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
+                        ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
+                        ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
+                    }
+                }
+
             }
         });
     }
+
 
     /// <summary>
     /// Adiciona informações de contexto na imagem extraída
@@ -630,6 +797,7 @@ public struct ScumCoordinate
     public double Y { get; set; }
 
     public Color Color { get; set; }
+    public string? Label { get; set; }
 
     public ScumCoordinate(double x, double y)
     {

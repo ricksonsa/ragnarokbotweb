@@ -84,7 +84,7 @@ export class PlayersComponent implements OnInit {
             this.pageIndex = page.number;
             this.pageSize = page.size;
           }
-          this.isLoading = false
+          this.isLoading = false;
         }),
         switchMap((page) => {
           return of(page.content);
