@@ -80,7 +80,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 Buttons = [new($"Buy {warzone.Name} Teleport", action)],
                 DiscordId = ulong.Parse(warzone.DiscordChannelId!),
-                FooterText = GetFooterText(warzone),
+                Fields = GetFields(warzone),
                 Color = warzone.IsVipOnly ? Color.Gold : Color.DarkPurple,
                 Text = warzone.Description,
                 ImageUrl = warzone.ImageUrl,
@@ -91,15 +91,12 @@ namespace RagnarokBotWeb.Domain.Services
             return message.Id;
         }
 
-        private static string GetFooterText(Warzone warzone)
+        private static List<CreateEmbedField> GetFields(Warzone warzone)
         {
-            string text = string.Empty;
-
-            if (warzone.Price > 0) text = $"Price: {warzone.Price}";
-            if (warzone.VipPrice > 0) text += $"\nVip price: {warzone.VipPrice}";
-            if (warzone.IsVipOnly) text = $"Price: {warzone.VipPrice}";
-
-            return text;
+            List<CreateEmbedField> fields = [];
+            if (warzone.Price > 0) fields.Add(new CreateEmbedField("Price", warzone.Price.ToString(), true));
+            if (warzone.VipPrice > 0) fields.Add(new CreateEmbedField("Vip Price", warzone.VipPrice.ToString(), true));
+            return fields;
         }
 
         public async Task DeleteDiscordMessage(Warzone warzone)

@@ -191,7 +191,8 @@ export class AppComponent implements OnInit {
           this.account = account;
         },
         error: (err) => {
-          this.errorMessage = err.error.details
+          this.loading = false;
+          this.errorMessage = err.error.details;
         }
       })
   }

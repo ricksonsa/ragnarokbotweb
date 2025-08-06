@@ -98,9 +98,14 @@ export class ServerComponent implements OnInit {
       vipCoinAwardPeriodically: [0, [Validators.min(0)]],
       coinReductionPerInvalidMineKill: [0],
       announceMineOutsideFlag: [true],
+      shopEnabled: [true],
       allowMinesOutsideFlag: [true],
       sendVipLockpickAlert: [true],
-      battleMetricsId: [null]
+      battleMetricsId: [null],
+      welcomePackCoinAward: [0, [Validators.min(0)]],
+      coinKillAwardAmount: [0, [Validators.min(0)]],
+      coinDeathPenaltyAmount: [0, [Validators.min(0)]],
+      coinAwardIntervalMinutes: [0, [Validators.min(0)]]
     });
   }
 
@@ -119,6 +124,15 @@ export class ServerComponent implements OnInit {
   }
 
   updateSettings() {
+    if (this.serverForm.invalid) {
+      Object.values(this.serverForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     const form = this.serverForm.value;
     form.restartTimes = this.times;
     this.serverService.updateSettings(form)

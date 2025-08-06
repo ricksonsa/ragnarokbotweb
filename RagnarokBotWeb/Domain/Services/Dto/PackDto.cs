@@ -13,6 +13,7 @@
         public string? DiscordChannelId { get; set; }
         public string? DiscordChannelName { get; set; }
         public long? PurchaseCooldownSeconds { get; set; } = 0;
+        public long? StockPerVipPlayer { get; set; }
         public long? StockPerPlayer { get; set; } = 0;
         public bool? Enabled { get; set; }
         public bool? IsWelcomePack { get; set; }

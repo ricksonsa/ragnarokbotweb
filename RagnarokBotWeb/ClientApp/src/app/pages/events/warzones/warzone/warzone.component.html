@@ -187,6 +187,17 @@
       </ng-template>
 
       <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="stockPerVipPlayer">Stock Per Vip Player</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="dailyPackageExtraVip">
+          <input formControlName="stockPerVipPlayer" nz-input name="stockPerVipPlayer" type="number"
+            id="stockPerVipPlayer" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #dailyPackageExtraVip>
+        <p>You can set how many times a player can use the teleport per day. Leave it blank for infinite
+      </ng-template>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="deliveryText">Item Spawned Text</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="packageDeliveryExtra">
           <input formControlName="deliveryText" nz-input name="deliveryText" type="text" id="deliveryText" />

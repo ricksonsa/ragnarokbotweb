@@ -114,7 +114,8 @@ export class WarzoneComponent implements OnInit {
       stockPerPlayer: [null],
       enabled: [true],
       isBlockPurchaseRaidTime: [false],
-      deliveryText: ['A package was dropped at the warzone!']
+      deliveryText: ['A package was dropped at the warzone!'],
+      stockPerVipPlayer: [null]
     });
 
     this.packageItemForm = this.fb.group({

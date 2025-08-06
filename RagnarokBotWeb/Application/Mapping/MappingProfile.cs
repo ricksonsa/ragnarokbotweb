@@ -27,6 +27,8 @@ namespace RagnarokBotWeb.Application.Mapping
                     .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
 
             CreateMap<UpdateKillFeedDto, ScumServer>();
+            CreateMap<UpdateServerSettingsDto, ScumServer>()
+                .ForMember(server => server.RestartTimes, opt => opt.MapFrom(dto => string.Join(";", dto.RestartTimes)));
 
             CreateMap<Item, ItemDto>();
             CreateMap<Order, OrderDto>();

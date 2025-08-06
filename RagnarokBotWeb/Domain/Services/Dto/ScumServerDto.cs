@@ -36,8 +36,13 @@
         #endregion
 
         #region Shop
+        public bool ShopEnabled { get; set; } = true;
+        public long CoinAwardIntervalMinutes { get; set; }
         public long CoinAwardPeriodically { get; set; }
         public long VipCoinAwardPeriodically { get; set; }
+        public long CoinDeathPenaltyAmount { get; set; }
+        public long CoinKillAwardAmount { get; set; }
+        public long WelcomePackCoinAward { get; set; }
         #endregion
 
         #region Trap

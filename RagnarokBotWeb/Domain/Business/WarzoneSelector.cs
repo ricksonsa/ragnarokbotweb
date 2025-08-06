@@ -18,6 +18,7 @@ namespace RagnarokBotWeb.Domain.Business
 
         public Warzone? Select(List<Warzone> warzones)
         {
+            var raidTime = _cacheService.GetRaidTimes(_scumServer.Id);
             var running = warzones.FirstOrDefault(warzone => warzone.IsRunning);
             if (running is not null) return running;
 
@@ -26,6 +27,7 @@ namespace RagnarokBotWeb.Domain.Business
                 var onlinePlayerCount = _cacheService.GetConnectedPlayers(_scumServer.Id).Count();
 
                 if (warzone.MinPlayerOnline < onlinePlayerCount) continue;
+                if (warzone.IsBlockPurchaseRaidTime && raidTime != null && raidTime.IsInRaidTime(_scumServer)) continue;
 
                 return warzone;
             }

@@ -13,6 +13,7 @@
         public ulong? DiscordMessageId { get; set; }
         public long? PurchaseCooldownSeconds { get; set; }
         public long WarzoneDurationInterval { get; set; } = 5;
+        public long? StockPerVipPlayer { get; set; }
         public long? MinPlayerOnline { get; set; }
         public long? ItemSpawnInterval { get; set; }
         public long? StockPerPlayer { get; set; }

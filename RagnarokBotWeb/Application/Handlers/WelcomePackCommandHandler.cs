@@ -47,6 +47,9 @@ namespace RagnarokBotWeb.Application.Handlers
                 player.DiscordId = register.DiscordId;
                 player.ScumServer = register.ScumServer;
 
+                if (register.ScumServer.WelcomePackCoinAward > 0)
+                    player.Coin += register.ScumServer.WelcomePackCoinAward;
+
                 await _playerRepository.CreateOrUpdateAsync(player);
                 await _playerRepository.SaveAsync();
 
@@ -56,10 +59,11 @@ namespace RagnarokBotWeb.Application.Handlers
 
                 string text = $"You are registered at {register.ScumServer.Name}.";
                 var order = await _orderService.PlaceWelcomePackOrder(player);
+
                 if (order != null)
-                {
                     text += $" Stay put to receive your Welcome Pack {DiscordEmoji.Gift}";
-                }
+
+
 
                 await _discordService.SendEmbedToUserDM(new CreateEmbed
                 {

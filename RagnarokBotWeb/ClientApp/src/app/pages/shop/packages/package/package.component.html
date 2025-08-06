@@ -148,6 +148,16 @@
       </ng-template>
 
       <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="stockPerVipPlayer">Stock Per Vip Player</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="dailyPackageExtra">
+          <input formControlName="stockPerVipPlayer" nz-input name="stockPerVipPlayer" type="number" id="stockPerVipPlayer" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #dailyPackageExtra>
+        <p>You can set how many times a vip player can buy this package per day.</p>
+      </ng-template>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="deliveryText">Package Delivery Message</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="packageDeliveryExtra">
           <input formControlName="deliveryText" nz-input name="deliveryText" type="text" id="deliveryText" />

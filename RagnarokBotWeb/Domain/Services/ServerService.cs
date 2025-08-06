@@ -444,14 +444,7 @@ namespace RagnarokBotWeb.Domain.Services
             var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
 
-            server.CoinAwardPeriodically = updateServer.CoinAwardPeriodically;
-            server.VipCoinAwardPeriodically = updateServer.VipCoinAwardPeriodically;
-            server.CoinReductionPerInvalidMineKill = updateServer.CoinReductionPerInvalidMineKill;
-            server.AllowMinesOutsideFlag = updateServer.AllowMinesOutsideFlag;
-            server.AnnounceMineOutsideFlag = updateServer.AnnounceMineOutsideFlag;
-            server.SendVipLockpickAlert = updateServer.SendVipLockpickAlert;
-            server.BattleMetricsId = updateServer.BattleMetricsId;
-            server.SetRestartTimes(updateServer.RestartTimes);
+            server = _mapper.Map(updateServer, server);
 
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();

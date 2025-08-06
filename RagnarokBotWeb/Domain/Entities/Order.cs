@@ -39,7 +39,6 @@ namespace RagnarokBotWeb.Domain.Entities
                 if (Player is null) return 0;
                 return Player.Coin - ResolvedPrice;
             }
-
         }
 
         public Player? Player { get; set; }
@@ -76,6 +75,20 @@ namespace RagnarokBotWeb.Domain.Entities
                 return ResolvePurchaseCooldownText(Pack.PurchaseCooldownSeconds.Value);
             }
             return string.Empty;
+        }
+
+        public long GetPrice()
+        {
+            if (Player is null) throw new Exception("Invalid player");
+            switch (OrderType)
+            {
+                case EOrderType.Warzone:
+                    return Player.IsVip() ? Warzone!.VipPrice : Warzone!.Price;
+                case EOrderType.Pack:
+                    return Player.IsVip() ? Pack!.VipPrice : Pack!.Price;
+                default:
+                    throw new Exception("Invalid order");
+            }
         }
 
         public string ResolvedDeliveryText()

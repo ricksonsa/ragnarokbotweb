@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -28,23 +29,22 @@ public class KillLogJob(
         try
         {
             var processor = new ScumFileProcessor(server);
-            List<string> lines = [];
+
+            string lastLine = string.Empty;
 
             await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService))
             {
-                lines.Add(line);
-            }
-            using var enumerator = lines.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                var first = enumerator.Current;
-                if (!enumerator.MoveNext()) break;
-                var second = enumerator.Current;
+                if (!line.Contains('{'))
+                {
+                    lastLine = line;
+                    continue;
+                }
 
                 Kill? kill = null;
                 try
                 {
-                    kill = new KillLogParser(server).Parse(first, second);
+                    kill = new KillLogParser(server).Parse(lastLine, line);
+                    if (kill is null) throw new Exception("Could not parse kill");
                 }
                 catch (Exception ex)
                 {
@@ -52,64 +52,73 @@ public class KillLogJob(
                     continue;
                 }
 
-                if (kill is null) continue;
+                HandleAnnounceText(cacheService, server, kill); // Announce kill in game
 
-                if (!server.ShowSameSquadKill)
-                {
-                    var squads = cacheService.GetSquads(server.Id);
+                var squads = cacheService.GetSquads(server.Id);
+                var isSameSquad = IsSameSquad(kill, squads);
 
-                    bool killerInSquad = false;
-                    bool targetInSameSquad = false;
-
-                    foreach (var squad in squads)
-                    {
-                        var memberIds = squad.Members.Select(m => m.SteamId).ToHashSet();
-
-                        if (memberIds.Contains(kill.KillerSteamId64!))
-                            killerInSquad = true;
-
-                        if (memberIds.Contains(kill.TargetSteamId64!))
-                            targetInSameSquad = true;
-
-                        if (killerInSquad && targetInSameSquad)
-                        {
-                            // Both are in the same squad, skip
-                            return;
-                        }
-                    }
-                }
+                if (!server.ShowSameSquadKill && isSameSquad) return;
 
                 if (server.UseKillFeed)
                 {
-                    if (server.ShowKillOnMap)
-                    {
-                        await HandleShowMap(logger, fileService, kill);
-                    }
-
+                    if (server.ShowKillOnMap) await HandleShowMap(logger, fileService, kill);
                     await discordService.SendKillFeedEmbed(server, kill);
                 }
 
-                if (!string.IsNullOrEmpty(server.KillAnnounceText))
-                {
-                    var msg = server.KillAnnounceText
-                        .Replace("{killer_name}", kill.KillerName)
-                        .Replace("{victim_name}", kill.TargetName)
-                        .Replace("{distance}", kill.Distance.ToString())
-                        .Replace("{weapon}", kill.DisplayWeapon)
-                        .Replace("{sector}", kill.Sector);
+                var coinHandler = new PlayerCoinManager(unitOfWork);
+                if (server.CoinKillAwardAmount > 0 && isSameSquad)
+                    await coinHandler.AddCoinsBySteamIdAsync(kill.KillerSteamId64!, server.Id, server.CoinKillAwardAmount);
 
-                    cacheService.GetCommandQueue(server.Id).Enqueue(new BotCommand().Say(msg));
-                }
+                if (server.CoinDeathPenaltyAmount > 0 && !isSameSquad)
+                    await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
 
                 logger.LogDebug("Adding new kill entry: {Killer} -> {Target}", kill.KillerName, kill.TargetName);
                 unitOfWork.ScumServers.Attach(server);
                 await unitOfWork.Kills.AddAsync(kill);
                 await unitOfWork.SaveAsync();
+
             }
         }
         catch (Exception ex)
         {
             logger.LogError("{Job} Exception -> {Ex}", context.JobDetail.Key.Name, ex.Message);
+        }
+    }
+
+    private static bool IsSameSquad(Kill kill, List<Shared.Models.Squad> squads)
+    {
+        bool killerInSquad = false;
+        bool targetInSameSquad = false;
+
+        foreach (var squad in squads)
+        {
+            var memberIds = squad.Members.Select(m => m.SteamId).ToHashSet();
+
+            if (memberIds.Contains(kill.KillerSteamId64!))
+                killerInSquad = true;
+
+            if (memberIds.Contains(kill.TargetSteamId64!))
+                targetInSameSquad = true;
+
+            // Both are in the same squad, skip
+            if (killerInSquad && targetInSameSquad) return true;
+        }
+
+        return false;
+    }
+
+    private static void HandleAnnounceText(ICacheService cacheService, ScumServer server, Kill kill)
+    {
+        if (!string.IsNullOrEmpty(server.KillAnnounceText))
+        {
+            var msg = server.KillAnnounceText!
+                .Replace("{killer_name}", kill.KillerName)
+                .Replace("{victim_name}", kill.TargetName)
+                .Replace("{distance}", kill.Distance.ToString())
+                .Replace("{weapon}", kill.DisplayWeapon)
+                .Replace("{sector}", kill.Sector);
+
+            cacheService.GetCommandQueue(server.Id).Enqueue(new BotCommand().Say(msg));
         }
     }
 

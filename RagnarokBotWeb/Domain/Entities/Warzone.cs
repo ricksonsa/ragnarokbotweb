@@ -17,6 +17,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public long? MinPlayerOnline { get; set; }
         public long ItemSpawnInterval { get; set; }
         public long? StockPerPlayer { get; set; }
+        public long? StockPerVipPlayer { get; set; }
         public bool Enabled { get; set; }
         public bool IsBlockPurchaseRaidTime { get; set; }
         public bool IsVipOnly { get; set; }

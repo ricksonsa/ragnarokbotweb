@@ -81,30 +81,74 @@
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="battlemetricsId">BattleMetrics ID</nz-form-label>
-        <nz-form-control [nzSpan]="8" nzExtra="Look for the BattleMetrics ID that is in the url at BattleMetrics Site. https://www.battlemetrics.com/servers/search?game=scum"
-          nzErrorTip="Must be greater then 0">
-          <input nz-input formControlName="battleMetricsId" name="battlemetricsId" type="text"
-            id="battlemetricsId" />
+        <nz-form-control [nzSpan]="8"
+          nzExtra="Look for the BattleMetrics ID that is in the url at BattleMetrics Site. https://www.battlemetrics.com/servers/search?game=scum">
+          <input nz-input formControlName="battleMetricsId" name="battlemetricsId" type="text" id="battlemetricsId" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-divider nzText="Shop"></nz-divider>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="coinAwardPeriodically">Periodically Bot Shop Coins</nz-form-label>
-        <nz-form-control [nzSpan]="8" nzExtra="How much coin will be awarded perodically to online players."
-          nzErrorTip="Must be greater then 0">
+        <nz-form-control [nzSpan]="null"
+          nzExtra="If disabled, it won't be possible for players to purchase from the bot shop.">
+          <label nz-checkbox formControlName="shopEnabled" nzFor="shopEnabled">Shop Enabled</label>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coinAwardIntervalMinutes">Login Time Inverval</nz-form-label>
+        <nz-form-control [nzSpan]="8"
+          nzExtra="How much time in minutes should pass before giving coins to online players. Zero means never award coins by login time."
+          nzErrorTip="Must not be negative">
+          <input nz-input formControlName="coinAwardIntervalMinutes" name="coinAwardIntervalMinutes" type="number"
+            id="coinAwardIntervalMinutes" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coinAwardPeriodically">Login Time Coins Award</nz-form-label>
+        <nz-form-control [nzSpan]="8" nzExtra="How much coins will be awarded by login time to online players."
+          nzErrorTip="Must not be negative">
           <input nz-input formControlName="coinAwardPeriodically" name="coinAwardPeriodically" type="number"
             id="coinAwardPeriodically" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="vipCoinAwardPeriodically">Vip Periodically Bot Shop Coins</nz-form-label>
-        <nz-form-control [nzSpan]="8" nzExtra="How much coin will be awarded perodically to online vip players."
-          nzErrorTip="Must be greater then 0">
+        <nz-form-label [nzSpan]="0" nzFor="vipCoinAwardPeriodically">Vip Login Time Coins Award</nz-form-label>
+        <nz-form-control [nzSpan]="8" nzExtra="How much coins will be awarded by login time to online vip players."
+          nzErrorTip="Must not be negative">
           <input nz-input formControlName="vipCoinAwardPeriodically" name="vipCoinAwardPeriodically" type="number"
             id="vipCoinAwardPeriodically" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="welcomePackCoinAward">Welcome Pack Coins Award</nz-form-label>
+        <nz-form-control [nzSpan]="8"
+          nzExtra="How much coins will be given for new players when claiming the welcome pack."
+          nzErrorTip="Must not be negative">
+          <input nz-input formControlName="welcomePackCoinAward" name="welcomePackCoinAward" type="number"
+            id="welcomePackCoinAward" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coinKillAwardAmount">Kill Coins Award Amount</nz-form-label>
+        <nz-form-control [nzSpan]="8" nzExtra="How much coins will be awarded for player kill."
+          nzErrorTip="Must not be negative">
+          <input nz-input formControlName="coinKillAwardAmount" name="coinKillAwardAmount" type="number"
+            id="coinKillAwardAmount" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coinDeathPenaltyAmount">Death Coins Penalty Amount</nz-form-label>
+        <nz-form-control [nzSpan]="8" nzExtra="How much coins will be removed from players when they are killed."
+          nzErrorTip="Must not be negative">
+          <input nz-input formControlName="coinDeathPenaltyAmount" name="coinDeathPenaltyAmount" type="number"
+            id="coinDeathPenaltyAmount" />
         </nz-form-control>
       </nz-form-item>
 

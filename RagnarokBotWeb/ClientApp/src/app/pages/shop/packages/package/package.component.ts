@@ -102,7 +102,8 @@ export class PackageComponent implements OnInit {
       stockPerPlayer: [null],
       enabled: [true],
       isBlockPurchaseRaidTime: [false],
-      deliveryText: ['{playerName} your order #{orderId} of {packageName} was delivered.']
+      deliveryText: ['{playerName} your order #{orderId} of {packageName} was delivered.'],
+      stockPerVipPlayer: [null]
     });
 
     this.packageItemForm = this.fb.group({

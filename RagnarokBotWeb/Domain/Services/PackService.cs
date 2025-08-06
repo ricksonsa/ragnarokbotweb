@@ -69,15 +69,12 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<PackDto>(pack);
         }
 
-        private static string GetFooterText(Pack pack)
+        private static List<CreateEmbedField> GetFields(Pack pack)
         {
-            string text = string.Empty;
-
-            if (pack.Price > 0) text = $"Price: {pack.Price}";
-            if (pack.VipPrice > 0) text += $"\nVip price: {pack.VipPrice}";
-            if (pack.IsVipOnly) text = $"Price: {pack.VipPrice}";
-
-            return text;
+            List<CreateEmbedField> fields = [];
+            if (pack.Price > 0) fields.Add(new CreateEmbedField("Price", pack.Price.ToString(), true));
+            if (pack.VipPrice > 0) fields.Add(new CreateEmbedField("Vip Price", pack.VipPrice.ToString(), true));
+            return fields;
         }
 
         private async Task<ulong> GenerateDiscordPackButton(Pack pack)
@@ -88,7 +85,7 @@ namespace RagnarokBotWeb.Domain.Services
                 Buttons = [new($"Buy {pack.Name}", action)],
                 DiscordId = ulong.Parse(pack.DiscordChannelId!),
                 Text = pack.Description,
-                FooterText = GetFooterText(pack),
+                Fields = GetFields(pack),
                 Color = pack.IsVipOnly ? Color.Gold : Color.DarkPurple,
                 ImageUrl = pack.ImageUrl,
                 Title = pack.Name

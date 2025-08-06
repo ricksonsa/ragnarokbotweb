@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
+using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
@@ -126,9 +127,7 @@ public class GamePlayJob(
                     if (server.AnnounceMineOutsideFlag) command.Say(msg);
 
                     cache.GetCommandQueue(server.Id).Enqueue(command);
-
-                    var player = await unitOfWork.Players.FirstOrDefaultAsync(player => player.SteamId64 == trapLog.SteamId);
-                    await unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, server.CoinReductionPerInvalidMineKill);
+                    await new PlayerCoinManager(unitOfWork).RemoveCoinsBySteamIdAsync(trapLog.SteamId, server.Id, server.CoinReductionPerInvalidMineKill);
                 }
             }
         }

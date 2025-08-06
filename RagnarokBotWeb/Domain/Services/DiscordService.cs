@@ -56,9 +56,9 @@ namespace RagnarokBotWeb.Domain.Services
             return (await _guildService.FindByServerIdAsync(serverId))!;
         }
 
-        private EmbedAuthorBuilder GetAuthor()
+        private EmbedFooterBuilder GetAuthor()
         {
-            return new EmbedAuthorBuilder().WithName("THE SCUM BOT").WithIconUrl(_appSettings.BaseUrl + "/images/ragnarok-logo.png");
+            return new EmbedFooterBuilder().WithText("www.thescumbot.com").WithIconUrl(_appSettings.BaseUrl + "/images/ragnarok-logo.png");
         }
 
         private async Task ClearBefore(Guild guild)
@@ -94,7 +94,7 @@ namespace RagnarokBotWeb.Domain.Services
             var embedBuilder = new EmbedBuilder()
                 .WithTitle(createEmbed.Title)
                 .WithDescription(createEmbed.Text)
-                .WithAuthor(GetAuthor())
+                .WithFooter(GetAuthor())
                 .WithCurrentTimestamp()
                 .WithColor(Color.DarkPurple);
 
@@ -128,10 +128,9 @@ namespace RagnarokBotWeb.Domain.Services
 
                 var embed = new EmbedBuilder()
                     .WithTitle(createEmbed.Title)
-                    .WithAuthor(GetAuthor())
+                    .WithFooter(GetAuthor())
                     .WithDescription(createEmbed.Text)
                     .WithImageUrl("attachment://" + filename)
-                    .WithFooter(new EmbedFooterBuilder { Text = createEmbed.FooterText })
                     .WithColor(createEmbed.Color)
                     .Build();
 
@@ -301,9 +300,8 @@ namespace RagnarokBotWeb.Domain.Services
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle(createEmbed.Title)
                     .WithDescription(createEmbed.Text)
-                    .WithAuthor(GetAuthor())
+                    .WithFooter(GetAuthor())
                     .WithImageUrl(_appSettings.BaseUrl + "/" + createEmbed.ImageUrl)
-                    .WithFooter(new EmbedFooterBuilder { Text = createEmbed.FooterText })
                     .WithColor(createEmbed.Color);
 
                 var builder = new ComponentBuilder();
@@ -440,7 +438,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var embedBuilder = new EmbedBuilder()
                 .WithColor(Color.DarkPurple)
-                .WithAuthor(GetAuthor())
+                .WithFooter(GetAuthor())
                 .WithCurrentTimestamp();
 
             if (server.ShowKillerName)

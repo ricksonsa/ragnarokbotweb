@@ -27,11 +27,10 @@
 
 <div class="main">
   <nz-card [nzTitle]="'Logs - ' + selectedSegment" [nzExtra]="extra">
-    <div class="console">
+    <div class="console custom-scroll">
       <div *ngIf="loading">
         <nz-skeleton [nzActive]="true"></nz-skeleton>
       </div>
-
       <ng-container *ngIf="!loading" [ngSwitch]="selectedSegment">
         <ng-container *ngSwitchCase="'Login'" [ngTemplateOutlet]="loginTemplate"></ng-container>
         <ng-container *ngSwitchCase="'Kills'" [ngTemplateOutlet]="killsTemplate"></ng-container>
@@ -138,7 +137,7 @@
   <p style="margin: 0;">Weapon: <span style="font-weight: bold;">{{kill.weapon}}</span></p>
   <br>
   <p style="margin: 0;">Killer</p>
-  <p style="margin: 0;">Has ImmortalitY=<span style="font-weight: bold;">{{kill.killer.hasImmortality}}</span></p>
+  <p style="margin: 0;">Has Immortality: <span style="font-weight: bold;">{{kill.killer.hasImmortality}}</span></p>
   <p style="margin: 0;">Is Inside Game Event: <span style="font-weight: bold;">{{kill.killer.isInGameEvent}}</span>
   </p>
   <p style="margin: 0;">Name: <span style="font-weight: bold;">{{kill.killer.profileName}}</span> SteamID: <span

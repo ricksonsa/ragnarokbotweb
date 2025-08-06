@@ -236,6 +236,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (buriedChests) => {
           this.loading = false;
+          buriedChests.forEach(e => e.line = e.line.substring(21));
           this.buriedChests = buriedChests;
         },
         error: (err) => {
