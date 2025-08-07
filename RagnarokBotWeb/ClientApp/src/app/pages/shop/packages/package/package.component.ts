@@ -30,6 +30,7 @@ import { ServerService } from '../../../../services/server.service';
 import { ChannelDto } from '../../../../models/channel.dto';
 import { arrayBufferToBase64, toBase64 } from '../../../../core/functions/file.functions';
 import { PackageDto, PackItemDto } from '../../../../models/package.dto';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-package',
@@ -76,6 +77,7 @@ export class PackageComponent implements OnInit {
   uploading = false;
   isUploaded = false;
   loading = false;
+  apiUrl = environment.apiUrl;
 
   get searchControl() {
     return this.packageItemForm.controls['searchControl'];

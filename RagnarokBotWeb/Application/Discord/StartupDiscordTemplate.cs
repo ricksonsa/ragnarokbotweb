@@ -9,20 +9,21 @@ public class StartupDiscordTemplate(
     ILogger<StartupDiscordTemplate> logger,
     IChannelService channelService,
     IChannelTemplateService channelTemplateService,
+    IDiscordService discordService,
     DiscordSocketClient client)
 {
-    public async Task Run(Guild guild)
+    public async Task Run(ScumServer server)
     {
-        if (guild.RunTemplate)
+        if (server.Guild!.RunTemplate)
         {
-            logger.LogWarning("Template already executed in GuildId: {GuildId} and DiscordId {DiscordId}", guild.Id, guild.DiscordId);
+            logger.LogWarning("Template already executed in GuildId: {GuildId} and DiscordId {DiscordId}", server.Guild.Id, server.Guild.DiscordId);
             return;
         }
 
-        var discordCreateChannel = new DiscordCreateChannel(client, channelTemplateService);
-        var channels = await discordCreateChannel.CreateAsync(guild.DiscordId);
+        var discordCreateChannel = new DiscordCreateChannel(client, channelTemplateService, discordService);
+        var channels = await discordCreateChannel.CreateAsync(server);
 
-        foreach (var channel in channels.Select(ToChannelEntity(guild)))
+        foreach (var channel in channels.Select(ToChannelEntity(server.Guild)))
             await channelService.CreateChannelAsync(channel);
     }
 

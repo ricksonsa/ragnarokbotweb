@@ -6,7 +6,6 @@ using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
-using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using System.Text;
 using static RagnarokBotWeb.Application.Tasks.Jobs.KillRankJob;
@@ -21,39 +20,20 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly DiscordSocketClient _client;
         private readonly AppSettings _appSettings;
         private readonly IGuildService _guildService;
-        private readonly StartupDiscordTemplate _startupDiscordTemplate;
         private readonly IChannelService _channelService;
 
         public DiscordService(
             ILogger<DiscordService> logger,
             DiscordSocketClient client,
             IGuildService guildService,
-            StartupDiscordTemplate startupDiscordTemplate,
             IChannelService channelService,
             IOptions<AppSettings> appSettings)
         {
             _logger = logger;
             _client = client;
             _guildService = guildService;
-            _startupDiscordTemplate = startupDiscordTemplate;
             _channelService = channelService;
             _appSettings = appSettings.Value;
-        }
-
-        public async Task<Guild> CreateChannelTemplates(long serverId)
-        {
-            var guild = await _guildService.FindByServerIdAsync(serverId);
-            if (guild is null)
-            {
-                _logger.LogWarning("No guild found.");
-                throw new DomainException("No guild found");
-            }
-            //await ClearBefore(guild);
-
-            await _startupDiscordTemplate.Run(guild);
-            guild.RunTemplate = true;
-            await _guildService.Update(guild);
-            return (await _guildService.FindByServerIdAsync(serverId))!;
         }
 
         private EmbedFooterBuilder GetAuthor()
@@ -95,10 +75,10 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithTitle(createEmbed.Title)
                 .WithDescription(createEmbed.Text)
                 .WithFooter(GetAuthor())
-                .WithCurrentTimestamp()
                 .WithColor(Color.DarkPurple);
 
-            if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl(createEmbed.ImageUrl);
+            if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{createEmbed.ImageUrl}");
+            if (createEmbed.TimeStamp) embedBuilder.WithCurrentTimestamp();
 
             var builder = new ComponentBuilder();
 
@@ -191,6 +171,62 @@ namespace RagnarokBotWeb.Domain.Services
             Console.WriteLine($"Deleted {deletedCount} messages.");
         }
 
+        public async Task DeleteAllMessagesInChannelByDate(ulong channelId, DateTime date)
+        {
+            var channel = _client.GetChannel(channelId) as IMessageChannel;
+            if (channel == null)
+            {
+                Console.WriteLine("Channel not found or is not a message channel.");
+                return;
+            }
+
+            int deletedCount = 0;
+            bool hasMore = true;
+            IMessage? lastMessage = null;
+
+            while (hasMore)
+            {
+                IEnumerable<IMessage> messages;
+
+                if (lastMessage == null)
+                    messages = await channel.GetMessagesAsync(100, CacheMode.AllowDownload).FlattenAsync();
+                else
+                    messages = await channel.GetMessagesAsync(lastMessage, Direction.Before, 100, CacheMode.AllowDownload).FlattenAsync();
+
+                var messageList = messages.ToList();
+
+                if (messageList.Count == 0)
+                {
+                    hasMore = false;
+                    break;
+                }
+
+                foreach (var msg in messageList)
+                {
+                    if (msg.Timestamp.UtcDateTime < date.ToUniversalTime() && msg.Embeds.Any(e => e.Description.Contains("Scan will expire")))
+                    {
+                        try
+                        {
+                            await msg.DeleteAsync();
+                            deletedCount++;
+                            await Task.Delay(500); // Delay to avoid rate limit
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Failed to delete message: {ex.Message}");
+                        }
+                    }
+                }
+
+                lastMessage = messageList.LastOrDefault();
+                if (lastMessage == null)
+                {
+                    hasMore = false;
+                }
+            }
+
+            Console.WriteLine($"Deleted {deletedCount} messages older than {date:u}.");
+        }
         public async Task SendLockpickRankEmbed(
             ulong channelId,
            List<LockpickStatsDto> stats,
@@ -301,8 +337,11 @@ namespace RagnarokBotWeb.Domain.Services
                     .WithTitle(createEmbed.Title)
                     .WithDescription(createEmbed.Text)
                     .WithFooter(GetAuthor())
-                    .WithImageUrl(_appSettings.BaseUrl + "/" + createEmbed.ImageUrl)
                     .WithColor(createEmbed.Color);
+
+
+                if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{createEmbed.ImageUrl}");
+                if (createEmbed.TimeStamp) embedBuilder.WithCurrentTimestamp();
 
                 var builder = new ComponentBuilder();
 
@@ -427,6 +466,61 @@ namespace RagnarokBotWeb.Domain.Services
 
             await user.RemoveRoleAsync(role);
             _logger.LogInformation("Removed Discord Role Id[{Role}] to user[{User}]", roleId, userDiscordId);
+        }
+
+        public async Task<IUserMessage?> CreateUavButtons(ScumServer server, ulong channelId)
+        {
+            if (server.Guild is null) return null;
+
+            var socketGuild = _client.GetGuild(server.Guild.DiscordId); // SocketGuild
+            IGuild guild = socketGuild; // Pode ser usado como IGuild
+
+            var channel = await _client.GetChannelAsync(channelId) as IMessageChannel;
+            if (channel is null) return null;
+
+            var sectors = SectorDefinitions.SECTOR_Y_CENTERS.Select(row => row.Key.ToString()).ToList();
+            List<string> sectorValues = [];
+
+            foreach (var sector in sectors)
+                for (int i = 0; i < SectorDefinitions.SECTOR_X_CENTERS.Values.Count; i++)
+                    sectorValues.Add($"{sector}{i}");
+
+            var sectorOptions = sectorValues.Select(sector => new SelectMenuOptionBuilder(sector, sector)).ToList();
+
+            var sectorsSelectMenu = new SelectMenuBuilder()
+                .WithCustomId("uav_zone_select")
+                .WithPlaceholder("Choose a zone")
+                .WithMinValues(1)
+                .WithMaxValues(1)
+                .WithOptions(sectorOptions);
+
+            var button = new ButtonBuilder()
+                .WithLabel("Scan")
+                .WithStyle(ButtonStyle.Primary)
+                .WithCustomId("uav_scan_trigger");
+
+            var component = new ComponentBuilder()
+                .WithSelectMenu(sectorsSelectMenu, row: 0)
+                .WithButton(button, row: 1);
+
+            var embedBuilder = new EmbedBuilder()
+                .WithTitle(server.Uav.Name)
+                .WithDescription(server.Uav.Description)
+                .WithColor(Color.DarkPurple)
+                .WithFooter(GetAuthor())
+                .WithTimestamp(DateTimeOffset.UtcNow);
+
+            if (server.Uav.Price > 0)
+                embedBuilder.AddField(new EmbedFieldBuilder().WithName("Price").WithValue(server.Uav.Price).WithIsInline(true));
+
+            if (server.Uav.VipPrice > 0)
+                embedBuilder.AddField(new EmbedFieldBuilder().WithName("Vip Price").WithValue(server.Uav.VipPrice).WithIsInline(true));
+
+            if (server.Uav.ImageUrl != null)
+                embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{server.Uav.ImageUrl}");
+
+            _logger.LogDebug("UAV Button created form guild[{Guild}] channel[{Channel}]", server.Guild.DiscordId, channelId);
+            return await channel.SendMessageAsync(embed: embedBuilder.Build(), components: component.Build());
         }
 
         public async Task SendKillFeedEmbed(ScumServer server, Kill kill)

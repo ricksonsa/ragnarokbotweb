@@ -75,7 +75,7 @@ namespace RagnarokBotWeb.Domain.Services
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server == null) return;
 
             var squads = ListSquadsParser.Parse(input.Value);
@@ -149,6 +149,7 @@ namespace RagnarokBotWeb.Domain.Services
                 var diff = (now - bot.LastPinged!.Value).TotalMinutes;
                 if (diff >= 10)
                 {
+                    _cacheService.ClearConnectedPlayers(serverId);
                     _cacheService.GetConnectedBots(serverId).Remove(bot.Guid);
                 }
             }

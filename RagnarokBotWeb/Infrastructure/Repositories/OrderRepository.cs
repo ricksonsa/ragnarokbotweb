@@ -31,6 +31,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
+                .Include(order => order.ScumServer.Uav)
                 .Include(order => order.Player)
                 .Include(order => order.Pack)
                 .ThenInclude(pack => pack.PackItems)
@@ -45,26 +46,28 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public Task<List<Order>> FindWithPack(long packId)
         {
+            var now = DateTime.UtcNow;
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
                 .Include(order => order.Player)
                 .Include(order => order.Pack)
                 .ThenInclude(pack => pack!.PackItems)
                 .ThenInclude(packItems => packItems.Item)
-                .Where(order => order.Pack != null && order.Pack.Id == packId)
+                .Where(order => order.Pack != null && order.Pack.Id == packId && order.CreateDate >= now.AddHours(-24) && order.CreateDate <= now)
                 .OrderByDescending(order => order.CreateDate)
                 .ToListAsync();
         }
 
         public Task<List<Order>> FindWithWarzone(long warzoneId)
         {
+            var now = DateTime.UtcNow;
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
                 .Include(order => order.Player)
                 .Include(order => order.Warzone)
                     .ThenInclude(warzone => warzone!.Teleports)
                     .ThenInclude(teleport => teleport.Teleport)
-                .Where(order => order.Warzone != null && order.Warzone.Id == warzoneId)
+                .Where(order => order.Warzone != null && order.Warzone.Id == warzoneId && order.CreateDate >= now.AddHours(-24) && order.CreateDate <= now)
                 .OrderByDescending(order => order.CreateDate)
                 .ToListAsync();
         }
@@ -75,6 +78,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                .Include(order => order.Pack)
                .Include(order => order.Warzone)
                .Include(order => order.ScumServer)
+               .Include(order => order.ScumServer.Uav)
                .Include(order => order.Player)
                .OrderByDescending(order => order.Id);
 

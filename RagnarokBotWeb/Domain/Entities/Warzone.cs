@@ -5,7 +5,7 @@ namespace RagnarokBotWeb.Domain.Entities
     public class Warzone : BaseEntity
     {
         public string Name { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public string? DeliveryText { get; set; }
         public long Price { get; set; } = 0;
         public long VipPrice { get; set; } = 0;
@@ -55,6 +55,7 @@ namespace RagnarokBotWeb.Domain.Entities
             return new CreateEmbed
             {
                 Buttons = [new($"Buy {Name} Teleport", action)],
+                GuildId = ScumServer.Guild!.DiscordId,
                 DiscordId = ulong.Parse(DiscordChannelId!),
                 Text = Description,
                 ImageUrl = ImageUrl,

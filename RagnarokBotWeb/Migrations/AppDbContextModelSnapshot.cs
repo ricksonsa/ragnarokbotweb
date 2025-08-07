@@ -512,6 +512,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Uav")
+                        .HasColumnType("text");
+
                     b.Property<long?>("WarzoneId")
                         .HasColumnType("bigint");
 
@@ -549,7 +552,6 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("DiscordChannelId")
@@ -919,6 +921,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<string>("TimeZoneId")
                         .HasColumnType("text");
 
+                    b.Property<long?>("UavId")
+                        .HasColumnType("bigint");
+
                     b.Property<bool>("UseKillFeed")
                         .HasColumnType("boolean");
 
@@ -939,6 +944,9 @@ namespace RagnarokBotWeb.Migrations
                         .IsUnique();
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("UavId")
+                        .IsUnique();
 
                     b.ToTable("ScumServers");
                 });
@@ -1043,6 +1051,68 @@ namespace RagnarokBotWeb.Migrations
                     b.ToTable("Transactions");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Uav", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("DeliveryText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("DiscordId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<decimal?>("DiscordMessageId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsBlockPurchaseRaidTime")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVipOnly")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Price")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PurchaseCooldownSeconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("SendToUserDM")
+                        .HasColumnType("boolean");
+
+                    b.Property<long?>("StockPerPlayer")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("StockPerVipPlayer")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("VipPrice")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Uavs");
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.User", b =>
                 {
                     b.Property<long>("Id")
@@ -1137,7 +1207,6 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("DiscordChannelId")
@@ -1488,11 +1557,17 @@ namespace RagnarokBotWeb.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Uav", "Uav")
+                        .WithOne("ScumServer")
+                        .HasForeignKey("RagnarokBotWeb.Domain.Entities.ScumServer", "UavId");
+
                     b.Navigation("Ftp");
 
                     b.Navigation("Guild");
 
                     b.Navigation("Tenant");
+
+                    b.Navigation("Uav");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Silence", b =>
@@ -1636,6 +1711,11 @@ namespace RagnarokBotWeb.Migrations
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Tenant", b =>
                 {
                     b.Navigation("ScumServers");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Uav", b =>
+                {
+                    b.Navigation("ScumServer");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Warzone", b =>

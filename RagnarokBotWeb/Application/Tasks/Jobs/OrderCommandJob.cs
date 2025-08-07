@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -11,6 +12,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         private readonly ILogger<OrderCommandJob> _logger;
         private readonly ICacheService _cacheService;
         private readonly IOrderRepository _orderRepository;
+        private readonly IDiscordService _discordService;
+        private readonly IFileService _fileService;
         private readonly IBotService _botService;
 
         public OrderCommandJob(
@@ -18,12 +21,16 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             IScumServerRepository scumServerRepository,
             IBotService botService,
             IOrderRepository orderRepository,
-            ILogger<OrderCommandJob> logger) : base(scumServerRepository)
+            ILogger<OrderCommandJob> logger,
+            IDiscordService discordService,
+            IFileService fileService) : base(scumServerRepository)
         {
             _cacheService = cacheService;
             _botService = botService;
             _orderRepository = orderRepository;
             _logger = logger;
+            _discordService = discordService;
+            _fileService = fileService;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -40,7 +47,6 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             order.Status = EOrderStatus.Command;
             _orderRepository.Update(order);
             await _orderRepository.SaveAsync();
-
             var command = new BotCommand();
 
             if (order.OrderType == EOrderType.Pack)
@@ -54,7 +60,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
                 }
 
-                command.Say(order.ResolvedDeliveryText());
+                var deliveryText = order.ResolvedDeliveryText();
+                if (deliveryText is not null) command.Say(deliveryText);
+
                 command.Data = "order_" + order.Id.ToString();
             }
             else if (order.OrderType == EOrderType.Warzone)
@@ -63,8 +71,27 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
                 command.Teleport(order.Player.SteamId64, teleport.Teleport.Coordinates);
             }
+            else if (order.OrderType == EOrderType.UAV)
+            {
+                if (order.ScumServer?.Uav is null) return;
+
+                await new UavHandler(
+                    _discordService,
+                    _fileService,
+                    _cacheService,
+                    server).Handle(order.Player, order.Uav!);
+
+                var deliveryText = order.ResolvedDeliveryText();
+                if (deliveryText is not null) command.Say(deliveryText);
+
+                order.Status = EOrderStatus.Done;
+                _orderRepository.Update(order);
+                await _orderRepository.SaveAsync();
+            }
 
             if (command != null) _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
+
+
         }
     }
 }

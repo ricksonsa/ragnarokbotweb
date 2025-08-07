@@ -8,6 +8,10 @@ namespace RagnarokBotWeb.Domain.Entities
         public Warzone? Warzone { get; set; }
         public EOrderStatus Status { get; set; }
         public EOrderType OrderType { get; set; }
+        public Player? Player { get; set; }
+        public ScumServer ScumServer { get; set; }
+        public string? Uav { get; set; }
+
         public long ResolvedPrice
         {
             get
@@ -23,6 +27,10 @@ namespace RagnarokBotWeb.Domain.Entities
                     case EOrderType.Warzone:
                         price = Warzone!.Price;
                         vipPrice = Warzone!.VipPrice;
+                        break;
+                    case EOrderType.UAV:
+                        price = ScumServer.Uav!.Price;
+                        vipPrice = ScumServer.Uav!.VipPrice;
                         break;
                     default: break;
                 }
@@ -41,9 +49,6 @@ namespace RagnarokBotWeb.Domain.Entities
             }
         }
 
-        public Player? Player { get; set; }
-        public ScumServer ScumServer { get; set; }
-
         public Order()
         {
             Status = EOrderStatus.Created;
@@ -57,6 +62,15 @@ namespace RagnarokBotWeb.Domain.Entities
 
             if (Math.Round(remainingMinutes) > 0) return $"\nNext purchase will be available in {Math.Round(remainingMinutes)} minutes.";
             return $"\nNext purchase will be available in {Math.Round(remainingSeconds)} seconds.";
+        }
+
+        public string ResolveUavCooldownText()
+        {
+            if (ScumServer.Uav.PurchaseCooldownSeconds.HasValue && ScumServer.Uav.PurchaseCooldownSeconds.Value > 0)
+            {
+                return ResolvePurchaseCooldownText(ScumServer.Uav.PurchaseCooldownSeconds.Value);
+            }
+            return string.Empty;
         }
 
         public string ResolveWarzoneCooldownText()
@@ -86,19 +100,36 @@ namespace RagnarokBotWeb.Domain.Entities
                     return Player.IsVip() ? Warzone!.VipPrice : Warzone!.Price;
                 case EOrderType.Pack:
                     return Player.IsVip() ? Pack!.VipPrice : Pack!.Price;
+                case EOrderType.UAV:
+                    return Player.IsVip() ? ScumServer.Uav.VipPrice : ScumServer.Uav.Price;
                 default:
                     throw new Exception("Invalid order");
             }
         }
 
-        public string ResolvedDeliveryText()
+        public string? ResolvedDeliveryText()
         {
-            if (Pack == null) return null;
+            if (OrderType == EOrderType.Pack)
+            {
+                if (Pack == null || Pack.DeliveryText is null) return null;
 
-            return Pack.DeliveryText
-                .Replace("{playerName}", Player?.Name)
-                .Replace("{packageName}", Pack?.Name)
-                .Replace("{orderId}", Id.ToString());
+                return Pack.DeliveryText
+                    .Replace("{playerName}", Player?.Name)
+                    .Replace("{packageName}", Pack?.Name)
+                    .Replace("{orderId}", Id.ToString());
+            }
+            else if (OrderType == EOrderType.UAV)
+            {
+                if (Uav == null || ScumServer.Uav.DeliveryText is null) return null;
+
+                return ScumServer.Uav.DeliveryText
+                    .Replace("{sector}", Uav);
+            }
+            else
+            {
+                return null;
+            }
+
         }
     }
 }

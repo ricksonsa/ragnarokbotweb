@@ -9,15 +9,15 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Discord;
 
-public class DiscordCreateChannel(DiscordSocketClient client, IChannelTemplateService channelTemplateService)
+public class DiscordCreateChannel(DiscordSocketClient client, IChannelTemplateService channelTemplateService, IDiscordService discordService)
 {
-    public async Task<List<ChannelDto>> CreateAsync(ulong guildDiscordId)
+    public async Task<List<ChannelDto>> CreateAsync(ScumServer server)
     {
         var channels = new List<ChannelDto>();
 
-        var guild = client.GetGuild(guildDiscordId);
+        var guild = client.GetGuild(server.Guild!.DiscordId);
 
-        if (!guild.IsConnected) throw new AppNotInstalledException(guildDiscordId);
+        if (!guild.IsConnected) throw new AppNotInstalledException(server.Guild.DiscordId);
 
         var channelTemplates = await GetChannelTemplates();
         var categories = new Dictionary<string, RestCategoryChannel>();
@@ -31,8 +31,17 @@ public class DiscordCreateChannel(DiscordSocketClient client, IChannelTemplateSe
             if (channelTemplate.Buttons is not null)
                 foreach (var buttonTemplate in channelTemplate.Buttons)
                 {
-                    var message = await CreateButtonAsync(channel, buttonTemplate);
-                    channelDto.Buttons.Add(new ButtonDto(buttonTemplate.Command, buttonTemplate.Name, message.Id));
+                    if (buttonTemplate.Command == "uav_scan_trigger")
+                    {
+                        server.Uav ??= new();
+                        server.Uav.DiscordMessageId = (await discordService.CreateUavButtons(server, channel.Id))?.Id;
+                    }
+                    else
+                    {
+                        var message = await CreateButtonAsync(channel, buttonTemplate);
+                        channelDto.Buttons.Add(new ButtonDto(buttonTemplate.Command, buttonTemplate.Name, message.Id));
+                    }
+
                 }
 
             channels.Add(channelDto);

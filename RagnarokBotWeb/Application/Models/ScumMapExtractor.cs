@@ -96,7 +96,7 @@ public class ScumMapExtractor
         }
 
         // Adiciona informações específicas do setor
-        AddSectorContextInfo(finalMap, centerCoordinate, points, sectorSizeInPixels);
+        //AddSectorContextInfo(finalMap, centerCoordinate, points, sectorSizeInPixels);
 
         // Salva a imagem resultante
         await finalMap.SaveAsync(outputStream, new JpegEncoder());
@@ -124,7 +124,6 @@ public class ScumMapExtractor
 
         // Filtra pontos que estão dentro ou próximos do setor
         var relevantPoints = FilterPointsNearSector(points, sectorCenter);
-
 
         var memoryStream = new MemoryStream();
         await ExtractSectorSizeArea(sectorCenter, relevantPoints, memoryStream, showGrid, true);
@@ -645,41 +644,41 @@ public class ScumMapExtractor
     private void DrawPointsOnOriginalMap(Image<Rgba32> originalMap, List<ScumCoordinate> points)
     {
         // Resolve sobreposições antes de desenhar
-        var adjustedPoints = ResolveOverlappingPoints(points);
+        //var adjustedPoints = ResolveOverlappingPoints(points);
 
         originalMap.Mutate(ctx =>
         {
             // Desenha pontos
-            foreach (var pointData in adjustedPoints)
+            foreach (var pointData in points)
             {
-                var pointPixel = pointData.PixelPosition;
+                var pointPixel = GameCoordinateToPixel(pointData);
 
-                ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 4.5f));
-                ctx.Fill(pointData.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 4f));
+                ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 10f));
+                ctx.Fill(pointData.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 8f));
 
-                // Linha conectando posição original com ajustada (se moveu)
-                var originalPointPixel = GameCoordinateToPixel(pointData.OriginalCoordinate);
-                if (Math.Abs(pointPixel.X - originalPointPixel.X) > 2 || Math.Abs(pointPixel.Y - originalPointPixel.Y) > 2)
-                {
-                    ctx.DrawLine(Color.FromRgba(0, 0, 255, 150), 1f,
-                        new PointF(originalPointPixel.X, originalPointPixel.Y),
-                        new PointF(pointPixel.X, pointPixel.Y));
-                }
+                //// Linha conectando posição original com ajustada (se moveu)
+                //var originalPointPixel = GameCoordinateToPixel(pointData.OriginalCoordinate);
+                //if (Math.Abs(pointPixel.X - originalPointPixel.X) > 2 || Math.Abs(pointPixel.Y - originalPointPixel.Y) > 2)
+                //{
+                //    ctx.DrawLine(Color.FromRgba(0, 0, 255, 150), 1f,
+                //        new PointF(originalPointPixel.X, originalPointPixel.Y),
+                //        new PointF(pointPixel.X, pointPixel.Y));
+                //}
 
-                if (!string.IsNullOrEmpty(pointData.Label))
-                {
-                    // Label com setor
-                    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
-                    var sectorText = pointData.OriginalCoordinate.GetSectorReference();
-                    if (!string.IsNullOrEmpty(sectorText))
-                    {
-                        // Fundo semi-transparente para o texto
-                        var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
-                        var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
-                        ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
-                        ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
-                    }
-                }
+                //if (!string.IsNullOrEmpty(pointData.Label))
+                //{
+                //    // Label com setor
+                //    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
+                //    var sectorText = pointData.OriginalCoordinate.GetSectorReference();
+                //    if (!string.IsNullOrEmpty(sectorText))
+                //    {
+                //        // Fundo semi-transparente para o texto
+                //        var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
+                //        var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
+                //        ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
+                //        ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
+                //    }
+                //}
 
             }
         });

@@ -102,6 +102,12 @@ namespace RagnarokBotWeb.Domain.Services
                  .Build();
             await scheduler.ScheduleJob(job, TenSecondsTrigger());
 
+            job = JobBuilder.Create<UavClearJob>()
+                .WithIdentity($"{nameof(UavClearJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, OneMinTrigger());
+
             job = JobBuilder.Create<WarzoneBootstartJob>()
                 .WithIdentity($"{nameof(WarzoneBootstartJob)}({server.Id})", $"WarzoneJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)

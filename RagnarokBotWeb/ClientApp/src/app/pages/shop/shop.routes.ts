@@ -10,6 +10,7 @@ import { ItemResolver } from './items/resolvers/item.resolver';
 import { AdminGuard } from '../../core/guards/admin.guard';
 import { WelcomePackComponent } from './welcome-pack/welcome-pack.component';
 import { WelcomePackResolver } from './packages/resolvers/welcome-pack.resolver';
+import { UavComponent } from './uav/uav.component';
 
 export const SHOP_ROUTES: Routes = [
   { path: 'bank', component: BankComponent },
@@ -18,5 +19,6 @@ export const SHOP_ROUTES: Routes = [
   { path: 'packages', component: PackagesComponent, pathMatch: 'full' },
   { path: 'packages/:id', component: PackageComponent, resolve: { package: PackageResolver } },
   { path: 'orders', component: OrdersComponent },
+  { path: 'uav', component: UavComponent },
   { path: 'welcome-pack', component: WelcomePackComponent, resolve: { package: WelcomePackResolver } },
 ];

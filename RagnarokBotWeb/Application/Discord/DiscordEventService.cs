@@ -15,6 +15,8 @@ public class DiscordEventService(
 )
     : BackgroundService
 {
+    public static readonly Dictionary<(ulong, ulong), string> UserSelections = [];
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await DiscordSocketClientUtils.AwaitDiscordSocketClientIsReady(stoppingToken);
@@ -23,6 +25,7 @@ public class DiscordEventService(
         client.InteractionCreated += InteractionCreatedAsync;
         client.JoinedGuild += OnJoinedGuildAsync;
         client.ButtonExecuted += OnButtonExecuted;
+        client.SelectMenuExecuted += OnButtonExecuted;
 
         try
         {

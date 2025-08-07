@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { WEB_API } from '../api.const';
 import { catchError, Observable, of, Subject, switchMap, tap, throwError } from 'rxjs';
 import { AuthResponse } from '../models/auth-response';
 import { AccountDto } from '../models/account.dto';
 import { decodeJwt } from "jose";
+import { environment } from '../../environments/environment';
 
 
 @Injectable({
@@ -34,7 +34,7 @@ export class AuthenticationService {
   authenticate(loginForm: any) {
     localStorage.removeItem('id_token');
     localStorage.removeItem('access_token');
-    return this.http.post<AuthResponse>(`${WEB_API.baseUrl}/api/authenticate`, loginForm)
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/api/authenticate`, loginForm)
       .pipe(tap(response => {
         localStorage.setItem('id_token', response.idToken!);
         localStorage.setItem('scum_servers', JSON.stringify(response.scumServers));
@@ -42,7 +42,7 @@ export class AuthenticationService {
   }
 
   login(serverId: number) {
-    return this.http.get<AuthResponse>(`${WEB_API.baseUrl}/api/login?serverId=${serverId}`)
+    return this.http.get<AuthResponse>(`${environment.apiUrl}/api/login?serverId=${serverId}`)
       .pipe(
         tap(response => {
           localStorage.setItem('access_token', response.accessToken!);
@@ -60,7 +60,7 @@ export class AuthenticationService {
   account(force = false) {
     const token = localStorage.getItem('access_token');
     if (force || !token || this.isTokenExpired(token)) {
-      return this.http.get<AccountDto>(`${WEB_API.baseUrl}/api/account`)
+      return this.http.get<AccountDto>(`${environment.apiUrl}/api/account`)
         .pipe(
           catchError(err => {
             this.logout();
@@ -78,7 +78,7 @@ export class AuthenticationService {
   }
 
   register(registerForm: any) {
-    return this.http.post(`${WEB_API.baseUrl}/api/register`, registerForm);
+    return this.http.post(`${environment.apiUrl}/api/register`, registerForm);
   }
 
   isAuthenticated() {

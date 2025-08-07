@@ -23,19 +23,21 @@
           <th>Player Steam Id</th>
           <th>Player Discord Name</th>
           <th>Status</th>
+          <th>Date</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let data of basicTable.data">
           <td>{{data.id}}</td>
-          <td>{{data.pack?.name ?? data.warzone.name}}</td>
-          <td>{{data.pack?.description ?? data.warzone.description}}</td>
+          <td>{{data.pack?.name ?? data.warzone?.name ?? data.scumServer.uav?.name ?? 'unknown'}}</td>
+          <td>{{data.pack?.description ?? data.warzone?.description ?? data.scumServer.uav?.description ?? 'unknown'}}</td>
           <td>{{resolveOrderType(data.orderType)}}</td>
           <td>{{data.player.name}}</td>
           <td>{{data.player.steamId64}}</td>
           <td>{{data.player.discordName}}</td>
-          <td>{{data.status}}</td>
+          <td>{{resolveOrderStatus(data.status)}}</td>
+          <td>{{data.createDate | date: 'MM/dd/yyyy HH:mm'}}</td>
         </tr>
       </tbody>
     </nz-table>

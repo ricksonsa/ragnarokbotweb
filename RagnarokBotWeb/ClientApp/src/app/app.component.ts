@@ -81,10 +81,6 @@ export class AppComponent implements OnInit {
     private renderer: Renderer2,
     fb: FormBuilder
   ) {
-    this.theme = localStorage.getItem("theme");
-    themeService.setTheme(this.theme || 'light', renderer);
-    this.darkMode = this.theme != 'light';
-
     this.loginForm = fb.group({
       email: [null, Validators.required],
       password: [null, Validators.required]
@@ -121,6 +117,10 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.theme = localStorage.getItem("theme");
+    this.themeService.setTheme(this.theme || 'dark', this.renderer);
+    this.darkMode = this.theme != 'dark';
+
     this.themeService.onThemeChange().subscribe({
       next: (theme) => {
         this.setTheme(theme);

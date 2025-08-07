@@ -79,6 +79,7 @@ namespace RagnarokBotWeb.Domain.Services
             var embed = new CreateEmbed
             {
                 Buttons = [new($"Buy {warzone.Name} Teleport", action)],
+                GuildId = warzone.ScumServer!.Guild!.DiscordId,
                 DiscordId = ulong.Parse(warzone.DiscordChannelId!),
                 Fields = GetFields(warzone),
                 Color = warzone.IsVipOnly ? Color.Gold : Color.DarkPurple,

@@ -11,6 +11,8 @@ namespace RagnarokBotWeb.Domain.Entities
         [ForeignKey("GuildId")]
         public Guild? Guild { get; set; }
         public Ftp? Ftp { get; set; }
+        public long? UavId { get; set; }
+        public Uav Uav { get; set; }
         public string? RestartTimes { get; private set; }
         public string? TimeZoneId { get; set; }
 

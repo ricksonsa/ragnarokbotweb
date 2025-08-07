@@ -4,12 +4,13 @@ namespace RagnarokBotWeb.Application.Models
 {
     public class CreateEmbed
     {
-        public ulong DiscordId { get; set; }
-        public ulong GuildId { get; set; }
+        public required ulong DiscordId { get; set; }
+        public required ulong GuildId { get; set; }
         public string Title { get; set; }
         public string Text { get; set; }
         public string ImageUrl { get; set; }
         public string FooterText { get; set; }
+        public bool TimeStamp { get; set; }
         public Color Color { get; set; } = Color.DarkPurple;
 
         public List<CreateEmbedButton> Buttons { get; set; }

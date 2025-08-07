@@ -13,9 +13,10 @@ public class MessageEventHandlerFactory : IMessageEventHandlerFactory
 
     private readonly Dictionary<string, Func<IServiceProvider, IMessageEventHandler>> _handlers = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "!dailypack", (serviceProvider) => new DailyPackEvent() },
         { "buy_package", (serviceProvider) => new BuyPackageEvent(serviceProvider) },
-        { "buy_warzone", (serviceProvider) => new BuyWarzoneEvent(serviceProvider) }
+        { "buy_warzone", (serviceProvider) => new BuyWarzoneEvent(serviceProvider) },
+        { "uav_scan_trigger", (serviceProvider) => new BuyUavTriggerEvent(serviceProvider) },
+        { "uav_zone_select", (serviceProvider) => new UavSelectEvent(serviceProvider) }
     };
 
     public IMessageEventHandler? GetHandler(SocketMessage message)
@@ -25,6 +26,7 @@ public class MessageEventHandlerFactory : IMessageEventHandlerFactory
 
     public IMessageEventHandler? GetHandler(SocketMessageComponent component)
     {
-        return _handlers.TryGetValue(component.Data.CustomId.Split(":")[0], out var factory) ? factory(_serviceProvider) : null;
+        var message = component.Data.CustomId.Contains(':') ? component.Data.CustomId.Split(":")[0] : component.Data.CustomId;
+        return _handlers.TryGetValue(message, out var factory) ? factory(_serviceProvider) : null;
     }
 }

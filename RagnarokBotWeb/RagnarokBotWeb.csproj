@@ -37,6 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Application\Tasks\Jobs\Discord\" />
     <Folder Include="cdn-storage\eliminations\" />
     <Folder Include="cdn-storage\lockpicks\" />
     <Folder Include="Logs\" />

@@ -4,7 +4,7 @@
     {
         public long? Id { get; set; }
         public string Name { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public long? Price { get; set; } = 0;
         public long? VipPrice { get; set; } = 0;
         public List<PackItemDto>? PackItems { get; set; }

@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Entities;
@@ -99,7 +99,6 @@ namespace RagnarokBotWeb.Domain.Services
             var player = await _playerRepository.FindOneWithServerAsync(u => u.SteamId64 == identifier || u.DiscordId.ToString() == identifier);
             if (player is null) throw new NotFoundException("Player not found");
 
-
             var order = new Order
             {
                 Pack = pack,
@@ -114,8 +113,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
-
-            await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, price);
+            await new PlayerCoinManager(_unitOfWork).RemoveCoinsByPlayerId(player.Id, price);
             return order;
         }
 
@@ -125,7 +123,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (pack is null) throw new DomainException("Pack not found");
 
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
-            if (player is null) throw new NotFoundException("You are not registered, please register using the Welcome Pack.");
+            if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
 
 
             var order = new Order
@@ -142,8 +140,31 @@ namespace RagnarokBotWeb.Domain.Services
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
+            await new PlayerCoinManager(_unitOfWork).RemoveCoinsByPlayerId(player.Id, price);
 
-            await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, price);
+            return order;
+        }
+
+        public async Task<Order?> PlaceUavOrderFromDiscord(ScumServer server, ulong userDiscordId, string sector)
+        {
+            var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Id == server.Id && u.DiscordId == userDiscordId);
+            if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
+
+            var order = new Order
+            {
+                Uav = sector,
+                Player = player,
+                OrderType = EOrderType.UAV,
+                ScumServer = player.ScumServer
+            };
+
+            var processor = new OrderPurchaseProcessor(_orderRepository, _cacheService);
+            await processor.ValidateAsync(order);
+            var price = order.ResolvedPrice;
+
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+            await new PlayerCoinManager(_unitOfWork).RemoveCoinsByPlayerId(player.Id, price);
 
             return order;
         }
@@ -154,7 +175,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (warzone is null) throw new DomainException("Warzone not found");
 
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
-            if (player is null) throw new NotFoundException("You are not registered, please register using the Welcome Pack.");
+            if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
 
             var order = new Order
             {
@@ -170,8 +191,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
-
-            await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, price);
+            await new PlayerCoinManager(_unitOfWork).RemoveCoinsByPlayerId(player.Id, price);
 
             return order;
         }

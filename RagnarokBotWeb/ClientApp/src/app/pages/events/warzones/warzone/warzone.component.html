@@ -27,7 +27,7 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="description">Description*</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="description">Description</nz-form-label>
         <nz-form-control [nzSpan]="24" nzErrorTip="Please input the package description!">
           <textarea formControlName="description" nz-input name="description" type="text" id="description"></textarea>
         </nz-form-control>
@@ -46,7 +46,7 @@
         <nz-form-label [nzSpan]="0" nzFor="warzoneThumbnail">Warzone Thumbnail</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="uploadBtn">
           <img *ngIf="avatarUrl" nz-image width="200px" height="200px"
-            [nzSrc]="!isUploaded ? avatarUrl : 'http://localhost:8080/' + avatarUrl" alt="" />
+            [nzSrc]="!isUploaded ? avatarUrl : (apiUrl + '/' + avatarUrl)" alt="" />
           <ng-template #uploadBtn>
             <nz-upload nzAction="https://www.mocky.io/v2/5cc8019d300000980a055e76"
               [nzBeforeUpload]="handleBeforeUpload">

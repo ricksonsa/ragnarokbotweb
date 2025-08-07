@@ -9,6 +9,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<Order?> PlaceDeliveryOrder(string identifier, long packId);
         Task<Order?> PlaceDeliveryOrderFromDiscord(ulong guildId, ulong discordId, long packId);
         Task<Order?> PlaceWarzoneOrderFromDiscord(ulong guildId, ulong discordId, long warzoneId);
+        Task<Order?> PlaceUavOrderFromDiscord(ScumServer server, ulong userDiscordId, string sector);
         Task<OrderDto?> PlaceWelcomePackOrder(long playerId);
         Task<Order?> PlaceWelcomePackOrder(Player player);
         Task<IEnumerable<Order>> GetCreatedOrders();

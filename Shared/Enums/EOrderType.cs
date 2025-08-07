@@ -3,6 +3,7 @@
     public enum EOrderType
     {
         Pack,
-        Warzone
+        Warzone,
+        UAV
     }
 }

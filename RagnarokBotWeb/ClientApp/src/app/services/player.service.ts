@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { PlayerDto } from '../models/player.dto';
-import { WEB_API } from '../api.const';
+import { environment } from '../../environments/environment';
 import { Page } from '../core/pagination/pager';
 
 @Injectable({
@@ -12,7 +12,7 @@ export class PlayerService {
   constructor(private readonly http: HttpClient) { }
 
   getPlayers(pageSize: number, pageNumber: number, filter: string = null) {
-    var url = `${WEB_API.baseUrl}/api/players?pageSize=${pageSize}&pageNumber=${pageNumber}`;
+    var url = `${environment.apiUrl}/api/players?pageSize=${pageSize}&pageNumber=${pageNumber}`;
     if (filter) {
       url += `&filter=${filter}`;
     }
@@ -20,47 +20,47 @@ export class PlayerService {
   }
 
   getPlayerById(id: number) {
-    return this.http.get<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}`);
+    return this.http.get<PlayerDto>(`${environment.apiUrl}/api/players/${id}`);
   }
 
   removeBan(id: number) {
-    return this.http.delete<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/ban`);
+    return this.http.delete<PlayerDto>(`${environment.apiUrl}/api/players/${id}/ban`);
   }
 
   removeVip(id: number) {
-    return this.http.delete<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/vip`);
+    return this.http.delete<PlayerDto>(`${environment.apiUrl}/api/players/${id}/vip`);
   }
 
   removeSilence(id: number) {
-    return this.http.delete<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/silence`);
+    return this.http.delete<PlayerDto>(`${environment.apiUrl}/api/players/${id}/silence`);
   }
 
   silence(id: any, dto: any) {
-    return this.http.post<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/silence`, dto);
+    return this.http.post<PlayerDto>(`${environment.apiUrl}/api/players/${id}/silence`, dto);
   }
 
   ban(id: any, dto: any) {
-    return this.http.post<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/ban`, dto);
+    return this.http.post<PlayerDto>(`${environment.apiUrl}/api/players/${id}/ban`, dto);
   }
 
   vip(id: any, dto: any) {
-    return this.http.post<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/vip`, dto);
+    return this.http.post<PlayerDto>(`${environment.apiUrl}/api/players/${id}/vip`, dto);
   }
 
   updateCoins(id: number, value: number) {
-    return this.http.patch<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/coins`, { amount: value });
+    return this.http.patch<PlayerDto>(`${environment.apiUrl}/api/players/${id}/coins`, { amount: value });
   }
 
   updateFame(id: number, value: number) {
-    return this.http.patch<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/fame`, { amount: value });
+    return this.http.patch<PlayerDto>(`${environment.apiUrl}/api/players/${id}/fame`, { amount: value });
   }
 
   updateMoney(id: number, value: number) {
-    return this.http.patch<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/money`, { amount: value });
+    return this.http.patch<PlayerDto>(`${environment.apiUrl}/api/players/${id}/money`, { amount: value });
   }
 
   updateGold(id: number, value: number) {
-    return this.http.patch<PlayerDto>(`${WEB_API.baseUrl}/api/players/${id}/gold`, { amount: value });
+    return this.http.patch<PlayerDto>(`${environment.apiUrl}/api/players/${id}/gold`, { amount: value });
   }
 
 }

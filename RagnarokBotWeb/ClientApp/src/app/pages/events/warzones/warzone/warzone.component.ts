@@ -33,6 +33,7 @@ import { WarzoneItemDto } from '../../../../models/warzone-item.dto';
 import { WarzoneTeleportDto } from '../../../../models/warzone-teleport';
 import { WarzoneSpawnDto } from '../../../../models/warzone-spawn.dto';
 import { WarzoneService } from '../../../../services/warzone.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-warzone',
@@ -83,6 +84,7 @@ export class WarzoneComponent implements OnInit {
   uploading = false;
   isUploaded = false;
   loading = false;
+  apiUrl = environment.apiUrl;
 
   get searchControl() {
     return this.packageItemForm.controls['searchControl'];

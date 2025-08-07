@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { ProfileComponent } from './pages/profile/profile.component';
 
 export const routes: Routes = [
-  // { path: '', pathMatch: 'full' },
+  { path: '', pathMatch: 'full', redirectTo: 'dashboard/home' },
   { path: 'profile', component: ProfileComponent },
   { path: 'dashboard', loadChildren: () => import('./pages/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES) },
   { path: 'settings', loadChildren: () => import('./pages/settings/settings.routes').then(m => m.SETTINGS_ROUTES) },

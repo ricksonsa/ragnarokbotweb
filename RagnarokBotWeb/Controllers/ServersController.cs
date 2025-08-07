@@ -101,6 +101,14 @@ namespace RagnarokBotWeb.Controllers
             return Ok(server);
         }
 
+        [HttpPut("uav")]
+        public async Task<IActionResult> UpdateServerUav(UavDto dto)
+        {
+            _logger.LogDebug("Put request to update server uav");
+            var uav = await _serverService.UpdateUav(dto);
+            return Ok(uav);
+        }
+
         [HttpPut("kill-feed")]
         public async Task<IActionResult> UpdateKillFeed(UpdateKillFeedDto updateKillFeed)
         {

@@ -11,5 +11,6 @@ namespace RagnarokBotWeb.Domain.Services.Dto
         public EOrderStatus Status { get; set; }
         public PlayerDto? Player { get; set; }
         public ScumServerDto ScumServer { get; set; }
+        public DateTime CreateDate { get; set; }
     }
 }

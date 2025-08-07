@@ -1,0 +1,31 @@
+﻿using Discord.WebSocket;
+using RagnarokBotWeb.Application.Discord.Handlers;
+using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+
+namespace RagnarokBotWeb.Application.Discord.Events.Messages
+{
+    public class UavSelectEvent : IMessageEventHandler
+    {
+        private readonly IServiceProvider _serviceProvider;
+
+        public UavSelectEvent(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
+        public Task HandleAsync(SocketMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task HandleAsync(SocketMessageComponent component)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var scumRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
+            var server = await scumRepository.FindByGuildId(component.GuildId!.Value);
+            var selected = component.Data.Values.First();
+            DiscordEventService.UserSelections[(component.User.Id, component.GuildId.Value)] = selected;
+            await component.RespondAsync($"Zone selected, please confirm UAV Scan for sector {selected}.", ephemeral: true);
+        }
+    }
+}

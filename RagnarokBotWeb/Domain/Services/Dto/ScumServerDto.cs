@@ -8,6 +8,7 @@
         public FtpDto Ftp { get; set; }
         public List<string> RestartTimes { get; set; }
         public DiscordDto? Discord { get; set; }
+        public UavDto Uav { get; set; }
 
         #region Kill Feed
         public bool UseKillFeed { get; set; } = true;

@@ -85,10 +85,20 @@ export class OrdersComponent implements OnInit {
       ); // Hide loading indicator
   }
 
-   resolveOrderType(type: number) {
-    switch(type) {
+  resolveOrderType(type: number) {
+    switch (type) {
       case 0: return 'Shop Pack';
       case 1: return 'Warzone Teleport';
+      case 2: return 'UAV';
+      default: return type.toString();
+    }
+  }
+
+  resolveOrderStatus(type: number) {
+    switch (type) {
+      case 0: return 'Queued';
+      case 1: return 'Processing';
+      case 2: return 'Completed';
       default: return type.toString();
     }
   }

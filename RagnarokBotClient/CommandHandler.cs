@@ -80,7 +80,6 @@ namespace RagnarokBotClient
                 tasks.Add(() => _remote.PatchAsync($"api/bots/deliveries/{command.Data.Split("_")[1]}/confirm"));
             }
 
-
             return tasks;
         }
 

@@ -117,12 +117,6 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 _cacheService.ClearConnectedPlayers(serverId.Value);
             }
-
-            serverId = ServerId();
-
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server");
-
-            _cacheService.ClearConnectedPlayers(serverId.Value);
         }
 
         public async Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name)

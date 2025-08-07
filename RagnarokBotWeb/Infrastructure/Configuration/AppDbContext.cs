@@ -37,6 +37,7 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<WarzoneSpawn> WarzoneSpawns { get; set; }
         public DbSet<WarzoneTeleport> WarzoneTeleports { get; set; }
         public DbSet<DiscordRole> DiscordRoles { get; set; }
+        public DbSet<Uav> Uavs { get; set; }
 
         public AppDbContext()
         {
@@ -71,6 +72,11 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
                     }
                 }
             }
+
+            modelBuilder.Entity<Uav>()
+            .HasOne(u => u.ScumServer)
+            .WithOne(s => s.Uav)
+            .HasForeignKey<ScumServer>(s => s.UavId);
 
             modelBuilder.Entity<PackItem>()
             .HasOne(wi => wi.Item)

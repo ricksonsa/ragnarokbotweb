@@ -1,5 +1,6 @@
 import { DiscordDto } from "./discord.dto";
 import { Ftp } from "./ftp";
+import { UavDto } from "./uav.dto";
 
 export class ScumServer {
     id: number = 0;
@@ -19,6 +20,7 @@ export class ScumServer {
     showKillOnMap: boolean;
     showKillCoordinates: boolean;
     killAnnounceText: string;
+    uav?: UavDto;
 }
 
 export class ScumServerResponse {

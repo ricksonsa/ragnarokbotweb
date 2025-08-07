@@ -15,6 +15,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return _appDbContext.ScumServers
                 .Include(server => server.Guild)
                 .Include(server => server.Tenant)
+                .Include(server => server.Uav)
                 .Include(server => server.Ftp)
                 .FirstOrDefaultAsync(server => server.Id == id);
         }
@@ -24,6 +25,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return _appDbContext.ScumServers
                 .Include(server => server.Guild)
                 .Include(server => server.Tenant)
+                .Include(server => server.Uav)
                 .Include(server => server.Ftp)
                 .Where(server => server.Tenant.Id == id && server.Tenant.Enabled)
                 .ToListAsync();
@@ -41,6 +43,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public override Task CreateOrUpdateAsync(ScumServer entity)
         {
             _appDbContext.Tenants.Attach(entity.Tenant);
+            if (entity.Uav != null && !entity.Uav.IsTransitory()) _appDbContext.Uavs.Attach(entity.Uav);
             return base.CreateOrUpdateAsync(entity);
         }
 
@@ -60,6 +63,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .AsNoTracking()
                 .Include(server => server.Guild)
                 .Include(server => server.Tenant)
+                .Include(server => server.Uav)
                 .Include(server => server.Ftp)
                 .FirstOrDefaultAsync(server => server.Id == id);
         }
@@ -69,6 +73,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return _appDbContext.ScumServers
               .Include(server => server.Guild)
               .Include(server => server.Tenant)
+                .Include(server => server.Uav)
               .Include(server => server.Ftp)
               .FirstOrDefaultAsync(server => server.Id == id && server.Tenant.Enabled);
         }
@@ -86,6 +91,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return _appDbContext.ScumServers
             .Include(server => server.Guild)
             .Include(server => server.Tenant)
+            .Include(server => server.Uav)
             .Include(server => server.Ftp)
             .FirstOrDefaultAsync(server => server.Guild != null && server.Guild.DiscordId == value && server.Tenant.Enabled);
         }

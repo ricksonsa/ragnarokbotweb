@@ -84,6 +84,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 Buttons = [new($"Buy {pack.Name}", action)],
                 DiscordId = ulong.Parse(pack.DiscordChannelId!),
+                GuildId = pack.ScumServer.Guild!.DiscordId,
                 Text = pack.Description,
                 Fields = GetFields(pack),
                 Color = pack.IsVipOnly ? Color.Gold : Color.DarkPurple,

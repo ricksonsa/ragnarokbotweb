@@ -33,6 +33,8 @@ namespace RagnarokBotWeb.Application.Mapping
             CreateMap<Item, ItemDto>();
             CreateMap<Order, OrderDto>();
 
+            CreateMap<Uav, UavDto>().ReverseMap();
+
             CreateMap<PackItem, PackItemDto>()
              .ForPath((dto) => dto.PackId, opt => opt.MapFrom(pack => pack.Pack.Id))
              .ForPath((dto) => dto.ItemName, opt => opt.MapFrom(pack => pack.Item.Name))

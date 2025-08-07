@@ -32,8 +32,6 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     return Task.CompletedTask;
                 }
 
-                _cacheService.ClearConnectedPlayers(serverId.Value);
-
                 if (!_botService.IsBotOnline(serverId.Value)) return Task.CompletedTask;
 
                 if (!_cacheService.GetCommandQueue(serverId.Value).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))

@@ -11,7 +11,6 @@
         {
             Guid = guid;
             LastInteracted = DateTime.UtcNow;
-            LastPinged = DateTime.UtcNow;
         }
 
     }

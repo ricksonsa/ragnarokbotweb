@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Discord;
 using Discord.WebSocket;
+using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -22,10 +24,11 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IMapper _mapper;
         private readonly DiscordSocketClient _discordClient;
         private readonly IDiscordService _discordService;
+        private readonly StartupDiscordTemplate _startupDiscordTemplate;
         private readonly IChannelTemplateRepository _channelTemplateRepository;
         private readonly IChannelRepository _channelRepository;
         private readonly ICacheService _cacheService;
-
+        private readonly IFileService _fileService;
 
         public ServerService(
             IHttpContextAccessor httpContext,
@@ -41,7 +44,9 @@ namespace RagnarokBotWeb.Domain.Services
             IDiscordService discordService,
             IChannelTemplateRepository channelTemplateRepository,
             IChannelRepository channelRepository,
-            ICacheService cacheService) : base(httpContext)
+            ICacheService cacheService,
+            StartupDiscordTemplate startupDiscordTemplate,
+            IFileService fileService) : base(httpContext)
         {
             _logger = logger;
             _scumServerRepository = scumServerRepository;
@@ -56,6 +61,8 @@ namespace RagnarokBotWeb.Domain.Services
             _channelTemplateRepository = channelTemplateRepository;
             _channelRepository = channelRepository;
             _cacheService = cacheService;
+            _startupDiscordTemplate = startupDiscordTemplate;
+            _fileService = fileService;
         }
 
         public async Task<ScumServerDto> ChangeFtp(FtpDto ftpDto)
@@ -69,7 +76,7 @@ namespace RagnarokBotWeb.Domain.Services
             var tenant = await _tenantRepository.FindByIdAsync(tenantId.Value);
             if (tenant is null) throw new DomainException("Tenant not found");
 
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new DomainException("ScumServer not found");
 
             string rootPath;
@@ -135,7 +142,7 @@ namespace RagnarokBotWeb.Domain.Services
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) return new PlayerCountDto();
 
             return new PlayerCountDto
@@ -180,7 +187,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 Enabled = true, // TODO: Verificar se pagamento está em dia
                 DiscordId = guildDto.GuildId,
-                RunTemplate = true,
+                RunTemplate = false,
             };
 
             await _scumServerRepository.CreateOrUpdateAsync(server);
@@ -198,7 +205,7 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<ScumServer> GetServer()
         {
             var serverId = ServerId()!;
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
 
             if (!server.Tenant.Enabled) throw new DomainException("Server tenant is not avaiable");
@@ -209,7 +216,7 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var serverId = ServerId()!;
 
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
 
             if (settings.Token is null && (server.Guild is null || !server.Guild.Confirmed)) throw new DomainException("Invalid discord confirmation token");
@@ -259,7 +266,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             guildDto.Channels = channels
                 .Where(channel => channel.ChannelType == Discord.ChannelType.Text)
-                .Select(channel => new ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name })
+                .Select(channel => new Dto.ChannelDto { DiscordId = channel.Id.ToString(), Name = channel.Name })
                 .Reverse()
                 .ToList();
 
@@ -285,84 +292,22 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var serverId = ServerId()!;
 
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
+            if (server.Guild is null) throw new NotFoundException("Server does not have a discord set");
 
-            return _mapper.Map<GuildDto>(await _discordService.CreateChannelTemplates(serverId.Value));
-        }
+            await _startupDiscordTemplate.Run(server);
+            server.Guild.RunTemplate = true;
 
-        public async Task<ScumServerDto> SaveServerDiscordChannels(List<SaveChannelDto> saveChannels)
-        {
-            var serverId = ServerId()!;
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
-            if (server is null) throw new NotFoundException("Server not found");
-
-            if (server.Guild is null) throw new NotFoundException("Discord not configured");
-
-            foreach (var saveChannel in saveChannels)
-            {
-                ulong? discordId = null;
-                if (ulong.TryParse(saveChannel.Value, out ulong result))
-                    discordId = result;
-
-                var channel = await _channelRepository.FindOneByServerIdAndChatType(serverId.Value, saveChannel.Key) ?? new();
-
-                if (!discordId.HasValue)
-                {
-                    if (!channel.IsTransitory())
-                    {
-                        if (channel.Buttons?.Count > 0 && channel.DiscordId != discordId)
-                            foreach (var button in channel.Buttons)
-                                await _discordService.RemoveMessage(channel.DiscordId, button.MessageId);
-
-                        _channelRepository.Delete(channel);
-                        await _channelRepository.SaveAsync();
-                    }
-                    continue;
-                }
-
-                var channelTemplateValue = ChannelTemplateValue.FromValue(saveChannel.Key);
-                if (channelTemplateValue is null)
-                {
-                    _logger.LogError("Invalid template channelType[{Key}]", saveChannel.Key);
-                    continue;
-                }
-
-                channel.Guild = server.Guild!;
-                channel.ChannelType = channelTemplateValue.ToString();
-                channel.DiscordId = discordId!.Value;
-
-                var channelTemplate = await _channelTemplateRepository.FindOneAsync(ct => ct.ChannelType == channel.ChannelType);
-                if (channelTemplate is null)
-                {
-                    _logger.LogError("Channel template not found with channelType[{Type}]", channel.ChannelType);
-                    continue;
-                }
-
-                if (channelTemplate.Buttons is not null)
-                    foreach (var buttonTemplate in channelTemplate.Buttons)
-                    {
-                        var message = await _discordService.CreateButtonAsync(channel.DiscordId, buttonTemplate);
-                        if (message is null)
-                        {
-                            _logger.LogError("Coudn't create discord button [{Button}] of template [{Template}] on discord channel with id [{Id}]", buttonTemplate.Name, buttonTemplate.ChannelTemplate.Name, channel.DiscordId);
-                            continue;
-                        }
-                        var button = new Button(buttonTemplate.Command, buttonTemplate.Name, message.Id);
-                        channel.Buttons?.Add(button);
-                    }
-
-                await _channelRepository.CreateOrUpdateAsync(channel);
-                await _channelRepository.SaveAsync();
-            }
-
-            return _mapper.Map<ScumServerDto>(server);
+            await _scumServerRepository.CreateOrUpdateAsync(server);
+            await _scumServerRepository.SaveAsync();
+            return _mapper.Map<GuildDto>(server.Guild);
         }
 
         public async Task<ScumServerDto?> SaveServerDiscordChannel(SaveChannelDto saveChannel)
         {
             var serverId = ServerId()!;
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
 
             if (server.Guild is null) throw new NotFoundException("Discord not configured");
@@ -409,7 +354,18 @@ namespace RagnarokBotWeb.Domain.Services
             if (channelTemplate.Buttons is not null)
                 foreach (var buttonTemplate in channelTemplate.Buttons)
                 {
-                    var message = await _discordService.CreateButtonAsync(channel.DiscordId, buttonTemplate);
+                    IUserMessage? message = null;
+                    if (buttonTemplate.Command == "uav_scan_trigger")
+                    {
+                        server.Uav ??= new();
+                        message = await _discordService.CreateUavButtons(server, channel.DiscordId);
+                        server.Uav.DiscordMessageId = message?.Id;
+                    }
+                    else
+                    {
+                        message = await _discordService.CreateButtonAsync(channel.DiscordId, buttonTemplate);
+                    }
+
                     if (message is null)
                     {
                         _logger.LogError("Coudn't create discord button [{Button}] of template [{Template}] on discord channel with id [{Id}]", buttonTemplate.Name, buttonTemplate.ChannelTemplate.Name, channel.DiscordId);
@@ -426,11 +382,44 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<ScumServerDto>(server);
         }
 
+        public async Task<UavDto> UpdateUav(UavDto dto)
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            var previousImage = server.Uav?.ImageUrl;
+            var previousDiscordChannel = server.Uav?.DiscordId;
+            var previousDiscordMessage = server.Uav?.DiscordMessageId;
+            server.Uav = _mapper.Map(dto, server.Uav ?? new Uav());
+            if (dto.DiscordId != null) server.Uav.DiscordId = ulong.Parse(dto.DiscordId);
+
+            if (!string.IsNullOrEmpty(server.Uav.ImageUrl) && server.Uav.ImageUrl != previousImage)
+            {
+                if (!string.IsNullOrEmpty(previousImage)) _fileService.DeleteFile(previousImage);
+                server.Uav.ImageUrl = await _fileService.SaveCompressedBase64ImageAsync(server.Uav.ImageUrl);
+            }
+
+            try
+            {
+                if (previousDiscordChannel.HasValue && previousDiscordMessage.HasValue)
+                    await _discordService.RemoveMessage(previousDiscordChannel.Value, previousDiscordMessage.Value);
+
+                if (server.Uav.DiscordId.HasValue)
+                    server.Uav.DiscordMessageId = (await _discordService.CreateUavButtons(server, server.Uav.DiscordId.Value))?.Id;
+            }
+            catch (Exception)
+            { }
+
+            await _scumServerRepository.CreateOrUpdateAsync(server);
+            await _scumServerRepository.SaveAsync();
+            return _mapper.Map<UavDto>(server.Uav);
+        }
 
         public async Task<List<SaveChannelDto>> GetServerDiscordChannels()
         {
             var serverId = ServerId()!;
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
 
             if (server.Guild is null) throw new NotFoundException("Discord not configured");
@@ -441,7 +430,7 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<ScumServerDto> UpdateServerSettings(UpdateServerSettingsDto updateServer)
         {
             var serverId = ServerId()!;
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
 
             server = _mapper.Map(updateServer, server);
@@ -455,7 +444,7 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<ScumServerDto> UpdateKillFeed(UpdateKillFeedDto updateKillFeed)
         {
             var serverId = ServerId()!;
-            var server = await _scumServerRepository.FindByIdAsync(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
 
             server = _mapper.Map(updateKillFeed, server);

@@ -11,4 +11,5 @@ export class OrderDto {
     orderType: number;
     player?: PlayerDto;
     scumServer!: ScumServer;
+    createDate: Date;
 }
