@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Crosscutting.Utils;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
@@ -9,6 +10,8 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Models;
+using static RagnarokBotWeb.Application.Tasks.Jobs.KillRankJob;
+using static RagnarokBotWeb.Application.Tasks.Jobs.LockpickRankJob;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -339,6 +342,7 @@ namespace RagnarokBotWeb.Domain.Services
                 throw new DomainException("Player is not vip");
 
             vip.Processed = true;
+            vip.Indefinitely = false;
             _unitOfWork.Vips.Update(vip);
             await _unitOfWork.SaveAsync();
 
@@ -376,6 +380,7 @@ namespace RagnarokBotWeb.Domain.Services
                 throw new DomainException("Player is not silenced");
 
             silence.Processed = true;
+            silence.Indefinitely = false;
             _unitOfWork.Silences.Update(silence);
             await _unitOfWork.SaveAsync();
 
@@ -403,6 +408,7 @@ namespace RagnarokBotWeb.Domain.Services
                 throw new DomainException("Player is not banned");
 
             ban.Processed = true;
+            ban.Indefinitely = false;
             _unitOfWork.Bans.Update(ban);
             await _unitOfWork.SaveAsync();
 
@@ -536,6 +542,90 @@ namespace RagnarokBotWeb.Domain.Services
             player.Fame += dto.Amount;
 
             return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task<List<LockpickStatsDto>> LockpickRank()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
+
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Invalid server");
+
+            var lockpicks = _unitOfWork.Lockpicks
+            .Where(l => l.ScumServer.Id == server.Id);
+
+            return await lockpicks
+                .GroupBy(l => new { l.Name, l.LockType })
+                .Select(g => new LockpickStatsDto
+                {
+                    PlayerName = g.Key.Name,
+                    LockType = g.Key.LockType,
+                    SuccessCount = g.Count(l => l.Success),
+                    FailCount = g.Count(l => !l.Success),
+                    SuccessRate = g.Any()
+                        ? (double)g.Count(l => l.Success) / g.Count() * 100
+                        : 0
+                })
+                .OrderByDescending(p => p.SuccessCount)
+                .ThenByDescending(p => p.SuccessRate)
+                .Take(20)
+                .ToListAsync();
+        }
+
+        public async Task<List<PlayerStatsDto>> KillRank()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
+
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Invalid server");
+
+            // Filter kills by server and period
+            var kills = _unitOfWork.Kills
+                .Where(k => k.ScumServer.Id == server.Id);
+
+            // Group by KillerName
+            return await kills
+                .GroupBy(k => k.KillerName)
+                .Select(g => new PlayerStatsDto()
+                {
+                    PlayerName = g.Key!,
+                    KillCount = g.Count()
+                })
+                .OrderByDescending(k => k.KillCount)
+                .ToListAsync();
+        }
+
+        public async Task<List<GrapthDto>> NewPlayersPerMonth()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
+
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Invalid server");
+
+            var monthlyCounts = _unitOfWork.Players
+              .Where(player => player.CreateDate.Year == DateTime.UtcNow.Year)
+              .GroupBy(p => new { p.CreateDate.Year, p.CreateDate.Month })
+              .Select(g => new
+              {
+                  Year = g.Key.Year,
+                  Month = g.Key.Month,
+                  Count = g.Count()
+              })
+              .OrderBy(x => x.Year)
+              .ThenBy(x => x.Month)
+              .ToList();
+
+            return monthlyCounts
+                .Select(x => new GrapthDto
+                {
+                    Amount = x.Count, // players in that month only
+                    Color = ColorUtil.GetRandomColor(),
+                    Name = new DateTime(x.Year, x.Month, 1).ToString("MMMM")
+                })
+                .ToList();
         }
     }
 }

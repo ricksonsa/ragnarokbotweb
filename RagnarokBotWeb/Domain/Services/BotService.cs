@@ -147,7 +147,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
 
                 var diff = (now - bot.LastPinged!.Value).TotalMinutes;
-                if (diff >= 10)
+                if (diff >= 20)
                 {
                     _cacheService.ClearConnectedPlayers(serverId);
                     _cacheService.GetConnectedBots(serverId).Remove(bot.Guid);

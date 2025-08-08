@@ -42,17 +42,15 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPatch("open")]
-        public async Task<IActionResult> OpenWarzone()
+        public async Task<IActionResult> OpenWarzone(bool? force = false)
         {
-            await _warzoneService.OpenWarzone();
-            return Ok();
+            return Ok(await _warzoneService.OpenWarzone(force));
         }
 
         [HttpPatch("close")]
         public async Task<IActionResult> CloseWarzone()
         {
-            await _warzoneService.CloseWarzone();
-            return Ok();
+            return Ok(await _warzoneService.CloseWarzone());
         }
 
         [HttpPut("{id}")]

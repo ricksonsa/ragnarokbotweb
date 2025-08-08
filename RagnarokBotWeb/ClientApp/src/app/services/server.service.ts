@@ -34,7 +34,7 @@ export class ServerService {
   }
 
   getPlayerCount() {
-    return this.http.get<any>(`${environment.apiUrl}/api/servers/player-count`);
+    return this.http.get<any>(`${environment.apiUrl}/api/servers/players`);
   }
 
   getDiscordChannels() {

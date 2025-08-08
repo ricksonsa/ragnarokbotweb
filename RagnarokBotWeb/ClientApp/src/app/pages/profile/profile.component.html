@@ -1,5 +1,5 @@
 <nz-space nzSize="middle">
-  <button *nzSpaceItem nz-button nzType="primary" (click)="save()">
+  <button *nzSpaceItem nz-button nzType="primary" [nzLoading]="loading" (click)="save()">
     Save Profile
   </button>
 </nz-space>
@@ -24,19 +24,25 @@
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Password</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the password!">
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the password!" [nzExtra]="mismatch">
           <input formControlName="password" nz-input name="password" type="password" id="password"
             placeholder="Input a new password. Leave it blank if not needed" />
         </nz-form-control>
       </nz-form-item>
+       <ng-template #mismatch>
+        <nz-alert *ngIf="mismatchPass" nzType="error" nzMessage="Passwords mismatch"></nz-alert>
+      </ng-template>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Confirm Password</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the password confirmation!">
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the password confirmation!" [nzExtra]="mismatch">
           <input formControlName="confirmPassword" nz-input name="confirmPassword" type="password" id="confirmPassword"
             placeholder="Input a new password. Leave it blank if not needed" />
         </nz-form-control>
       </nz-form-item>
+      <ng-template #mismatch>
+        <nz-alert *ngIf="mismatchPass" nzType="error" nzMessage="Passwords mismatch"></nz-alert>
+      </ng-template>
     </form>
   </nz-card>
 </div>

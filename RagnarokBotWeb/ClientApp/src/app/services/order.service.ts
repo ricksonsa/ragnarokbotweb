@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Page } from '../core/pagination/pager';
-import { OrderDto } from '../models/order.dto';
+import { GraphDto, OrderDto } from '../models/order.dto';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +14,11 @@ export class OrderService {
     var url = `${environment.apiUrl}/api/orders?pageSize=${pageSize}&pageNumber=${pageNumber}`;
     if (filter) url += `&filter=${filter}`;
     return this.http.get<Page<OrderDto>>(url);
+  }
+
+  getBestSellersOrders() {
+    var url = `${environment.apiUrl}/api/orders/best-sellers`;
+    return this.http.get<GraphDto[]>(url);
   }
 
   deliverWelcomePack(id: any) {

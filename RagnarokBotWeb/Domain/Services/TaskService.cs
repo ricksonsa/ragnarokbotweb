@@ -82,13 +82,13 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity($"{nameof(BotAliveJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, DefaultTrigger());
+            await scheduler.ScheduleJob(job, OneMinTrigger());
 
             job = JobBuilder.Create<ListPlayersJob>()
                 .WithIdentity($"{nameof(ListPlayersJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TwoMinTrigger());
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
 
             job = JobBuilder.Create<ListSquadsJob>()
                 .WithIdentity($"{nameof(ListSquadsJob)}({server.Id})", $"ServerJobs({server.Id})")
@@ -321,10 +321,10 @@ namespace RagnarokBotWeb.Domain.Services
             var scheduler = await _schedulerFactory.GetScheduler();
 
             var closeWarzoneJob = JobBuilder.Create<CloseWarzoneJob>()
-              .WithIdentity($"CloseWarzoneJob({server.Id})", $"WarzoneJobs({server.Id})")
-              .UsingJobData("server_id", server.Id)
-              .UsingJobData("warzone_id", warzone.Id)
-              .Build();
+                .WithIdentity($"CloseWarzoneJob({server.Id})", $"WarzoneJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .UsingJobData("warzone_id", warzone.Id)
+                .Build();
 
             ITrigger warzoneClosingTrigger = TriggerBuilder.Create()
                 .WithIdentity("$CloseWarzoneJobTrigger({server.Id})", $"WarzoneJobs({server.Id})")
@@ -341,10 +341,10 @@ namespace RagnarokBotWeb.Domain.Services
                 .Build();
 
             ITrigger warzoneItemSpawnJobTrigger = TriggerBuilder.Create()
-               .WithIdentity($"WarzoneItemSpawnJobTrigger({server.Id})", $"WarzoneJobs({server.Id})")
-               .StartNow() // Start immediately
+                .WithIdentity($"WarzoneItemSpawnJobTrigger({server.Id})", $"WarzoneJobs({server.Id})")
+                .StartNow() // Start immediately
                 .WithSimpleSchedule(x => x
-                       .WithIntervalInMinutes((int)warzone.ItemSpawnInterval)
+                        .WithIntervalInMinutes((int)warzone.ItemSpawnInterval)
                 .RepeatForever())
                 .Build();
 

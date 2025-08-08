@@ -92,6 +92,25 @@ namespace RagnarokBotWeb.Domain.Services
             };
         }
 
+        public async Task<AccountDto> UpdateAccount(UserDto userDto)
+        {
+            var user = await _userRepository.FindOneAsync(user => user.Email == UserLogin());
+
+            if (user is null) throw new NotFoundException("User not found");
+
+            if (!string.IsNullOrEmpty(userDto.Password))
+                user.SetPassword(userDto.Password);
+
+            user.Email = userDto.Email;
+            user.Name = userDto.Name;
+
+            _userRepository.Update(user);
+            await _userRepository.SaveAsync();
+
+            return _mapper.Map<AccountDto>(user);
+        }
+
+
         public async Task<ScumServer> CreateServer(Tenant tenant)
         {
             var server = new ScumServer(tenant);
@@ -131,6 +150,11 @@ namespace RagnarokBotWeb.Domain.Services
                 Servers = scumServers.Select(_mapper.Map<ScumServerDto>),
                 AccessLevel = user.AccessLevel
             };
+        }
+
+        public Task<AccountDto?> UpdateAccount(AccountDto accountDto)
+        {
+            throw new NotImplementedException();
         }
     }
 }

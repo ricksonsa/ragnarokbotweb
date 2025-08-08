@@ -423,7 +423,7 @@ namespace RagnarokBotClient
             var action = new Action(() => LogBox.Text += $"\n {new DateTimeOffset(DateTime.Now)} {status}");
             var clearTextAction = new Action(() =>
             {
-                if (LogBox.Text.Length >= 5000) LogBox.Text = string.Empty;
+                if (LogBox.Text.Length >= 15000) LogBox.Text = string.Empty;
             });
             if (StatusValue.InvokeRequired)
             {

@@ -2,6 +2,8 @@
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Dto;
 using Shared.Models;
+using static RagnarokBotWeb.Application.Tasks.Jobs.KillRankJob;
+using static RagnarokBotWeb.Application.Tasks.Jobs.LockpickRankJob;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
@@ -13,6 +15,9 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<List<ScumPlayer>> OfflinePlayers(long serverId);
         void ResetPlayersConnection(long? serverId = null);
         ScumPlayer? PlayerDisconnected(long serverId, string steamId64);
+        Task<List<GrapthDto>> NewPlayersPerMonth();
+        Task<List<PlayerStatsDto>> KillRank();
+        Task<List<LockpickStatsDto>> LockpickRank();
 
         Task<Player?> FindBySteamId64Async(string steamId, long serverId);
         Task AddPlayerAsync(Player user);

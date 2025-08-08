@@ -177,7 +177,10 @@ namespace RagnarokBotWeb.Domain.Services
                     pack.DiscordChannelId = packDto.DiscordChannelId;
                     pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
                 }
-                catch (Exception) { }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Error trying to create discord buttons for package {Pack} -> {Ex}", pack.Id, ex.Message);
+                }
 
             }
             else

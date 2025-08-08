@@ -230,8 +230,9 @@ export class PlayerComponent implements OnInit {
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Welcomepack', `Welcomepack will be delivered to player ${this.playerForm.value.name}`, 'success')));
           this.loadingWelcomepack = false;
         },
-        error: () => {
+        error: (err) => {
           this.loadingWelcomepack = false;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err.error.details, 'error')));
         }
 
       });

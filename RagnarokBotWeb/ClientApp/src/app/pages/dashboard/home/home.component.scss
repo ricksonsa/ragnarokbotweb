@@ -7,3 +7,13 @@
     display: flex;
     gap: 20px;
 }
+
+.fit-content {
+    height: fit-content !important;
+}
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 30px;
+}

@@ -9,6 +9,20 @@
         public string BaseUrl { get; set; }
     }
 
+    public class SecuritySettings
+    {
+        public bool UseHsts { get; set; }
+        public bool UseHttpsRedirection { get; set; }
+        public bool UseRateLimiting { get; set; }
+        public RateLimitOptions? RateLimit { get; set; }
+        public Cors? Cors { get; set; }
+    }
+
+    public class Cors
+    {
+        public string AllowedOrigins { get; set; }
+    }
+
     public static class AppSettingsStatic
     {
         public static string DefaultCron { get; set; } = "0 0/2 * * * ?";

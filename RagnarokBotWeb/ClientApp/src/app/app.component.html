@@ -18,9 +18,9 @@
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.ftp == null">
             <a routerLink="dashboard/logs">Logs</a>
           </li>
-          <li nz-menu-item nzMatchRouter>
+          <!-- <li nz-menu-item nzMatchRouter>
             <a routerLink="dashboard/console">Console (Coming Soon)</a>
-          </li>
+          </li> -->
         </ul>
       </li>
 
@@ -48,9 +48,9 @@
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="management/players">Players</a>
           </li>
-          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+          <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="management/tickets">Tickets (Coming Soon)</a>
-          </li>
+          </li> -->
         </ul>
       </li>
 
@@ -71,22 +71,22 @@
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="shop/uav">UAV</a>
           </li>
-          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+          <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a>Taxi (Coming Soon)</a>
-          </li>
+          </li> -->
         </ul>
       </li>
 
       <li nz-submenu nzOpen nzTitle="Events" nzIcon="star">
         <ul>
-          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+          <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a>Air Drops (Coming Soon)</a>
-          </li>
+          </li> -->
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="events/warzones">Warzones</a>
           </li>
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
-            <a routerLink="events/quests">Quests (Coming Soon)</a>
+            <a routerLink="events/quests">Quests</a>
           </li>
         </ul>
       </li>
@@ -111,7 +111,7 @@
         </span>
       </div>
       <div class="top-actions">
-        <ng-template #light>
+        <!-- <ng-template #light>
           <nz-icon nzType="sun" nzTheme="outline" />
         </ng-template>
         <ng-template #dark>
@@ -119,12 +119,12 @@
         </ng-template>
 
         <nz-switch style="margin-right: 10px;" [(ngModel)]="darkMode" (ngModelChange)="changeTheme($event)"
-          [nzCheckedChildren]="dark" [nzUnCheckedChildren]="light"></nz-switch>
+          [nzCheckedChildren]="dark" [nzUnCheckedChildren]="light"></nz-switch> -->
 
         <button nz-popconfirm [nzPopconfirmTitle]="topActions" nzPopconfirmOverlayClassName="top-actions-popconfirm"
           nz-button nzType="link" style="height: 40px;">
           <nz-space nzAlign="center">
-            <nz-avatar *nzSpaceItem [nzText]="getFirstLetter(account?.email)"
+            <nz-avatar *nzSpaceItem [nzText]="getFirstLetter(account?.name)"
               style="color:#f56a00; background-color:#fde3cf;"></nz-avatar>
             <p *nzSpaceItem style="margin: 0" class="top-actions-button"
               [ngClass]="{'top-actions-button-dark': darkMode}">{{account?.name}}</p>

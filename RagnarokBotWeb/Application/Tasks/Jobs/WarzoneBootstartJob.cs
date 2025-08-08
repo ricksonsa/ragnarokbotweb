@@ -34,7 +34,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var scheduler = await _schedulerFactory.GetScheduler();
             if (!await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({server.Id})")))
             {
-                await _warzoneService.OpenWarzone(server, context.CancellationToken);
+                await _warzoneService.OpenWarzone(server, token: context.CancellationToken);
 
             }
         }

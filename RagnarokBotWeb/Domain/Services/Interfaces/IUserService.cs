@@ -6,6 +6,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     public interface IUserService
     {
         Task<AuthResponse?> PreAuthenticate(AuthenticateDto authenticateDto);
+        Task<AccountDto?> UpdateAccount(UserDto userDto);
         Task<AuthResponse?> Authenticate(long serverId);
         Task<UserDto> Register(RegisterUserDto register);
         Task<AccountDto> GetAccount();

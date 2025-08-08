@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import { PlayerDto } from '../models/player.dto';
 import { environment } from '../../environments/environment';
 import { Page } from '../core/pagination/pager';
+import { GraphDto } from '../models/order.dto';
+import { LockpickStatsDto, PlayerStatsDto } from '../models/player-stats.dto';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +23,18 @@ export class PlayerService {
 
   getPlayerById(id: number) {
     return this.http.get<PlayerDto>(`${environment.apiUrl}/api/players/${id}`);
+  }
+
+  getNewPlayerStatistics() {
+    return this.http.get<GraphDto[]>(`${environment.apiUrl}/api/players/statistics/monthly-registers`);
+  }
+
+  getPlayerStatisticsKills() {
+    return this.http.get<PlayerStatsDto[]>(`${environment.apiUrl}/api/players/statistics/kills`);
+  }
+
+  getPlayerStatisticsLockpicks() {
+    return this.http.get<LockpickStatsDto[]>(`${environment.apiUrl}/api/players/statistics/lockpicks`);
   }
 
   removeBan(id: number) {

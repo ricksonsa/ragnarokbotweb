@@ -46,6 +46,27 @@ namespace RagnarokBotWeb.Controllers
             return Ok(player);
         }
 
+        [HttpGet("statistics/monthly-registers")]
+        public async Task<IActionResult> GetPlayerMonthly(long id)
+        {
+            var players = await _playerService.NewPlayersPerMonth();
+            return Ok(players);
+        }
+
+        [HttpGet("statistics/kills")]
+        public async Task<IActionResult> GetKillStatistics()
+        {
+            var players = await _playerService.KillRank();
+            return Ok(players);
+        }
+
+        [HttpGet("statistics/lockpicks")]
+        public async Task<IActionResult> GetLockpickStatistics()
+        {
+            var players = await _playerService.LockpickRank();
+            return Ok(players);
+        }
+
         [HttpPatch("{id}/coins")]
         public async Task<IActionResult> UpdatePlayerCoins(long id, ChangeAmountDto dto)
         {

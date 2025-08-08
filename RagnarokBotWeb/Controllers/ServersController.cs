@@ -45,12 +45,12 @@ namespace RagnarokBotWeb.Controllers
             return Ok(guild);
         }
 
-        [HttpGet("player-count")]
-        public async Task<IActionResult> GetPlayerCount()
+        [HttpGet("players")]
+        public async Task<IActionResult> GetPlayers()
         {
-            _logger.LogDebug("Get request to fetch player count");
-            var count = await _serverService.GetServerPlayerCount();
-            return Ok(count);
+            _logger.LogDebug("Get request to fetch online players");
+            var players = await _serverService.GetOnlinePlayers();
+            return Ok(players);
         }
 
         [HttpGet("discord")]

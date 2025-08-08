@@ -32,6 +32,7 @@ namespace RagnarokBotWeb.Application.Mapping
 
             CreateMap<Item, ItemDto>();
             CreateMap<Order, OrderDto>();
+            CreateMap<User, AccountDto>().ReverseMap();
 
             CreateMap<Uav, UavDto>().ReverseMap();
 
@@ -87,6 +88,7 @@ namespace RagnarokBotWeb.Application.Mapping
 
             CreateMap<Warzone, WarzoneDto>()
                  .ForPath((dto) => dto.ScumServerId, opt => opt.MapFrom(warzone => warzone.ScumServer.Id))
+                 .ForPath((dto) => dto.IsRunning, opt => opt.MapFrom(warzone => warzone.IsRunning))
             .ReverseMap()
                .ForPath((warzone) => warzone.ScumServer.Id, opt => opt.MapFrom(dto => dto.ScumServerId))
                .ForMember(dest => dest.WarzoneItems, opt => opt.Ignore())

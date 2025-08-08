@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Crosscutting.Utils;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -18,6 +20,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IPackRepository _packRepository;
         private readonly IPlayerRepository _playerRepository;
         private readonly IWarzoneRepository _warzoneRepository;
+        private readonly IScumServerRepository _scumServerRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
         private readonly IMapper _mapper;
@@ -31,7 +34,8 @@ namespace RagnarokBotWeb.Domain.Services
             IMapper mapper,
             IWarzoneRepository warzoneRepository,
             IUnitOfWork unitOfWork,
-            ICacheService cacheService) : base(contextAccessor)
+            ICacheService cacheService,
+            IScumServerRepository scumServerRepository) : base(contextAccessor)
         {
             _logger = logger;
             _orderRepository = orderRepository;
@@ -41,6 +45,7 @@ namespace RagnarokBotWeb.Domain.Services
             _warzoneRepository = warzoneRepository;
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
+            _scumServerRepository = scumServerRepository;
         }
 
         public async Task<OrderDto> ConfirmOrderDelivered(long orderId)
@@ -69,6 +74,10 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var player = await _playerRepository.FindByIdAsync(playerId);
             if (player is null) throw new NotFoundException("Player not found");
+
+            if (!_cacheService.GetConnectedPlayers(player.ScumServerId).Any(p => p.SteamID == player.SteamId64))
+                throw new NotFoundException($"Player {player.Name} is not online");
+
             return _mapper.Map<OrderDto>(await PlaceWelcomePackOrder(player));
         }
 
@@ -194,6 +203,42 @@ namespace RagnarokBotWeb.Domain.Services
             await new PlayerCoinManager(_unitOfWork).RemoveCoinsByPlayerId(player.Id, price);
 
             return order;
+        }
+
+        public async Task<List<GrapthDto>> GetBestSellingOrdersPacks()
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
+
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Invalid server");
+
+            var orders = await _unitOfWork
+                .AppDbContext
+                .Orders
+                .Include(order => order.Pack)
+                .Include(order => order.Warzone)
+                .Include(order => order.ScumServer)
+                .Where(order => order.ScumServer.Id == server.Id)
+                .ToListAsync();
+
+            var packs = orders
+            .Where(order => order.OrderType == EOrderType.Pack && !order.Pack!.IsWelcomePack)
+            .GroupBy(p => p.Pack!.Name)
+            .Select(g => new
+            {
+                Name = g.Key,
+                Count = g.Count(),
+                Color = ColorUtil.GetRandomColor()
+            })
+            .ToList();
+
+            return packs.Select(a => new GrapthDto()
+            {
+                Color = a.Color,
+                Amount = a.Count,
+                Name = a.Name
+            }).ToList();
         }
     }
 }

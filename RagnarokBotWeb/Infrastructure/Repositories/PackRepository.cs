@@ -15,6 +15,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return await _appDbContext.Packs
                 .Include(pack => pack.ScumServer)
+                .Include(pack => pack.ScumServer.Guild)
                 .Include(pack => pack.PackItems)
                 .ThenInclude(packItem => packItem.Item)
                 .FirstOrDefaultAsync(pack => pack.Id == id);

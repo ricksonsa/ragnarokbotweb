@@ -4,6 +4,7 @@ import { WarzoneSpawnDto } from "./warzone-spawn.dto";
 import { WarzoneTeleportDto } from "./warzone-teleport";
 
 export interface WarzoneDto {
+    isRunning: boolean;
     id: number;
     name: string;
     description: string;

@@ -1,23 +1,115 @@
-<div class="top-bar">
+<ng-template #botPrefix>
+  <nz-badge [nzStatus]="botsOnline < 1 ? 'error' : 'processing'">
+    <span nz-typography nzType="secondary" style="color: #c0c0c0ec">Bots Online</span>
+  </nz-badge>
+</ng-template>
+
+<ng-template #startStopWarzone>
+  <button *ngIf="!isRunningWarzone()" nz-button nzType="primary" nzSize="small" [disabled]="warzones.length === 0"
+    (click)="startWarzone()" [nzLoading]="loading">Start
+    Warzone</button>
+
+  <button *ngIf="isRunningWarzone()" nz-button nzType="primary" nzSize="small" [nzLoading]="loading"
+    (click)="stopWarzone()">Stop
+    Warzone</button>
+</ng-template>
+
+<div class="grid">
   <nz-card class="statistics-card">
-    <nz-statistic [nzValue]="getSlotsText().count || 0" nzTitle="Players Online"
-      [nzSuffix]="getSlotsText().maxSlots || ''"></nz-statistic>
+    <nz-statistic [nzValue]="playerCount" nzTitle="Players Online"
+      [nzSuffix]="'/' + maxSlots?.toString()"></nz-statistic>
   </nz-card>
 
-  <ng-template #botPrefix>
-    <nz-badge [nzStatus]="botsOnline < 1 ? 'error' : 'processing'">
-      <span nz-typography nzType="secondary" style="color: #c0c0c0ec">Bots Online</span>
-    </nz-badge>
-  </ng-template>
   <nz-card class="statistics-card">
     <nz-statistic [nzValue]="botsOnline" [nzTitle]="botPrefix"></nz-statistic>
+  </nz-card>
+
+  <nz-card style="width: 700px;" nzTitle="Warzone" [nzExtra]="startStopWarzone">
+    <nz-descriptions nzBordered>
+      <nz-descriptions-item *ngIf="getRunningWarzone() != null" [nzTitle]="getRunningWarzone()?.name">
+        <nz-badge nzSize="small" nzStatus="processing" nzText="Running"></nz-badge>
+      </nz-descriptions-item>
+
+      <ng-template #titleWz>
+        <p nz-typography nzType="secondary" style="margin: 0;">No warzone running</p>
+      </ng-template>
+      <nz-descriptions-item *ngIf="getRunningWarzone() == null" [nzTitle]="titleWz" [nzSpan]="3">
+        <nz-badge nzStatus="error"></nz-badge>
+      </nz-descriptions-item>
+    </nz-descriptions>
   </nz-card>
 </div>
 
 <br>
+<br>
 
-<div class="main">
-  <nz-card>
+<div class="grid">
+  <nz-card class="statistics-card" nzTitle="Best Sellers">
+    <canvas id="orders"></canvas>
+  </nz-card>
 
+  <nz-card class="statistics-card" nzTitle="Players Registering Per Month">
+    <canvas id="newPlayers"></canvas>
+  </nz-card>
+
+  <nz-card class="statistics-card fit-content" nzTitle="Lockpicks General">
+    <nz-table nzSize="small" #lockpickTable [nzData]="lockpicks" nzShowPagination="false">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Lock Type</th>
+          <th>Locks Picked</th>
+          <th>Failed Attempts</th>
+          <th>Success Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of lockpickTable.data">
+          <td>{{data.playerName}}</td>
+          <td>{{getLockType(data.lockType)}}</td>
+          <td>{{data.successCount}}</td>
+          <td>{{data.failCount}}</td>
+          <td>{{getPercentage(data.successRate)}}%</td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+
+  <nz-card class="statistics-card fit-content" nzTitle="Kills General">
+    <nz-table nzSize="small" #killTable [nzData]="kills" nzShowPagination="false">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Kill Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of killTable.data">
+          <td>{{data.playerName}}</td>
+          <td>{{data.killCount}}</td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+
+  <nz-card class="fit-content" nzTitle="Online Players">
+    <nz-table nzSize="small" #playersTable [nzData]="players" nzShowPagination="false">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Money</th>
+          <th>Gold</th>
+          <th>Coins</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of playersTable.data">
+          <td><a href="">{{data.name}}</a></td>
+          <td>{{data.money}}</td>
+          <td>{{data.gold}}</td>
+          <td>{{data.coin}}</td>
+        </tr>
+      </tbody>
+    </nz-table>
   </nz-card>
 </div>

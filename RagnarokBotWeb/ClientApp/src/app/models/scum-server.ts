@@ -20,6 +20,7 @@ export class ScumServer {
     showKillOnMap: boolean;
     showKillCoordinates: boolean;
     killAnnounceText: string;
+    maxSlots?: number;
     uav?: UavDto;
 }
 

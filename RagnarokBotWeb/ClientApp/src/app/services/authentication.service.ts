@@ -81,6 +81,10 @@ export class AuthenticationService {
     return this.http.post(`${environment.apiUrl}/api/register`, registerForm);
   }
 
+  update(updateForm: any) {
+    return this.http.put(`${environment.apiUrl}/api/account`, updateForm);
+  }
+
   isAuthenticated() {
     var accessToken = localStorage.getItem('access_token');
     return accessToken !== undefined || accessToken !== null;

@@ -20,8 +20,20 @@ export class WarzoneService {
         return this.http.get<WarzoneDto>(`${environment.apiUrl}/api/warzones/${id}`);
     }
 
+    getRunningWarzone() {
+        return this.http.get<WarzoneDto>(`${environment.apiUrl}/api/warzones/running`);
+    }
+
     deleteWarzone(id: number) {
         return this.http.delete<WarzoneDto>(`${environment.apiUrl}/api/warzones/${id}`);
+    }
+
+    openWarzone() {
+        return this.http.patch<WarzoneDto>(`${environment.apiUrl}/api/warzones/open?force=true`, null);
+    }
+
+    closeWarzone() {
+        return this.http.patch<WarzoneDto>(`${environment.apiUrl}/api/warzones/close`, null);
     }
 
     saveWarzone(warzone: WarzoneDto) {

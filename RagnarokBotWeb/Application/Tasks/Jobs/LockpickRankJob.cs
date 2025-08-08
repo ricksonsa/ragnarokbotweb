@@ -47,7 +47,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             string lockType)
         {
             var lockpicks = unitOfWork.Lockpicks
-                .Where(l => l.ScumServer.Id == server.Id && l.LockType == lockType);
+                .Where(l => l.ScumServer.Id == server.Id && l.LockType == lockType && l.AttemptDate.Date == DateTime.UtcNow.Date);
 
             var stats = await lockpicks
                 .GroupBy(l => l.Name)
@@ -70,6 +70,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public class LockpickStatsDto
         {
             public string PlayerName { get; set; }
+            public string LockType { get; set; }
             public int SuccessCount { get; set; }
             public int FailCount { get; set; }
             public double SuccessRate { get; set; } // As a percentage

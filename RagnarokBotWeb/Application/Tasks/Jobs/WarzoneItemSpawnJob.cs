@@ -51,7 +51,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var command = new BotCommand();
 
             // coordinates needs double quote
-            command.Delivery($"\"{spawnPoint.Teleport.Coordinates}\"", warzoneItem.Item.Code, 1);
+            var coordinates = spawnPoint.Teleport.Coordinates.Contains("{") ? $"\"{spawnPoint.Teleport.Coordinates}\"" : spawnPoint.Teleport.Coordinates;
+            command.Delivery(coordinates, warzoneItem.Item.Code, 1);
 
             if (!string.IsNullOrEmpty(warzone.DeliveryText))
             {

@@ -64,9 +64,6 @@ namespace RagnarokBotWeb.Domain.Business
 
         private async Task ValidateWarzone(Order order)
         {
-            if (!order.Warzone!.Enabled || order.Warzone.Deleted.HasValue)
-                throw new DomainException("This Warzone is not available at the moment.");
-
             if (order.Warzone.IsVipOnly && !order.Player!.IsVip())
                 throw new DomainException("This Warzone Teleport is only available for Vip Players.");
 

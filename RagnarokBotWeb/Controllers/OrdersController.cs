@@ -37,6 +37,14 @@ namespace RagnarokBotWeb.Controllers
             return Ok(page);
         }
 
+        [HttpGet("best-sellers")]
+        public async Task<IActionResult> GetBestSellingOrders()
+        {
+            _logger.LogInformation("Get request to fetch a best sellers");
+            var page = await _orderService.GetBestSellingOrdersPacks();
+            return Ok(page);
+        }
+
         [HttpPatch("players/{playerId}/welcomepack")]
         public async Task<IActionResult> DeliverWelcomePack(long playerId)
         {

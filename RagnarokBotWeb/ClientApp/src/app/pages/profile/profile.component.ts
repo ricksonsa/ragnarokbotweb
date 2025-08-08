@@ -17,6 +17,7 @@ import { AccountDto } from '../../models/account.dto';
 import { Alert } from '../../models/alert';
 import { AuthenticationService } from '../../services/authentication.service';
 import { EventManager, EventWithContent } from '../../services/event-manager.service';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 
 @Component({
   selector: 'app-profile',
@@ -36,13 +37,16 @@ import { EventManager, EventWithContent } from '../../services/event-manager.ser
     NzListModule,
     NzTypographyModule,
     NzPopconfirmModule,
-    NzButtonModule
+    NzButtonModule,
+    NzAlertModule
   ]
 })
 export class ProfileComponent implements OnInit {
   account?: AccountDto;
   profileForm!: FormGroup;
   private fb = inject(NonNullableFormBuilder);
+  mismatchPass: boolean;
+  loading = false;
 
   constructor(
     private readonly authService: AuthenticationService,
@@ -82,12 +86,21 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    // this.itemService.saveItem(this.profileForm.value)
-    //   .subscribe({
-    //     next: (value) => {
-    //       setTimeout(() => this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Profile updated successfully.`))), 800);
-    //     }
-    //   });
+    this.mismatchPass = this.profileForm.value.password !== this.profileForm.value.confirmPassword;
+    if (this.mismatchPass) return;
+
+    this.loading = true;
+    this.authService.update(this.profileForm.value)
+      .subscribe({
+        next: (account => {
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', 'Profile successfully updated.', 'success')));
+          this.loading = false;
+        }),
+        error: (err) => {
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err.error.details, 'error')));
+          this.loading = false;
+        }
+      });
   }
 
 }

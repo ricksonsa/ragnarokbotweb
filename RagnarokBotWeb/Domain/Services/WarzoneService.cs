@@ -325,34 +325,35 @@ namespace RagnarokBotWeb.Domain.Services
             return new Page<WarzoneDto>(page.Content.Select(_mapper.Map<WarzoneDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 
-        public async Task OpenWarzone()
+        public async Task<WarzoneDto?> OpenWarzone(bool? force = false)
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
             var server = await _scumServerRepository.FindByIdAsync(serverId!.Value);
             if (server is null) throw new NotFoundException("Server not found");
-            await OpenWarzone(server);
+            return await OpenWarzone(server, force);
         }
 
-        public async Task CloseWarzone()
+        public async Task<WarzoneDto?> CloseWarzone()
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
             var server = await _scumServerRepository.FindByIdAsync(serverId!.Value);
             if (server is null) throw new NotFoundException("Server not found");
-            await CloseWarzone(server);
+            return await CloseWarzone(server);
         }
 
-        public async Task OpenWarzone(ScumServer server, CancellationToken token = default)
+        public async Task<WarzoneDto?> OpenWarzone(ScumServer server, bool? force = false, CancellationToken token = default)
         {
             var warzones = await _unitOfWork.Warzones
                .Include(warzone => warzone.ScumServer)
-               .Where(warzone => warzone.Enabled && warzone.ScumServer.Id == server.Id)
+               .Include(warzone => warzone.ScumServer.Guild)
+               .Where(warzone => warzone.ScumServer.Id == server.Id)
                .ToListAsync();
 
-            var warzone = new WarzoneSelector(_cacheService, server).Select(warzones);
+            var warzone = new WarzoneSelector(_cacheService, server).Select(warzones, force);
 
-            if (warzone is null) return;
+            if (warzone is null) return null;
 
             if (!warzone.IsRunning)
             {
@@ -363,9 +364,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var scheduler = await _schedulerFactory.GetScheduler();
             if (await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({server.Id})"), token))
-            {
                 await CloseWarzone(server, token);
-            }
 
             if (!string.IsNullOrEmpty(warzone.StartMessage))
             {
@@ -384,10 +383,7 @@ namespace RagnarokBotWeb.Domain.Services
 
                 try
                 {
-                    CreateEmbed embed = warzone.WarzoneButtonEmbed();
-                    IUserMessage message;
-                    message = await _discordService.SendEmbedToChannel(embed);
-                    warzone.DiscordMessageId = message.Id;
+                    warzone.DiscordMessageId = await GenerateDiscordWarzoneButton(warzone);
                 }
                 catch (Exception) { }
 
@@ -399,9 +395,10 @@ namespace RagnarokBotWeb.Domain.Services
             }
 
             await _taskService.CreateWarzoneJobs(server, warzone);
+            return _mapper.Map<WarzoneDto>(warzone);
         }
 
-        public async Task CloseWarzone(ScumServer server, CancellationToken token = default)
+        public async Task<WarzoneDto?> CloseWarzone(ScumServer server, CancellationToken token = default)
         {
             var warzones = await _unitOfWork.Warzones
                 .Include(warzone => warzone.ScumServer)
@@ -409,7 +406,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var warzone = warzones.FirstOrDefault(wz => wz.IsRunning);
 
-            if (warzone == null) return;
+            if (warzone == null) return null;
 
             warzone.Stop();
             _unitOfWork.Warzones.Update(warzone);
@@ -434,6 +431,8 @@ namespace RagnarokBotWeb.Domain.Services
             }
 
             _logger.LogInformation("Warzone Id {Warzone} Closed for Server Id {Id} at: {time}", warzone.Id, server.Id, DateTimeOffset.Now);
+
+            return _mapper.Map<WarzoneDto>(warzone);
         }
     }
 }

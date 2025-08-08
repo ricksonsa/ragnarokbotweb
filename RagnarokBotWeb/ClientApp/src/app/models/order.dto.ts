@@ -13,3 +13,9 @@ export class OrderDto {
     scumServer!: ScumServer;
     createDate: Date;
 }
+
+export interface GraphDto {
+    name: string;
+    amount: number;
+    color: string;
+}

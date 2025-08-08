@@ -37,6 +37,13 @@ namespace RagnarokBotWeb.Controllers
             return Ok(token);
         }
 
+        [HttpPut("account")]
+        public async Task<IActionResult> UpdateAccount(UserDto userDto)
+        {
+            _logger.LogDebug("Put request for updating user: " + userDto.Email + " account");
+            return Ok(await _userService.UpdateAccount(userDto));
+        }
+
         [Authorize(AuthenticationSchemes = AuthorizationPolicyConstants.IdTokenPolicy)]
         [HttpGet("login")]
         public async Task<IActionResult> Authenticate(long serverId)

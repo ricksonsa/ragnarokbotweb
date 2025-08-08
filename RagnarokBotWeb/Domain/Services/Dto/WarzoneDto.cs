@@ -21,6 +21,7 @@
         public bool IsBlockPurchaseRaidTime { get; set; }
         public bool IsVipOnly { get; set; }
         public long ScumServerId { get; set; }
+        public bool IsRunning { get; set; }
         public List<WarzoneItemDto> WarzoneItems { get; set; }
         public List<WarzoneTeleportDto> Teleports { get; set; }
         public List<WarzoneSpawnDto> SpawnPoints { get; set; }

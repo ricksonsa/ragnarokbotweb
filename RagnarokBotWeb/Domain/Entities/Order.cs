@@ -57,11 +57,13 @@ namespace RagnarokBotWeb.Domain.Entities
         private string ResolvePurchaseCooldownText(long seconds)
         {
             var now = DateTime.UtcNow;
-            var remainingMinutes = (CreateDate.AddSeconds(seconds) - now).TotalMinutes;
-            var remainingSeconds = (CreateDate.AddSeconds(seconds) - now).TotalSeconds;
+            var remainingHours = Math.Round((CreateDate.AddSeconds(seconds) - now).TotalHours);
+            var remainingMinutes = Math.Round((CreateDate.AddSeconds(seconds) - now).TotalMinutes);
+            var remainingSeconds = Math.Round((CreateDate.AddSeconds(seconds) - now).TotalSeconds);
 
-            if (Math.Round(remainingMinutes) > 0) return $"\nNext purchase will be available in {Math.Round(remainingMinutes)} minutes.";
-            return $"\nNext purchase will be available in {Math.Round(remainingSeconds)} seconds.";
+            if (remainingHours > 0) return $"\nNext purchase will be available in {Math.Round(remainingHours)} hours.";
+            else if (remainingMinutes > 0) return $"\nNext purchase will be available in {Math.Round(remainingMinutes)} minutes.";
+            else return $"\nNext purchase will be available in {Math.Round(remainingSeconds)} seconds.";
         }
 
         public string ResolveUavCooldownText()

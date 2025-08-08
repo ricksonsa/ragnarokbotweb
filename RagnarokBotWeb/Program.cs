@@ -40,13 +40,13 @@ namespace RagnarokBotWeb
                 .Enrich.FromLogContext()
             );
 
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             builder.Configuration
-                .AddJsonFile("appsettings.json")
-                .AddJsonFile($"appsettings.{environment}.json", true)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
             var DefaultCorsPolicy = "_defaultCorsPolicy";
+            var ProductionCorsPolicy = "_productionCorsPolicy";
 
             Environment.SetEnvironmentVariable("jwt_secret", "p2tfCQNn6FJrM7XmdAsW5zKc4DHyYbELwuPV93BRv8xeqkSjZaVhN64mSPatj9H5FqfU2rCTEWvpskKQy3eZwLGXnb8RudD7zBYMwRJXr2b6tsQZWNLUDV4C8nmpKyc7fagGqh5MFux39kASvPEdBzZd7wKDnsq8j9WTHaGmbAkeYN4RPJrEp3UXS5LCvQy6hzxBVMcFsDh3SGNHjf7qARkxzMe2VpyPncmbvJCKTX4ruZWtB86dLQ9YF5");
 
@@ -67,20 +67,22 @@ namespace RagnarokBotWeb
             builder.Services.AddAuthorization();
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(options =>
+            if (builder.Environment.IsDevelopment())
             {
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen(options =>
                 {
-                    Description = @"JWT Authorization header using the Bearer scheme.
+                    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        Description = @"JWT Authorization header using the Bearer scheme.
                       Enter 'Bearer' [space] and then your token in the text input below.
                       Example: 'Bearer 12345abcdef'",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer"
-                });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                        Name = "Authorization",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.ApiKey,
+                        Scheme = "Bearer"
+                    });
+                    options.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
                     {
                         new OpenApiSecurityScheme
@@ -97,7 +99,8 @@ namespace RagnarokBotWeb
                         new List<string>()
                     }
                 });
-            });
+                });
+            }
 
             builder.Services.AddDbContextFactory<AppDbContext>();
             builder.Services.AddDbContext<AppDbContext>();
@@ -133,6 +136,13 @@ namespace RagnarokBotWeb
                 var section = builder.Configuration.GetSection(nameof(AppSettings));
                 section.Bind(options);
             });
+
+            var securitySettings = new SecuritySettings();
+            builder.Configuration.GetSection(nameof(SecuritySettings)).Bind(securitySettings);
+
+            builder.Services.Configure<SecuritySettings>(
+                builder.Configuration.GetSection(nameof(SecuritySettings))
+            );
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IPlayerRepository, PlayerRepository>();
@@ -182,22 +192,48 @@ namespace RagnarokBotWeb
 
             builder.Services.AddHealthChecks();
 
+
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy(name: DefaultCorsPolicy,
-                    policy =>
+                if (builder.Environment.IsDevelopment())
+                {
+                    options.AddPolicy(DefaultCorsPolicy, policy =>
                     {
                         policy.AllowAnyOrigin()
                               .AllowAnyMethod()
                               .AllowAnyHeader();
                     });
+                }
+                else
+                {
+                    var allowedOrigins = securitySettings.Cors!.AllowedOrigins
+                        .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+                    options.AddPolicy(ProductionCorsPolicy, policy =>
+                    {
+                        policy.WithOrigins(allowedOrigins)
+                              .AllowAnyMethod()
+                              .AllowAnyHeader();
+                    });
+                }
             });
 
             builder.Services.AddMvc();
+            builder.Services.AddRateLimiting();
             var app = builder.Build();
 
-            app.UseCors(DefaultCorsPolicy);
-
+            app.UseSimpleRateLimit(maxRequests: 100, timeWindowMinutes: 1);
+            app.UseCors(builder.Environment.IsDevelopment() ? DefaultCorsPolicy : ProductionCorsPolicy);
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+            else
+            {
+                app.UseHsts();
+                app.UseHttpsRedirection();
+            }
             app.UseMiddleware<ExceptionMiddleware>();
 
             // Serve Angular static files
@@ -212,15 +248,6 @@ namespace RagnarokBotWeb
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.MigrateDatabase();
             }
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            //app.UseHttpsRedirection();
 
             app.UseAuthorization();
             app.UseAuthentication();

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Discord;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
@@ -137,19 +138,20 @@ namespace RagnarokBotWeb.Domain.Services
             await _scumServerRepository.SaveAsync();
         }
 
-        public async Task<PlayerCountDto> GetServerPlayerCount()
+        public async Task<List<PlayerDto>> GetOnlinePlayers()
         {
             var serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
             var server = await _scumServerRepository.FindActiveById(serverId.Value);
-            if (server is null) return new PlayerCountDto();
+            if (server is null) return [];
 
-            return new PlayerCountDto
-            {
-                MaxSlots = server.Slots,
-                OnlineCount = _cacheService.GetConnectedPlayers(serverId.Value).Count,
-            };
+            var onlinePlayers = _cacheService.GetConnectedPlayers(serverId.Value).ToList();
+            var players = (await _unitOfWork.Players.Include(player => player.ScumServer)
+                .Where(player => player.ScumServerId == serverId.Value)
+                .ToListAsync()).Where(player => onlinePlayers.Any(op => op.SteamID == player.SteamId64));
+
+            return players.Select(_mapper.Map<PlayerDto>).ToList();
         }
 
         public async Task GetServerConfigLineValue(Ftp ftp, Dictionary<string, string> data)
