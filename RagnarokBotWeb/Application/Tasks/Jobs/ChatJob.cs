@@ -47,19 +47,20 @@ public class ChatJob(
                     continue;
                 }
 
-                var chatCommandHandler = new ExclamationCommandHandlerFactory(
-                    server,
-                    cacheService,
-                    scumServerRepository,
-                    playerRespository,
-                    playerRegisterRepository,
-                    discordService,
-                    orderService
-                    ).Create(parsed.Text);
-
-                if (chatCommandHandler is not null)
+                if (IsCompliant())
                 {
-                    await chatCommandHandler.ExecuteAsync(parsed);
+                    var chatCommandHandler = new ExclamationCommandHandlerFactory(
+                   server,
+                   cacheService,
+                   scumServerRepository,
+                   playerRespository,
+                   playerRegisterRepository,
+                   discordService,
+                   orderService
+                   ).Create(parsed.Text);
+
+                    if (chatCommandHandler is not null)
+                        await chatCommandHandler.ExecuteAsync(parsed);
                 }
 
                 if (parsed.Text.Contains("!check-state"))

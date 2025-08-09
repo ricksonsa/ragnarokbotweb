@@ -63,8 +63,6 @@ namespace RagnarokBotWeb.Application.Handlers
                 if (order != null)
                     text += $" Stay put to receive your Welcome Pack {DiscordEmoji.Gift}";
 
-
-
                 await _discordService.SendEmbedToUserDM(new CreateEmbed
                 {
                     GuildId = register.ScumServer.Guild!.DiscordId,

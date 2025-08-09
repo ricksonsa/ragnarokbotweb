@@ -60,6 +60,8 @@ namespace RagnarokBotWeb.Domain.Services
             var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server is null) throw new DomainException("Server tenant is not enabled");
 
+            ValidateSubscription(server);
+
             warzone.ScumServer = server;
 
             if (!string.IsNullOrEmpty(warzone.ImageUrl))
@@ -108,13 +110,14 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<WarzoneDto> UpdateWarzoneAsync(long id, WarzoneDto warzoneDto)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
-
             var warzone = await _warzoneRepository.FindByIdAsync(id);
 
             if (warzone == null)
                 throw new NotFoundException("Warzone not found");
 
+
+            ValidateServerOwner(warzone.ScumServer);
+            ValidateSubscription(warzone.ScumServer);
 
             var previousImage = warzone.ImageUrl;
             var previousDiscordId = warzone.DiscordChannelId;
@@ -249,7 +252,6 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task DeleteWarzoneAsync(long id)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
             await CheckAuthority(id, serverId);
 
             var warzone = await _unitOfWork.AppDbContext.Warzones
@@ -309,11 +311,10 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<WarzoneDto> FetchWarzoneById(long id)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
             var warzone = await _warzoneRepository.FindByIdAsync(id);
             if (warzone is null) throw new NotFoundException("Warzone not found");
 
-            if (warzone.ScumServer.Id != serverId!.Value) throw new UnauthorizedException("Invalid server id");
+            ValidateServerOwner(warzone.ScumServer);
 
             return _mapper.Map<WarzoneDto>(warzone);
         }
@@ -328,9 +329,11 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<WarzoneDto?> OpenWarzone(bool? force = false)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
             var server = await _scumServerRepository.FindByIdAsync(serverId!.Value);
             if (server is null) throw new NotFoundException("Server not found");
+
+            ValidateSubscription(server);
+
             return await OpenWarzone(server, force);
         }
 

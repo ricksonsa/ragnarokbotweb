@@ -14,6 +14,7 @@ namespace RagnarokBotWeb.Application.Mapping
 
             CreateMap<ScumServer, ScumServerDto>()
                 .ForMember((dto) => dto.RestartTimes, opt => opt.MapFrom(server => server.GetRestartTimesList()))
+                .ForMember((dto) => dto.IsCompliant, opt => opt.MapFrom(server => server.IsCompliant()))
                 .ForMember((dto) => dto.Discord, opt => opt.MapFrom(server => server.Guild != null ?
                     new DiscordDto
                     {
@@ -35,6 +36,11 @@ namespace RagnarokBotWeb.Application.Mapping
             CreateMap<User, AccountDto>().ReverseMap();
 
             CreateMap<Uav, UavDto>().ReverseMap();
+
+            CreateMap<Subscription, SubscriptionDto>().ReverseMap();
+            CreateMap<Payment, PaymentDto>()
+                .ForMember((dto) => dto.IsExpired, opt => opt.MapFrom(data => data.ExpireAt < DateTime.UtcNow))
+                .ReverseMap();
 
             CreateMap<PackItem, PackItemDto>()
              .ForPath((dto) => dto.PackId, opt => opt.MapFrom(pack => pack.Pack.Id))

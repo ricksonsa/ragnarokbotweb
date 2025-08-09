@@ -13,7 +13,7 @@
   <ng-template #saveDiscord>
     <button nz-button nzType="primary" (click)="saveDiscordData()" [nzLoading]="isDiscordSettingsSaving">Save</button>
   </ng-template>
-  <nz-card [nzTitle]="discord" [nzExtra]="saveDiscord">
+  <nz-card nzSize="small" [nzTitle]="discord" [nzExtra]="saveDiscord">
     <form nz-form [formGroup]="discordForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="email">App Installation Link</nz-form-label>
@@ -96,7 +96,7 @@
   <ng-template #saveChannels>
     <button nz-button [disabled]="!account?.server.discord" nzType="primary">Save</button>
   </ng-template>
-  <nz-card [nzTitle]="channelSelections">
+  <nz-card nzSize="small" [nzTitle]="channelSelections">
     <form nz-form [formGroup]="channelsForm" *ngIf="account?.server.discord; else noDiscord">
       <nz-form-item>
         <nz-form-label [nzSpan]="0">Create channels</nz-form-label>

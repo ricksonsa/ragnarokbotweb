@@ -9,6 +9,8 @@
         public List<string> RestartTimes { get; set; }
         public DiscordDto? Discord { get; set; }
         public UavDto Uav { get; set; }
+        public bool IsCompliant { get; set; }
+        public int Slots { get; set; }
 
         #region Kill Feed
         public bool UseKillFeed { get; set; } = true;

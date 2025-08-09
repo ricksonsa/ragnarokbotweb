@@ -68,16 +68,9 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<ScumServerDto> ChangeFtp(FtpDto ftpDto)
         {
-            var tenantId = TenantId();
-            if (!tenantId.HasValue) throw new UnauthorizedException("Invalid token");
-
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
-            var tenant = await _tenantRepository.FindByIdAsync(tenantId.Value);
-            if (tenant is null) throw new DomainException("Tenant not found");
-
-            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server is null) throw new DomainException("ScumServer not found");
 
             string rootPath;
@@ -141,9 +134,8 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<List<PlayerDto>> GetOnlinePlayers()
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
-            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server is null) return [];
 
             var onlinePlayers = _cacheService.GetConnectedPlayers(serverId.Value).ToList();
@@ -390,6 +382,8 @@ namespace RagnarokBotWeb.Domain.Services
             var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Server not found");
 
+            ValidateSubscription(server);
+
             var previousImage = server.Uav?.ImageUrl;
             var previousDiscordChannel = server.Uav?.DiscordId;
             var previousDiscordMessage = server.Uav?.DiscordMessageId;
@@ -437,6 +431,13 @@ namespace RagnarokBotWeb.Domain.Services
 
             server = _mapper.Map(updateServer, server);
 
+            if (!server.IsCompliant())
+            {
+                server.ShowKillOnMap = false;
+                server.ShowSameSquadKill = true;
+                server.AllowMinesOutsideFlag = true;
+            }
+
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();
 
@@ -450,6 +451,13 @@ namespace RagnarokBotWeb.Domain.Services
             if (server is null) throw new NotFoundException("Server not found");
 
             server = _mapper.Map(updateKillFeed, server);
+
+            if (!server.IsCompliant())
+            {
+                server.ShowKillOnMap = false;
+                server.ShowSameSquadKill = true;
+                server.AllowMinesOutsideFlag = true;
+            }
 
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();

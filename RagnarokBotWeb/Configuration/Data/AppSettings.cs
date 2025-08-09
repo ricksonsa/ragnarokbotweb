@@ -7,6 +7,7 @@
         public string TwoMinCron { get; set; }
         public string TwentySecondsCron { get; set; }
         public string BaseUrl { get; set; }
+        public string PayPalUrl { get; set; }
     }
 
     public class SecuritySettings

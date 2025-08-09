@@ -23,6 +23,9 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Tenant)
+            .Include(player => player.ScumServer.Tenant.Payments)
+                .ThenInclude(payment => payment.Subscription)
             .Include(player => player.ScumServer.Guild)
             .FirstOrDefaultAsync(player => player.Id == id);
     }
@@ -30,33 +33,39 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
     public async Task<Player?> FindOneWithServerAsync(Expression<Func<Player, bool>> predicate)
     {
         return await _appDbContext.Players
-          .Include(player => player.Vips)
-          .Include(player => player.Bans)
-          .Include(player => player.Silences)
-          .Include(player => player.ScumServer)
-          .Include(player => player.ScumServer.Guild)
-          .FirstOrDefaultAsync(predicate);
+            .Include(player => player.Vips)
+            .Include(player => player.Bans)
+            .Include(player => player.Silences)
+            .Include(player => player.ScumServer)
+            .Include(warzone => warzone.ScumServer.Tenant)
+            .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                .ThenInclude(payment => payment.Subscription)
+            .Include(player => player.ScumServer.Guild)
+            .FirstOrDefaultAsync(predicate);
     }
 
     public async Task<Player?> FindOneWithServerBySteamIdAsync(long serverId, string steamId64)
     {
         return await _appDbContext.Players
-          .Include(player => player.Vips)
-          .Include(player => player.Bans)
-          .Include(player => player.Silences)
-          .Include(player => player.ScumServer)
-          .FirstOrDefaultAsync(player => player.ScumServerId == serverId && player.SteamId64 == steamId64);
+            .Include(player => player.Vips)
+            .Include(player => player.Bans)
+            .Include(player => player.Silences)
+            .Include(player => player.ScumServer)
+            .Include(warzone => warzone.ScumServer.Tenant)
+            .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                .ThenInclude(payment => payment.Subscription)
+            .FirstOrDefaultAsync(player => player.ScumServerId == serverId && player.SteamId64 == steamId64);
     }
 
     public Task<List<Player>> GetAllByServerId(long serverId)
     {
         return _appDbContext.Players
-           .Include(player => player.Vips)
-           .Include(player => player.Bans)
-           .Include(player => player.Silences)
-           .Include(player => player.ScumServer)
-           .Where(player => player.ScumServer.Id == serverId)
-           .ToListAsync();
+            .Include(player => player.Vips)
+            .Include(player => player.Bans)
+            .Include(player => player.Silences)
+            .Include(player => player.ScumServer)
+            .Where(player => player.ScumServer.Id == serverId)
+            .ToListAsync();
     }
 
     public Task<Page<Player>> GetPageByServerId(Paginator paginator, long serverId, string? filter)

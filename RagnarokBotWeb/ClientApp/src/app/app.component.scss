@@ -8,6 +8,7 @@ $border-radius: 10px;
   justify-content: center;
   gap: 10px;
   align-items: center;
+  margin-bottom: 15px;
 
   h4 {
     margin: 0;
@@ -192,9 +193,13 @@ body {
   padding: 20px;
   border-radius: $border-radius;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  min-width: 380px;
+  min-width: 420px;
   max-width: 420px;
+
+  h5 {
+
+    text-align: center;
+  }
 }
 
 .login-form {

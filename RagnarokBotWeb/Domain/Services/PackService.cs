@@ -46,10 +46,11 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<PackDto> CreatePackAsync(PackDto createPack)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
 
-            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server is null) throw new DomainException("Server tenant is not enabled");
+
+            ValidateSubscription(server);
 
             var pack = _mapper.Map<Pack>(createPack);
             pack.ScumServer = server;
@@ -106,16 +107,8 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<PackDto> FetchPackById(long id)
         {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
-
-            var server = await _scumServerRepository.FindActiveById(serverId.Value);
-            if (server is null) throw new UnauthorizedException("Invalid server");
-
             var pack = await _packRepository.FindByIdAsync(id);
             if (pack is null || pack.Deleted != null) throw new NotFoundException("Package not found");
-
-            if (pack.ScumServer.Id != server.Id) throw new UnauthorizedException("Invalid package");
 
             return _mapper.Map<PackDto>(pack);
         }
@@ -149,12 +142,12 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<PackDto> UpdatePackAsync(long id, PackDto packDto)
         {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
-
             var pack = await _packRepository.FindByIdAsync(id);
             if (pack == null)
                 throw new NotFoundException("Pack not found");
+
+            ValidateServerOwner(pack.ScumServer);
+            ValidateSubscription(pack.ScumServer);
 
             var previousImage = pack.ImageUrl;
             var previousDiscordId = pack.DiscordChannelId;
@@ -201,12 +194,12 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task DeletePackAsync(long id)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
 
             var pack = await _packRepository.FindByIdAsync(id);
             if (pack is null) throw new NotFoundException("Package not found");
 
-            if (pack.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Invalid server");
+            ValidateServerOwner(pack.ScumServer);
+            ValidateSubscription(pack.ScumServer);
 
             _packItemRepository.DeletePackItems(pack.PackItems);
             await _packItemRepository.SaveAsync();
@@ -229,18 +222,14 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<Page<PackDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
-
-            var page = await _packRepository.GetPageByServerAndFilter(paginator, serverId.Value, filter);
+            var page = await _packRepository.GetPageByServerAndFilter(paginator, serverId!.Value, filter);
             return new Page<PackDto>(page.Content.Select(_mapper.Map<PackDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 
         public async Task<PackDto> FetchWelcomePack()
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
-
-            var pack = await _packRepository.FindOneAsync(package => package.IsWelcomePack);
+            var pack = await _packRepository.FindOneAsync(package => package.IsWelcomePack && package.ScumServer.Id == serverId);
             if (pack == null) throw new NotFoundException("Package not found");
 
             return await FetchPackById(pack.Id);

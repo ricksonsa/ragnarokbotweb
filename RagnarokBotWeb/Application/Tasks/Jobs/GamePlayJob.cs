@@ -33,9 +33,9 @@ public class GamePlayJob(
             var processor = new ScumFileProcessor(server);
             await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService))
             {
-                await HandleArmedTrap(unitOfWork, cache, server, line);
-                await HandleBunkerState(bunkerService, server, line);
+                if (IsCompliant()) await HandleArmedTrap(unitOfWork, cache, server, line);
                 await HandleLockpick(unitOfWork, discordService, fileService, server, line);
+                await HandleBunkerState(bunkerService, server, line);
             }
         }
         catch (Exception ex)
@@ -50,51 +50,49 @@ public class GamePlayJob(
             line.Contains("[LogMinigame] [BP_DialLockMinigame_C]"))
         {
             var lockpick = LockpickLogParser.Parse(line);
-            if (lockpick is not null)
+            if (lockpick is null) return;
+            uow.ScumServers.Attach(server);
+            await uow.Lockpicks.AddAsync(new Lockpick
             {
-                uow.ScumServers.Attach(server);
-                await uow.Lockpicks.AddAsync(new Lockpick
-                {
-                    LockType = lockpick.LockType,
-                    Attempts = lockpick.FailedAttempts,
-                    Name = lockpick.User,
-                    ScumId = lockpick.ScumId,
-                    SteamId64 = lockpick.SteamId,
-                    AttemptDate = DateTime.UtcNow,
-                    ScumServer = server,
-                    Success = lockpick.Success
+                LockType = lockpick.LockType,
+                Attempts = lockpick.FailedAttempts,
+                Name = lockpick.User,
+                ScumId = lockpick.ScumId,
+                SteamId64 = lockpick.SteamId,
+                AttemptDate = DateTime.UtcNow,
+                ScumServer = server,
+                Success = lockpick.Success
 
-                });
-                await uow.SaveAsync();
+            });
+            await uow.SaveAsync();
 
-                if (server.SendVipLockpickAlert)
+            if (server.SendVipLockpickAlert && server.Tenant.IsCompliant())
+            {
+                var player = await uow.Players.Include(player => player.Vips).FirstOrDefaultAsync(player => player.SteamId64 == lockpick.OwnerSteamId);
+                if (player is not null && player.IsVip() && player.DiscordId.HasValue)
                 {
-                    var player = await uow.Players.Include(player => player.Vips).FirstOrDefaultAsync(player => player.SteamId64 == lockpick.OwnerSteamId);
-                    if (player is not null && player.IsVip() && player.DiscordId.HasValue)
+                    var centerCoord = new ScumCoordinate(lockpick.X, lockpick.Y);
+                    var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
+                    var result = await extractor.ExtractMapWithPoints(
+                        centerCoord,
+                        [new ScumCoordinate(lockpick.X, lockpick.Y).WithLabel(lockpick.TargetObject)],
+                        256);
+
+                    var imageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/lockpicks", cdnUrlPrefix: "images/lockpicks");
+                    var embed = new CreateEmbed()
                     {
-                        var centerCoord = new ScumCoordinate(lockpick.X, lockpick.Y);
-                        var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
-                        var result = await extractor.ExtractMapWithPoints(
-                            centerCoord,
-                            [new ScumCoordinate(lockpick.X, lockpick.Y).WithLabel(lockpick.TargetObject)],
-                            256);
-
-                        var imageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/lockpicks", cdnUrlPrefix: "images/lockpicks");
-                        var embed = new CreateEmbed()
-                        {
-                            Color = Color.Red,
-                            ImageUrl = imageUrl,
-                            DiscordId = player.DiscordId.Value,
-                            GuildId = server.Guild!.DiscordId,
-                            Fields = [
-                                new CreateEmbedField("Sector", centerCoord.GetSectorReference(), true),
+                        Color = Color.Red,
+                        ImageUrl = imageUrl,
+                        DiscordId = player.DiscordId.Value,
+                        GuildId = server.Guild!.DiscordId,
+                        Fields = [
+                            new CreateEmbedField("Sector", centerCoord.GetSectorReference(), true),
                                 new CreateEmbedField("Lock", lockpick.DisplayLockType, true),
                                 new CreateEmbedField("Unlocked", lockpick.Success ? "Yes" : "No", true)],
-                            Title = "THE SCUM BOT ALERT",
-                            Text = "Warning!!! Someone is trying to pick one of your locks!!!"
-                        };
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
+                        Title = "THE SCUM BOT ALERT",
+                        Text = "Warning!!! Someone is trying to pick one of your locks!!!"
+                    };
+                    await discordService.SendEmbedToUserDM(embed);
                 }
             }
         }

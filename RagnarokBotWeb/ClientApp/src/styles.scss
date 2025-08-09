@@ -126,3 +126,51 @@ mat-option {
     min-height: 100vh;
     box-shadow: 2px 0 6px rgba(0, 21, 41, .35);
 }
+
+// .block {
+//     ::after {
+//         height: -webkit-fill-available;
+//         width: -webkit-fill-available;
+//         position: absolute;
+//         background-color: #ffffff1a;
+//         z-index: 999;
+//     }
+// }
+
+.block {
+
+
+    &::after {
+        content: "";
+        position: fixed; // covers viewport regardless of scroll
+        height: -webkit-fill-available;
+        width: -webkit-fill-available;
+        z-index: 999;
+        pointer-events: all;
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.1); // same as #ffffff1a
+    }
+}
+
+.blocked {
+    &::before {
+        content: "Subscription Content";
+        cursor: pointer;
+        color: #fff;
+        height: 100% !important;
+        align-items: center;
+        justify-content: center;
+        display: flex;
+        font-weight: 900;
+        font-size: 30px;
+        width: 100% !important;
+        z-index: 999;
+        pointer-events: all;
+        position: absolute !important;
+        background-color: rgba(255, 255, 255, 0.1);
+        top: 0;
+        left: 0;
+        text-shadow: -3px 3px 15px black;
+    }
+
+}

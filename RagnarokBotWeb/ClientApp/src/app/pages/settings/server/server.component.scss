@@ -1,7 +1,14 @@
 .main {
-    flex-direction: column;
+    // flex-direction: column;
+    justify-content: baseline;
+
     nz-card {
         flex-grow: 1 !important;
-        width: 100%;
+        // width: 100%;
     }
+}
+
+.flex-grow {
+    flex-grow: 1 !important;
+
 }

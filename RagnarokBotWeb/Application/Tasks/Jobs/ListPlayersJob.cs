@@ -1,51 +1,36 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
-    public class ListPlayersJob : IJob
+    public class ListPlayersJob(
+        ICacheService cacheService,
+        ILogger<ListPlayersJob> logger,
+        IBotService botService,
+        IScumServerRepository scumServerRepository) : AbstractJob(scumServerRepository), IJob
     {
-        private readonly ILogger<ListPlayersJob> _logger;
-        private readonly ICacheService _cacheService;
-        private readonly IBotService _botService;
-
-        public ListPlayersJob(
-            ICacheService cacheService,
-            ILogger<ListPlayersJob> logger,
-            IBotService botService)
+        public async Task Execute(IJobExecutionContext context)
         {
-            _cacheService = cacheService;
-            _logger = logger;
-            _botService = botService;
-        }
-
-        public Task Execute(IJobExecutionContext context)
-        {
-            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
             try
             {
-                JobDataMap dataMap = context.JobDetail.JobDataMap;
-                long? serverId = dataMap.GetLong("server_id");
-                if (!serverId.HasValue)
-                {
-                    _logger.LogError("No value for variable serverId");
-                    return Task.CompletedTask;
-                }
+                var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+                long serverId = server.Id;
 
-                if (!_botService.IsBotOnline(serverId.Value)) return Task.CompletedTask;
+                if (!botService.IsBotOnline(serverId)) return;
 
-                if (!_cacheService.GetCommandQueue(serverId.Value).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
+                if (!cacheService.GetCommandQueue(serverId).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
                 {
                     var command = new BotCommand();
                     command.ListPlayers();
-                    _cacheService.GetCommandQueue(serverId.Value).Enqueue(command);
+                    cacheService.GetCommandQueue(serverId).Enqueue(command);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                logger.LogError(ex.Message);
             }
-            return Task.CompletedTask;
         }
     }
 }

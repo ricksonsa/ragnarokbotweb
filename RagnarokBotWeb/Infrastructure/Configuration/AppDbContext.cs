@@ -38,7 +38,7 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<WarzoneTeleport> WarzoneTeleports { get; set; }
         public DbSet<DiscordRole> DiscordRoles { get; set; }
         public DbSet<Uav> Uavs { get; set; }
-        public DbSet<Subscription> Subscription { get; set; }
+        public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<Payment> Payments { get; set; }
 
         public AppDbContext()

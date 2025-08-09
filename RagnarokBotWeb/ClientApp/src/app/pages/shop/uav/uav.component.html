@@ -2,7 +2,8 @@
   <ng-template #saveBtn>
     <button nz-button nzType="primary" (click)="save()" [nzLoading]="loading">Save</button>
   </ng-template>
-  <nz-card nzTitle="UAV" [nzExtra]="saveBtn">
+  <nz-card nzSize="small" nzTitle="UAV" [nzExtra]="saveBtn">
+    <div class="blocker"></div>
     <form nz-form [formGroup]="packageForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Name*</nz-form-label>

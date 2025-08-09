@@ -17,7 +17,7 @@ public class PaydayJob(
     {
 
         logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-        var server = await GetServerAsync(context, ftpRequired: false);
+        var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
 
         if (server.CoinAwardPeriodically > 0)
         {

@@ -44,6 +44,23 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .FirstOrDefaultAsync(order => order.Status == EOrderStatus.Created);
         }
 
+        public Task<List<Order>> FindManyByServer(long serverId)
+        {
+            return _appDbContext.Orders
+                .Include(order => order.ScumServer)
+                .Include(order => order.ScumServer.Uav)
+                .Include(order => order.Player)
+                .Include(order => order.Pack)
+                .ThenInclude(pack => pack.PackItems)
+                .ThenInclude(packItems => packItems.Item)
+                .Include(order => order.Warzone)
+                    .ThenInclude(warzone => warzone.Teleports)
+                    .ThenInclude(teleport => teleport.Teleport)
+                .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId && order.Status == EOrderStatus.Created)
+                .OrderBy(order => order.CreateDate)
+                .ToListAsync();
+        }
+
         public Task<List<Order>> FindWithPack(long packId)
         {
             var now = DateTime.UtcNow;

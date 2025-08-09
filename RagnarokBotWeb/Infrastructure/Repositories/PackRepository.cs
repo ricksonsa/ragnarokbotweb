@@ -15,6 +15,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return await _appDbContext.Packs
                 .Include(pack => pack.ScumServer)
+                .Include(warzone => warzone.ScumServer.Tenant)
+                .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                    .ThenInclude(payment => payment.Subscription)
                 .Include(pack => pack.ScumServer.Guild)
                 .Include(pack => pack.PackItems)
                 .ThenInclude(packItem => packItem.Item)
@@ -25,6 +28,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return await _appDbContext.Packs
                 .Include(pack => pack.ScumServer)
+                .Include(warzone => warzone.ScumServer.Tenant)
+                .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                    .ThenInclude(payment => payment.Subscription)
                 .Include(pack => pack.PackItems)
                 .ThenInclude(packItem => packItem.Item)
                 .FirstOrDefaultAsync(pack => pack.ScumServer.Id == id && pack.IsWelcomePack && pack.Enabled);
@@ -34,6 +40,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return await _appDbContext.Packs
                 .Include(pack => pack.ScumServer)
+                .Include(warzone => warzone.ScumServer.Tenant)
+                .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                    .ThenInclude(payment => payment.Subscription)
                 .Include(pack => pack.PackItems)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(pack => pack.Id == id);
@@ -43,6 +52,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return await _appDbContext.Packs
                .Include(pack => pack.ScumServer)
+               .Include(warzone => warzone.ScumServer.Tenant)
+                .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                    .ThenInclude(payment => payment.Subscription)
                .Include(pack => pack.PackItems)
                .ThenInclude(packItem => packItem.Item)
                .ToListAsync();

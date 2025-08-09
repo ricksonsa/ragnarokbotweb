@@ -18,6 +18,9 @@
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.ftp == null">
             <a routerLink="dashboard/logs">Logs</a>
           </li>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.ftp == null">
+            <a routerLink="dashboard/payments">Payments</a>
+          </li>
           <!-- <li nz-menu-item nzMatchRouter>
             <a routerLink="dashboard/console">Console (Coming Soon)</a>
           </li> -->
@@ -104,7 +107,8 @@
     </ul>
   </nz-sider>
   <nz-layout>
-    <nz-header [ngClass]="{'header-light': !darkMode}">
+    <!-- <nz-header [ngClass]="{'header-light': !darkMode}"> -->
+    <nz-header>
       <div class="app-header">
         <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
           <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
@@ -143,6 +147,8 @@
       </div>
     </nz-header>
     <nz-content>
+      <!-- <div *ngIf="block" class="block"></div> -->
+
       <div class="inner-content">
         <div class="alert-holder" *ngIf="showAlert">
           <nz-affix [nzOffsetTop]="10">
@@ -214,49 +220,61 @@
     <h5 nz-typography>Sign Up</h5>
     <br>
     <form nz-form [formGroup]="registerForm" (action)="signup()">
-      <nz-space style="width: 100%;" nzDirection="vertical">
-        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>Name</p>
-        <nz-form-item *nzSpaceItem>
-          <nz-form-control [nzSpan]="24" nzErrorTip="Name is required!">
-            <input formControlName="name" nz-input name="name" type="text" id="name" />
-          </nz-form-control>
-        </nz-form-item>
+      <!-- <nz-space style="width: 100%;" nzDirection="vertical"> -->
+      <p style="margin: 0; text-align: start;" nz-typography>Name</p>
+      <nz-form-item>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Name is required!">
+          <input formControlName="name" nz-input name="name" type="text" id="name" />
+        </nz-form-control>
+      </nz-form-item>
 
-        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>E-mail</p>
-        <nz-form-item *nzSpaceItem>
-          <nz-form-control [nzSpan]="24" nzErrorTip="Email is required!">
-            <input formControlName="email" nz-input name="email" type="email" id="email" />
-          </nz-form-control>
-        </nz-form-item>
+      <p style="margin: 0; text-align: start;" nz-typography>E-mail</p>
+      <nz-form-item>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Email is required!">
+          <input formControlName="email" nz-input name="email" type="email" id="email" />
+        </nz-form-control>
+      </nz-form-item>
 
-        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>Password</p>
-        <nz-form-item *nzSpaceItem>
-          <nz-form-control [nzSpan]="24" nzErrorTip="Password is required!">
-            <input formControlName="password" nz-input name="password" type="password" id="password" />
-          </nz-form-control>
-        </nz-form-item>
+      <p style="margin: 0; text-align: start;" nz-typography>Password</p>
+      <nz-form-item>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Password is required!">
+          <input formControlName="password" nz-input name="password" type="password" id="password" />
+        </nz-form-control>
+      </nz-form-item>
 
-        <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>Confirm password</p>
-        <nz-form-item *nzSpaceItem>
-          <nz-form-control [nzSpan]="24" nzErrorTip="Password Confirmation is required!">
-            <input formControlName="confirmPassword" nz-input name="confirmPassword" type="password"
-              id="confirmPassword" />
-          </nz-form-control>
-        </nz-form-item>
+      <p style="margin: 0; text-align: start;" nz-typography>Confirm password</p>
+      <nz-form-item>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Password Confirmation is required!">
+          <input formControlName="confirmPassword" nz-input name="confirmPassword" type="password"
+            id="confirmPassword" />
+        </nz-form-control>
+      </nz-form-item>
 
-        <div *nzSpaceItem>
-          <ng-container *ngTemplateOutlet="error"></ng-container>
-        </div>
+      <p style="margin: 0; text-align: start;" nz-typography>Country</p>
+      <nz-form-item>
+        <nz-form-control nzErrorTip="Country is required!" [nzSpan]="24">
+          <nz-select nzSize="large" id="country" nzPlaceHolder="Select your country" formControlName="country"
+            nzShowSearch>
+            @for (country of countries; track $index) {
+            <nz-option [nzValue]="country.name" [nzLabel]="country.name"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-        <nz-space nzDirection="vertical" style="width: 100%;" *nzSpaceItem>
-          <button *nzSpaceItem nz-button type="button" [nzBlock]="true" nzType="link" (click)="register = false">
-            Already have an account? Sign In
-          </button>
-          <button *nzSpaceItem (click)="signup()" [nzLoading]="loading" [nzBlock]="true" nz-button nzType="primary"
-            nzSize="large">Sign
-            Up</button>
-        </nz-space>
+      <div>
+        <ng-container *ngTemplateOutlet="error"></ng-container>
+      </div>
+
+      <nz-space nzDirection="vertical" style="width: 100%;">
+        <button *nzSpaceItem nz-button type="button" [nzBlock]="true" nzType="link" (click)="register = false">
+          Already have an account? Sign In
+        </button>
+        <button *nzSpaceItem (click)="signup()" [nzLoading]="loading" [nzBlock]="true" nz-button nzType="primary"
+          nzSize="large">Sign
+          Up</button>
       </nz-space>
+      <!-- </nz-space> -->
     </form>
   </nz-card>
 </div>

@@ -161,6 +161,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IReaderPointerRepository, ReaderPointerRepository>();
             builder.Services.AddScoped<IBunkerRepository, BunkerRepository>();
             builder.Services.AddScoped<IWarzoneRepository, WarzoneRepository>();
+            builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFileService, FileService>();
@@ -180,6 +181,8 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IPlayerRegisterService, PlayerRegisterService>();
             builder.Services.AddScoped<IReaderPointerService, ReaderPointerService>();
             builder.Services.AddScoped<IWarzoneService, WarzoneService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<PayPalService>();
 
             builder.Services.AddScoped<StartupDiscordTemplate>();
 
@@ -218,6 +221,7 @@ namespace RagnarokBotWeb
                 }
             });
 
+            builder.Services.AddHttpClient();
             builder.Services.AddMvc();
             builder.Services.AddRateLimiting();
             var app = builder.Build();

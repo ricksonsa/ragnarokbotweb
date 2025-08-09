@@ -26,7 +26,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-            var server = await GetServerAsync(context, ftpRequired: false);
+            var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
 
             var players = _unitOfWork.Players
                 .Include(player => player.Silences)

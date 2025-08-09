@@ -8,5 +8,11 @@
         public bool Enabled { get; set; }
         public IEnumerable<ScumServer> ScumServers { get; set; }
         public IEnumerable<Payment> Payments { get; set; }
+
+
+        public bool IsCompliant()
+        {
+            return Payments?.Any(payment => payment.IsActive() && payment.Status == Enums.EPaymentStatus.Confirmed) ?? false;
+        }
     }
 }

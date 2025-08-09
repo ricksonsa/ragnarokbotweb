@@ -28,6 +28,7 @@ import { Alert } from '../../../models/alert';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { ChannelDto } from '../../../models/channel.dto';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
+import { Constants } from '../../../constants';
 registerLocaleData(localePT);
 registerLocaleData(localeES);
 registerLocaleData(localeDE);
@@ -63,6 +64,7 @@ export class ServerComponent implements OnInit {
   serverForm!: FormGroup;
   accountDto?: AccountDto;
   channels: ChannelDto[] = [];
+  isCompliant = Constants.isCompliant;
 
   private fb = inject(NonNullableFormBuilder);
 

@@ -76,6 +76,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 Name = register.Name,
                 Email = register.Email,
+                Country = register.Country,
                 Active = true
             };
 
@@ -103,6 +104,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             user.Email = userDto.Email;
             user.Name = userDto.Name;
+            user.Country = userDto.Country;
 
             _userRepository.Update(user);
             await _userRepository.SaveAsync();
@@ -129,7 +131,7 @@ namespace RagnarokBotWeb.Domain.Services
             };
 
             await _tenantRepository.CreateOrUpdateAsync(tenant);
-            await _unitOfWork.SaveAsync();
+            await _tenantRepository.SaveAsync();
 
             return tenant;
         }
@@ -145,6 +147,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 Name = user.Name,
                 Email = UserLogin()!,
+                Country = user.Country,
                 ServerId = serverId,
                 Server = _mapper.Map<ScumServerDto>(scumServers.FirstOrDefault(server => server.Id == serverId)),
                 Servers = scumServers.Select(_mapper.Map<ScumServerDto>),

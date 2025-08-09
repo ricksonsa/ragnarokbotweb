@@ -47,7 +47,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet("statistics/monthly-registers")]
-        public async Task<IActionResult> GetPlayerMonthly(long id)
+        public async Task<IActionResult> GetPlayerMonthly()
         {
             var players = await _playerService.NewPlayersPerMonth();
             return Ok(players);

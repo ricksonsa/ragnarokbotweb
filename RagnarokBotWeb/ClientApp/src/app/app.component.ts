@@ -10,7 +10,7 @@ import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { AuthenticationService } from './services/authentication.service';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { debounceTime, switchMap } from 'rxjs';
+import { BehaviorSubject, debounceTime, firstValueFrom, map, Observable, of, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
@@ -25,6 +25,8 @@ import { AccountDto } from './models/account.dto';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { ThemeService } from './services/theme.service';
+import { Constants, COUNSTRIES } from './constants';
+import { NzSelectModule } from 'ng-zorro-antd/select';
 
 
 @Component({
@@ -48,6 +50,7 @@ import { ThemeService } from './services/theme.service';
     NzSwitchModule,
     NzListModule,
     NzAvatarModule,
+    NzSelectModule,
     NzBreadCrumbModule,
     NzAffixModule,
     NzMenuModule
@@ -68,6 +71,8 @@ export class AppComponent implements OnInit {
   darkMode = false;
   loading = false;
   theme: string | null;
+  block = true;
+  countries = COUNSTRIES;
 
   private readonly notification = inject(NzNotificationService);
   paths: string[] = [];
@@ -90,7 +95,8 @@ export class AppComponent implements OnInit {
       name: [null, Validators.required],
       email: [null, Validators.required],
       password: [null, Validators.required],
-      confirmPassword: [null, Validators.required]
+      confirmPassword: [null, Validators.required],
+      country: [null, Validators.required],
     });
     router.events.pipe(
       debounceTime(800),
@@ -105,6 +111,34 @@ export class AppComponent implements OnInit {
           }
         }
       });
+
+    setInterval(async () => {
+      const account = await firstValueFrom(this.authenticationService.account(false, true));
+      this.block = !account?.server?.isCompliant && this.isBlockRoute();
+      const isCompliant = account?.server?.isCompliant;
+      Constants.isCompliant = isCompliant;
+      var elements = document.getElementsByClassName('blocker');
+      for (let index = 0; index < elements.length; index++) {
+        const element = elements[index];
+        if (isCompliant) element.classList.remove('blocked');
+        else element.classList.add('blocked');
+        element.addEventListener('click', (event) => { this.router.navigate(['dashboard', 'payments']); event.stopPropagation(); });
+      }
+    }, 100);
+  }
+
+
+  isBlockRoute() {
+    const route = location.href;
+    if (
+      route.includes('warzone')
+      || route.includes('uav')
+      || route.includes('pack')
+      || route.includes('kill-feed')
+
+    ) return true;
+
+    return false;
   }
 
   changeTheme(value: boolean) {
@@ -156,8 +190,8 @@ export class AppComponent implements OnInit {
       // this.showAlert = true;
       // setTimeout(() => this.showAlert = false, 5000);
     }));
-  }
 
+  }
   getFirstLetter(input?: string) {
     if (!input) return 'A';
     return input[0].toUpperCase();
@@ -181,7 +215,7 @@ export class AppComponent implements OnInit {
           return this.authenticationService.login(value.scumServers[0]!.id);
         })),
         switchMap(authResponse => {
-          return this.authenticationService.account()
+          return this.authenticationService.account();
         })
       )
       .subscribe({
@@ -193,6 +227,8 @@ export class AppComponent implements OnInit {
         error: (err) => {
           this.loading = false;
           this.errorMessage = err.error.details;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err.error.details, 'error')));
+
         }
       })
   }
@@ -213,6 +249,12 @@ export class AppComponent implements OnInit {
       .subscribe({
         next: (value: any) => {
           this.register = false;
+          this.loading = false;
+        },
+        error: (err) => {
+          this.loading = false;
+          this.errorMessage = err.error.details;
+          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err.error.details, 'error')));
         }
       });
   }

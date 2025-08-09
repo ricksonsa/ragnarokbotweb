@@ -485,5 +485,18 @@ namespace RagnarokBotClient
 
             Login();
         }
+
+        private void thescumbotSite_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            // Mark the link as visited
+            thescumbotSite.LinkVisited = true;
+
+            // Open the URL in the default browser
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = thescumbotSite.Text,
+                UseShellExecute = true // This ensures the default browser is used
+            });
+        }
     }
 }

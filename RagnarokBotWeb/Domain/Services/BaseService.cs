@@ -1,4 +1,6 @@
 ﻿using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 
 namespace RagnarokBotWeb.Domain.Services
@@ -23,6 +25,16 @@ namespace RagnarokBotWeb.Domain.Services
             }
         }
 
+        public AccessLevel AccessLevel()
+        {
+            var accessLevel = GetClaimValue(ClaimConstants.AccessLevel);
+            try { return (AccessLevel)int.Parse(accessLevel!); }
+            catch (Exception)
+            {
+                throw new UnauthorizedException("Invalid access level");
+            }
+        }
+
         public long? ServerId(bool throwWhenNull = true)
         {
             var serverIdString = GetClaimValue(ClaimConstants.ServerId);
@@ -32,6 +44,17 @@ namespace RagnarokBotWeb.Domain.Services
                 if (throwWhenNull) throw new UnauthorizedException("Invalid server id");
                 return null;
             }
+        }
+
+        public void ValidateServerOwner(ScumServer server)
+        {
+            if (server.Id != ServerId()) throw new ForbiddenException();
+        }
+
+        public void ValidateSubscription(ScumServer server)
+        {
+            if (server is null) throw new UnauthorizedException("Invalid server");
+            if (!server.IsCompliant()) throw new DomainException("Free subscription doesn't have access to this feature");
         }
 
         public string? UserLogin()

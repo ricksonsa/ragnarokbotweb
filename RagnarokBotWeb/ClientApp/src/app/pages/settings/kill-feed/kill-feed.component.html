@@ -11,7 +11,9 @@
     <nz-icon nzType="aim" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Kill Feed</span>
   </ng-template>
 
-  <nz-card [nzTitle]="killfeed" [nzExtra]="saveKillfeed">
+  <nz-card nzSize="small" [nzTitle]="killfeed" [nzExtra]="saveKillfeed">
+    <div class="blocker"></div>
+
     <form nz-form *ngIf="account?.server.discord; else noDiscord" [formGroup]="killfeedForm">
       <nz-form-item>
         <nz-form-control [nzSpan]="null" [nzExtra]="killFeedExtra">

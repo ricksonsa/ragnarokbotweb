@@ -6,7 +6,8 @@
 <br>
 <br>
 <div class="main">
-  <nz-card nzTitle="Package">
+  <nz-card nzSize="small" nzTitle="Package">
+    <div class="blocker"></div>
     <form nz-form [formGroup]="packageForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Name*</nz-form-label>
@@ -40,7 +41,8 @@
       <ng-template #packageDeliveryExtra>
         <p style="margin: 0">Text that the bot will send in global chat after the package is delivered. Leave it blank
           for no text.</p>
-        <p>You can use template variables for data reference like {{'{orderId}'}} {{'{playerName}'}} {{'{packageName}'}}.
+        <p>You can use template variables for data reference like {{'{orderId}'}} {{'{playerName}'}}
+          {{'{packageName}'}}.
         </p>
       </ng-template>
     </form>
@@ -53,7 +55,8 @@
       item.name}}</nz-auto-option>
     }
   </nz-autocomplete>
-  <nz-card nzTitle="Package Items">
+  <nz-card nzSize="small" nzTitle="Package Items">
+    <div class="blocker"></div>
     <form [formGroup]="packageItemForm" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="searchControl">Item</nz-form-label>

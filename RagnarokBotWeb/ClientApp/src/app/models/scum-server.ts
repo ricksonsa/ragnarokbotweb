@@ -7,6 +7,7 @@ export class ScumServer {
     name?: string;
     ftp?: Ftp;
     discord?: DiscordDto;
+    isCompliant: boolean;
     coinAwardPeriodically: number = 0;
     restartTimes: string[];
     battleMetricsId?: string;
@@ -20,7 +21,7 @@ export class ScumServer {
     showKillOnMap: boolean;
     showKillCoordinates: boolean;
     killAnnounceText: string;
-    maxSlots?: number;
+    slots?: number;
     uav?: UavDto;
 }
 

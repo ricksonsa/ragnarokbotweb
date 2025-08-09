@@ -52,31 +52,33 @@ public class KillLogJob(
                     continue;
                 }
 
-                HandleAnnounceText(cacheService, server, kill); // Announce kill in game
-
-                var squads = cacheService.GetSquads(server.Id);
-                var isSameSquad = IsSameSquad(kill, squads);
-
-                if (!server.ShowSameSquadKill && isSameSquad) return;
-
-                if (server.UseKillFeed)
+                if (IsCompliant())
                 {
-                    if (server.ShowKillOnMap) await HandleShowMap(logger, fileService, kill);
-                    await discordService.SendKillFeedEmbed(server, kill);
+                    HandleAnnounceText(cacheService, server, kill); // Announce kill in game
+
+                    var squads = cacheService.GetSquads(server.Id);
+                    var isSameSquad = IsSameSquad(kill, squads);
+
+                    if (!server.ShowSameSquadKill && isSameSquad) return;
+
+                    if (server.UseKillFeed)
+                    {
+                        if (server.ShowKillOnMap) await HandleShowMap(logger, fileService, kill);
+                        await discordService.SendKillFeedEmbed(server, kill);
+                    }
+
+                    var coinHandler = new PlayerCoinManager(unitOfWork);
+                    if (server.CoinKillAwardAmount > 0 && isSameSquad)
+                        await coinHandler.AddCoinsBySteamIdAsync(kill.KillerSteamId64!, server.Id, server.CoinKillAwardAmount);
+
+                    if (server.CoinDeathPenaltyAmount > 0 && !isSameSquad)
+                        await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
                 }
-
-                var coinHandler = new PlayerCoinManager(unitOfWork);
-                if (server.CoinKillAwardAmount > 0 && isSameSquad)
-                    await coinHandler.AddCoinsBySteamIdAsync(kill.KillerSteamId64!, server.Id, server.CoinKillAwardAmount);
-
-                if (server.CoinDeathPenaltyAmount > 0 && !isSameSquad)
-                    await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
 
                 logger.LogDebug("Adding new kill entry: {Killer} -> {Target}", kill.KillerName, kill.TargetName);
                 unitOfWork.ScumServers.Attach(server);
                 await unitOfWork.Kills.AddAsync(kill);
                 await unitOfWork.SaveAsync();
-
             }
         }
         catch (Exception ex)

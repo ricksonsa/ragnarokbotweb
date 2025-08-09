@@ -14,27 +14,13 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             _appDbContext = context;
         }
 
-        public override Task CreateOrUpdateAsync(Warzone entity)
-        {
-
-            //if (entity.ScumServer != null) _appDbContext.ScumServers.Attach(entity.ScumServer);
-            //if (_appDbContext.ChangeTracker.Entries<Warzone>().Any(e => e.Entity.Id == entity.Id))
-            //{
-            //    _appDbContext.ChangeTracker.Entries<Warzone>().FirstOrDefault(e => e.Entity.Id == entity.Id)!.State = EntityState.Detached;
-            //}
-
-            //foreach (var warzoneItem in entity.WarzoneItems)
-            //{
-            //    _appDbContext.Items.Attach(warzoneItem.Item);
-            //}
-
-            return base.CreateOrUpdateAsync(entity);
-        }
-
         public Task<List<Warzone>> FindActiveByServerId(long serverId)
         {
             return DbSet()
                 .Include(warzone => warzone.ScumServer)
+                .Include(warzone => warzone.ScumServer.Tenant)
+                .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                    .ThenInclude(payment => payment.Subscription)
                 .Where(warzone => warzone.Enabled && warzone.ScumServer.Id == serverId && warzone.Deleted == null)
                 .ToListAsync();
         }
@@ -43,6 +29,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return DbSet()
                 .Include(warzone => warzone.ScumServer)
+                .Include(warzone => warzone.ScumServer.Tenant)
+                .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                    .ThenInclude(payment => payment.Subscription)
                 .Include(warzone => warzone.WarzoneItems)
                     .ThenInclude(warzone => warzone.Item)
                 .Include(warzone => warzone.SpawnPoints)
@@ -57,6 +46,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return DbSet()
                 .Include(warzone => warzone.ScumServer)
+                .Include(warzone => warzone.ScumServer.Tenant)
+                .Include(warzone => warzone.ScumServer.Tenant.Payments)
+                    .ThenInclude(payment => payment.Subscription)
                 .Include(warzone => warzone.WarzoneItems)
                     .ThenInclude(warzone => warzone.Item)
                 .Include(warzone => warzone.SpawnPoints)

@@ -57,12 +57,8 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<PlayerDto> GetPlayer(long id)
         {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
-
             var player = await _playerRepository.FindByIdAsync(id);
             if (player is null) throw new NotFoundException("Player not found");
-            if (player.ScumServer.Id != serverId.Value) throw new UnauthorizedException("Unauthorized server");
 
             return _mapper.Map<PlayerDto>(player);
         }
@@ -70,8 +66,7 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<Page<PlayerDto>> GetPlayers(Paginator paginator, string? filter)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
-            var page = await _playerRepository.GetPageByServerId(paginator, serverId.Value, filter);
+            var page = await _playerRepository.GetPageByServerId(paginator, serverId!.Value, filter);
             var content = page.Content.Select(_mapper.Map<PlayerDto>);
             foreach (var player in content)
             {
@@ -248,6 +243,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (player is null)
                 throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
+
             if (player.IsVip())
                 throw new DomainException("Player already has ongoing vip");
 
@@ -285,6 +283,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (player is null)
                 throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
+
             if (player.IsSilenced())
                 throw new DomainException("Player already has ongoing silence");
 
@@ -309,6 +310,9 @@ namespace RagnarokBotWeb.Domain.Services
             var player = await _playerRepository.FindByIdAsync(id);
             if (player is null)
                 throw new NotFoundException("Player not found");
+
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
 
             if (player.IsBanned())
                 throw new DomainException("Player already has ongoing ban");
@@ -335,6 +339,9 @@ namespace RagnarokBotWeb.Domain.Services
             var player = await _playerRepository.FindByIdAsync(id);
             if (player is null)
                 throw new NotFoundException("Player not found");
+
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
 
             Vip? vip = player.RemoveVip();
 
@@ -374,6 +381,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (player is null)
                 throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
+
             Silence? silence = player.RemoveSilence();
 
             if (silence is null)
@@ -402,6 +412,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (player is null)
                 throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
+
             Ban? ban = player.RemoveBan();
 
             if (ban is null)
@@ -429,6 +442,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (player is null)
                 throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
+
             var role = player.DiscordRoles?.FirstOrDefault(role => role.DiscordId == roleId);
 
             if (role is null)
@@ -454,6 +470,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (player is null)
                 throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
+
             if (!dto.DiscordRoleId.HasValue)
                 throw new NotFoundException("Invalid role");
 
@@ -476,6 +495,9 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (player is null)
                 throw new NotFoundException("Player not found");
+
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
 
             if (dto.Amount > 0)
             {
@@ -500,6 +522,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (player is null)
                 throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
+
             if (!IsBotConnected())
                 throw new DomainException("There is no bots online at the moment");
 
@@ -517,6 +542,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (player is null)
                 throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
+
             if (!IsBotConnected())
                 throw new DomainException("There is no bots online at the moment");
 
@@ -533,6 +561,9 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (player is null)
                 throw new NotFoundException("Player not found");
+
+            ValidateServerOwner(player.ScumServer);
+            ValidateSubscription(player.ScumServer);
 
             if (!IsBotConnected())
                 throw new DomainException("There is no bots online at the moment");
@@ -606,7 +637,8 @@ namespace RagnarokBotWeb.Domain.Services
             if (server is null) throw new NotFoundException("Invalid server");
 
             var monthlyCounts = _unitOfWork.Players
-              .Where(player => player.CreateDate.Year == DateTime.UtcNow.Year)
+              .Include(player => player.ScumServer)
+              .Where(player => player.CreateDate.Year == DateTime.UtcNow.Year && player.ScumServerId == serverId.Value)
               .GroupBy(p => new { p.CreateDate.Year, p.CreateDate.Month })
               .Select(g => new
               {

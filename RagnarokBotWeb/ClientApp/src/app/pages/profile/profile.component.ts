@@ -18,6 +18,8 @@ import { Alert } from '../../models/alert';
 import { AuthenticationService } from '../../services/authentication.service';
 import { EventManager, EventWithContent } from '../../services/event-manager.service';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { COUNSTRIES } from '../../constants';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -47,6 +49,7 @@ export class ProfileComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);
   mismatchPass: boolean;
   loading = false;
+  countries = COUNSTRIES;
 
   constructor(
     private readonly authService: AuthenticationService,
@@ -58,7 +61,8 @@ export class ProfileComponent implements OnInit {
       name: [null, [Validators.required]],
       email: [null, [Validators.required]],
       password: [null],
-      confirmPassword: [null]
+      confirmPassword: [null],
+      country: [null, [Validators.required]]
     });
   }
 
@@ -68,6 +72,7 @@ export class ProfileComponent implements OnInit {
 
   loadAccount() {
     this.authService.account()
+      .pipe(take(1))
       .subscribe({
         next: (account) => {
           this.profileForm.patchValue(account);

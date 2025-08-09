@@ -57,9 +57,10 @@ export class AuthenticationService {
   }
 
 
-  account(force = false) {
+  account(force = false, cachedOnly = false) {
     const token = localStorage.getItem('access_token');
     if (force || !token || this.isTokenExpired(token)) {
+      if (cachedOnly) return of(null);
       return this.http.get<AccountDto>(`${environment.apiUrl}/api/account`)
         .pipe(
           catchError(err => {

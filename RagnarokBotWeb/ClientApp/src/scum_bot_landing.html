@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The SCUM Bot - Complete Automation for SCUM Servers With Special Launch Price</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0F0F0F;
+            color: #F0F0F0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1A1A1A 0%, #0F0F0F 100%);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #777777;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FAFAFA;
+        }
+
+        .drone-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            background: linear-gradient(45deg, #777777, #FFB84D);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .drone-icon::before {
+            content: '🚁';
+            font-size: 20px;
+            filter: grayscale(1) brightness(0) invert(1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #F0F0F0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #777777;
+        }
+
+        /* Language Selector */
+        .language-selector {
+            position: relative;
+            margin-left: 1rem;
+        }
+
+        .language-btn {
+            background: linear-gradient(45deg, #360F5A, #6a329f);
+            color: #fafafa;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .language-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(132, 0, 255, 0.3);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #1A1A1A;
+            border: 1px solid #360F5A;
+            border-radius: 10px;
+            padding: 10px 0;
+            min-width: 120px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .language-dropdown.show {
+            display: block;
+        }
+
+        .language-option {
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .language-option:hover {
+            background: #6a329f;
+            color: #0F0F0F;
+        }
+
+        .language-option.active {
+            background: rgba(174, 0, 255, 0.2);
+            color: #FAFAFA;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #0F0F0F 0%, #1a1a1a 100%);
+            padding: 120px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(30, 23, 131, 0.1) 0%, transparent 70%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #797979, #ffffff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.2); }
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            color: #F0F0F0;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #360F5A, #6a329f);
+            color: #FAFAFA;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(132, 0, 255, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(119, 0, 255, 0.5);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+            background: #1A1A1A;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #FAFAFA;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #0F0F0F 0%, #1A1A1A 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid #777777;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 4, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(119, 0, 255, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #FAFAFA;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #FAFAFA;
+        }
+
+        .feature-card p {
+            color: #F0F0F0;
+            opacity: 0.9;
+        }
+
+        /* Screenshots Section */
+        .screenshots {
+            padding: 80px 0;
+            background: #0F0F0F;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .screenshot-card {
+            background: #1A1A1A;
+            border-radius: 15px;
+            padding: 1rem;
+            border: 1px solid #777777;
+            transition: transform 0.3s ease;
+        }
+
+        .screenshot-card:hover {
+            transform: scale(1.05);
+        }
+
+        .screenshot-card img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .screenshot-card h4 {
+            color: #FAFAFA;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #1A1A1A 0%, #0F0F0F 100%);
+            text-align: center;
+        }
+
+        .pricing-card {
+            background: linear-gradient(135deg, #0F0F0F 0%, #1A1A1A 100%);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 2px solid #777777;
+            max-width: 400px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #777777, #FFB84D, #777777);
+            border-radius: 20px;
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .price {
+            font-size: 3rem;
+            color: #FAFAFA;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .price-period {
+            color: #F0F0F0;
+            opacity: 0.7;
+            margin-bottom: 2rem;
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .features-list li {
+            padding: 0.5rem 0;
+            color: #F0F0F0;
+        }
+
+        .features-list li::before {
+            content: '✓';
+            color: #FAFAFA;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* Footer */
+        footer {
+            background: #0F0F0F;
+            padding: 2rem 0;
+            text-align: center;
+            border-top: 1px solid #777777;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .language-selector {
+                margin-left: 0;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Floating Elements */
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .floating-element {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            /* background: #acacac; */
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+        .floating-element:nth-child(2) { top: 60%; left: 80%; animation-delay: 2s; }
+        .floating-element:nth-child(3) { top: 80%; left: 20%; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <img width="60" src="drone.png" alt="">
+                The SCUM Bot
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features" data-translate="nav-features">Features</a></li>
+                <li><a href="#screenshots" data-translate="nav-screenshots">Screenshots</a></li>
+                <li><a href="#pricing" data-translate="nav-pricing">Pricing</a></li>
+                <li><a href="#contact" data-translate="nav-contact">Contact</a></li>
+            </ul>
+            <div class="language-selector">
+                <button class="language-btn" onclick="toggleLanguageDropdown()">
+                    <span id="current-flag">🇺🇸</span>
+                    <span id="current-lang">EN</span>
+                    <span>▼</span>
+                </button>
+                <div class="language-dropdown" id="languageDropdown">
+                    <div class="language-option active" onclick="changeLanguage('en')">
+                        <span>🇺🇸</span>
+                        <span>English</span>
+                    </div>
+                    <div class="language-option" onclick="changeLanguage('pt')">
+                        <span>🇧🇷</span>
+                        <span>Português</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="floating-elements">
+            <!-- <div class="floating-element"></div>
+            <div class="floating-element"></div>
+            <div class="floating-element"></div> -->
+                <img class="floating-element" width="60" src="drone.png" alt="">
+                <img class="floating-element" width="60" src="drone.png" alt="">
+                <img class="floating-element" width="60" src="drone.png" alt="">
+                <img class="floating-element" width="60" src="drone.png" alt="">
+                <img class="floating-element" width="60" src="drone.png" alt="">
+                <img class="floating-element" width="60" src="drone.png" alt="">
+
+        </div>
+        <div class="container">
+            <div class="hero-content">
+                <h1>The SCUM Bot</h1>
+                <p data-translate="hero-subtitle">Complete automation for your SCUM server<br>Advanced management through Management Panel and Discord</p>
+                <a href="#pricing" class="cta-button" data-translate="hero-cta">Get Started Now</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title" data-translate="features-title">Powerful Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 data-translate="feature-setup-title">Quick Setup</h3>
+                    <p data-translate="feature-setup-desc">Plug and Play - everything ready and running with just a few clicks. Quick setup with no complications.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🪙</div>
+                    <h3 data-translate="feature-coin-title">Coin System</h3>
+                    <p data-translate="feature-coin-desc">Complete shop for in-game items, vehicles and teleports using virtual currency. Fully manageable via Discord and admin panel.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3 data-translate="feature-notifications-title">Notifications</h3>
+                    <p data-translate="feature-notifications-desc">Notify alerts, raids, kills and updated information about bunkers state directly on Discord.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3 data-translate="feature-rankings-title">Rankings</h3>
+                    <p data-translate="feature-rankings-desc">Top players by kills, kill distance and raids. Rankings automatically displayed on Discord.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛰️</div>
+                    <h3 data-translate="feature-uav-title">UAV System</h3>
+                    <p data-translate="feature-uav-desc">Map sectors area scan with image generation displayed on Discord. Fully customizable.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👑</div>
+                    <h3 data-translate="feature-vip-title">VIP Management</h3>
+                    <p data-translate="feature-vip-desc">Assign Discord roles with expiration time, along with in-game VIP through the web panel. Automatic removal when expires.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="screenshots" class="screenshots">
+        <div class="container">
+            <h2 class="section-title" data-translate="screenshots-title">Management Interface</h2>
+            <div class="screenshots-grid">
+                <div class="screenshot-card">
+                    <h4 data-translate="screenshot-packages-title">Package Management</h4>
+                    <p data-translate="screenshot-packages-desc">Complete system for creating and managing shop packages, with detailed price and availability settings.</p>
+                </div>
+                <div class="screenshot-card">
+                    <h4 data-translate="screenshot-warzones-title">Warzone Configuration</h4>
+                    <p data-translate="screenshot-warzones-desc">Intuitive interface to configure warzones, spawn points, teleports and all event parameters.</p>
+                </div>
+                <div class="screenshot-card">
+                    <h4 data-translate="screenshot-logs-title">Logs System</h4>
+                    <p data-translate="screenshot-logs-desc">Complete monitoring and easy access to your SCUM server logs at your fingertips.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title" data-translate="pricing-title">Special Launch Price</h2>
+            <div class="pricing-card">
+                <div class="price">$7,99</div>
+                <div class="price-period" data-translate="pricing-period">per month</div>
+                <ul class="features-list">
+                    <li data-translate="pricing-feature-1">Instant setup</li>
+                    <li data-translate="pricing-feature-2">Complete coin system</li>
+                    <li data-translate="pricing-feature-3">Automatic notifications</li>
+                    <li data-translate="pricing-feature-4">Dynamic rankings</li>
+                    <li data-translate="pricing-feature-5">UAV with image generation</li>
+                    <li data-translate="pricing-feature-6">Automatic VIP management</li>
+                    <li data-translate="pricing-feature-7">Web hosting compatible</li>
+                    <li data-translate="pricing-feature-8">Technical support included</li>
+                </ul>
+                <a href="#contact" class="cta-button" data-translate="pricing-cta">Subscribe Now</a>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contact">
+        <div class="container">
+            <p data-translate="footer-copyright">&copy; 2025 The SCUM Bot. Developed for administrators seeking excellence.</p>
+            <p data-translate="footer-contact">Contact us via Discord for more information and technical support.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Translations
+        const translations = {
+            en: {
+                'nav-features': 'Features',
+                'nav-screenshots': 'Screenshots',
+                'nav-pricing': 'Pricing',
+                'nav-contact': 'Contact',
+                'hero-subtitle': 'Complete automation for your SCUM server<br>Advanced management through Discord',
+                'hero-cta': 'Get Started Now',
+                'features-title': 'Powerful Features',
+                'feature-setup-title': 'Quick Setup',
+                'feature-setup-desc': 'Plug and Play - everything ready and running with just a few clicks. Quick setup with no complications.',
+                'feature-coin-title': 'Coin System',
+                'feature-coin-desc': 'Complete shop for in-game items, vehicles and teleports using virtual currency. Fully manageable via Discord and admin panel.',
+                'feature-notifications-title': 'Notifications',
+                'feature-notifications-desc': 'Notify raids and kills, updated information about bunkers state directly on Discord.',
+                'feature-rankings-title': 'Rankings',
+                'feature-rankings-desc': 'Top players by kills, kill distance and raids. Rankings automatically displayed on Discord.',
+                'feature-uav-title': 'UAV System',
+                'feature-uav-desc': 'Map sectors area scan with image generation displayed on Discord. Fully customizable.',
+                'feature-vip-title': 'VIP Management',
+                'feature-vip-desc': 'Assign Discord roles with expiration time, along with in-game VIP through the web panel. Automatic removal when expires.',
+                'screenshots-title': 'Professional Interface',
+                'screenshot-packages-title': 'Package Management',
+                'screenshot-packages-desc': 'Complete system for creating and managing shop packages, with detailed price and availability settings.',
+                'screenshot-warzones-title': 'Warzone Configuration',
+                'screenshot-warzones-desc': 'Intuitive interface to configure warzones, spawn points, teleports and all event parameters.',
+                'screenshot-logs-title': 'Logs System',
+                'screenshot-logs-desc': 'Complete monitoring of player login/logout with precise coordinates and detailed timestamps.',
+                'pricing-title': 'Special Launch Price',
+                'pricing-period': 'per month',
+                'pricing-feature-1': 'Instant setup',
+                'pricing-feature-2': 'Complete coin system',
+                'pricing-feature-3': 'Automatic notifications',
+                'pricing-feature-4': 'Dynamic rankings',
+                'pricing-feature-5': 'UAV with image generation',
+                'pricing-feature-6': 'Automatic VIP management',
+                'pricing-feature-7': 'Web hosting compatible',
+                'pricing-feature-8': 'Technical support included',
+                'pricing-cta': 'Subscribe Now',
+                'footer-copyright': '© 2025 The SCUM Bot. Developed for administrators seeking excellence.',
+                'footer-contact': 'Contact us via Discord for more information and technical support.'
+            },
+            pt: {
+                'nav-features': 'Funcionalidades',
+                'nav-screenshots': 'Screenshots',
+                'nav-pricing': 'Preços',
+                'nav-contact': 'Contato',
+                'hero-subtitle': 'Automatização completa para seu servidor SCUM<br>Gerenciamento avançado através da Paltaforma de Gestão e Discord',
+                'hero-cta': 'Começar Agora',
+                'features-title': 'Funcionalidades Poderosas',
+                'feature-setup-title': 'Configuração Rápida',
+                'feature-setup-desc': 'Plug and Play - tudo pronto e funcionando com apenas alguns cliques. Configuração rápida e sem complicações.',
+                'feature-coin-title': 'Sistema de Moedas',
+                'feature-coin-desc': 'Loja completa para itens do jogo, veículos e teleportes usando moeda virtual. Totalmente gerenciável via Discord e painel admin.',
+                'feature-notifications-title': 'Notificações',
+                'feature-notifications-desc': 'Notifique raids e kills, informações atualizadas sobre o estado dos bunkers diretamente no Discord.',
+                'feature-rankings-title': 'Rankings',
+                'feature-rankings-desc': 'Top players por kills, distância de kill e raids. Rankings exibidos automaticamente no Discord.',
+                'feature-uav-title': 'Sistema UAV',
+                'feature-uav-desc': 'Escaneamento de área dos setores do mapa com geração de imagens exibidas no Discord. Totalmente customizável.',
+                'feature-vip-title': 'Gerenciamento VIP',
+                'feature-vip-desc': 'Atribua roles do Discord com tempo de expiração, junto com VIP no jogo através do painel web. Remoção automática quando expira.',
+                'screenshots-title': 'Interface Profissional',
+                'screenshot-packages-title': 'Gerenciamento de Pacotes',
+                'screenshot-packages-desc': 'Sistema completo para criação e gerenciamento de pacotes da loja, com configurações detalhadas de preços e disponibilidade.',
+                'screenshot-warzones-title': 'Configuração de Warzones',
+                'screenshot-warzones-desc': 'Interface intuitiva para configurar warzones, pontos de spawn, teleportes e todos os parâmetros do evento.',
+                'screenshot-logs-title': 'Sistema de Logs',
+                'screenshot-logs-desc': 'Monitoramento completo de login/logout dos jogadores com coordenadas precisas e timestamps detalhados.',
+                'pricing-title': 'Preço Especial de Lançamento',
+                'pricing-period': 'por mês',
+                'pricing-feature-1': 'Setup instantâneo',
+                'pricing-feature-2': 'Sistema de moedas completo',
+                'pricing-feature-3': 'Notificações automáticas',
+                'pricing-feature-4': 'Rankings dinâmicos',
+                'pricing-feature-5': 'UAV com geração de imagens',
+                'pricing-feature-6': 'Gerenciamento VIP automático',
+                'pricing-feature-7': 'Compatível com web hosting',
+                'pricing-feature-8': 'Suporte técnico incluído',
+                'pricing-cta': 'Assinar Agora',
+                'footer-copyright': '© 2025 The SCUM Bot. Desenvolvido para administradores que buscam excelência.',
+                'footer-contact': 'Entre em contato via Discord para mais informações e suporte técnico.'
+            }
+        };
+
+        let currentLanguage = 'en';
+
+        // Language functions
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('languageDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Update UI
+            const currentFlag = document.getElementById('current-flag');
+            const currentLang = document.getElementById('current-lang');
+            
+            if (lang === 'en') {
+                currentFlag.textContent = '🇺🇸';
+                currentLang.textContent = 'EN';
+            } else {
+                currentFlag.textContent = '🇧🇷';
+                currentLang.textContent = 'PT';
+            }
+            
+            // Update active state
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            document.querySelector(`[onclick="changeLanguage('${lang}')"]`).classList.add('active');
+            
+            // Apply translations
+            applyTranslations(lang);
+            
+            // Close dropdown
+            document.getElementById('languageDropdown').classList.remove('show');
+            
+            // Store preference
+            localStorage.setItem('scum-bot-language', lang);
+        }
+
+        function applyTranslations(lang) {
+            const langData = translations[lang];
+            
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (langData[key]) {
+                    element.innerHTML = langData[key];
+                }
+            });
+        }
+
+        // Initialize language on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check stored preference
+            const storedLang = localStorage.getItem('scum-bot-language') || 'en';
+            if (storedLang !== 'en') {
+                changeLanguage(storedLang);
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const selector = document.querySelector('.language-selector');
+            const dropdown = document.getElementById('languageDropdown');
+            
+            if (!selector.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Header background on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(15, 15, 15, 0.95)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #1A1A1A 0%, #0F0F0F 100%)';
+            }
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe feature cards
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

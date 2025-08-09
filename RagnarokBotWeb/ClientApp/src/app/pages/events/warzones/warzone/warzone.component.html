@@ -17,7 +17,8 @@
 <br>
 <br>
 <div class="main">
-  <nz-card nzTitle="Warzone">
+  <nz-card nzSize="small" nzTitle="Warzone">
+    <div class="blocker"></div>
     <form nz-form [formGroup]="packageForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Name*</nz-form-label>
@@ -234,7 +235,8 @@
     }
   </nz-autocomplete>
 
-  <nz-card nzTitle="Warzone Items">
+  <nz-card nzSize="small" nzTitle="Warzone Items">
+    <div class="blocker"></div>
     <form [formGroup]="packageItemForm" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="searchControl">Item</nz-form-label>
@@ -291,7 +293,8 @@
     </form>
   </nz-card>
 
-  <nz-card nzTitle="Item Spawn Point">
+  <nz-card nzSize="small" nzTitle="Item Spawn Point">
+    <div class="blocker"></div>
     <form [formGroup]="itemSpawnPointForm" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Name</nz-form-label>
@@ -345,7 +348,8 @@
     </form>
   </nz-card>
 
-  <nz-card nzTitle="Warzone Teleport">
+  <nz-card nzSize="small" nzTitle="Warzone Teleport">
+    <div class="blocker"></div>
     <form [formGroup]="teleportForm" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Name</nz-form-label>

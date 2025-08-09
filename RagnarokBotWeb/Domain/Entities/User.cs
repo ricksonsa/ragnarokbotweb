@@ -11,6 +11,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public string PasswordHash { get; private set; }
         public byte[] PasswordSalt { get; private set; }
         public bool Active { get; set; }
+        public string? Country { get; set; }
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Default;
 
         public User() { }

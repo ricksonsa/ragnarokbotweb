@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             StatusText = new Label();
             StatusValue = new Label();
             LogBox = new RichTextBox();
@@ -43,6 +44,7 @@
             label1 = new Label();
             ServerListBox = new ListBox();
             debugCheckBox = new CheckBox();
+            thescumbotSite = new LinkLabel();
             AuthPanel.SuspendLayout();
             ServersPanel.SuspendLayout();
             SuspendLayout();
@@ -74,7 +76,7 @@
             LogBox.Location = new Point(12, 111);
             LogBox.Name = "LogBox";
             LogBox.ReadOnly = true;
-            LogBox.Size = new Size(495, 330);
+            LogBox.Size = new Size(495, 308);
             LogBox.TabIndex = 2;
             LogBox.Text = "";
             // 
@@ -163,7 +165,7 @@
             ServersPanel.Controls.Add(ServerListBox);
             ServersPanel.Location = new Point(12, 9);
             ServersPanel.Name = "ServersPanel";
-            ServersPanel.Size = new Size(495, 432);
+            ServersPanel.Size = new Size(495, 410);
             ServersPanel.TabIndex = 5;
             ServersPanel.Visible = false;
             // 
@@ -201,11 +203,23 @@
             debugCheckBox.Text = "Show Logs";
             debugCheckBox.UseVisualStyleBackColor = true;
             // 
+            // thescumbotSite
+            // 
+            thescumbotSite.AutoSize = true;
+            thescumbotSite.Location = new Point(12, 429);
+            thescumbotSite.Name = "thescumbotSite";
+            thescumbotSite.Size = new Size(128, 15);
+            thescumbotSite.TabIndex = 7;
+            thescumbotSite.TabStop = true;
+            thescumbotSite.Text = "www.thescumbot.com";
+            thescumbotSite.LinkClicked += thescumbotSite_LinkClicked;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(519, 453);
+            Controls.Add(thescumbotSite);
             Controls.Add(ServersPanel);
             Controls.Add(AuthPanel);
             Controls.Add(StartButton);
@@ -214,6 +228,7 @@
             Controls.Add(StatusText);
             Controls.Add(debugCheckBox);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             Name = "Form1";
             Text = "The SCUM Bot";
@@ -243,5 +258,6 @@
         private Label label1;
         private ListBox ServerListBox;
         private CheckBox debugCheckBox;
+        private LinkLabel thescumbotSite;
     }
 }

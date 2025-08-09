@@ -5,18 +5,18 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
     public interface IBotService
     {
-        void ConnectBot(Guid guid);
+        Task ConnectBot(Guid guid);
         void DisconnectBot(Guid guid);
         Task UpdatePlayersOnline(UpdateFromStringRequest input);
         bool IsBotOnline();
         bool IsBotOnline(long serverId);
-        BotCommand? GetCommand(Guid guid);
+        Task<BotCommand?> GetCommand(Guid guid);
         void PutCommand(BotCommand command);
         Task ConfirmDelivery(long orderId);
         List<BotUser> FindActiveBotsByServerId(long serverId);
         void ResetBotState(long value);
-        BotUser? FindBotByGuid(Guid guid);
-        void RegisterBot(Guid guid);
+        Task<BotUser?> FindBotByGuid(Guid guid);
+        Task RegisterBot(Guid guid);
 
         Task UpdateSquads(UpdateFromStringRequest input);
         List<BotUser> GetBots();

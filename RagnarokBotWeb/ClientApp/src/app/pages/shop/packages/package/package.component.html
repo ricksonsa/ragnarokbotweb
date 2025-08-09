@@ -17,7 +17,9 @@
 <br>
 <br>
 <div class="main">
-  <nz-card nzTitle="Package">
+  <nz-card nzTitle="Package" nzSize="small">
+    <div class="blocker"></div>
+
     <form nz-form [formGroup]="packageForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Name*</nz-form-label>
@@ -213,7 +215,8 @@
       item.name}}</nz-auto-option>
     }
   </nz-autocomplete>
-  <nz-card nzTitle="Package Items">
+  <nz-card nzTitle="Package Items" nzSize="small">
+    <div class="blocker"></div>
     <form [formGroup]="packageItemForm" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="searchControl">Item</nz-form-label>

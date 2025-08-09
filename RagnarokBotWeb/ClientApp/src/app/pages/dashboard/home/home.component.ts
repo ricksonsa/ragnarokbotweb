@@ -25,6 +25,7 @@ import { PlayerService } from '../../../services/player.service';
 import { PlayerStatsDto, LockpickStatsDto } from '../../../models/player-stats.dto';
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { Alert } from '../../../models/alert';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 Chart.register(...registerables);
 
 @Component({
@@ -42,7 +43,8 @@ Chart.register(...registerables);
     NzGridModule,
     NzTableModule,
     NzListModule,
-    NzDescriptionsModule
+    NzDescriptionsModule,
+    NzEmptyModule
   ]
 })
 export class HomeComponent implements OnInit, OnDestroy {
@@ -57,9 +59,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   loading = false;
 
   warzones: WarzoneDto[] = [];
-  bestSellers: GraphDto[];
+  bestSellers: GraphDto[] = [];
   kills: PlayerStatsDto[];
   lockpicks: LockpickStatsDto[];
+  playerStatistics: GraphDto[] = [];
 
   constructor(
     private readonly serverService: ServerService,
@@ -155,6 +158,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.playerService.getNewPlayerStatistics()
       .subscribe({
         next: (graph) => {
+          this.playerStatistics = graph;
           this.renderChart('newPlayers', 'bar', graph.map(x => x.name), graph.map(x => x.amount), graph.map(x => x.color));
         }
       })
@@ -224,16 +228,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.accountService.account()
       .pipe(switchMap((account) => {
         this.account = account;
-        this.maxSlots = account.server.maxSlots;
-        if (account.server?.battleMetricsId)
+        this.maxSlots = account.server?.slots ?? 0;
+        if (account.server?.battleMetricsId && this.battlemetricsData == null)
           return this.battlemetrics.getBattlemetricsStatus(account.server!.battleMetricsId);
         return of(null);
       }))
       .subscribe((battlemetrics) => {
         if (battlemetrics) {
           this.battlemetricsData = battlemetrics;
-          this.maxSlots = battlemetrics.data.attributes.maxPlayers;
-          this.playerCount = battlemetrics.data.attributes.players;
+          this.maxSlots = battlemetrics.data?.attributes?.maxPlayers ?? 0;
+          this.playerCount = battlemetrics.data?.attributes?.players ?? 0;
         }
       });
   }

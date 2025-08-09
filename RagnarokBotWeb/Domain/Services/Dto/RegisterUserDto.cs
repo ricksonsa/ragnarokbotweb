@@ -7,5 +7,6 @@
         public string Password { get; set; }
         public string ConfirmPassword { get; set; }
         public long? TenantId { get; set; }
+        public string? Country { get; set; }
     }
 }

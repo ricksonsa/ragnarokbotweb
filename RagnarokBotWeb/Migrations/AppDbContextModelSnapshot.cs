@@ -647,17 +647,29 @@ namespace RagnarokBotWeb.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<bool>("Confirmed")
-                        .HasColumnType("boolean");
+                    b.Property<DateTime?>("ConfirmDate")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("ExpireAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("OrderNumber")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<long>("SubscriptionId")
                         .HasColumnType("bigint");
 
                     b.Property<long>("TenantId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("Url")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -1026,7 +1038,7 @@ namespace RagnarokBotWeb.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subscription");
+                    b.ToTable("Subscriptions");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Teleport", b =>
@@ -1180,6 +1192,9 @@ namespace RagnarokBotWeb.Migrations
 
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamp without time zone");

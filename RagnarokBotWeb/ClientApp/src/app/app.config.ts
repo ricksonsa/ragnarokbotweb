@@ -24,6 +24,7 @@ const ngZorroConfig: NzConfig = {
   }
 };
 
+
 provideCharts({ registerables: [BarController, Legend, Colors, PieController] })
 registerLocaleData(en);
 

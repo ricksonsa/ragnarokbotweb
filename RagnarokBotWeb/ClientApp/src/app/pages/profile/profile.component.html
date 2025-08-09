@@ -15,10 +15,20 @@
         </nz-form-control>
       </nz-form-item>
 
-      <nz-form-item>
+      <nz-form-item nzRequired>
         <nz-form-label [nzSpan]="0" nzFor="name">Email</nz-form-label>
         <nz-form-control [nzSpan]="24" nzErrorTip="Please input the email!">
           <input formControlName="email" nz-input name="email" type="email" id="email" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzRequired>
+        <nz-form-label [nzSpan]="0" nzFor="country">Country</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Country is required!" [nzSpan]="24">
+          <nz-select nzSize="large" id="country" nzPlaceHolder="Select your country" formControlName="country"
+            nzAllowClear="false" nzShowSearch="true">
+            <nz-option *ngFor="let country of countries" [nzValue]="country.name" [nzLabel]="country.name"></nz-option>
+          </nz-select>
         </nz-form-control>
       </nz-form-item>
 
@@ -29,7 +39,7 @@
             placeholder="Input a new password. Leave it blank if not needed" />
         </nz-form-control>
       </nz-form-item>
-       <ng-template #mismatch>
+      <ng-template #mismatch>
         <nz-alert *ngIf="mismatchPass" nzType="error" nzMessage="Passwords mismatch"></nz-alert>
       </ng-template>
 

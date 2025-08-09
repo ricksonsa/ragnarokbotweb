@@ -25,7 +25,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public bool ShowMineKill { get; set; } = true;
         public bool ShowSameSquadKill { get; set; } = true;
         public bool ShowKillCoordinates { get; set; } = true;
-        public bool ShowKillOnMap { get; set; } = true;
+        public bool ShowKillOnMap { get; set; } = false;
         public string? KillAnnounceText { get; set; }
         #endregion
 
@@ -81,6 +81,11 @@ namespace RagnarokBotWeb.Domain.Entities
         public TimeZoneInfo GetTimeZoneOrDefault()
         {
             return TimeZoneId == null ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
+        }
+
+        public bool IsCompliant()
+        {
+            return Tenant?.IsCompliant() ?? false;
         }
     }
 }

@@ -10,7 +10,7 @@
     </nz-space>
   </ng-template>
   <nz-card nzTitle="Players" [nzExtra]="newItem">
-    <nz-table #basicTable [nzData]="suggestions$ | async" [nzFrontPagination]="false" nzShowSizeChanger
+    <nz-table #basicTable nzSize="small" [nzData]="suggestions$ | async" [nzFrontPagination]="false" nzShowSizeChanger
       [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)"
       [nzLoading]="isLoading" (nzPageSizeChange)="pageSizeChange($event)">
       <thead>

@@ -1,0 +1,8 @@
+<nz-card>
+  <nz-result nzTitle="Payment Canceled" nzStatus="error">
+    <div nz-result-extra>
+      <button nz-button nzType="primary" (click)="goPayments()">Go Payments</button>
+      <button nz-button (click)="addPayment()" [nzLoading]="loading">Buy Again</button>
+    </div>
+  </nz-result>
+</nz-card>

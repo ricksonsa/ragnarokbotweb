@@ -125,6 +125,8 @@ namespace RagnarokBotWeb.Domain.Business
 
         public async Task ValidateAsync(Order order)
         {
+            if (!order.ScumServer.IsCompliant()) throw new DomainException("This feature is not available at the moment.");
+
             if (order.Player is null)
                 throw new DomainException("Player not yet registered, please register using the Welcome Pack.");
 

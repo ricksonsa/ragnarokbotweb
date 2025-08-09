@@ -37,59 +37,67 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         {
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
-            var server = await GetServerAsync(context, ftpRequired: false);
-            var order = await _orderRepository.FindOneByServer(server.Id);
+            var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+            var orders = await _orderRepository.FindManyByServer(server.Id);
 
-            if (order is null) return;
+            if (orders.Count == 0) return;
             if (!_botService.IsBotOnline(server.Id)) return;
-            if (order.Player?.SteamId64 is null) return;
 
-            order.Status = EOrderStatus.Command;
-            _orderRepository.Update(order);
-            await _orderRepository.SaveAsync();
-            var command = new BotCommand();
+            var players = _cacheService.GetConnectedPlayers(server.Id);
 
-            if (order.OrderType == EOrderType.Pack)
+            foreach (var order in orders)
             {
-                if (order.Pack is null) return;
-                foreach (var packItem in order.Pack.PackItems)
-                {
-                    if (packItem.AmmoCount > 0)
-                        command.MagazineDelivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount, packItem.AmmoCount);
-                    else
-                        command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
-                }
+                if (order.Player?.SteamId64 is null) continue;
+                if (!players.Any(player => player.SteamID == order.Player.SteamId64)) continue;
 
-                var deliveryText = order.ResolvedDeliveryText();
-                if (deliveryText is not null) command.Say(deliveryText);
-
-                command.Data = "order_" + order.Id.ToString();
-            }
-            else if (order.OrderType == EOrderType.Warzone)
-            {
-                if (order.Warzone is null) return;
-                var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
-                command.Teleport(order.Player.SteamId64, teleport.Teleport.Coordinates);
-            }
-            else if (order.OrderType == EOrderType.UAV)
-            {
-                if (order.ScumServer?.Uav is null) return;
-
-                await new UavHandler(
-                    _discordService,
-                    _fileService,
-                    _cacheService,
-                    server).Handle(order.Player, order.Uav!);
-
-                var deliveryText = order.ResolvedDeliveryText();
-                if (deliveryText is not null) command.Say(deliveryText);
-
-                order.Status = EOrderStatus.Done;
+                order.Status = EOrderStatus.Command;
                 _orderRepository.Update(order);
                 await _orderRepository.SaveAsync();
-            }
+                var command = new BotCommand();
 
-            if (command != null) _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
+                if (order.OrderType == EOrderType.Pack)
+                {
+                    if (order.Pack is null) return;
+                    foreach (var packItem in order.Pack.PackItems)
+                    {
+                        if (packItem.AmmoCount > 0)
+                            command.MagazineDelivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount, packItem.AmmoCount);
+                        else
+                            command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
+                    }
+
+                    var deliveryText = order.ResolvedDeliveryText();
+                    if (deliveryText is not null) command.Say(deliveryText);
+
+                    command.Data = "order_" + order.Id.ToString();
+                }
+                else if (order.OrderType == EOrderType.Warzone)
+                {
+                    if (order.Warzone is null) return;
+                    var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
+                    command.Teleport(order.Player.SteamId64, teleport.Teleport.Coordinates);
+                }
+                else if (order.OrderType == EOrderType.UAV)
+                {
+                    if (order.ScumServer?.Uav is null) return;
+
+                    await new UavHandler(
+                        _discordService,
+                        _fileService,
+                        _cacheService,
+                        server).Handle(order.Player, order.Uav!);
+
+                    var deliveryText = order.ResolvedDeliveryText();
+                    if (deliveryText is not null) command.Say(deliveryText);
+
+                    order.Status = EOrderStatus.Done;
+                    _orderRepository.Update(order);
+                    await _orderRepository.SaveAsync();
+                }
+
+                if (command != null) _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
+
+            }
 
 
         }

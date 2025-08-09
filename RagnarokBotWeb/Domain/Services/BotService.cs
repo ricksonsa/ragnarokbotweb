@@ -31,10 +31,11 @@ namespace RagnarokBotWeb.Domain.Services
             _scumServerRepository = scumServerRepository;
         }
 
-        public void ConnectBot(Guid guid)
+        public async Task ConnectBot(Guid guid)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            ValidateSubscription(server!);
 
             try
             {
@@ -47,7 +48,6 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     _cacheService.GetConnectedBots(serverId.Value)[guid] = new BotUser(guid);
                 }
-
             }
             catch (Exception) { }
         }
@@ -63,19 +63,17 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task UpdatePlayersOnline(UpdateFromStringRequest input)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
             var players = ListPlayersParser.Parse(input.Value);
-            _cacheService.SetConnectedPlayers(serverId.Value, players);
+            _cacheService.SetConnectedPlayers(serverId!.Value, players);
             await _playerService.UpdateFromScumPlayers(serverId.Value, players);
         }
 
         public async Task UpdateSquads(UpdateFromStringRequest input)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server == null) return;
 
             var squads = ListSquadsParser.Parse(input.Value);
@@ -86,9 +84,8 @@ namespace RagnarokBotWeb.Domain.Services
         public bool IsBotOnline()
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
-            return _cacheService.GetConnectedBots(serverId.Value).Any();
+            return _cacheService.GetConnectedBots(serverId!.Value).Any();
         }
 
         public bool IsBotOnline(long serverId)
@@ -96,10 +93,12 @@ namespace RagnarokBotWeb.Domain.Services
             return _cacheService.GetConnectedBots(serverId).Any();
         }
 
-        public BotCommand? GetCommand(Guid guid)
+        public async Task<BotCommand?> GetCommand(Guid guid)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            ValidateSubscription(server!);
 
             ConnectBot(guid);
 
@@ -114,7 +113,7 @@ namespace RagnarokBotWeb.Domain.Services
         public void PutCommand(BotCommand command)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+            if (!serverId.HasValue || AccessLevel() == Enums.AccessLevel.Default) throw new UnauthorizedAccessException();
 
             _cacheService.GetCommandQueue(serverId.Value).Enqueue(command);
         }
@@ -134,9 +133,7 @@ namespace RagnarokBotWeb.Domain.Services
         public List<BotUser> GetBots()
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
-
-            return _cacheService.GetConnectedBots(serverId.Value).Values.ToList();
+            return _cacheService.GetConnectedBots(serverId!.Value).Values.ToList();
         }
 
         public void ResetBotState(long serverId)
@@ -145,7 +142,6 @@ namespace RagnarokBotWeb.Domain.Services
             var bots = _cacheService.GetConnectedBots(serverId).Values.ToList();
             foreach (var bot in bots)
             {
-
                 var diff = (now - bot.LastPinged!.Value).TotalMinutes;
                 if (diff >= 20)
                 {
@@ -155,10 +151,13 @@ namespace RagnarokBotWeb.Domain.Services
             }
         }
 
-        public BotUser? FindBotByGuid(Guid guid)
+        public async Task<BotUser?> FindBotByGuid(Guid guid)
         {
-
             var serverId = ServerId();
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+
+            ValidateSubscription(server!);
+
             if (!serverId.HasValue) throw new UnauthorizedAccessException();
 
             try
@@ -171,10 +170,12 @@ namespace RagnarokBotWeb.Domain.Services
             }
         }
 
-        public void RegisterBot(Guid guid)
+        public async Task RegisterBot(Guid guid)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            ValidateSubscription(server!);
 
             try
             {

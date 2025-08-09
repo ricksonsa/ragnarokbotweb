@@ -1,13 +1,13 @@
-<div class="main">
+<div class="main single">
   <ng-template #ftp>
     <nz-icon nzType="file-sync" nzTheme="outline"
       style="font-size: 20px; color: #9D8342;" /><span>&nbsp;&nbsp;FTP</span>
   </ng-template>
-  <nz-card [nzTitle]="ftp" [nzExtra]="saveFtpTemplate">
+  <nz-card class="flex-grow" nzSize="small" [nzTitle]="ftp" [nzExtra]="saveFtpTemplate" nzSize="small">
     <form nz-form [formGroup]="ftpForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="address">IP Address</nz-form-label>
-        <nz-form-control [nzSpan]="8" nzErrorTip="Please input your FTP IP Address!">
+        <nz-form-control [nzSpan]="12" nzErrorTip="Please input your FTP IP Address!">
           <input formControlName="address" nz-input name="address" type="text" id="address" />
         </nz-form-control>
       </nz-form-item>
@@ -21,14 +21,14 @@
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="username">Username</nz-form-label>
-        <nz-form-control [nzSpan]="8" nzErrorTip="Please input your FTP Username!">
+        <nz-form-control [nzSpan]="10" nzErrorTip="Please input your FTP Username!">
           <input nz-input formControlName="userName" name="username" type="text" id="username" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="password">Password</nz-form-label>
-        <nz-form-control [nzSpan]="8" nzErrorTip="Please input your FTP Password!">
+        <nz-form-control [nzSpan]="10" nzErrorTip="Please input your FTP Password!">
           <input nz-input formControlName="password" name="password" type="password" id="password" />
         </nz-form-control>
       </nz-form-item>
@@ -43,7 +43,8 @@
     <nz-icon nzType="sliders" nzTheme="outline" style="font-size: 20px;" /><span>&nbsp;&nbsp;Server Settings</span>
   </ng-template>
 
-  <nz-card [nzTitle]="server" [nzExtra]="saveSettings">
+  <nz-card class="flex-grow" nzSize="small" [nzTitle]="server" [nzExtra]="saveSettings" nzSize="small">
+    <div class="blocker"></div>
     <ng-template #noFtp>
       <nz-alert nzMessage="Valid FTP configuration is required." nzType="error"></nz-alert>
     </ng-template>
