@@ -11,11 +11,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{419876
 		compose.yml = compose.yml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RagnarokBotClient", "RagnarokBotClient\RagnarokBotClient.csproj", "{6E121485-756C-402F-B57B-3637CEFA2291}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheSCUMBot", "RagnarokBotClient\TheSCUMBot.csproj", "{6E121485-756C-402F-B57B-3637CEFA2291}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{570C706C-7A13-4FE3-B963-ADDEE57E5BC1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleAppTest", "ConsoleAppTest\ConsoleAppTest.csproj", "{DAD0E3B3-3213-4938-949F-9F666B5842A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleAppTest", "ConsoleAppTest\ConsoleAppTest.csproj", "{DAD0E3B3-3213-4938-949F-9F666B5842A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Updater", "Updater\Updater.csproj", "{7607BC8B-8814-470D-A7DA-765CF38ECA3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{DAD0E3B3-3213-4938-949F-9F666B5842A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DAD0E3B3-3213-4938-949F-9F666B5842A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DAD0E3B3-3213-4938-949F-9F666B5842A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7607BC8B-8814-470D-A7DA-765CF38ECA3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7607BC8B-8814-470D-A7DA-765CF38ECA3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7607BC8B-8814-470D-A7DA-765CF38ECA3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7607BC8B-8814-470D-A7DA-765CF38ECA3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

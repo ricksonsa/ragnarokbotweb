@@ -7,7 +7,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     {
         Task ConnectBot(Guid guid);
         void DisconnectBot(Guid guid);
-        Task UpdatePlayersOnline(UpdateFromStringRequest input);
         bool IsBotOnline();
         bool IsBotOnline(long serverId);
         Task<BotCommand?> GetCommand(Guid guid);
@@ -18,6 +17,8 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<BotUser?> FindBotByGuid(Guid guid);
         Task RegisterBot(Guid guid);
 
+        Task UpdatePlayersOnline(UpdateFromStringRequest input);
+        Task UpdateFlags(UpdateFromStringRequest input);
         Task UpdateSquads(UpdateFromStringRequest input);
         List<BotUser> GetBots();
     }

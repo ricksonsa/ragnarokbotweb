@@ -93,6 +93,10 @@ namespace RagnarokBotClient
             {
                 return await response.Content.ReadAsStringAsync()!;
             }
+            else
+            {
+                throw new Exception(response.StatusCode.ToString());
+            }
 
             return default!;
         }

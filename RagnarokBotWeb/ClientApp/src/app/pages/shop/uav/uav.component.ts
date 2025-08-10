@@ -19,7 +19,7 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzUploadFile, NzUploadModule } from 'ng-zorro-antd/upload';
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
-import { Observable, of, debounceTime, distinctUntilChanged, tap, switchMap } from 'rxjs';
+import { Observable, of, debounceTime, distinctUntilChanged, tap, switchMap, take } from 'rxjs';
 import { arrayBufferToBase64, toBase64 } from '../../../core/functions/file.functions';
 import { AccountDto } from '../../../models/account.dto';
 import { Alert } from '../../../models/alert';
@@ -119,6 +119,7 @@ export class UavComponent implements OnInit {
 
   loadAccount() {
     this.authService.account()
+      .pipe(take(1))
       .subscribe({
         next: (account) => {
           this.account = account;

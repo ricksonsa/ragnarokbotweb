@@ -9,6 +9,15 @@ namespace RagnarokBotWeb.Application
         public string Value { get; set; }
         public int Amount { get; set; } = 1;
         public ECommandType Type { get; set; }
+        public bool CheckTargetOnline { get; set; }
+
+        public BotCommandValue() { }
+
+
+        public BotCommandValue(bool checkTargetOnline)
+        {
+            CheckTargetOnline = checkTargetOnline;
+        }
     }
 
     public class BotCommand
@@ -18,6 +27,7 @@ namespace RagnarokBotWeb.Application
         public string Data { get; set; }
 
         public BotCommand() { }
+
 
         public BotCommand ListPlayers()
         {
@@ -37,12 +47,22 @@ namespace RagnarokBotWeb.Application
             return this;
         }
 
+        public BotCommand ListFlags()
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ListFlags
+            });
+            return this;
+        }
+
         public BotCommand Kick(string steamId)
         {
             Values.Add(new BotCommandValue
             {
                 Type = ECommandType.Kick,
-                Value = steamId
+                Value = steamId,
+                CheckTargetOnline = true
             });
             return this;
         }
@@ -52,7 +72,8 @@ namespace RagnarokBotWeb.Application
             Values.Add(new BotCommandValue
             {
                 Type = ECommandType.Ban,
-                Value = steamId
+                Value = steamId,
+                CheckTargetOnline = true
             });
             return this;
         }
@@ -78,14 +99,15 @@ namespace RagnarokBotWeb.Application
             return this;
         }
 
-        public BotCommand Teleport(string target, string coordinates)
+        public BotCommand Teleport(string target, string coordinates, bool checkTargetOnline = false)
         {
             Values.Add(new BotCommandValue
             {
                 Target = target,
                 Type = ECommandType.TeleportPlayer,
                 Value = target,
-                Coordinates = coordinates
+                Coordinates = coordinates,
+                CheckTargetOnline = checkTargetOnline
             });
             return this;
         }
@@ -98,6 +120,7 @@ namespace RagnarokBotWeb.Application
                 Type = ECommandType.SimpleDelivery,
                 Value = value,
                 Amount = amount,
+                CheckTargetOnline = true
             });
             return this;
         }
@@ -110,7 +133,8 @@ namespace RagnarokBotWeb.Application
                 Type = ECommandType.MagazineDelivery,
                 Value = ammoCount.ToString(),
                 Amount = amount,
-                Coordinates = coordinates
+                Coordinates = coordinates,
+                CheckTargetOnline = true
             });
             return this;
         }
@@ -124,6 +148,7 @@ namespace RagnarokBotWeb.Application
                 Target = target,
                 Value = value,
                 Amount = amount,
+                CheckTargetOnline = true
             });
             return this;
         }
@@ -144,7 +169,8 @@ namespace RagnarokBotWeb.Application
             {
                 Type = ECommandType.ChangeFame,
                 Target = target,
-                Value = amount.ToString()
+                Value = amount.ToString(),
+                CheckTargetOnline = true
             });
             return this;
         }
@@ -155,7 +181,8 @@ namespace RagnarokBotWeb.Application
             {
                 Type = ECommandType.ChangeGold,
                 Target = target,
-                Value = amount.ToString()
+                Value = amount.ToString(),
+                CheckTargetOnline = true
             });
             return this;
         }
@@ -166,7 +193,8 @@ namespace RagnarokBotWeb.Application
             {
                 Type = ECommandType.ChangeMoney,
                 Target = target,
-                Value = amount.ToString()
+                Value = amount.ToString(),
+                CheckTargetOnline = true
             });
             return this;
         }

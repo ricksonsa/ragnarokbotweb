@@ -20,7 +20,7 @@ namespace RagnarokBotWeb.Application.Handlers
             var image = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/eliminations", cdnUrlPrefix: "images/eliminations");
             var embed = new CreateEmbed()
             {
-                Color = Color.DarkPurple,
+                Color = Color.DarkOrange,
                 GuildId = server.Guild!.DiscordId,
                 DiscordId = server.Uav.DiscordId!.Value,
                 Title = $"SECTOR {sector} UAV SCAN",

@@ -584,7 +584,8 @@ namespace RagnarokBotWeb.Domain.Services
             if (server is null) throw new NotFoundException("Invalid server");
 
             var lockpicks = _unitOfWork.Lockpicks
-            .Where(l => l.ScumServer.Id == server.Id);
+                .Include(kill => kill.ScumServer)
+                .Where(l => l.ScumServer.Id == server.Id);
 
             return await lockpicks
                 .GroupBy(l => new { l.Name, l.LockType })
@@ -598,11 +599,42 @@ namespace RagnarokBotWeb.Domain.Services
                         ? (double)g.Count(l => l.Success) / g.Count() * 100
                         : 0
                 })
-                .OrderByDescending(p => p.SuccessCount)
-                .ThenByDescending(p => p.SuccessRate)
+                .OrderByDescending(p => p.SuccessRate)
+                .ThenByDescending(p => p.SuccessCount)
                 .Take(20)
                 .ToListAsync();
         }
+
+        public async Task<List<LockpickStatsDto>> LockpickRank(string steamId)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
+
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Invalid server");
+
+            var lockpicks = _unitOfWork.Lockpicks
+                .Include(kill => kill.ScumServer)
+                .Where(l => l.ScumServer.Id == server.Id && l.SteamId64 == steamId);
+
+            return await lockpicks
+                .GroupBy(l => new { l.Name, l.LockType })
+                .Select(g => new LockpickStatsDto
+                {
+                    PlayerName = g.Key.Name,
+                    LockType = g.Key.LockType,
+                    SuccessCount = g.Count(l => l.Success),
+                    FailCount = g.Count(l => !l.Success),
+                    SuccessRate = g.Any()
+                        ? (double)g.Count(l => l.Success) / g.Count() * 100
+                        : 0
+                })
+                .OrderByDescending(p => p.SuccessRate)
+                .ThenByDescending(p => p.SuccessCount)
+                .Take(20)
+                .ToListAsync();
+        }
+
 
         public async Task<List<PlayerStatsDto>> KillRank()
         {
@@ -615,6 +647,31 @@ namespace RagnarokBotWeb.Domain.Services
             // Filter kills by server and period
             var kills = _unitOfWork.Kills
                 .Where(k => k.ScumServer.Id == server.Id);
+
+            // Group by KillerName
+            return await kills
+                .GroupBy(k => k.KillerName)
+                .Select(g => new PlayerStatsDto()
+                {
+                    PlayerName = g.Key!,
+                    SteamId = g.FirstOrDefault(x => x.KillerName == g.Key)!.KillerSteamId64!,
+                    KillCount = g.Count()
+                })
+                .OrderByDescending(k => k.KillCount)
+                .ToListAsync();
+        }
+
+        public async Task<List<PlayerStatsDto>> KillRank(string steamId)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
+
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Invalid server");
+
+            // Filter kills by server and period
+            var kills = _unitOfWork.Kills
+                .Where(k => k.ScumServer.Id == server.Id && k.KillerSteamId64 == steamId);
 
             // Group by KillerName
             return await kills

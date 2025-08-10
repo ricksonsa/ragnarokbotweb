@@ -38,7 +38,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         private EmbedFooterBuilder GetAuthor()
         {
-            return new EmbedFooterBuilder().WithText("www.thescumbot.com").WithIconUrl(_appSettings.BaseUrl + "/images/ragnarok-logo.png");
+            return new EmbedFooterBuilder().WithText("bot").WithIconUrl(_appSettings.BaseUrl + "/images/bot.png");
         }
 
         private async Task ClearBefore(Guild guild)
@@ -75,7 +75,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithTitle(createEmbed.Title)
                 .WithDescription(createEmbed.Text)
                 .WithFooter(GetAuthor())
-                .WithColor(Color.DarkPurple);
+                .WithColor(Color.DarkOrange);
 
             if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{createEmbed.ImageUrl}");
             if (createEmbed.TimeStamp) embedBuilder.WithCurrentTimestamp();
@@ -237,7 +237,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             var builder = new EmbedBuilder()
                 .WithTitle($"🔐 TOP LOCK PICKERS - {lockType}")
-                .WithColor(Color.DarkPurple)
+                .WithColor(Color.DarkOrange)
+                .WithFooter(GetAuthor())
                 .WithCurrentTimestamp();
 
             var sb = new StringBuilder();
@@ -269,7 +270,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             var builder = new EmbedBuilder()
              .WithTitle($"{DiscordEmoji.Dart} SNIPER RANK")
-             .WithColor(Color.DarkPurple)
+             .WithColor(Color.DarkOrange)
+             .WithFooter(GetAuthor())
              .WithCurrentTimestamp();
 
             var sb = new StringBuilder();
@@ -280,7 +282,7 @@ namespace RagnarokBotWeb.Domain.Services
             int rank = 1;
             foreach (var p in players)
             {
-                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {p.KillDistance,12:F1} | {Truncate(p.WeaponName, 16)}");
+                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {Math.Round(p.KillDistance / 1000f),12:F1} | {Truncate(p.WeaponName, 16)}");
                 rank++;
             }
 
@@ -299,7 +301,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             var builder = new EmbedBuilder()
             .WithTitle($"🏆 Top {topCount} Killers ({period})")
-            .WithColor(Color.Purple)
+            .WithColor(Color.DarkOrange)
+            .WithFooter(GetAuthor())
             .WithCurrentTimestamp();
 
             var sb = new StringBuilder();
@@ -506,9 +509,8 @@ namespace RagnarokBotWeb.Domain.Services
             var embedBuilder = new EmbedBuilder()
                 .WithTitle(server.Uav.Name)
                 .WithDescription(server.Uav.Description)
-                .WithColor(Color.DarkPurple)
-                .WithFooter(GetAuthor())
-                .WithTimestamp(DateTimeOffset.UtcNow);
+                .WithColor(Color.DarkOrange)
+                .WithFooter(GetAuthor());
 
             if (server.Uav.Price > 0)
                 embedBuilder.AddField(new EmbedFieldBuilder().WithName("Price").WithValue(server.Uav.Price).WithIsInline(true));
@@ -531,7 +533,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (channel is null) return;
 
             var embedBuilder = new EmbedBuilder()
-                .WithColor(Color.DarkPurple)
+                .WithColor(Color.DarkOrange)
                 .WithFooter(GetAuthor())
                 .WithCurrentTimestamp();
 
@@ -549,15 +551,15 @@ namespace RagnarokBotWeb.Domain.Services
                 embedBuilder.AddField("Weapon", kill.DisplayWeapon, false);
 
             if (server.ShowKillDistance)
-                embedBuilder.AddField("Distance", kill.Distance, false);
+                embedBuilder.AddField("Distance", kill.Distance.HasValue ? $"{Math.Round(kill.Distance.Value / 1000f)}m" : "Unknown", false);
 
             if (server.ShowKillSector)
                 embedBuilder.AddField("Sector", kill.Sector, false);
 
             if (server.ShowKillCoordinates)
             {
-                embedBuilder.AddField("Killer Coordinates", $"{kill.KillerX} {kill.KillerY} {kill.KillerZ}", true);
-                embedBuilder.AddField("Victim Coordinates", $"{kill.VictimX} {kill.VictimY} {kill.VictimZ}", true);
+                embedBuilder.AddField("Killer Coordinates", $"{new ScumCoordinate(kill.KillerX, kill.KillerY, kill.KillerZ)}", true);
+                embedBuilder.AddField("Victim Coordinates", $"{new ScumCoordinate(kill.VictimX, kill.VictimY, kill.VictimZ)}", true);
             }
 
             if (server.ShowKillOnMap)

@@ -47,6 +47,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             string lockType)
         {
             var lockpicks = unitOfWork.Lockpicks
+                .Include(kill => kill.ScumServer)
                 .Where(l => l.ScumServer.Id == server.Id && l.LockType == lockType && l.AttemptDate.Date == DateTime.UtcNow.Date);
 
             var stats = await lockpicks

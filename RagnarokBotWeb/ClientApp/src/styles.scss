@@ -164,7 +164,7 @@ mat-option {
         font-weight: 900;
         font-size: 30px;
         width: 100% !important;
-        z-index: 999;
+    z-index: 999;
         pointer-events: all;
         position: absolute !important;
         background-color: rgba(255, 255, 255, 0.1);
@@ -173,4 +173,8 @@ mat-option {
         text-shadow: -3px 3px 15px black;
     }
 
+}
+
+form {
+    padding: 10px !important;
 }

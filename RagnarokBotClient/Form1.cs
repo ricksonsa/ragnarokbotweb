@@ -4,6 +4,7 @@ using Shared.Security;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
+using TheSCUMBot;
 
 namespace RagnarokBotClient
 {
@@ -27,8 +28,9 @@ namespace RagnarokBotClient
         private long _timeToLoadWorld = 30;
         private IniFile _iniFile;
 
-        public Guid Guid { get; set; }
+        private const string BASE_URL = "https://api.thescumbot.com:8082";
 
+        public Guid Guid { get; set; }
 
         public Form1()
         {
@@ -40,8 +42,78 @@ namespace RagnarokBotClient
             LoadCredentials();
             _scumManager = new ScumManager();
             Guid = Guid.NewGuid();
-            _remote = new WebApi(new Settings("http://localhost:8080"));
+            _remote = new WebApi(new Settings(BASE_URL));
             LoadIni();
+            Text += $" - {GetVersion()}";
+            Task.Run(CheckVersion);
+        }
+
+        private string GetVersion()
+        {
+            Assembly runningAssembly = Assembly.GetEntryAssembly();
+            if (runningAssembly == null)
+            {
+                runningAssembly = Assembly.GetExecutingAssembly();
+            }
+            var version = runningAssembly.GetName().Version;
+            return $"{version.Major}.{version.Minor}.{version.Build}";
+        }
+
+        private async Task CheckVersion()
+        {
+            try
+            {
+                var result = await _remote.GetAsync<UpdateResult>("api/application/version");
+                if (result.Version != GetVersion())
+                {
+                    var dialogResult = MessageBox.Show("New version available, click ok to update.", "Update", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                    if (dialogResult == DialogResult.OK)
+                    {
+                        await DownloadVersion(result.Version);
+                        UpdateStatus("Updating version...", force: true);
+                        await Task.Delay(1000);
+                        StartUpdater();
+                        Application.Exit();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+            }
+
+        }
+
+        private async Task DownloadVersion(string version)
+        {
+            string zipPath = Path.Combine(Path.GetTempPath(), "thescumbot.zip");
+            using (HttpClient client = new HttpClient())
+            using (HttpResponseMessage response = await client.GetAsync($"{BASE_URL}/images/thescumbot-{version}.zip"))
+            using (Stream stream = await response.Content.ReadAsStreamAsync())
+            using (FileStream fileStream = new FileStream(zipPath, FileMode.Create))
+            {
+                await stream.CopyToAsync(fileStream);
+            }
+        }
+
+        private void StartUpdater()
+        {
+            string updaterPath = Path.Combine(Application.StartupPath, "Updater.exe");
+            try
+            {
+                ProcessStartInfo psi = new()
+                {
+                    FileName = updaterPath,
+                    UseShellExecute = false,
+                    CreateNoWindow = false
+                };
+
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void LoadIni()
@@ -183,7 +255,8 @@ namespace RagnarokBotClient
                 AuthFeedback.Invoke(new Action(() => AuthFeedback.Visible = true));
                 tokenResult = null;
                 Debug.WriteLine(ex.Message);
-                UpdateStatus("Failed to connect.");
+                UpdateStatus("Failed to connect.", force: true);
+                UpdateStatus(ex.Message, force: true);
             }
             finally
             {
@@ -211,7 +284,8 @@ namespace RagnarokBotClient
                 AuthFeedback.Invoke(new Action(() => AuthFeedback.Visible = true));
                 tokenResult = null;
                 Debug.WriteLine(ex.Message);
-                UpdateStatus("Failed to connect.");
+                UpdateStatus("Failed to connect.", force: true);
+                UpdateStatus(ex.Message, force: true);
             }
 
             if (tokenResult is not null)
@@ -418,7 +492,7 @@ namespace RagnarokBotClient
             Stop();
         }
 
-        private void UpdateStatus(string status, bool changeLabel = true)
+        private void UpdateStatus(string status, bool changeLabel = true, bool force = false)
         {
             var action = new Action(() => LogBox.Text += $"\n {new DateTimeOffset(DateTime.Now)} {status}");
             var clearTextAction = new Action(() =>
@@ -428,7 +502,7 @@ namespace RagnarokBotClient
             if (StatusValue.InvokeRequired)
             {
                 if (changeLabel) StatusValue.Invoke(new Action(() => StatusValue.Text = status));
-                if (debugCheckBox.Checked)
+                if (debugCheckBox.Checked && !force)
                 {
                     StatusValue.Invoke(action);
                     StatusValue.Invoke(clearTextAction);
@@ -437,7 +511,7 @@ namespace RagnarokBotClient
             else
             {
                 if (changeLabel) StatusValue.Text = status;
-                if (debugCheckBox.Checked)
+                if (debugCheckBox.Checked && !force)
                 {
                     action?.Invoke();
                     clearTextAction?.Invoke();
@@ -477,6 +551,7 @@ namespace RagnarokBotClient
 
         private void ServerListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (ServerListBox.SelectedIndex == -1) return;
             var test = ((dynamic)sender).SelectedItem as string;
             _serverId = long.Parse(test!.Split(" - ")[0]);
             ServersPanel.Invoke(new Action(() => ServersPanel.Visible = false));

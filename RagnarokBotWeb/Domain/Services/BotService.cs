@@ -69,6 +69,18 @@ namespace RagnarokBotWeb.Domain.Services
             await _playerService.UpdateFromScumPlayers(serverId.Value, players);
         }
 
+        public async Task UpdateFlags(UpdateFromStringRequest input)
+        {
+            var serverId = ServerId();
+
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            if (server == null) return;
+
+            var flags = ListFlagsParser.Parse(input.Value);
+            _cacheService.SetFlags(serverId.Value, flags);
+            await new ScumFileProcessor(server).SaveFlagList(JsonConvert.SerializeObject(flags));
+        }
+
         public async Task UpdateSquads(UpdateFromStringRequest input)
         {
             var serverId = ServerId();
@@ -100,10 +112,26 @@ namespace RagnarokBotWeb.Domain.Services
             var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             ValidateSubscription(server!);
 
-            ConnectBot(guid);
+            await ConnectBot(guid);
+
 
             if (_cacheService.GetCommandQueue(serverId.Value).TryDequeue(out var command))
             {
+                if (command.Values.Any(x => x.CheckTargetOnline))
+                {
+                    try
+                    {
+                        if (_cacheService.GetConnectedPlayers(serverId.Value).Any(player => player.SteamID == command.Values.FirstOrDefault(x => x.CheckTargetOnline)?.Target))
+                        {
+                            _cacheService.GetCommandQueue(serverId.Value).Enqueue(command);
+                            return null;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        return command;
+                    }
+                }
                 return command;
             }
 

@@ -29,6 +29,7 @@ import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { ChannelDto } from '../../../models/channel.dto';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { Constants } from '../../../constants';
+import { switchMap, take } from 'rxjs';
 registerLocaleData(localePT);
 registerLocaleData(localeES);
 registerLocaleData(localeDE);
@@ -182,12 +183,16 @@ export class ServerComponent implements OnInit {
 
     this.savingFtp = true;
     this.serverService.updateFtp(this.ftpForm.value)
+      .pipe(switchMap((value) => {
+        this.accountDto!.server = value;
+        this.ftpForm.patchValue(value.ftp!);
+        this.savingFtp = false;
+        this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('', 'Ftp Settings Success', 'success')));
+        return this.authService.account(true);
+      }),
+      take(1))
       .subscribe({
         next: (value) => {
-          this.accountDto!.server = value;
-          this.ftpForm.patchValue(value.ftp!);
-          this.savingFtp = false;
-          this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('', 'Ftp Settings Success', 'success')));
           location.reload();
         },
         error: (err) => {

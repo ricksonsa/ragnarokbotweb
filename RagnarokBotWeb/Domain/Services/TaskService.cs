@@ -88,13 +88,19 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity($"{nameof(ListPlayersJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            await scheduler.ScheduleJob(job, OneMinTrigger());
 
             job = JobBuilder.Create<ListSquadsJob>()
                 .WithIdentity($"{nameof(ListSquadsJob)}({server.Id})", $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?"));
+
+            job = JobBuilder.Create<ListFlagsJob>()
+                .WithIdentity($"{nameof(ListFlagsJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 0/2 * * ?"));
 
             job = JobBuilder.Create<OrderCommandJob>()
                  .WithIdentity($"{nameof(OrderCommandJob)}({server.Id})", $"ServerJobs({server.Id})")
@@ -279,7 +285,7 @@ namespace RagnarokBotWeb.Domain.Services
 
                 try
                 {
-                    var raidTimeString = await processor.ReadLocalRaidTimesAsync();
+                    var raidTimeString = await processor.ReadLocalRaidTimesAsync(stoppingToken);
                     if (raidTimeString != null)
                     {
                         var raidTimes = JsonConvert.DeserializeObject<RaidTimes>(raidTimeString);
@@ -302,16 +308,39 @@ namespace RagnarokBotWeb.Domain.Services
 
                 try
                 {
-                    var squadListString = await processor.ReadSquadListAsync();
+                    var squadListString = await processor.ReadSquadListAsync(stoppingToken);
                     if (squadListString != null)
                     {
-                        var squads = JsonConvert.DeserializeObject<List<Shared.Models.Squad>>(squadListString);
+                        var squads = JsonConvert.DeserializeObject<List<Shared.Models.ScumSquad>>(squadListString);
                         if (squads != null) _cacheService.SetSquads(server.Id, squads);
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogDebug("LoadSquadsHostedService error reading server initial files -> {Ex}", ex.Message);
+                }
+            }
+        }
+
+        public async Task LoadFlags(CancellationToken stoppingToken)
+        {
+
+            foreach (var server in await _scumServerRepository.FindActive())
+            {
+                var processor = new ScumFileProcessor(server);
+
+                try
+                {
+                    var flagListString = await processor.ReadFlagListAsync(stoppingToken);
+                    if (flagListString != null)
+                    {
+                        var flags = JsonConvert.DeserializeObject<List<Shared.Models.ScumFlag>>(flagListString);
+                        if (flags != null) _cacheService.SetFlags(server.Id, flags);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("LoadFlagsHostedService error reading server initial files -> {Ex}", ex.Message);
                 }
             }
         }

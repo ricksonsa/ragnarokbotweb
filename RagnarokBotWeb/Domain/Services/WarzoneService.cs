@@ -84,7 +84,7 @@ namespace RagnarokBotWeb.Domain.Services
                 GuildId = warzone.ScumServer!.Guild!.DiscordId,
                 DiscordId = ulong.Parse(warzone.DiscordChannelId!),
                 Fields = GetFields(warzone),
-                Color = warzone.IsVipOnly ? Color.Gold : Color.DarkPurple,
+                Color = warzone.IsVipOnly ? Color.Gold : Color.DarkOrange,
                 Text = warzone.Description,
                 ImageUrl = warzone.ImageUrl,
                 Title = warzone.Name

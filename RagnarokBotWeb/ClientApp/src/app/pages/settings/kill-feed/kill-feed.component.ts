@@ -19,6 +19,7 @@ import { AuthenticationService } from '../../../services/authentication.service'
 import { ServerService } from '../../../services/server.service';
 import { Alert } from '../../../models/alert';
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-kill-feed',
@@ -88,6 +89,7 @@ export class KillFeedComponent implements OnInit {
 
   loadAccount(force = false) {
     this.authService.account(force)
+      .pipe(take(1))
       .subscribe({
         next: (account) => {
           this.account = account;

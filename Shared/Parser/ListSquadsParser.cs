@@ -5,9 +5,9 @@ namespace Shared.Parser
 {
     public static class ListSquadsParser
     {
-        public static List<Squad> Parse(string input)
+        public static List<ScumSquad> Parse(string input)
         {
-            var squads = new List<Squad>();
+            var squads = new List<ScumSquad>();
             string[] values = Regex.Split(input.TrimStart().TrimEnd(), $"\r\n\r\n");
 
             foreach (string value in values)
@@ -16,7 +16,7 @@ namespace Shared.Parser
                 var squadHeaderMatch = Regex.Match(value, @"\[SquadId:\s*(\d+)\s+SquadName:\s*(.+?)\]");
                 if (squadHeaderMatch.Success)
                 {
-                    var squad = new Squad
+                    var squad = new ScumSquad
                     {
                         SquadId = int.Parse(squadHeaderMatch.Groups[1].Value),
                         SquadName = squadHeaderMatch.Groups[2].Value

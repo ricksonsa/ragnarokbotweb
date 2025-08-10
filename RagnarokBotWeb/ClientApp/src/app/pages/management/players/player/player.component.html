@@ -235,7 +235,7 @@
     <p nz-typography nzType="secondary">Players added to whitelist will have priority on joining the server, and
       the game will kick a non whitelisted players when it's full.</p>
     <br>
-    <nz-select [(ngModel)]="selectedDiscordId" style="width: 100%;" nzPlaceHolder="Select the discord role">
+    <nz-select nzShowSearch [(ngModel)]="selectedDiscordId" style="width: 100%;" nzPlaceHolder="Select the discord role">
       <nz-option *ngFor="let role of discordRoles" [nzValue]="role.discordId" [nzLabel]="role.name"></nz-option>
     </nz-select>
     <p nz-typography nzType="secondary">The selected role will be applied to the player on discord and will be

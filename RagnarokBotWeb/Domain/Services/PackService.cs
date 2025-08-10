@@ -88,7 +88,7 @@ namespace RagnarokBotWeb.Domain.Services
                 GuildId = pack.ScumServer.Guild!.DiscordId,
                 Text = pack.Description,
                 Fields = GetFields(pack),
-                Color = pack.IsVipOnly ? Color.Gold : Color.DarkPurple,
+                Color = pack.IsVipOnly ? Color.Gold : Color.DarkOrange,
                 ImageUrl = pack.ImageUrl,
                 Title = pack.Name
             };

@@ -75,8 +75,7 @@ public class GamePlayJob(
                     var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
                     var result = await extractor.ExtractMapWithPoints(
                         centerCoord,
-                        [new ScumCoordinate(lockpick.X, lockpick.Y).WithLabel(lockpick.TargetObject)],
-                        256);
+                        [new ScumCoordinate(lockpick.X, lockpick.Y).WithLabel(lockpick.TargetObject)]);
 
                     var imageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/lockpicks", cdnUrlPrefix: "images/lockpicks");
                     var embed = new CreateEmbed()
@@ -116,16 +115,33 @@ public class GamePlayJob(
             {
                 if (!server.AllowMinesOutsideFlag)
                 {
-                    var msg = $"{trapLog.User} armed a mine outside flag area!";
-                    if (server.CoinReductionPerInvalidMineKill > 0) msg += " Coin penalty applied";
+                    var squad = cache.GetSquads(server.Id).FirstOrDefault(squad => squad.Members.Any(member => member.SteamId == trapLog.SteamId));
+                    if (squad is null) return;
 
-                    var command = new BotCommand()
-                        .Teleport(trapLog.SteamId, $"{trapLog.X} {trapLog.Y} {trapLog.Z}");
+                    var squadeLeader = squad.Members.FirstOrDefault(member => member.MemberRank == 4);
+                    if (squadeLeader is null) return;
 
-                    if (server.AnnounceMineOutsideFlag) command.Say(msg);
+                    var flag = cache.GetFlags(server.Id).FirstOrDefault(flag => flag.SteamId == squadeLeader.SteamId);
+                    if (flag is null) return;
 
-                    cache.GetCommandQueue(server.Id).Enqueue(command);
-                    await new PlayerCoinManager(unitOfWork).RemoveCoinsBySteamIdAsync(trapLog.SteamId, server.Id, server.CoinReductionPerInvalidMineKill);
+                    var distance = new ScumCoordinate(flag.X, flag.Y, flag.Z).DistanceTo(new ScumCoordinate(trapLog.X, trapLog.Y, trapLog.Z));
+                    if (distance > 50)
+                    {
+                        var msg = $"{trapLog.User} armed a mine outside flag area!";
+                        var command = new BotCommand()
+                            .Teleport(trapLog.SteamId, $"{trapLog.X} {trapLog.Y} {trapLog.Z}", checkTargetOnline: true);
+
+                        cache.GetCommandQueue(server.Id).Enqueue(command);
+
+                        if (server.CoinReductionPerInvalidMineKill > 0)
+                        {
+                            msg += " Coin penalty applied.";
+                            await new PlayerCoinManager(unitOfWork).RemoveCoinsBySteamIdAsync(trapLog.SteamId, server.Id, server.CoinReductionPerInvalidMineKill);
+                        }
+
+                        if (server.AnnounceMineOutsideFlag) command.Say(msg);
+
+                    }
                 }
             }
         }

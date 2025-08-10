@@ -90,7 +90,7 @@ export class WelcomePackComponent implements OnInit {
     this.packageForm = this.fb.group({
       id: [null],
       name: [null, [Validators.required]],
-      description: [null, [Validators.required]],
+      description: [null],
       price: [null],
       vipPrice: [null],
       isVipOnly: [false],

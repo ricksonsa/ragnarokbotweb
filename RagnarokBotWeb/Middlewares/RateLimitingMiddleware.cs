@@ -10,16 +10,19 @@ namespace RagnarokBotWeb.Middlewares
         private readonly int _maxRequests;
         private readonly TimeSpan _timeWindow;
 
-        public RateLimitingMiddleware(RequestDelegate next, int maxRequests = 100, int timeWindowMinutes = 1)
+        public RateLimitingMiddleware(RequestDelegate next, int maxRequests = 100, int timeWindowSeconds = 30)
         {
             _next = next;
             _maxRequests = maxRequests;
-            _timeWindow = TimeSpan.FromMinutes(timeWindowMinutes);
+            _timeWindow = TimeSpan.FromSeconds(timeWindowSeconds);
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
             var clientIP = GetClientIP(context);
+
+            if (context.Request.Path.HasValue && context.Request.Path.Value.Contains("/api/bots"))
+                await _next(context);
 
             if (IsRateLimited(clientIP))
             {

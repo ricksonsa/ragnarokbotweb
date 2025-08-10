@@ -239,6 +239,26 @@ namespace RagnarokBotWeb.Migrations
                     b.ToTable("ChannelTemplates");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Config", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Config");
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.DiscordRole", b =>
                 {
                     b.Property<long>("Id")

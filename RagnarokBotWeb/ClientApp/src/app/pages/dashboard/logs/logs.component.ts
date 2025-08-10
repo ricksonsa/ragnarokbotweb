@@ -59,7 +59,8 @@ export class LogsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.selectedDateFrom.setDate(new Date().getDate() - 5);
+    this.selectedDateFrom.setDate(new Date().getDate() - 1);
+    this.selectedDateTo.setDate(new Date().getDate() + 1);
     this.loadLogs();
   }
 

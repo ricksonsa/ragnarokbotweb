@@ -89,7 +89,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public Task<Page<Order>> GetPageByFilter(Paginator paginator, string? filter)
+        public Task<Page<Order>> GetPageByFilter(long serverId, Paginator paginator, string? filter)
         {
             var query = _appDbContext.Orders
                .Include(order => order.Pack)
@@ -97,6 +97,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                .Include(order => order.ScumServer)
                .Include(order => order.ScumServer.Uav)
                .Include(order => order.Player)
+               .Where(order => order.ScumServer.Id == serverId)
                .OrderByDescending(order => order.Id);
 
             if (!string.IsNullOrEmpty(filter))
@@ -104,8 +105,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 filter = filter.ToLower();
                 return base.GetPageAsync(paginator, query.Where(
                     order =>
-                    order.Pack != null && (order.Pack.Name.ToLower().Contains(filter) || order.Pack.Description.ToLower().Contains(filter))
-                    || order.Id.ToString() == filter));
+                    order.Player != null && (order.Player.Name != null && order.Player.Name.ToLower().Contains(filter) || (order.Player.SteamId64 != null && order.Player.SteamId64 == filter)
+                    || order.Pack != null && (order.Pack.Name.ToLower().Contains(filter) || (order.Pack.Description != null && order.Pack.Description.ToLower().Contains(filter)))
+                    || order.Warzone != null && (order.Warzone.Name.ToLower().Contains(filter) || (order.Warzone.Description != null && order.Warzone.Description.ToLower().Contains(filter)))
+                    || order.Id.ToString() == filter)));
             }
 
             return base.GetPageAsync(paginator, query);

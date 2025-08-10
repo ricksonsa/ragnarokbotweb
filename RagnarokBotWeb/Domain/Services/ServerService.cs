@@ -76,9 +76,9 @@ namespace RagnarokBotWeb.Domain.Services
             string rootPath;
             try
             {
-                var files = await new FtpScanner($"{ftpDto.Address}", ftpDto.UserName, ftpDto.Password).FindServerSettingsFilesAsync("SCUM");
-                if (files is null || files.Count == 0) throw new DomainException("Invalid ftp server");
-                rootPath = files.FirstOrDefault()!;
+                var directory = await new FtpScanner($"{ftpDto.Address}", (int)ftpDto.Port, ftpDto.UserName, ftpDto.Password).FindFirstDirectoryAsync("SCUM");
+                if (directory is null) throw new DomainException("Invalid ftp server");
+                rootPath = directory;
             }
             catch (Exception ex)
             {
@@ -99,7 +99,7 @@ namespace RagnarokBotWeb.Domain.Services
             Dictionary<string, string> data = [];
             data.Add("ServerName", "");
             data.Add("MaxPlayers", "");
-            await GetServerConfigLineValue(server.Ftp!, data);
+            await GetServerConfigLineValue(newFtp, data);
             server.Name = data["ServerName"];
             server.Slots = int.Parse(data["MaxPlayers"]);
 

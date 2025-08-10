@@ -33,6 +33,7 @@ export interface GameKillData {
   };
   weapon: string;
   date: string;
+  distance: number;
   timeOfDay: string;
   line: string;
 }

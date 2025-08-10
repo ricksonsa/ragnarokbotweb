@@ -117,7 +117,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="register">Welcomepack/Registering Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="register" formControlName="register" nzPlaceHolder="Select a discord channel">
+          <nz-select nzShowSearch id="register" formControlName="register" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels ; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -130,7 +130,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="chat">Chat Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="chat" formControlName="game-chat" nzPlaceHolder="Select a discord channel">
+          <nz-select nzShowSearch id="chat" formControlName="game-chat" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -143,7 +143,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="taxi">Taxi Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="taxi" formControlName="taxi" nzPlaceHolder="Select a discord channel">
+          <nz-select nzShowSearch id="taxi" formControlName="taxi" nzPlaceHolder="Select a discord channel">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -158,7 +158,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="abusePublic">No Admin Abuse Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="abusePublic" nzPlaceHolder="Select a discord channel" formControlName="no-admin-abuse-public">
+          <nz-select nzShowSearch id="abusePublic" nzPlaceHolder="Select a discord channel" formControlName="no-admin-abuse-public">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -171,7 +171,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="killFeed">Kill Feed</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="killFeed" nzPlaceHolder="Select a discord channel" formControlName="kill-feed">
+          <nz-select nzShowSearch id="killFeed" nzPlaceHolder="Select a discord channel" formControlName="kill-feed">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -184,7 +184,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="sniperRank">Sniper Rank</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="sniperRank" nzPlaceHolder="Select a discord channel" formControlName="sniper-rank">
+          <nz-select nzShowSearch id="sniperRank" nzPlaceHolder="Select a discord channel" formControlName="sniper-rank">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -197,7 +197,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="killRank">Kill Rank</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="killRank" nzPlaceHolder="Select a discord channel" formControlName="kill-rank">
+          <nz-select nzShowSearch id="killRank" nzPlaceHolder="Select a discord channel" formControlName="kill-rank">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -210,7 +210,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="lockpickRank">Lockpick Rank</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="lockpickRank" nzPlaceHolder="Select a discord channel" formControlName="lockpick-rank">
+          <nz-select nzShowSearch id="lockpickRank" nzPlaceHolder="Select a discord channel" formControlName="lockpick-rank">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -223,7 +223,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="bunkerState">Bunker State</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="bunkerState" nzPlaceHolder="Select a discord channel" formControlName="bunker-states">
+          <nz-select nzShowSearch id="bunkerState" nzPlaceHolder="Select a discord channel" formControlName="bunker-states">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -238,7 +238,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="login">Login</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="login" nzPlaceHolder="Select a discord channel" formControlName="login">
+          <nz-select nzShowSearch id="login" nzPlaceHolder="Select a discord channel" formControlName="login">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
@@ -251,7 +251,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="adminAlert">Admin Alert</nz-form-label>
         <nz-form-control [nzSpan]="24">
-          <nz-select id="adminAlert" nzPlaceHolder="Select a discord channel" formControlName="admin-alert">
+          <nz-select nzShowSearch id="adminAlert" nzPlaceHolder="Select a discord channel" formControlName="admin-alert">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"

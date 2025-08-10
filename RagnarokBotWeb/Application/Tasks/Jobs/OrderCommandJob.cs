@@ -75,6 +75,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 {
                     if (order.Warzone is null) return;
                     var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
+                    command.Data = "order_" + order.Id.ToString();
                     command.Teleport(order.Player.SteamId64, teleport.Teleport.Coordinates);
                 }
                 else if (order.OrderType == EOrderType.UAV)

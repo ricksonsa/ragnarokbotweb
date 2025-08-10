@@ -66,7 +66,8 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<Page<OrderDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter)
         {
-            Page<Order> page = await _orderRepository.GetPageByFilter(paginator, filter);
+            var serverId = ServerId();
+            Page<Order> page = await _orderRepository.GetPageByFilter(serverId!.Value, paginator, filter);
             return new Page<OrderDto>(page.Content.Select(_mapper.Map<OrderDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
 

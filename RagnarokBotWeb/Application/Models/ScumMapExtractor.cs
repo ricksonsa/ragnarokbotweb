@@ -31,12 +31,12 @@ public class ScumMapExtractor
         _mapHeight = image.Height;
     }
 
-    public static (float x, float y) GetMidpoint((float x1, float y1) point1, (float x2, float y2) point2)
-    {
-        float midX = (point1.x1 + point2.x2) / 2;
-        float midY = (point1.y1 + point2.y2) / 2;
-        return (midX, midY);
-    }
+    //public static (float x, float y) GetMidpoint((float x1, float y1) point1, (float x2, float y2) point2)
+    //{
+    //    float midX = (point1.x1 + point2.x2) / 2;
+    //    float midY = (point1.y1 + point2.y2) / 2;
+    //    return (midX, midY);
+    //}
 
     /// <summary>
     /// Extrai uma porção do mapa equivalente ao tamanho de um setor (3km x 3km)
@@ -746,10 +746,18 @@ public struct ScumCoordinate
 {
     public double X { get; set; }
     public double Y { get; set; }
+    public double Z { get; set; }
     public string? Label { get; set; }
-
     public Color Color { get; set; }
 
+
+    public ScumCoordinate(double x, double y, double z)
+    {
+        X = x;
+        Y = y;
+        Z = z;
+        Color = Color.Red;
+    }
     public ScumCoordinate(double x, double y)
     {
         X = x;
@@ -768,6 +776,23 @@ public struct ScumCoordinate
     {
         Label = label;
         return this;
+    }
+
+    /// <summary>
+    /// Calcula a distância em metros até outra coordenada
+    /// </summary>
+    public double DistanceTo(ScumCoordinate target) => Math.Sqrt(
+        Math.Pow(target.X - X, 2) +
+        Math.Pow(target.Y - Y, 2) +
+        Math.Pow(target.Z - Z, 2));
+
+    public override readonly string ToString() => $"X={X} Y={Y} Z={Z}".Replace(",", ".");
+
+    public static ScumCoordinate MidPoint((float x1, float y1) point1, (float x2, float y2) point2)
+    {
+        float midX = (point1.x1 + point2.x2) / 2;
+        float midY = (point1.y1 + point2.y2) / 2;
+        return new ScumCoordinate(midX, midY);
     }
 
     /// <summary>
@@ -835,16 +860,9 @@ public struct ScumCoordinate
             : "?";
     }
 
-    /// <summary>
-    /// Calcula a distância em metros até outra coordenada
-    /// </summary>
-    public double DistanceTo(ScumCoordinate other)
-    {
-        return Math.Sqrt(Math.Pow(X - other.X, 2) + Math.Pow(Y - other.Y, 2));
-    }
 
-    public override string ToString()
-    {
-        return $"({X:F1}, {Y:F1}) [{GetSectorReference()}]";
-    }
+    //public override string ToString()
+    //{
+    //    return $"({X:F1}, {Y:F1}) [{GetSectorReference()}]";
+    //}
 }

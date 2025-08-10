@@ -1,4 +1,5 @@
 ﻿using Shared.Enums;
+using System.Text;
 
 namespace RagnarokBotClient
 {
@@ -61,6 +62,10 @@ namespace RagnarokBotClient
                         tasks.Add(HandleListSquads);
                         break;
 
+                    case ECommandType.ListFlags:
+                        tasks.Add(HandleListFlags);
+                        break;
+
                     case ECommandType.ChangeGold:
                         tasks.Add(() => _scumManager.ChangeCurrency("Gold", commandValue.Target!, commandValue.Value));
                         break;
@@ -75,7 +80,7 @@ namespace RagnarokBotClient
                 }
             }
 
-            if (command.Values.Any(values => values.Type == ECommandType.SimpleDelivery))
+            if (!string.IsNullOrEmpty(command.Data))
             {
                 tasks.Add(() => _remote.PatchAsync($"api/bots/deliveries/{command.Data.Split("_")[1]}/confirm"));
             }
@@ -97,10 +102,56 @@ namespace RagnarokBotClient
         {
             await _scumManager.DumpAllSquadsInfoList();
             await Task.Delay(1000);
-
             string clipboardContent = await GetClipboardTextAsync();
-
             var response = await _remote.PostAsync("api/bots/squads", new { Value = clipboardContent });
+        }
+
+        private async Task HandleListFlags()
+        {
+            var flagInfo = await GetFlagsAsync();
+            var response = await _remote.PostAsync("api/bots/flags", new { Value = flagInfo });
+        }
+
+        private async Task<string> GetFlagsAsync(int page = 1)
+        {
+            string content = "";
+            int pageCount = 1;
+            await _scumManager.DumpAllFlagsInfoList(page);
+            await Task.Delay(1000);
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(await GetClipboardTextAsync())))
+            using (var reader = new StreamReader(stream))
+            {
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.Contains("Page"))
+                    {
+                        pageCount = int.Parse(line.Split("/")[1]);
+                        continue;
+                    }
+                    content += line;
+                }
+                page += 1;
+            }
+
+            while (page <= pageCount)
+            {
+                await _scumManager.DumpAllFlagsInfoList(page);
+                await Task.Delay(1000);
+                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(await GetClipboardTextAsync())))
+                using (var reader = new StreamReader(stream))
+                {
+                    string? line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.Contains("Page")) continue;
+                        content += line;
+                    }
+                }
+                page += 1;
+            }
+
+            return content;
         }
 
         private Task<string> GetClipboardTextAsync()

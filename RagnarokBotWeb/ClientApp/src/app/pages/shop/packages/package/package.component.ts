@@ -94,7 +94,7 @@ export class PackageComponent implements OnInit {
     this.packageForm = this.fb.group({
       id: [0],
       name: [null, [Validators.required]],
-      description: [null, [Validators.required]],
+      description: [null],
       price: [null],
       vipPrice: [null],
       isVipOnly: [false],

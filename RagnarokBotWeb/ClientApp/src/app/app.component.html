@@ -1,14 +1,14 @@
 <nz-layout class="app-layout" *ngIf="logged">
-  <nz-sider [nzTheme]="darkMode ? 'dark': 'light'" class="menu-sidebar" nzCollapsible nzWidth="256px" nzBreakpoint="md"
+  <nz-sider nzTheme="dark" class="menu-sidebar" nzCollapsible nzWidth="256px" nzBreakpoint="md"
     [(nzCollapsed)]="isCollapsed" [nzTrigger]="null">
     <div class="sidebar-logo">
       <a href="/" target="_blank">
-        <img src="assets/images/ragnarok-logo-transparent.png" alt="logo">
-        <h1 [ngClass]="{'top-actions-button-light': !darkMode}" nz-typography>{{ account?.server?.name ?? 'The SCUM Bot'
-          }}</h1>
+        <img src="assets/images/bot-logo.png" alt="logo">
+        <h1 style="font-size: 12px;" nz-tooltip [nzTooltipTitle]="account?.server?.name ?? 'The SCUM Bot'"
+          [nzTooltipPlacement]="['bottomRight', 'right']">{{ getName() }}</h1>
       </a>
     </div>
-    <ul nz-menu [nzTheme]="darkMode ? 'dark': 'light'" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+    <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
 
       <li nz-submenu nzOpen nzTitle="Dashboard" nzIcon="dashboard">
         <ul>
@@ -130,8 +130,7 @@
           <nz-space nzAlign="center">
             <nz-avatar *nzSpaceItem [nzText]="getFirstLetter(account?.name)"
               style="color:#f56a00; background-color:#fde3cf;"></nz-avatar>
-            <p *nzSpaceItem style="margin: 0" class="top-actions-button"
-              [ngClass]="{'top-actions-button-dark': darkMode}">{{account?.name}}</p>
+            <p *nzSpaceItem style="margin: 0" class="top-actions-button top-actions-button-dark">{{account?.name}}</p>
           </nz-space>
           <ng-template #topActions>
             <nz-space nzDirection="vertical" nzAlign="start">
@@ -175,7 +174,7 @@
 <div class="login" *ngIf="!logged && !register">
   <nz-card class="login-container">
     <div class="logo-holder">
-      <img width="48" height="48" src="assets/images/ragnarok-logo-transparent.png" alt="">
+      <img width="48" height="48" src="assets/images/bot-logo.png" alt="">
       <h4 style="margin: 0;" nz-typography>The SCUM Bot</h4>
     </div>
     <p nz-typography> Manage your SCUM private server with automation tools and insights
@@ -214,7 +213,7 @@
 <div class="login" *ngIf="!logged && register">
   <nz-card class="login-container">
     <div class="logo-holder">
-      <img width="48" height="48" src="assets/images/ragnarok-logo-transparent.png" alt="">
+      <img width="48" height="48" src="assets/images/bot-logo.png" alt="">
       <h4 style="margin: 0;" nz-typography>The SCUM Bot</h4>
     </div>
     <h5 nz-typography>Sign Up</h5>

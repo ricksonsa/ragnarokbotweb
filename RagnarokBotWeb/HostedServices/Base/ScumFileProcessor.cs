@@ -266,11 +266,11 @@ public class ScumFileProcessor
         return reader.ReadToEndAsync();
     }
 
-    public Task<string> ReadLocalRaidTimesAsync()
+    public Task<string> ReadLocalRaidTimesAsync(CancellationToken token = default)
     {
         var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ragnarokbot", "servers", _scumServer.Id.ToString(), "RaidTimes.json");
         using var reader = new StreamReader(localPath);
-        return reader.ReadToEndAsync();
+        return reader.ReadToEndAsync(token);
     }
 
     public Task SaveSquadList(string squadList)
@@ -281,10 +281,25 @@ public class ScumFileProcessor
         return reader.WriteAsync(squadList);
     }
 
-    public Task<string> ReadSquadListAsync()
+    public Task<string> ReadSquadListAsync(CancellationToken token = default)
     {
         var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ragnarokbot", "servers", _scumServer.Id.ToString(), "squadlist.json");
         using var reader = new StreamReader(localPath);
-        return reader.ReadToEndAsync();
+        return reader.ReadToEndAsync(token);
+    }
+
+    public Task SaveFlagList(string flagList)
+    {
+        var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ragnarokbot", "servers", _scumServer.Id.ToString(), "flaglist.json");
+        _logger.LogDebug("Saving FlagList from server {Server}", _scumServer.Id);
+        using var reader = new StreamWriter(localPath, false);
+        return reader.WriteAsync(flagList);
+    }
+
+    public Task<string> ReadFlagListAsync(CancellationToken token = default)
+    {
+        var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ragnarokbot", "servers", _scumServer.Id.ToString(), "flaglist.json");
+        using var reader = new StreamReader(localPath);
+        return reader.ReadToEndAsync(token);
     }
 }

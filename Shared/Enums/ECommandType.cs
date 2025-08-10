@@ -11,6 +11,7 @@
         Command,
         DestroyItems,
         ListPlayers,
+        ListFlags,
         MagazineDelivery,
         SayLocal,
         ListSquads,

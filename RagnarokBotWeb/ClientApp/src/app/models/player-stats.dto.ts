@@ -1,4 +1,5 @@
 export interface PlayerStatsDto {
+    steamId: string;
     playerName: string;
     killCount: number;
 }

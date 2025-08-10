@@ -3,6 +3,14 @@
     width: fit-content;
 }
 
+.graph-card {
+    flex-grow: 1 !important;
+    height: fit-content !important;
+    width: auto;
+    max-height: 450px !important;
+    max-width: 400px !important;
+}
+
 .top-bar {
     display: flex;
     gap: 20px;
@@ -11,9 +19,31 @@
 .fit-content {
     height: fit-content !important;
 }
+
 .grid {
     display: flex;
     flex-wrap: wrap;
     width: 100%;
     gap: 30px;
+}
+
+.hidden {
+    display: none;
+}
+
+.show {
+    display: block;
+}
+
+.bar-holder {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

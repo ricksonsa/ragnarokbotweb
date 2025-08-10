@@ -11,6 +11,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task DeleteJob(string jobKey);
         Task LoadRaidTimes(CancellationToken stoppingToken);
         Task LoadSquads(CancellationToken stoppingToken);
+        Task LoadFlags(CancellationToken stoppingToken);
         Task CreateWarzoneJobs(ScumServer server, Warzone warzone);
         Task DeleteWarzoneJobs(ScumServer server);
     }

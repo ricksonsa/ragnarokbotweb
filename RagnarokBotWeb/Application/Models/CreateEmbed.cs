@@ -11,7 +11,7 @@ namespace RagnarokBotWeb.Application.Models
         public string ImageUrl { get; set; }
         public string FooterText { get; set; }
         public bool TimeStamp { get; set; }
-        public Color Color { get; set; } = Color.DarkPurple;
+        public Color Color { get; set; } = Color.DarkOrange;
 
         public List<CreateEmbedButton> Buttons { get; set; }
         public List<CreateEmbedField> Fields { get; set; }

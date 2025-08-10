@@ -17,7 +17,9 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         ScumPlayer? PlayerDisconnected(long serverId, string steamId64);
         Task<List<GrapthDto>> NewPlayersPerMonth();
         Task<List<PlayerStatsDto>> KillRank();
+        Task<List<PlayerStatsDto>> KillRank(string steamId);
         Task<List<LockpickStatsDto>> LockpickRank();
+        Task<List<LockpickStatsDto>> LockpickRank(string steamId);
 
         Task<Player?> FindBySteamId64Async(string steamId, long serverId);
         Task AddPlayerAsync(Player user);

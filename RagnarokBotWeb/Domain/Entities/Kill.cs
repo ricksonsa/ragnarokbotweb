@@ -1,4 +1,5 @@
-﻿namespace RagnarokBotWeb.Domain.Entities
+﻿
+namespace RagnarokBotWeb.Domain.Entities
 {
     public class Kill : BaseEntity
     {
@@ -11,8 +12,8 @@
         {
             get
             {
-                if (Weapon is null) return "";
-                var resolved = Weapon.Substring(0, Weapon.LastIndexOf("_C"));
+                if (string.IsNullOrEmpty(Weapon) || string.IsNullOrWhiteSpace(Weapon)) return "Unknown";
+                var resolved = Weapon.Contains("_C") ? Weapon.Substring(0, Weapon.LastIndexOf("_C")) : Weapon;
                 return resolved.Replace("Weapon_", string.Empty)
                     .Replace("1H_", string.Empty)
                     .Replace("2H_", string.Empty)
@@ -30,5 +31,12 @@
         public float VictimZ { get; set; }
         public ScumServer ScumServer { get; set; }
         public string? ImageUrl { get; set; }
+
+        public static bool IsMine(string? weapon)
+        {
+            if (string.IsNullOrEmpty(weapon)) return false;
+            weapon = weapon.ToLower();
+            return weapon.Contains("trap") || weapon.Contains("mine") || weapon.Contains("claymore");
+        }
     }
 }

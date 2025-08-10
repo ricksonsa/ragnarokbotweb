@@ -188,6 +188,12 @@ namespace RagnarokBotClient
             return RunCommand("#DumpAllSquadsInfoList");
         }
 
+        public Task DumpAllFlagsInfoList(int page)
+        {
+            Logger.LogWrite($"DumpAllFlagsInfoList");
+            return RunCommand($"#ListFlags {page} true");
+        }
+
         public Task DumpListPlayers()
         {
             //Logger.LogWrite($"DumpListPlayers");

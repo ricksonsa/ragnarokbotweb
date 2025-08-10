@@ -26,7 +26,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var embed = new CreateEmbed
             {
                 DiscordId = channel.DiscordId,
-                Color = Color.DarkPurple,
+                Color = Color.DarkOrange,
                 Title = "BUNKERS STATE",
                 GuildId = server.Guild.DiscordId
             };

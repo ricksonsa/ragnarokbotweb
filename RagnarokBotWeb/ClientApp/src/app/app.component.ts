@@ -27,6 +27,7 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { ThemeService } from './services/theme.service';
 import { Constants, COUNSTRIES } from './constants';
 import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
 
 @Component({
@@ -53,7 +54,8 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
     NzSelectModule,
     NzBreadCrumbModule,
     NzAffixModule,
-    NzMenuModule
+    NzMenuModule,
+    NzToolTipModule
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
@@ -114,6 +116,7 @@ export class AppComponent implements OnInit {
 
     setInterval(async () => {
       const account = await firstValueFrom(this.authenticationService.account(false, true));
+      this.account = account;
       this.block = !account?.server?.isCompliant && this.isBlockRoute();
       const isCompliant = account?.server?.isCompliant;
       Constants.isCompliant = isCompliant;
@@ -127,6 +130,14 @@ export class AppComponent implements OnInit {
     }, 100);
   }
 
+  getName() {
+    try {
+      return this.account.server.name.slice(0, 20) + '...';
+
+    } catch (err) {
+      return 'The SUM Bot';
+    }
+  }
 
   isBlockRoute() {
     const route = location.href;

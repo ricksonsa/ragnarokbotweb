@@ -12,7 +12,8 @@ namespace RagnarokBotWeb.Domain.Services
 
         private Dictionary<long, Dictionary<Guid, BotUser>> _connectedBots;
         private Dictionary<long, List<ScumPlayer>> _connectedPlayers;
-        private Dictionary<long, List<Squad>> _squads;
+        private Dictionary<long, List<ScumSquad>> _squads;
+        private Dictionary<long, List<ScumFlag>> _flags;
         private Dictionary<long, RaidTimes?> _raidTimes;
 
         public CacheService()
@@ -23,6 +24,7 @@ namespace RagnarokBotWeb.Domain.Services
             _connectedBots = [];
             _raidTimes = [];
             _squads = [];
+            _flags = [];
         }
 
         public List<ScumPlayer> GetConnectedPlayers(long serverId)
@@ -35,9 +37,14 @@ namespace RagnarokBotWeb.Domain.Services
             return _raidTimes[serverId];
         }
 
-        public List<Squad> GetSquads(long serverId)
+        public List<ScumSquad> GetSquads(long serverId)
         {
             return _squads[serverId];
+        }
+
+        public List<ScumFlag> GetFlags(long serverId)
+        {
+            return _flags[serverId];
         }
 
         public void SetRaidTimes(long serverId, RaidTimes config)
@@ -45,9 +52,14 @@ namespace RagnarokBotWeb.Domain.Services
             _raidTimes[serverId] = config;
         }
 
-        public void SetSquads(long serverId, List<Squad> squads)
+        public void SetSquads(long serverId, List<ScumSquad> squads)
         {
             _squads[serverId] = squads;
+        }
+
+        public void SetFlags(long serverId, List<ScumFlag> flags)
+        {
+            _flags[serverId] = flags;
         }
 
         public Dictionary<Guid, BotUser> GetConnectedBots(long serverId)
@@ -102,6 +114,11 @@ namespace RagnarokBotWeb.Domain.Services
                 if (!_squads.ContainsKey(server.Id))
                 {
                     _squads.Add(server.Id, []);
+                }
+
+                if (!_flags.ContainsKey(server.Id))
+                {
+                    _flags.Add(server.Id, []);
                 }
 
                 if (!_raidTimes.ContainsKey(server.Id))

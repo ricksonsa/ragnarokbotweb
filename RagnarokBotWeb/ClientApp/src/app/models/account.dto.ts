@@ -5,6 +5,6 @@ export class AccountDto {
     email!: string;
     serverId!: number;
     server?: ScumServer;
-    servers!: ScumServerResponse;
+    servers?: ScumServer[];
     accessLevel!: number;
 }

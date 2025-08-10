@@ -54,8 +54,6 @@ public class KillLogJob(
 
                 if (IsCompliant())
                 {
-                    HandleAnnounceText(cacheService, server, kill); // Announce kill in game
-
                     var squads = cacheService.GetSquads(server.Id);
                     var isSameSquad = IsSameSquad(kill, squads);
 
@@ -63,8 +61,17 @@ public class KillLogJob(
 
                     if (server.UseKillFeed)
                     {
-                        if (server.ShowKillOnMap) await HandleShowMap(logger, fileService, kill);
-                        await discordService.SendKillFeedEmbed(server, kill);
+                        bool postKillFeed = true;
+
+                        if (Kill.IsMine(kill.Weapon) && !server.ShowMineKill)
+                            postKillFeed = false;
+
+                        if (postKillFeed)
+                        {
+                            HandleAnnounceText(cacheService, server, kill); // Announce kill in game
+                            if (server.ShowKillOnMap) await HandleShowMap(logger, fileService, kill);
+                            await discordService.SendKillFeedEmbed(server, kill);
+                        }
                     }
 
                     var coinHandler = new PlayerCoinManager(unitOfWork);
@@ -87,7 +94,7 @@ public class KillLogJob(
         }
     }
 
-    private static bool IsSameSquad(Kill kill, List<Shared.Models.Squad> squads)
+    private static bool IsSameSquad(Kill kill, List<Shared.Models.ScumSquad> squads)
     {
         bool killerInSquad = false;
         bool targetInSameSquad = false;
@@ -138,15 +145,13 @@ public class KillLogJob(
 
     private static async Task ExtractMap(IFileService fileService, Kill kill)
     {
-        var midPoint = ScumMapExtractor.GetMidpoint((kill.KillerX, kill.KillerY), (kill.VictimX, kill.VictimY));
         var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
         var result = await extractor.ExtractMapWithPoints(
-            new ScumCoordinate(midPoint.x, midPoint.y),
+            ScumCoordinate.MidPoint((kill.KillerX, kill.KillerY), (kill.VictimX, kill.VictimY)),
             [
                 new ScumCoordinate(kill.KillerX, kill.KillerY, Color.Red).WithLabel(kill.KillerName!),
                 new ScumCoordinate(kill.VictimX, kill.VictimY, Color.Black).WithLabel(kill.TargetName!)
-            ],
-            256);
+            ]);
         kill.ImageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/eliminations", cdnUrlPrefix: "images/eliminations");
     }
 }

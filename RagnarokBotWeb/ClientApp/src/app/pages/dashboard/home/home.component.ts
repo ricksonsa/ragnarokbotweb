@@ -159,7 +159,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (graph) => {
           this.playerStatistics = graph;
-          this.renderChart('newPlayers', 'bar', graph.map(x => x.name), graph.map(x => x.amount), graph.map(x => x.color));
+          setTimeout(() => {
+            this.renderChart('newPlayers', 'bar', graph.map(x => x.name), graph.map(x => x.amount), graph.map(x => x.color));
+          }, 500);
         }
       })
   }
@@ -169,7 +171,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (bestSellers) => {
           this.bestSellers = bestSellers;
-          this.renderChart('orders', 'doughnut', bestSellers.map(x => x.name), bestSellers.map(x => x.amount), bestSellers.map(x => x.color))
+          setTimeout(() => {
+            this.renderChart('orders', 'doughnut', bestSellers.map(x => x.name), bestSellers.map(x => x.amount), bestSellers.map(x => x.color))
+          }, 500);
         }
       });
   }

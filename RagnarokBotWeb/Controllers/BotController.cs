@@ -28,35 +28,42 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult RegisterBot(string guid)
+        public async Task<IActionResult> RegisterBot(string guid)
         {
-            _botService.RegisterBot(new Guid(guid));
+            await _botService.RegisterBot(new Guid(guid));
             return Ok();
         }
 
         [HttpGet("guid/{guid}")]
-        public IActionResult GetBotByGuid(string guid)
+        public async Task<IActionResult> GetBotByGuid(string guid)
         {
-            return Ok(_botService.FindBotByGuid(new Guid(guid)));
+            return Ok(await _botService.FindBotByGuid(new Guid(guid)));
         }
 
         [HttpGet("commands")]
-        public IActionResult GetReadyCommands(string guid)
+        public async Task<IActionResult> GetReadyCommands(string guid)
         {
-            return Ok(_botService.GetCommand(new Guid(guid)));
+            return Ok(await _botService.GetCommand(new Guid(guid)));
         }
 
         [HttpPost("players")]
-        public IActionResult UpdatePlayers(UpdateFromStringRequest input)
+        public async Task<IActionResult> UpdatePlayers(UpdateFromStringRequest input)
         {
-            _botService.UpdatePlayersOnline(input);
+            await _botService.UpdatePlayersOnline(input);
             return Ok();
         }
 
         [HttpPost("squads")]
-        public IActionResult UpdateSquads(UpdateFromStringRequest input)
+        public async Task<IActionResult> UpdateSquads(UpdateFromStringRequest input)
         {
-            _botService.UpdateSquads(input);
+            await _botService.UpdateSquads(input);
+            return Ok();
+        }
+
+        [HttpPost("flags")]
+        public async Task<IActionResult> UpdateFlags(UpdateFromStringRequest input)
+        {
+            await _botService.UpdateFlags(input);
             return Ok();
         }
 

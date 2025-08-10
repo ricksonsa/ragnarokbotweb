@@ -44,13 +44,15 @@
 <br>
 
 <div class="grid">
-  <nz-card nzSize="small" class="statistics-card" nzTitle="Best Sellers">
+  <nz-card nzSize="small" class="graph-card" nzTitle="Best Sellers">
     <canvas *ngIf="bestSellers.length > 0" id="orders"></canvas>
     <nz-empty *ngIf="bestSellers.length === 0" nzNotFoundImage="simple"></nz-empty>
   </nz-card>
 
-  <nz-card nzSize="small" class="statistics-card" nzTitle="Players Registering Per Month">
-    <canvas *ngIf="playerStatistics.length > 0" id="newPlayers"></canvas>
+  <nz-card nzSize="small" class="graph-card" nzTitle="Players Registering Per Month">
+    <div *ngIf="playerStatistics.length > 0" class="bar-holder">
+      <canvas id="newPlayers"></canvas>
+    </div>
     <nz-empty *ngIf="playerStatistics.length === 0" nzNotFoundImage="simple"></nz-empty>
   </nz-card>
 
@@ -82,12 +84,14 @@
       <thead>
         <tr>
           <th>Name</th>
+          <th>Steam ID</th>
           <th>Kill Count</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let data of killTable.data">
           <td>{{data.playerName}}</td>
+          <td>{{data.steamId}}</td>
           <td>{{data.killCount}}</td>
         </tr>
       </tbody>

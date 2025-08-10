@@ -40,6 +40,7 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Uav> Uavs { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<Config> Config { get; set; }
 
         public AppDbContext()
         {

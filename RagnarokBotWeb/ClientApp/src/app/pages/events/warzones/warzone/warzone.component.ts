@@ -102,7 +102,7 @@ export class WarzoneComponent implements OnInit {
     this.packageForm = this.fb.group({
       id: [0],
       name: [null, [Validators.required]],
-      description: [null, [Validators.required]],
+      description: [null],
       price: [null],
       vipPrice: [null],
       itemSpawnInterval: [5, [Validators.required, Validators.min(1)]],

@@ -55,7 +55,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="discordId">Discord Channel</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="discordChannelExtra">
-          <nz-select formControlName="discordId" id="discordId"
+          <nz-select nzShowSearch formControlName="discordId" id="discordId"
             nzPlaceHolder="Select the discord channel in which the UAV will be displayed for purchase">
             <nz-option *ngFor="let ch of channels" [nzValue]="ch.discordId" [nzLabel]="ch.name"></nz-option>
           </nz-select>

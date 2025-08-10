@@ -1,6 +1,6 @@
 ﻿namespace Shared.Models
 {
-    public class Squad
+    public class ScumSquad
     {
         public int SquadId { get; set; }
         public string SquadName { get; set; }

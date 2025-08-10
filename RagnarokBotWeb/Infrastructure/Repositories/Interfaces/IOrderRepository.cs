@@ -8,7 +8,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         Task<Order?> FindOneByServer(long serverId);
         Task<List<Order>> FindWithPack(long packId);
         Task<List<Order>> FindWithWarzone(long warzoneId);
-        Task<Page<Order>> GetPageByFilter(Paginator paginator, string? filter);
+        Task<Page<Order>> GetPageByFilter(long serverId, Paginator paginator, string? filter);
         Task<List<Order>> FindManyByServer(long serverId);
     }
 }
