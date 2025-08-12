@@ -20,7 +20,8 @@ namespace RagnarokBotWeb.Application.Handlers
             _handlers = new()
             {
                { "!welcomepack", new WelcomePackCommandHandler(playerRepository, playerRegisterRepository, discordService, orderService) },
-               { "!discord", new DiscordCommandHandler(server, scumServerRepository, cacheService) }
+               { "!discord", new DiscordCommandHandler(server, scumServerRepository, cacheService) },
+               { "!orderconfirm", new ConfirmOrderCommand(orderService) }
             };
         }
 

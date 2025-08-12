@@ -199,7 +199,7 @@ export class WelcomePackComponent implements OnInit {
       deleted: null,
       itemId: this.selectedItem.id,
       itemName: this.selectedItem.name,
-      packId: this.packageForm.value.id
+      packId: this.packageForm.value.id ?? 0
     };
 
     this.items.push(packageItem);

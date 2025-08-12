@@ -9,18 +9,18 @@ namespace RagnarokBotWeb.Domain.Services;
 
 public class FtpService(FtpConnectionPool pool) : IFtpService
 {
-    public FtpClient GetClient(Ftp ftp)
+    public AsyncFtpClient GetClient(Ftp ftp, CancellationToken cancellationToken = default)
     {
-        return pool.GetClient(ftp);
+        return pool.GetClient(ftp, cancellationToken: cancellationToken);
     }
 
-    public void CopyFiles(FtpClient client, string targetFolder, IList<string> remoteFilePaths)
+    public async Task CopyFilesAsync(AsyncFtpClient client, string targetFolder, IList<string> remoteFilePaths, CancellationToken token = default)
     {
-        var states = client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw);
+        var states = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
         if (states.Any(result => result.IsFailed)) throw new Exception("Error while copying files from FTP");
     }
 
-    public async Task UpdateINILine(FtpClient client, string remoteFilePath, string key, string newValue)
+    public async Task UpdateINILine(AsyncFtpClient client, string remoteFilePath, string key, string newValue)
     {
         try
         {
@@ -29,7 +29,7 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
 
             using (MemoryStream stream = new())
             {
-                client.DownloadStream(stream, remoteFilePath);
+                await client.DownloadStream(stream, remoteFilePath);
                 stream.Position = 0;
 
                 var content = await new StreamReader(stream).ReadToEndAsync();
@@ -44,10 +44,10 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
                     string updatedContent = string.Join(Environment.NewLine, lines);
                     MemoryStream updatedStream = new(Encoding.UTF8.GetBytes(updatedContent));
 
-                    client.UploadStream(updatedStream, remoteFilePath);
+                    await client.UploadStream(updatedStream, remoteFilePath);
                 }
             }
-            client.Disconnect();
+            await client.Disconnect();
 
         }
         catch (Exception)
@@ -57,15 +57,15 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
     }
 
 
-    public Stream? DownloadFile(FtpClient client, string remoteFilePath)
+    public async Task<Stream?> DownloadFile(AsyncFtpClient client, string remoteFilePath)
     {
         try
         {
             MemoryStream stream = new();
-            if (client.DownloadStream(stream, remoteFilePath))
+            if (await client.DownloadStream(stream, remoteFilePath))
             {
                 stream.Position = 0;
-                client.Disconnect();
+                await client.Disconnect();
                 return stream;
             }
             return null;
@@ -76,10 +76,10 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
             throw new DomainException("Invalid ftp server");
         }
     }
-    public async Task RemoveLine(FtpClient client, string remotePath, string lineToRemove)
+    public async Task RemoveLine(AsyncFtpClient client, string remotePath, string lineToRemove)
     {
         using var downloadStream = new MemoryStream();
-        if (client.DownloadStream(downloadStream, remotePath))
+        if (await client.DownloadStream(downloadStream, remotePath))
         {
             downloadStream.Position = 0;
             using var reader = new StreamReader(downloadStream, Encoding.UTF8);
@@ -93,16 +93,16 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
 
             using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(modifiedContent));
             uploadStream.Position = 0;
-            client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
+            await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
         }
 
-        client.Disconnect();
+        await client.Disconnect();
     }
 
-    public async Task AddLine(FtpClient client, string remotePath, string lineToAdd)
+    public async Task AddLine(AsyncFtpClient client, string remotePath, string lineToAdd)
     {
         using var downloadStream = new MemoryStream();
-        if (client.DownloadStream(downloadStream, remotePath))
+        if (await client.DownloadStream(downloadStream, remotePath))
         {
             downloadStream.Position = 0;
             using var reader = new StreamReader(downloadStream, Encoding.UTF8);
@@ -115,14 +115,14 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
 
             using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(modifiedContent));
             uploadStream.Position = 0;
-            client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
+            await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
         }
 
-        client.Disconnect();
+        await client.Disconnect();
     }
 
-    public Task<Stream> DownloadFile(FtpClient client)
+    public void ReleaseClient(AsyncFtpClient client)
     {
-        throw new NotImplementedException();
+        pool.ReleaseClient(client);
     }
 }

@@ -88,6 +88,18 @@
         </nz-form-control>
       </nz-form-item>
 
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="timeZoneId">Timezone</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select nzShowSearch id="timeZoneId" nzPlaceHolder="Select your timezone"
+            formControlName="timeZoneId">
+            @for (channel of timezones$ | async; track $index) {
+            <nz-option [nzValue]="channel.id" [nzLabel]="channel.displayName"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
       <nz-divider nzText="Shop"></nz-divider>
 
       <nz-form-item>

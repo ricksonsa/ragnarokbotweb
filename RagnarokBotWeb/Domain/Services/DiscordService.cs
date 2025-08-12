@@ -38,7 +38,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         private EmbedFooterBuilder GetAuthor()
         {
-            return new EmbedFooterBuilder().WithText("bot").WithIconUrl(_appSettings.BaseUrl + "/images/bot.png");
+            return new EmbedFooterBuilder().WithText("www.thescumbot.com").WithIconUrl(_appSettings.BaseUrl + "/images/bot.png");
         }
 
         private async Task ClearBefore(Guild guild)
@@ -282,7 +282,7 @@ namespace RagnarokBotWeb.Domain.Services
             int rank = 1;
             foreach (var p in players)
             {
-                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {Math.Round(p.KillDistance / 1000f),12:F1} | {Truncate(p.WeaponName, 16)}");
+                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {Convert.ToInt32(Math.Round(p.KillDistance / 1000f)),12:F1} | {Truncate(p.WeaponName, 16)}");
                 rank++;
             }
 
@@ -329,6 +329,12 @@ namespace RagnarokBotWeb.Domain.Services
             return value.Length <= maxLength ? value : value.Substring(0, maxLength - 1) + "…";
         }
 
+        public Task<IUserMessage> SendMessageToChannel(string message, ulong channelId)
+        {
+            var channel = _client.GetChannel(channelId) as IMessageChannel;
+            if (channel != null) return channel.SendMessageAsync(message);
+            throw new Exception("Channel not found");
+        }
 
         public async Task<IUserMessage> SendEmbedToChannel(CreateEmbed createEmbed)
         {

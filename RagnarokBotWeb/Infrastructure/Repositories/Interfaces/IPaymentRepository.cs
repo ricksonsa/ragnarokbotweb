@@ -7,5 +7,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
     {
         Task<Page<Payment>> GetPageByServerId(Paginator paginator, long serverId);
         Task<Payment?> FindByOrderNumberAsync(string orderNumber);
+        Task<Payment?> FindOnePending();
     }
 }

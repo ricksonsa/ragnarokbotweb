@@ -1,5 +1,6 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Application.LogParser;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -24,7 +25,7 @@ public class LoginJob(
             var fileType = GetFileTypeFromContext(context);
 
             var processor = new ScumFileProcessor(server);
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService))
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService, context.CancellationToken))
             {
                 if (string.IsNullOrEmpty(line)) continue;
 
@@ -37,6 +38,8 @@ public class LoginJob(
                     playerService.PlayerDisconnected(server.Id, steamId64);
             }
         }
+        catch (ServerUncompliantException) { }
+        catch (FtpNotSetException) { }
         catch (Exception ex)
         {
             logger.LogError(ex.Message);

@@ -27,7 +27,7 @@ namespace RagnarokBotWeb.Domain.Business
                 if (force.HasValue && !force.Value && !warzone.Enabled) continue;
                 var onlinePlayerCount = _cacheService.GetConnectedPlayers(_scumServer.Id).Count();
 
-                if (warzone.MinPlayerOnline < onlinePlayerCount && force.HasValue && !force.Value) continue;
+                if (onlinePlayerCount < warzone.MinPlayerOnline && force.HasValue && !force.Value) continue;
                 if (warzone.IsBlockPurchaseRaidTime && raidTime != null && raidTime.IsInRaidTime(_scumServer) && force.HasValue && !force.Value) continue;
 
                 return warzone;

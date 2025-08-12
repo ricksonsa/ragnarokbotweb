@@ -2,6 +2,7 @@
 {
     public class AppSettings
     {
+        public static bool IsDevelopment { get; set; }
         public string DefaultCron { get; set; }
         public string FiveMinCron { get; set; }
         public string TwoMinCron { get; set; }

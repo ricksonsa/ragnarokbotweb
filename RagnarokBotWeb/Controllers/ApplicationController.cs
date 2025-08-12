@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
@@ -21,7 +20,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet("version")]
-        public async Task<IActionResult> GetItems([FromQuery] Paginator paginator, string? filter)
+        public async Task<IActionResult> GetItems()
         {
             _logger.Log(LogLevel.Debug, "REST Request to fetch all items by filter");
             var application = await _unitOfWork.AppDbContext.Config.FirstOrDefaultAsync();
@@ -29,6 +28,21 @@ namespace RagnarokBotWeb.Controllers
             {
                 Version = application?.Version ?? "1.0.0"
             });
+        }
+
+        [HttpGet("timezones")]
+        public IActionResult GetTimezones()
+        {
+            _logger.Log(LogLevel.Debug, "REST Request to fetch all timezones");
+            var timeZoneIds = TimeZoneInfo
+              .GetSystemTimeZones()
+              .Select(tz => new
+              {
+                  Id = tz.Id,
+                  DisplayName = tz.DisplayName
+              })
+              .ToList();
+            return Ok(timeZoneIds);
         }
     }
 }

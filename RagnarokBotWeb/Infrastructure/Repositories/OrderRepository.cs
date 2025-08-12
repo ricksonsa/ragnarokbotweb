@@ -61,6 +61,16 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+
+        public Task<List<Order>> FindManyCommandByServer(long serverId)
+        {
+            return _appDbContext.Orders
+                .Include(order => order.ScumServer)
+                .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId && order.Status == EOrderStatus.Command)
+                .OrderBy(order => order.CreateDate)
+                .ToListAsync();
+        }
+
         public Task<List<Order>> FindWithPack(long packId)
         {
             var now = DateTime.UtcNow;

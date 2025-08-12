@@ -1,6 +1,7 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Domain.Business;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Enums;
@@ -37,70 +38,78 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         {
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
-            var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
-            var orders = await _orderRepository.FindManyByServer(server.Id);
-
-            if (orders.Count == 0) return;
-            if (!_botService.IsBotOnline(server.Id)) return;
-
-            var players = _cacheService.GetConnectedPlayers(server.Id);
-
-            foreach (var order in orders)
+            try
             {
-                if (order.Player?.SteamId64 is null) continue;
-                if (!players.Any(player => player.SteamID == order.Player.SteamId64)) continue;
+                var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+                var orders = await _orderRepository.FindManyByServer(server.Id);
 
-                order.Status = EOrderStatus.Command;
-                _orderRepository.Update(order);
-                await _orderRepository.SaveAsync();
-                var command = new BotCommand();
+                if (orders.Count == 0) return;
+                if (!_botService.IsBotOnline(server.Id)) return;
 
-                if (order.OrderType == EOrderType.Pack)
+                var players = _cacheService.GetConnectedPlayers(server.Id);
+
+                foreach (var order in orders)
                 {
-                    if (order.Pack is null) return;
-                    foreach (var packItem in order.Pack.PackItems)
-                    {
-                        if (packItem.AmmoCount > 0)
-                            command.MagazineDelivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount, packItem.AmmoCount);
-                        else
-                            command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
-                    }
+                    if (order.Player?.SteamId64 is null) continue;
+                    if (!players.Any(player => player.SteamID == order.Player.SteamId64)) continue;
 
-                    var deliveryText = order.ResolvedDeliveryText();
-                    if (deliveryText is not null) command.Say(deliveryText);
-
-                    command.Data = "order_" + order.Id.ToString();
-                }
-                else if (order.OrderType == EOrderType.Warzone)
-                {
-                    if (order.Warzone is null) return;
-                    var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
-                    command.Data = "order_" + order.Id.ToString();
-                    command.Teleport(order.Player.SteamId64, teleport.Teleport.Coordinates);
-                }
-                else if (order.OrderType == EOrderType.UAV)
-                {
-                    if (order.ScumServer?.Uav is null) return;
-
-                    await new UavHandler(
-                        _discordService,
-                        _fileService,
-                        _cacheService,
-                        server).Handle(order.Player, order.Uav!);
-
-                    var deliveryText = order.ResolvedDeliveryText();
-                    if (deliveryText is not null) command.Say(deliveryText);
-
-                    order.Status = EOrderStatus.Done;
+                    order.Status = EOrderStatus.Command;
                     _orderRepository.Update(order);
                     await _orderRepository.SaveAsync();
+                    var command = new BotCommand();
+
+                    if (order.OrderType == EOrderType.Pack)
+                    {
+                        var deliveryText = order.ResolvedDeliveryText();
+                        if (deliveryText is not null) command.Say(deliveryText);
+
+                        if (order.Pack is null) return;
+                        foreach (var packItem in order.Pack.PackItems)
+                        {
+                            if (packItem.AmmoCount > 0)
+                                command.MagazineDelivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount, packItem.AmmoCount);
+                            else
+                                command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
+                        }
+
+                        command.Data = "order_" + order.Id.ToString();
+                    }
+                    else if (order.OrderType == EOrderType.Warzone)
+                    {
+                        if (order.Warzone is null) return;
+                        var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
+                        command.Data = "order_" + order.Id.ToString();
+                        command.Teleport(order.Player.SteamId64, teleport.Teleport.Coordinates);
+                    }
+                    else if (order.OrderType == EOrderType.UAV)
+                    {
+                        if (order.ScumServer?.Uav is null) return;
+
+                        await new UavHandler(
+                            _discordService,
+                            _fileService,
+                            players,
+                            server).Execute(order.Player, order.Uav!);
+
+                        var deliveryText = order.ResolvedDeliveryText();
+                        if (deliveryText is not null) command.Say(deliveryText);
+
+                        order.Status = EOrderStatus.Done;
+                        _orderRepository.Update(order);
+                        await _orderRepository.SaveAsync();
+                    }
+
+                    if (command != null) _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
+
                 }
-
-                if (command != null) _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
-
             }
-
-
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception ex)
+            {
+                _logger.LogError("OrderCommandJob Exception -> {Ex}", ex.Message);
+                throw;
+            }
         }
     }
 }

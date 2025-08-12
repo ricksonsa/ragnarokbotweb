@@ -9,6 +9,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
     public interface IDiscordService
     {
+        Task<IUserMessage> SendMessageToChannel(string message, ulong channelId);
         Task<IUserMessage> SendEmbedToChannel(CreateEmbed createEmbed);
         Task SendEmbedToUserDM(CreateEmbed createEmbed);
         string GetDiscordUserName(ulong discordId);

@@ -66,6 +66,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var players = ListPlayersParser.Parse(input.Value);
             _cacheService.SetConnectedPlayers(serverId!.Value, players);
+            _logger.LogInformation("Receiver player list from server [{Server}]: {}", serverId.Value, JsonConvert.SerializeObject(players, Formatting.Indented));
             await _playerService.UpdateFromScumPlayers(serverId.Value, players);
         }
 
@@ -78,7 +79,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var flags = ListFlagsParser.Parse(input.Value);
             _cacheService.SetFlags(serverId.Value, flags);
-            await new ScumFileProcessor(server).SaveFlagList(JsonConvert.SerializeObject(flags));
+            await new ScumFileProcessor(server).SaveFlagList(JsonConvert.SerializeObject(flags, Formatting.Indented));
         }
 
         public async Task UpdateSquads(UpdateFromStringRequest input)
@@ -90,7 +91,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var squads = ListSquadsParser.Parse(input.Value);
             _cacheService.SetSquads(serverId.Value, squads);
-            await new ScumFileProcessor(server).SaveSquadList(JsonConvert.SerializeObject(squads));
+            await new ScumFileProcessor(server).SaveSquadList(JsonConvert.SerializeObject(squads, Formatting.Indented));
         }
 
         public bool IsBotOnline()
@@ -121,7 +122,7 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     try
                     {
-                        if (_cacheService.GetConnectedPlayers(serverId.Value).Any(player => player.SteamID == command.Values.FirstOrDefault(x => x.CheckTargetOnline)?.Target))
+                        if (!(_cacheService.GetConnectedPlayers(serverId.Value).Any(player => player.SteamID == command.Values.FirstOrDefault(x => x.CheckTargetOnline)?.Target)))
                         {
                             _cacheService.GetCommandQueue(serverId.Value).Enqueue(command);
                             return null;
@@ -164,7 +165,7 @@ namespace RagnarokBotWeb.Domain.Services
             return _cacheService.GetConnectedBots(serverId!.Value).Values.ToList();
         }
 
-        public void ResetBotState(long serverId)
+        public async Task ResetBotState(long serverId)
         {
             var now = DateTime.UtcNow;
             var bots = _cacheService.GetConnectedBots(serverId).Values.ToList();
@@ -176,6 +177,11 @@ namespace RagnarokBotWeb.Domain.Services
                     _cacheService.ClearConnectedPlayers(serverId);
                     _cacheService.GetConnectedBots(serverId).Remove(bot.Guid);
                 }
+            }
+
+            if (_cacheService.GetConnectedBots(serverId).Count == 0)
+            {
+                await _orderService.ResetCommandOrders(serverId);
             }
         }
 

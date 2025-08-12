@@ -11,5 +11,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<PaymentDto> ConfirmPayment(string token);
 
         Task<PaymentDto> CancelPayment(string token);
+        Task<PaymentDto> ConfirmPayment();
+        Task<PaymentDto> CancelPayment(long id);
     }
 }

@@ -28,52 +28,56 @@ namespace RagnarokBotWeb.Application.Handlers
 
         public async Task ExecuteAsync(ChatTextParseResult input)
         {
-            // Extract digits using regex
-            Match match = Regex.Match(input.Text, @"\d+");
-            if (match.Success)
+            try
             {
-                string numericValue = match.Value;
-                var register = await _playerRegisterRepository.FindOneWithServerByWelcomeIdAsync(numericValue);
-                if (register is null) return;
-
-                var player = await _playerRepository.FindOneAsync(p => p.SteamId64 == input.SteamId);
-                if (player?.DiscordId != null) return;
-
-                player ??= new();
-                player.SteamId64 = input.SteamId;
-                player.SteamName = await new SteamAccountResolver().Resolve(input.SteamId);
-                player.Name = input.PlayerName;
-                player.DiscordName = (await _discordService.GetDiscordUser(register.ScumServer.Guild!.DiscordId, register.DiscordId))?.DisplayName;
-                player.DiscordId = register.DiscordId;
-                player.ScumServer = register.ScumServer;
-
-                if (register.ScumServer.WelcomePackCoinAward > 0)
-                    player.Coin += register.ScumServer.WelcomePackCoinAward;
-
-                await _playerRepository.CreateOrUpdateAsync(player);
-                await _playerRepository.SaveAsync();
-
-                register.Status = Domain.Enums.EPlayerRegisterStatus.Registered;
-                await _playerRegisterRepository.CreateOrUpdateAsync(register);
-                await _playerRegisterRepository.SaveAsync();
-
-                string text = $"You are registered at {register.ScumServer.Name}.";
-                var order = await _orderService.PlaceWelcomePackOrder(player);
-
-                if (order != null)
-                    text += $" Stay put to receive your Welcome Pack {DiscordEmoji.Gift}";
-
-                await _discordService.SendEmbedToUserDM(new CreateEmbed
+                // Extract digits using regex
+                Match match = Regex.Match(input.Text, @"\d+");
+                if (match.Success)
                 {
-                    GuildId = register.ScumServer.Guild!.DiscordId,
-                    DiscordId = register.DiscordId,
-                    Title = "Registration",
-                    Text = text,
-                });
+                    string numericValue = match.Value;
+                    var register = await _playerRegisterRepository.FindOneWithServerByWelcomeIdAsync(numericValue);
+                    if (register is null) return;
+
+                    var player = await _playerRepository.FindOneAsync(p => p.SteamId64 == input.SteamId);
+                    if (player?.DiscordId != null) return;
+
+                    player ??= new();
+                    player.SteamId64 = input.SteamId;
+                    player.SteamName = await new SteamAccountResolver().Resolve(input.SteamId);
+                    player.Name = input.PlayerName;
+                    player.DiscordName = (await _discordService.GetDiscordUser(register.ScumServer.Guild!.DiscordId, register.DiscordId))?.DisplayName;
+                    player.DiscordId = register.DiscordId;
+                    player.ScumServer = register.ScumServer;
+
+                    if (register.ScumServer.WelcomePackCoinAward > 0)
+                        player.Coin += register.ScumServer.WelcomePackCoinAward;
+
+                    await _playerRepository.CreateOrUpdateAsync(player);
+                    await _playerRepository.SaveAsync();
+
+                    register.Status = Domain.Enums.EPlayerRegisterStatus.Registered;
+                    await _playerRegisterRepository.CreateOrUpdateAsync(register);
+                    await _playerRegisterRepository.SaveAsync();
+
+                    string text = $"You are registered at {register.ScumServer.Name}.";
+                    var order = await _orderService.PlaceWelcomePackOrder(player);
+
+                    if (order != null)
+                        text += $" Stay put to receive your Welcome Pack {DiscordEmoji.Gift}";
+
+                    await _discordService.SendEmbedToUserDM(new CreateEmbed
+                    {
+                        GuildId = register.ScumServer.Guild!.DiscordId,
+                        DiscordId = register.DiscordId,
+                        Title = "Registration",
+                        Text = text,
+                    });
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("No numeric value found.");
+                await _discordService.SendMessageToChannel("Welcome Pack error: " + ex.Message, 1404334678823014451u);
+                throw;
             }
         }
     }

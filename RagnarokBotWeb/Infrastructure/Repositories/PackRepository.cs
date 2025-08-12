@@ -66,12 +66,14 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(pack => pack.ScumServer)
                 .Include(pack => pack.PackItems)
                 .ThenInclude(packItem => packItem.Item)
+                .OrderByDescending(pack => pack.Id)
                 .Where(pack => pack.Deleted == null && pack.ScumServer.Id == id && !pack.IsWelcomePack);
 
             if (!string.IsNullOrEmpty(filter))
             {
                 filter = filter.ToLower();
-                return base.GetPageAsync(paginator, query.Where(pack => pack.Name.ToLower().Contains(filter) || pack.Description.ToLower().Contains(filter)));
+                return base.GetPageAsync(paginator, query.Where(pack => pack.Name.ToLower().Contains(filter)
+                || pack.Description != null && pack.Description.ToLower().Contains(filter)));
             }
 
             return base.GetPageAsync(paginator, query);
@@ -79,6 +81,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public override Task CreateOrUpdateAsync(Pack entity)
         {
+            foreach (var packItem in entity.PackItems)
+            {
+                _appDbContext.Items.Attach(packItem.Item);
+            }
             return base.CreateOrUpdateAsync(entity);
         }
     }

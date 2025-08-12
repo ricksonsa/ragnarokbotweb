@@ -43,41 +43,6 @@ namespace RagnarokBotWeb.Domain.Services
             _fileService = fileService;
         }
 
-        public async Task<PackDto> CreatePackAsync(PackDto createPack)
-        {
-            var serverId = ServerId();
-
-            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
-            if (server is null) throw new DomainException("Server tenant is not enabled");
-
-            ValidateSubscription(server);
-
-            var pack = _mapper.Map<Pack>(createPack);
-            pack.ScumServer = server;
-            if (!string.IsNullOrEmpty(pack.ImageUrl))
-            {
-                pack.ImageUrl = await _fileService.SaveCompressedBase64ImageAsync(pack.ImageUrl);
-            }
-
-            if (!string.IsNullOrEmpty(pack.DiscordChannelId))
-            {
-                pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
-            }
-
-            await _packRepository.CreateOrUpdateAsync(pack);
-            await _packRepository.SaveAsync();
-
-            return _mapper.Map<PackDto>(pack);
-        }
-
-        private static List<CreateEmbedField> GetFields(Pack pack)
-        {
-            List<CreateEmbedField> fields = [];
-            if (pack.Price > 0) fields.Add(new CreateEmbedField("Price", pack.Price.ToString(), true));
-            if (pack.VipPrice > 0) fields.Add(new CreateEmbedField("Vip Price", pack.VipPrice.ToString(), true));
-            return fields;
-        }
-
         private async Task<ulong> GenerateDiscordPackButton(Pack pack)
         {
             var action = $"buy_package:{pack.Id}";
@@ -138,6 +103,42 @@ namespace RagnarokBotWeb.Domain.Services
                     });
                 }
             }
+        }
+
+        public async Task<PackDto> CreatePackAsync(PackDto createPack)
+        {
+            var serverId = ServerId();
+
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            if (server is null) throw new DomainException("Server tenant is not enabled");
+
+            ValidateSubscription(server);
+
+            var pack = _mapper.Map<Pack>(createPack);
+            pack.ScumServer = server;
+            pack.PackItems = _mapper.Map<List<PackItem>>(createPack.PackItems);
+            if (!string.IsNullOrEmpty(pack.ImageUrl))
+            {
+                pack.ImageUrl = await _fileService.SaveCompressedBase64ImageAsync(pack.ImageUrl);
+            }
+
+            await _packRepository.CreateOrUpdateAsync(pack);
+            await _packRepository.SaveAsync();
+
+            if (!string.IsNullOrEmpty(pack.DiscordChannelId))
+            {
+                pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
+            }
+
+            return _mapper.Map<PackDto>(pack);
+        }
+
+        private static List<CreateEmbedField> GetFields(Pack pack)
+        {
+            List<CreateEmbedField> fields = [];
+            if (pack.Price > 0) fields.Add(new CreateEmbedField("Price", pack.Price.ToString(), true));
+            if (pack.VipPrice > 0) fields.Add(new CreateEmbedField("Vip Price", pack.VipPrice.ToString(), true));
+            return fields;
         }
 
         public async Task<PackDto> UpdatePackAsync(long id, PackDto packDto)

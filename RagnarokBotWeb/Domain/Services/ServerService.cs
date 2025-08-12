@@ -146,13 +146,21 @@ namespace RagnarokBotWeb.Domain.Services
             return players.Select(_mapper.Map<PlayerDto>).ToList();
         }
 
+        public async Task<List<Shared.Models.ScumPlayer>> GetOnlineScumPlayers()
+        {
+            var serverId = ServerId();
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            if (server is null) return [];
+            return _cacheService.GetConnectedPlayers(serverId.Value);
+        }
+
         public async Task GetServerConfigLineValue(Ftp ftp, Dictionary<string, string> data)
         {
             if (ftp is null) throw new DomainException("Invalid ftp server");
             try
             {
                 var client = _ftpService.GetClient(ftp);
-                using (var stream = client.OpenRead($@"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini"))
+                using (var stream = await client.OpenRead($@"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini"))
                 using (var reader = new StreamReader(stream, encoding: Encoding.UTF8))
                     while (await reader.ReadLineAsync() is { } line)
                         foreach (var item in data)

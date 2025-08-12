@@ -22,9 +22,8 @@ public abstract class AbstractJob
         var server = await _scumServerRepository.FindByIdAsNoTrackingAsync(serverId);
         if (server is null) throw new Exception("Invalid server: server does not exist");
         _scumServer = server;
-        if (validateSubscription && !server.Tenant.IsCompliant()) throw new DomainException("Invalid server: is does not have an active subscription");
-        if (server!.Ftp is null && ftpRequired)
-            throw new Exception("Invalid server: server does not have a ftp configuration");
+        if (validateSubscription && !server.Tenant.IsCompliant()) throw new ServerUncompliantException();
+        if (server!.Ftp is null && ftpRequired) throw new FtpNotSetException();
         return server;
     }
 

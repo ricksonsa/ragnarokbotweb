@@ -17,7 +17,6 @@
         <tr>
           <th>Id</th>
           <th>Order Name</th>
-          <th>Order Description</th>
           <th>Order Type</th>
           <th>Player Name</th>
           <th>Player Steam Id</th>
@@ -31,7 +30,6 @@
         <tr *ngFor="let data of basicTable.data">
           <td>{{data.id}}</td>
           <td>{{data.pack?.name ?? data.warzone?.name ?? data.scumServer.uav?.name ?? 'unknown'}}</td>
-          <td>{{data.pack?.description ?? data.warzone?.description ?? data.scumServer.uav?.description ?? 'unknown'}}</td>
           <td>{{resolveOrderType(data.orderType)}}</td>
           <td>{{data.player.name}}</td>
           <td>{{data.player.steamId64}}</td>

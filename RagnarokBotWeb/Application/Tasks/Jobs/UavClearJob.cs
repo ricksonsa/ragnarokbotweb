@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -13,15 +14,17 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-            var server = await GetServerAsync(context);
 
             try
             {
+                var server = await GetServerAsync(context);
                 if (server.Uav?.DiscordId != null)
                 {
                     await discordService.DeleteAllMessagesInChannelByDate(server.Uav.DiscordId.Value, DateTime.UtcNow.AddMinutes(-15));
                 }
             }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
             catch (Exception)
             {
                 throw;

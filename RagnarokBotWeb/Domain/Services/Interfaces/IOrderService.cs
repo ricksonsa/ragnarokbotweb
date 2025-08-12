@@ -16,5 +16,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<Page<OrderDto>> GetPacksPageByFilterAsync(Paginator paginator, string? filter);
         Task<OrderDto> ConfirmOrderDelivered(long orderId);
         Task<List<GrapthDto>> GetBestSellingOrdersPacks();
+        Task ResetCommandOrders(long serverId);
     }
 }

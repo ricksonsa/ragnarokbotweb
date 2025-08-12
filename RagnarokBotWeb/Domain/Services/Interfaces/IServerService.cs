@@ -19,6 +19,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<ScumServerDto> UpdateKillFeed(UpdateKillFeedDto updateKillFeed);
         Task UpdateServerData(ScumServer server);
         Task<List<PlayerDto>> GetOnlinePlayers();
+        Task<List<Shared.Models.ScumPlayer>> GetOnlineScumPlayers();
         Task<UavDto> UpdateUav(UavDto dto);
     }
 }

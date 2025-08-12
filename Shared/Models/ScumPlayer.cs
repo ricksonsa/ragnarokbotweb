@@ -8,9 +8,9 @@
         public long Fame { get; set; }
         public long AccountBalance { get; set; }
         public long GoldBalance { get; set; }
-        public float X { get; set; }
-        public float Y { get; set; }
-        public float Z { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Z { get; set; }
 
         public override string ToString()
         {

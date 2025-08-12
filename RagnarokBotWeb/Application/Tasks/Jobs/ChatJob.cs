@@ -4,6 +4,7 @@ using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -38,7 +39,8 @@ public class ChatJob(
             var fileType = GetFileTypeFromContext(context);
 
             var processor = new ScumFileProcessor(server);
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService))
+
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService, context.CancellationToken))
             {
                 var parsed = new ChatTextParser().Parse(line);
                 if (parsed is null)
@@ -79,7 +81,6 @@ public class ChatJob(
                         {
                             bot.SteamId = parsed.SteamId;
                             bot.LastPinged = DateTime.UtcNow;
-                            parsed.Post = false;
                             cacheService.GetConnectedBots(server.Id)[guid] = bot;
                         }
                     }
@@ -88,19 +89,22 @@ public class ChatJob(
                         logger.LogError("Could not parse the string [{}] to Guid", parsed.Text);
                     }
                 }
-
-                if (!IsCommand(parsed)
-                    && IsServerAllowed(server, parsed)
-                    && !IsBotSteamId(cacheService, server, parsed)
-                    && parsed.Post)
+                else
                 {
-                    await publisher.Publish(server,
-                     new ChannelPublishDto { Content = $"[{parsed.ChatType}] {parsed.PlayerName.Substring(0, parsed.PlayerName.LastIndexOf("("))}: {parsed.Text}" },
-                     ChannelTemplateValues.GameChat);
+                    if (!IsCommand(parsed)
+                        && IsServerAllowed(server, parsed)
+                        && !IsBotSteamId(cacheService, server, parsed)
+                        && parsed.Post)
+                    {
+                        await publisher.Publish(server,
+                         new ChannelPublishDto { Content = $"[{parsed.ChatType}] {parsed.PlayerName.Substring(0, parsed.PlayerName.LastIndexOf("("))}: {parsed.Text}" },
+                         ChannelTemplateValues.GameChat);
+                    }
                 }
-
             }
         }
+        catch (ServerUncompliantException) { }
+        catch (FtpNotSetException) { }
         catch (Exception ex)
         {
             logger.LogError("{Job} Exception -> {Ex}", context.JobDetail.Key.Name, ex.Message);

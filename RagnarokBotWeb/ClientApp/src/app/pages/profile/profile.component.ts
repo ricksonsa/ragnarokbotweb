@@ -18,8 +18,9 @@ import { Alert } from '../../models/alert';
 import { AuthenticationService } from '../../services/authentication.service';
 import { EventManager, EventWithContent } from '../../services/event-manager.service';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
-import { COUNSTRIES } from '../../constants';
-import { take } from 'rxjs';
+import { COUNTRIES } from '../../constants';
+import { Observable, take } from 'rxjs';
+import { ApplicationService } from '../../services/application.service';
 
 @Component({
   selector: 'app-profile',
@@ -49,7 +50,7 @@ export class ProfileComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);
   mismatchPass: boolean;
   loading = false;
-  countries = COUNSTRIES;
+  countries = COUNTRIES;
 
   constructor(
     private readonly authService: AuthenticationService,

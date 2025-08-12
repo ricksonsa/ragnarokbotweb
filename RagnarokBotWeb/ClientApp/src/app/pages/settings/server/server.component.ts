@@ -29,7 +29,8 @@ import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { ChannelDto } from '../../../models/channel.dto';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { Constants } from '../../../constants';
-import { switchMap, take } from 'rxjs';
+import { Observable, switchMap, take } from 'rxjs';
+import { ApplicationService } from '../../../services/application.service';
 registerLocaleData(localePT);
 registerLocaleData(localeES);
 registerLocaleData(localeDE);
@@ -66,6 +67,7 @@ export class ServerComponent implements OnInit {
   accountDto?: AccountDto;
   channels: ChannelDto[] = [];
   isCompliant = Constants.isCompliant;
+  timezones$: Observable<{ id: string, displayName: string }[]>;
 
   private fb = inject(NonNullableFormBuilder);
 
@@ -88,6 +90,7 @@ export class ServerComponent implements OnInit {
 
   constructor(
     private readonly serverService: ServerService,
+    private readonly appService: ApplicationService,
     private readonly eventManager: EventManager,
     private readonly authService: AuthenticationService) {
     this.ftpForm = this.fb.group({
@@ -105,6 +108,7 @@ export class ServerComponent implements OnInit {
       allowMinesOutsideFlag: [true],
       sendVipLockpickAlert: [true],
       battleMetricsId: [null],
+      timeZoneId: [null, [Validators.required]],
       welcomePackCoinAward: [0, [Validators.min(0)]],
       coinKillAwardAmount: [0, [Validators.min(0)]],
       coinDeathPenaltyAmount: [0, [Validators.min(0)]],
@@ -124,6 +128,7 @@ export class ServerComponent implements OnInit {
           this.serverForm.patchValue(this.accountDto.server);
         }
       });
+    this.timezones$ = this.appService.getTimeZones();
   }
 
   updateSettings() {
@@ -190,7 +195,7 @@ export class ServerComponent implements OnInit {
         this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('', 'Ftp Settings Success', 'success')));
         return this.authService.account(true);
       }),
-      take(1))
+        take(1))
       .subscribe({
         next: (value) => {
           location.reload();

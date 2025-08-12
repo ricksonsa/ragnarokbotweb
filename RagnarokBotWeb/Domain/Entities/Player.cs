@@ -13,9 +13,9 @@ public class Player : BaseEntity
     public long? Money { get; set; }
     public long? Gold { get; set; }
     public long? Fame { get; set; }
-    public float? X { get; set; }
-    public float? Y { get; set; }
-    public float? Z { get; set; }
+    public double? X { get; set; }
+    public double? Y { get; set; }
+    public double? Z { get; set; }
     public long Coin { get; set; } = 0;
     public List<Vip> Vips { get; set; }
     public List<Ban> Bans { get; set; }

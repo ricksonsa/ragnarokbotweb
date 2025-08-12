@@ -5,6 +5,7 @@ using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -26,18 +27,20 @@ public class GamePlayJob(
 
     public async Task Execute(IJobExecutionContext context)
     {
+        logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
         try
         {
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
             var server = await GetServerAsync(context);
             var processor = new ScumFileProcessor(server);
-            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService))
+            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService, context.CancellationToken))
             {
                 if (IsCompliant()) await HandleArmedTrap(unitOfWork, cache, server, line);
                 await HandleLockpick(unitOfWork, discordService, fileService, server, line);
                 await HandleBunkerState(bunkerService, server, line);
             }
         }
+        catch (ServerUncompliantException) { }
+        catch (FtpNotSetException) { }
         catch (Exception ex)
         {
             logger.LogError(ex.Message, this);

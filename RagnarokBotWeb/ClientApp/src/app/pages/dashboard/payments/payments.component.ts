@@ -71,7 +71,7 @@ export class PaymentsComponent implements OnInit {
     this.paymentService.addPayment()
       .subscribe({
         next: (response) => {
-          window.open(response.url);
+          window.open("https://www.paypal.com/ncp/payment/ZJ2UNRCF4W2EL");
           this.loading = false;
           this.loadPage();
         },
@@ -83,7 +83,7 @@ export class PaymentsComponent implements OnInit {
   }
 
   pay(link: string) {
-    window.open(link);
+    window.open("https://www.paypal.com/ncp/payment/ZJ2UNRCF4W2EL");
   }
 
   setUpFilter() {

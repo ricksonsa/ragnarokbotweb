@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Quartz;
 using RagnarokBotWeb.Domain.Business;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -30,36 +31,46 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         {
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
-            var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
-            if (!_botService.IsBotOnline(server.Id)) return;
-            var warzoneId = GetValueFromContext<long>(context, "warzone_id");
-            if (warzoneId == 0) return;
-
-            var warzone = await _unitOfWork.Warzones
-                .Include(warzone => warzone.ScumServer)
-                .Include(warzone => warzone.WarzoneItems)
-                    .ThenInclude(warzone => warzone.Item)
-                .Include(warzone => warzone.SpawnPoints)
-                    .ThenInclude(warzone => warzone.Teleport)
-                .FirstOrDefaultAsync(warzone => warzone.Id == warzoneId);
-
-            if (warzone == null) return;
-
-            var warzoneItem = WarzoneRandomSelector.SelectItem(warzone);
-            var spawnPoint = WarzoneRandomSelector.SelectSpawnPoint(warzone);
-
-            var command = new BotCommand();
-
-            // coordinates needs double quote
-            var coordinates = spawnPoint.Teleport.Coordinates.Contains("{") ? $"\"{spawnPoint.Teleport.Coordinates}\"" : spawnPoint.Teleport.Coordinates;
-            command.Delivery(coordinates, warzoneItem.Item.Code, 1);
-
-            if (!string.IsNullOrEmpty(warzone.DeliveryText))
+            try
             {
-                command.Say(warzone.ResolveDeliveryText(warzoneItem, spawnPoint));
+                var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+                if (!_botService.IsBotOnline(server.Id)) return;
+                var warzoneId = GetValueFromContext<long>(context, "warzone_id");
+                if (warzoneId == 0) return;
+
+                var warzone = await _unitOfWork.Warzones
+                    .Include(warzone => warzone.ScumServer)
+                    .Include(warzone => warzone.WarzoneItems)
+                        .ThenInclude(warzone => warzone.Item)
+                    .Include(warzone => warzone.SpawnPoints)
+                        .ThenInclude(warzone => warzone.Teleport)
+                    .FirstOrDefaultAsync(warzone => warzone.Id == warzoneId);
+
+                if (warzone == null) return;
+
+                var warzoneItem = WarzoneRandomSelector.SelectItem(warzone);
+                var spawnPoint = WarzoneRandomSelector.SelectSpawnPoint(warzone);
+
+                var command = new BotCommand();
+
+                // coordinates needs double quote
+                var coordinates = spawnPoint.Teleport.Coordinates.Contains("{") ? $"\"{spawnPoint.Teleport.Coordinates}\"" : spawnPoint.Teleport.Coordinates;
+                command.Delivery(coordinates, warzoneItem.Item.Code, 1);
+
+                if (!string.IsNullOrEmpty(warzone.DeliveryText))
+                {
+                    command.Say(warzone.ResolveDeliveryText(warzoneItem, spawnPoint));
+                }
+
+                _cacheService.GetCommandQueue(server.Id).Enqueue(command);
+            }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception)
+            {
+                throw;
             }
 
-            _cacheService.GetCommandQueue(server.Id).Enqueue(command);
         }
     }
 }

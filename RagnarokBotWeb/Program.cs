@@ -1,5 +1,6 @@
 using Discord;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using Quartz;
@@ -45,6 +46,8 @@ namespace RagnarokBotWeb
                 .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
+            var configuration = builder.Configuration;
+
             var DefaultCorsPolicy = "_defaultCorsPolicy";
             var ProductionCorsPolicy = "_productionCorsPolicy";
 
@@ -69,6 +72,7 @@ namespace RagnarokBotWeb
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             if (builder.Environment.IsDevelopment())
             {
+                AppSettings.IsDevelopment = true;
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen(options =>
                 {
@@ -102,8 +106,19 @@ namespace RagnarokBotWeb
                 });
             }
 
-            builder.Services.AddDbContextFactory<AppDbContext>();
-            builder.Services.AddDbContext<AppDbContext>();
+            builder.Services.AddDbContextFactory<AppDbContext>(options =>
+            {
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+
+            builder.Services.AddDbContextFactory<AppDbContext>(options =>
+            {
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+
+            // Register DbContext for scoped services using the factory
+            builder.Services.AddScoped<AppDbContext>(sp =>
+                sp.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext());
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddSingleton(_ =>
@@ -134,7 +149,7 @@ namespace RagnarokBotWeb
 
             builder.Services.Configure<AppSettings>(options =>
             {
-                var section = builder.Configuration.GetSection(nameof(AppSettings));
+                var section = configuration.GetSection(nameof(AppSettings));
                 section.Bind(options);
             });
 
@@ -244,15 +259,11 @@ namespace RagnarokBotWeb
             // Serve Angular static files
             app.UseDefaultFiles();
             app.UseStaticFiles();
-
             app.MapHealthChecks("/healthz");
 
-            // Apply migrations automatically
-            using (var scope = app.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.MigrateDatabase();
-            }
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Database.Migrate();
 
             app.UseAuthorization();
             app.UseAuthentication();

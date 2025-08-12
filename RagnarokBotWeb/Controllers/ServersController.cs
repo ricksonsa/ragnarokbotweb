@@ -53,6 +53,14 @@ namespace RagnarokBotWeb.Controllers
             return Ok(players);
         }
 
+        [HttpGet("scum-players")]
+        public async Task<IActionResult> GetScumPlayers()
+        {
+            _logger.LogDebug("Get request to fetch online scum players");
+            var players = await _serverService.GetOnlineScumPlayers();
+            return Ok(players);
+        }
+
         [HttpGet("discord")]
         public async Task<IActionResult> GetDiscord()
         {

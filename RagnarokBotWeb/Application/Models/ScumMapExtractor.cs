@@ -126,7 +126,7 @@ public class ScumMapExtractor
         var relevantPoints = FilterPointsNearSector(points, sectorCenter);
 
         var memoryStream = new MemoryStream();
-        await ExtractSectorSizeArea(sectorCenter, relevantPoints, memoryStream, showGrid, true);
+        await ExtractSectorSizeArea(sectorCenter, points, memoryStream, showGrid, true);
         memoryStream.Position = 0;
         return memoryStream;
     }
@@ -208,7 +208,7 @@ public class ScumMapExtractor
     public async Task<Stream> ExtractMapWithPoints(
         ScumCoordinate centerCoordinate,
         List<ScumCoordinate> points,
-        int extractSize = 512,
+        int extractSize = 1024,
         bool autoFitPoints = true,
         bool showLabels = true,
         bool showGrid = true)
@@ -389,7 +389,7 @@ public class ScumMapExtractor
     {
         var color = Color.FromRgba(255, 255, 255, 180); // Amarelo semi-transparente
         var labelColor = Color.White;
-        var font = SystemFonts.CreateFont("Arial", 12, FontStyle.Regular);
+        var font = SystemFonts.CreateFont("Arial", 20, FontStyle.Regular);
 
         map.Mutate(ctx =>
         {
@@ -788,10 +788,10 @@ public struct ScumCoordinate
 
     public override readonly string ToString() => $"X={X} Y={Y} Z={Z}".Replace(",", ".");
 
-    public static ScumCoordinate MidPoint((float x1, float y1) point1, (float x2, float y2) point2)
+    public static ScumCoordinate MidPoint((double x1, double y1) point1, (double x2, double y2) point2)
     {
-        float midX = (point1.x1 + point2.x2) / 2;
-        float midY = (point1.y1 + point2.y2) / 2;
+        double midX = (point1.x1 + point2.x2) / 2;
+        double midY = (point1.y1 + point2.y2) / 2;
         return new ScumCoordinate(midX, midY);
     }
 

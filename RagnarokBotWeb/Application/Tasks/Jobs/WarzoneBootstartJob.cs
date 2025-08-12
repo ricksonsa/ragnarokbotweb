@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -27,16 +28,26 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-            var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
-
-            if (!_botService.IsBotOnline(server.Id)) return;
-
-            var scheduler = await _schedulerFactory.GetScheduler();
-            if (!await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({server.Id})")))
+            try
             {
-                await _warzoneService.OpenWarzone(server, token: context.CancellationToken);
+                var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
 
+                if (!_botService.IsBotOnline(server.Id)) return;
+
+                var scheduler = await _schedulerFactory.GetScheduler();
+                if (!await scheduler.CheckExists(new JobKey(nameof(CloseWarzoneJob), $"WarzoneJobs({server.Id})")))
+                {
+                    await _warzoneService.OpenWarzone(server, token: context.CancellationToken);
+                }
             }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Domain.Entities;
 
 namespace RagnarokBotWeb.Domain.Services.Interfaces
 {
@@ -14,5 +15,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task LoadFlags(CancellationToken stoppingToken);
         Task CreateWarzoneJobs(ScumServer server, Warzone warzone);
         Task DeleteWarzoneJobs(ScumServer server);
+        Task TriggerJob(string jobId, string groupId);
+        Task<List<JobModel>> ListJobs();
     }
 }

@@ -63,11 +63,12 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateSubscription(server);
 
             warzone.ScumServer = server;
+            warzone.WarzoneItems = createWarzone.WarzoneItems.Select(_mapper.Map<WarzoneItem>).ToList();
+            warzone.Teleports = createWarzone.Teleports.Select(_mapper.Map<WarzoneTeleport>).ToList();
+            warzone.SpawnPoints = createWarzone.SpawnPoints.Select(_mapper.Map<WarzoneSpawn>).ToList();
 
             if (!string.IsNullOrEmpty(warzone.ImageUrl))
-            {
                 warzone.ImageUrl = await _fileService.SaveCompressedBase64ImageAsync(warzone.ImageUrl);
-            }
 
             await _warzoneRepository.CreateOrUpdateAsync(warzone);
             await _warzoneRepository.SaveAsync();

@@ -104,7 +104,7 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<Order?> PlaceDeliveryOrder(string identifier, long packId)
         {
             var pack = await _packRepository.FindByIdAsync(packId);
-            if (pack is null) throw new DomainException("Pack not found");
+            if (pack is null) throw new DomainException($"Pack [{packId}] not found");
 
             var player = await _playerRepository.FindOneWithServerAsync(u => u.SteamId64 == identifier || u.DiscordId.ToString() == identifier);
             if (player is null) throw new NotFoundException("Player not found");
@@ -130,7 +130,7 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<Order?> PlaceDeliveryOrderFromDiscord(ulong guildId, ulong discordId, long packId)
         {
             var pack = await _packRepository.FindByIdAsync(packId);
-            if (pack is null) throw new DomainException("Pack not found");
+            if (pack is null) throw new DomainException($"Pack [{packId}] not found");
 
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
             if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
@@ -240,6 +240,17 @@ namespace RagnarokBotWeb.Domain.Services
                 Amount = a.Count,
                 Name = a.Name
             }).ToList();
+        }
+
+        public async Task ResetCommandOrders(long serverId)
+        {
+            var orders = await _orderRepository.FindManyCommandByServer(serverId);
+            foreach (var order in orders)
+            {
+                order.Status = EOrderStatus.Created;
+                await _orderRepository.CreateOrUpdateAsync(order);
+                await _orderRepository.SaveAsync();
+            }
         }
     }
 }

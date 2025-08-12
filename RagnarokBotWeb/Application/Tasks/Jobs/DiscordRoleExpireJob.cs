@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Quartz;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -27,35 +28,46 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         {
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
-            var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
-            var players = _unitOfWork.Players
-                .Include(player => player.DiscordRoles)
-                .Include(player => player.ScumServer)
-                .Include(player => player.ScumServer.Guild)
-                .Where(player =>
-                    player.ScumServer != null
-                    && player.ScumServer.Id == server.Id
-                    && player.ScumServer.Guild != null
-                    && player.DiscordId.HasValue
-                    && player.DiscordRoles.Any(role => !role.Processed && !role.Indefinitely && role.ExpirationDate.HasValue && role.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
-
-            foreach (var player in players)
+            try
             {
-                foreach (var role in player.DiscordRoles)
+                var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+                var players = _unitOfWork.Players
+                    .Include(player => player.DiscordRoles)
+                    .Include(player => player.ScumServer)
+                    .Include(player => player.ScumServer.Guild)
+                    .Where(player =>
+                        player.ScumServer != null
+                        && player.ScumServer.Id == server.Id
+                        && player.ScumServer.Guild != null
+                        && player.DiscordId.HasValue
+                        && player.DiscordRoles.Any(role => !role.Processed && !role.Indefinitely && role.ExpirationDate.HasValue && role.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
+
+                foreach (var player in players)
                 {
-                    try
+                    foreach (var role in player.DiscordRoles)
                     {
-                        await _discordService.RemoveUserRoleAsync(player.ScumServer!.Guild!.DiscordId, player.DiscordId!.Value, role.DiscordId);
-                        role.Processed = true;
-                        _unitOfWork.DiscordRoles.Update(role);
-                        await _unitOfWork.SaveAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError("Could not remove user role with id {DiscordId} with exception {Ex}", role.DiscordId, ex.Message);
+                        try
+                        {
+                            await _discordService.RemoveUserRoleAsync(player.ScumServer!.Guild!.DiscordId, player.DiscordId!.Value, role.DiscordId);
+                            role.Processed = true;
+                            _unitOfWork.DiscordRoles.Update(role);
+                            await _unitOfWork.SaveAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError("Could not remove user role with id {DiscordId} with exception {Ex}", role.DiscordId, ex.Message);
+                        }
                     }
                 }
             }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
     }
 }

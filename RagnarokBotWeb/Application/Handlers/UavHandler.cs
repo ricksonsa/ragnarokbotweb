@@ -2,19 +2,20 @@
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Application.Handlers
 {
     public class UavHandler(
         IDiscordService discordService,
         IFileService fileService,
-        ICacheService cache,
-        ScumServer server
+        List<ScumPlayer> players,
+        Domain.Entities.ScumServer server
         )
     {
-        public async Task Handle(Player player, string sector)
+        public async Task Execute(Player player, string sector)
         {
-            var points = cache.GetConnectedPlayers(server.Id).Select(player => new ScumCoordinate(player.X, player.Y)).ToList();
+            var points = players.Select(player => new ScumCoordinate(player.X, player.Y)).ToList();
             var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
             var result = await extractor.ExtractCompleteSector(sector, points);
             var image = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/eliminations", cdnUrlPrefix: "images/eliminations");

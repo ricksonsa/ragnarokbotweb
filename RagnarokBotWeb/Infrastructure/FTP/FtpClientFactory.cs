@@ -6,12 +6,12 @@ namespace RagnarokBotWeb.Infrastructure.FTP;
 
 public static class FtpClientFactory
 {
-    public static FtpClient CreateClient(Ftp ftp, bool acceptInvalidCertificates = true)
+    public static AsyncFtpClient CreateClient(Ftp ftp, bool acceptInvalidCertificates = true, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(ftp.Address) || string.IsNullOrWhiteSpace(ftp.UserName))
             throw new ArgumentException("FTP configuration is invalid.");
 
-        var client = new FtpClient(ftp.Address, port: (int)ftp.Port, user: ftp.UserName, pass: ftp.Password)
+        var client = new AsyncFtpClient(ftp.Address, port: (int)ftp.Port, user: ftp.UserName, pass: ftp.Password)
         {
             Config = new FtpConfig
             {
@@ -19,13 +19,16 @@ public static class FtpClientFactory
                 LogDurations = false,
                 LogPassword = false,
                 LogUserName = false,
-                LogToConsole = false,
+                LogToConsole = true,
+                RetryAttempts = 5,
                 EncryptionMode = FtpEncryptionMode.Auto,
-                ConnectTimeout = 5000,
+                ConnectTimeout = 10000,
                 DataConnectionType = FtpDataConnectionType.AutoPassive,
                 ValidateAnyCertificate = acceptInvalidCertificates
             }
         };
+
+        client.AutoConnect(cancellationToken);
 
         // Custom certificate validation if needed
         if (!acceptInvalidCertificates)
@@ -47,7 +50,7 @@ public static class FtpClientFactory
     }
 
     // Alternative method for development/testing with relaxed SSL validation
-    public static FtpClient CreateClientForDevelopment(Ftp ftp)
+    public static AsyncFtpClient CreateClientForDevelopment(Ftp ftp)
     {
         return CreateClient(ftp, acceptInvalidCertificates: true);
     }

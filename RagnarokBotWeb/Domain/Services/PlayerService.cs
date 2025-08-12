@@ -646,7 +646,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             // Filter kills by server and period
             var kills = _unitOfWork.Kills
-                .Where(k => k.ScumServer.Id == server.Id);
+                .Include(k => k.ScumServer)
+                .Where(k => k.ScumServer.Id == server.Id && k.KillerSteamId64 != "-1");
 
             // Group by KillerName
             return await kills
@@ -671,6 +672,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             // Filter kills by server and period
             var kills = _unitOfWork.Kills
+                .Include(k => k.ScumServer)
                 .Where(k => k.ScumServer.Id == server.Id && k.KillerSteamId64 == steamId);
 
             // Group by KillerName

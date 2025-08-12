@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -27,6 +28,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     cacheService.GetCommandQueue(serverId).Enqueue(command);
                 }
             }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);

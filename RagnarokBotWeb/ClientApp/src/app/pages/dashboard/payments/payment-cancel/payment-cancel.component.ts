@@ -34,7 +34,7 @@ export class PaymentCancelComponent implements OnInit {
     this.paymentService.addPayment()
       .subscribe({
         next: (response) => {
-          window.open(response.url);
+          window.open("https://www.paypal.com/ncp/payment/ZJ2UNRCF4W2EL");
           this.loading = false;
         },
         error: (err) => {

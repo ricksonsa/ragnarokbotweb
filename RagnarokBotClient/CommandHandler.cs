@@ -82,7 +82,8 @@ namespace RagnarokBotClient
 
             if (!string.IsNullOrEmpty(command.Data))
             {
-                tasks.Add(() => _remote.PatchAsync($"api/bots/deliveries/{command.Data.Split("_")[1]}/confirm"));
+                //tasks.Add(() => _remote.PatchAsync($"api/bots/deliveries/{command.Data.Split("_")[1]}/confirm"));
+                tasks.Add(() => _scumManager.SayLocal($"!orderconfirm_{command.Data.Split("_")[1]}"));
             }
 
             return tasks;

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Quartz;
 using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -17,14 +18,25 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-            var server = await GetServerAsync(context);
-            if (server.Ftp is null) return;
+            try
+            {
+                var server = await GetServerAsync(context);
+                if (server.Ftp is null) return;
 
-            var processor = new ScumFileProcessor(server);
-            var data = await processor.DownloadRaidTimes(ftpService);
-            var raidTime = JsonConvert.DeserializeObject<RaidTimes>(data);
-            if (raidTime == null) return;
-            cache.SetRaidTimes(server.Id, raidTime);
+                var processor = new ScumFileProcessor(server);
+                var data = await processor.DownloadRaidTimes(ftpService);
+                var raidTime = JsonConvert.DeserializeObject<RaidTimes>(data);
+                if (raidTime == null) return;
+                cache.SetRaidTimes(server.Id, raidTime);
+            }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
     }
 }

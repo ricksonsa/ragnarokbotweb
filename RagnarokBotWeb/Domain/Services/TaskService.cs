@@ -79,67 +79,67 @@ namespace RagnarokBotWeb.Domain.Services
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
 
             var job = JobBuilder.Create<BotAliveJob>()
-                .WithIdentity($"{nameof(BotAliveJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(BotAliveJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, OneMinTrigger());
 
             job = JobBuilder.Create<ListPlayersJob>()
-                .WithIdentity($"{nameof(ListPlayersJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(ListPlayersJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, OneMinTrigger());
 
             job = JobBuilder.Create<ListSquadsJob>()
-                .WithIdentity($"{nameof(ListSquadsJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(ListSquadsJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?"));
 
             job = JobBuilder.Create<ListFlagsJob>()
-                .WithIdentity($"{nameof(ListFlagsJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(ListFlagsJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0 0/2 * * ?"));
 
             job = JobBuilder.Create<OrderCommandJob>()
-                 .WithIdentity($"{nameof(OrderCommandJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(OrderCommandJob), $"ServerJobs({server.Id})")
                  .UsingJobData("server_id", server.Id)
                  .Build();
             await scheduler.ScheduleJob(job, TenSecondsTrigger());
 
             job = JobBuilder.Create<UavClearJob>()
-                .WithIdentity($"{nameof(UavClearJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(UavClearJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, OneMinTrigger());
 
             job = JobBuilder.Create<WarzoneBootstartJob>()
-                .WithIdentity($"{nameof(WarzoneBootstartJob)}({server.Id})", $"WarzoneJobs({server.Id})")
+                .WithIdentity(nameof(WarzoneBootstartJob), $"WarzoneJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0/10 * * * ?", startNow: true));
 
             job = JobBuilder.Create<BunkerStateJob>()
-                .WithIdentity($"{nameof(BunkerStateJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(BunkerStateJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
 
             job = JobBuilder.Create<KillRankJob>()
-                .WithIdentity($"{nameof(KillRankJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(KillRankJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
 
             job = JobBuilder.Create<LockpickRankJob>()
-                .WithIdentity($"{nameof(LockpickRankJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(LockpickRankJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
 
             job = JobBuilder.Create<PaydayJob>()
-                .WithIdentity($"{nameof(PaydayJob)}({server.Id})", $"ServerJobs({server.Id})")
+                .WithIdentity(nameof(PaydayJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0/30 * * * ?"));
@@ -152,71 +152,71 @@ namespace RagnarokBotWeb.Domain.Services
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
 
             var job = JobBuilder.Create<ChatJob>()
-                .WithIdentity($"ChatJob({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(ChatJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Chat.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0/10 * * * * ?"));
 
             job = JobBuilder.Create<KillLogJob>()
-                   .WithIdentity($"KillLogJob({server.Id})", $"FtpJobs({server.Id})")
+                   .WithIdentity(nameof(KillLogJob), $"FtpJobs({server.Id})")
                    .UsingJobData("server_id", server.Id)
                    .UsingJobData("file_type", EFileType.Kill.ToString())
                    .Build();
             await scheduler.ScheduleJob(job, ThirtySecondsTrigger());
 
             job = JobBuilder.Create<EconomyJob>()
-                .WithIdentity($"EconomyJob({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(EconomyJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Economy.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, FiveMinTrigger());
 
             job = JobBuilder.Create<GamePlayJob>()
-                .WithIdentity($"GamePlayJob({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(GamePlayJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Gameplay.ToString())
                 .Build();
             await scheduler.ScheduleJob(job, ThirtySecondsTrigger());
 
             job = JobBuilder.Create<VipExpireJob>()
-                .WithIdentity($"VipExpireJob({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(VipExpireJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, TenMinTrigger());
 
             job = JobBuilder.Create<BanExpireJob>()
-                .WithIdentity($"BanExpireJob({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(BanExpireJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, TenMinTrigger());
 
             job = JobBuilder.Create<SilenceExpireJob>()
-                .WithIdentity($"SilenceExpireJob({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(SilenceExpireJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, TenMinTrigger());
 
             job = JobBuilder.Create<DiscordRoleExpireJob>()
-                .WithIdentity($"DiscordRoleExpireJob({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(DiscordRoleExpireJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, TenMinTrigger());
 
             job = JobBuilder.Create<UpdateServerDataJob>()
-               .WithIdentity($"{nameof(UpdateServerDataJob)}({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(UpdateServerDataJob), $"FtpJobs({server.Id})")
                .UsingJobData("server_id", server.Id)
                .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0 */6 * * ?"));
 
             job = JobBuilder.Create<RaidTimesJob>()
-               .WithIdentity($"{nameof(RaidTimesJob)}({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(RaidTimesJob), $"FtpJobs({server.Id})")
                .UsingJobData("server_id", server.Id)
                .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0 * * * ?", startNow: true));
 
             job = JobBuilder.Create<FileChangeJob>()
-                .WithIdentity($"FileChangeJob({server.Id})", $"FtpJobs({server.Id})")
+                .WithIdentity(nameof(FileChangeJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0/30 * * * * ?"));
@@ -237,11 +237,7 @@ namespace RagnarokBotWeb.Domain.Services
             try
             {
                 var jobKeys = await scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals($"FtpJobs({server.Id})"));
-
-                if (jobKeys.Any())
-                {
-                    await scheduler.DeleteJobs(jobKeys.ToList());
-                }
+                if (jobKeys.Any()) await scheduler.DeleteJobs(jobKeys.ToList());
             }
             catch (Exception ex)
             {
@@ -350,13 +346,12 @@ namespace RagnarokBotWeb.Domain.Services
             var scheduler = await _schedulerFactory.GetScheduler();
 
             var closeWarzoneJob = JobBuilder.Create<CloseWarzoneJob>()
-                .WithIdentity($"CloseWarzoneJob({server.Id})", $"WarzoneJobs({server.Id})")
+                .WithIdentity(nameof(CloseWarzoneJob), $"WarzoneJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("warzone_id", warzone.Id)
                 .Build();
 
             ITrigger warzoneClosingTrigger = TriggerBuilder.Create()
-                .WithIdentity("$CloseWarzoneJobTrigger({server.Id})", $"WarzoneJobs({server.Id})")
                 .StartAt(new DateTimeOffset(warzone.StopAt!.Value))
                 .WithSimpleSchedule(x => x.WithRepeatCount(0)) // only once
                 .Build();
@@ -364,20 +359,61 @@ namespace RagnarokBotWeb.Domain.Services
             await scheduler.ScheduleJob(closeWarzoneJob, warzoneClosingTrigger);
 
             var warzoneItemSpawnJob = JobBuilder.Create<WarzoneItemSpawnJob>()
-                .WithIdentity($"WarzoneItemSpawnJob({server.Id})", $"WarzoneJobs({server.Id})")
+                .WithIdentity(nameof(WarzoneItemSpawnJob), $"WarzoneJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("warzone_id", warzone.Id)
                 .Build();
 
             ITrigger warzoneItemSpawnJobTrigger = TriggerBuilder.Create()
-                .WithIdentity($"WarzoneItemSpawnJobTrigger({server.Id})", $"WarzoneJobs({server.Id})")
                 .StartNow() // Start immediately
                 .WithSimpleSchedule(x => x
-                        .WithIntervalInMinutes((int)warzone.ItemSpawnInterval)
+                    .WithIntervalInMinutes((int)warzone.ItemSpawnInterval)
                 .RepeatForever())
                 .Build();
 
             await scheduler.ScheduleJob(warzoneItemSpawnJob, warzoneItemSpawnJobTrigger);
+        }
+
+        public async Task TriggerJob(string jobId, string groupId)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+
+            var jobKey = new JobKey(jobId, groupId);
+
+            // Trigger the job immediately
+            await scheduler.TriggerJob(jobKey);
+        }
+
+        public async Task<List<JobModel>> ListJobs()
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+            List<JobModel> jobs = [];
+
+            // Get all job group names
+            var jobGroupNames = await scheduler.GetJobGroupNames();
+
+            foreach (var group in jobGroupNames)
+            {
+                // Get all job keys in the group
+                var jobKeys = await scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals(group));
+
+                foreach (var jobKey in jobKeys)
+                {
+                    var job = new JobModel
+                    {
+                        JobID = jobKey.Name,
+                        GroupID = jobKey.Group
+                    };
+
+                    var triggers = await scheduler.GetTriggersOfJob(jobKey);
+                    foreach (var trigger in triggers)
+                    {
+                        job.NextFireTime = trigger.GetNextFireTimeUtc();
+                    }
+                    jobs.Add(job);
+                }
+            }
+            return jobs;
         }
 
         public async Task DeleteWarzoneJobs(ScumServer server)

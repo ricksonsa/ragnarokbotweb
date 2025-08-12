@@ -2,6 +2,7 @@
 using Quartz;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -18,27 +19,37 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-            var server = await GetServerAsync(context);
+            try
+            {
+                var server = await GetServerAsync(context);
 
-            var channel = await channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.LockPickRank);
-            if (channel is null) return;
+                var channel = await channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.LockPickRank);
+                if (channel is null) return;
 
-            await discordService.DeleteAllMessagesInChannel(channel.DiscordId);
+                await discordService.DeleteAllMessagesInChannel(channel.DiscordId);
 
-            var killBoxRank = await GetLockpickRank(unitOfWork, server, "KillBox");
-            await discordService.SendLockpickRankEmbed(channel.DiscordId, killBoxRank, "Kill Box");
+                var killBoxRank = await GetLockpickRank(unitOfWork, server, "KillBox");
+                await discordService.SendLockpickRankEmbed(channel.DiscordId, killBoxRank, "Kill Box");
 
-            var dialLockRank = await GetLockpickRank(unitOfWork, server, "DialLock");
-            await discordService.SendLockpickRankEmbed(channel.DiscordId, dialLockRank, "Dial Lock");
+                var dialLockRank = await GetLockpickRank(unitOfWork, server, "DialLock");
+                await discordService.SendLockpickRankEmbed(channel.DiscordId, dialLockRank, "Dial Lock");
 
-            var basicRank = await GetLockpickRank(unitOfWork, server, "Basic");
-            await discordService.SendLockpickRankEmbed(channel.DiscordId, basicRank, "Iron Lock");
+                var basicRank = await GetLockpickRank(unitOfWork, server, "Basic");
+                await discordService.SendLockpickRankEmbed(channel.DiscordId, basicRank, "Iron Lock");
 
-            var mediumRank = await GetLockpickRank(unitOfWork, server, "Medium");
-            await discordService.SendLockpickRankEmbed(channel.DiscordId, mediumRank, "Silver Lock");
+                var mediumRank = await GetLockpickRank(unitOfWork, server, "Medium");
+                await discordService.SendLockpickRankEmbed(channel.DiscordId, mediumRank, "Silver Lock");
 
-            var advancedRank = await GetLockpickRank(unitOfWork, server, "Advanced");
-            await discordService.SendLockpickRankEmbed(channel.DiscordId, advancedRank, "Gold Lock");
+                var advancedRank = await GetLockpickRank(unitOfWork, server, "Advanced");
+                await discordService.SendLockpickRankEmbed(channel.DiscordId, advancedRank, "Gold Lock");
+            }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception)
+            {
+                throw;
+            }
+
         }
 
         private static async Task<List<LockpickStatsDto>> GetLockpickRank(

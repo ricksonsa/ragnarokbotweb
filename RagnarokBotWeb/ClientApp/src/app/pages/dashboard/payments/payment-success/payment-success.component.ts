@@ -34,6 +34,7 @@ export class PaymentSuccessComponent implements OnInit {
       this.goPayments();
     } else {
       this.confirmPayment();
+
     }
   }
 
@@ -48,7 +49,7 @@ export class PaymentSuccessComponent implements OnInit {
       }))
       .subscribe({
         next: (result) => {
-
+          this.router.navigate(['dashboard', 'payments']);
         }
       });
   }

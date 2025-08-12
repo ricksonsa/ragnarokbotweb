@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using RagnarokBotWeb.Configuration.Data;
+using RagnarokBotWeb.Domain.Exceptions;
 using System.Text;
 using System.Text.Json;
 using static RagnarokBotWeb.Application.Models.PayPal;
@@ -14,23 +15,24 @@ namespace RagnarokBotWeb.Domain.Services
         public PayPalService(HttpClient httpClient, IOptions<AppSettings> options)
         {
             _httpClient = httpClient;
-            //_config = config;
-            //var clientId = Environment.GetEnvironmentVariable("PayPalClientId", EnvironmentVariableTarget.User);
-            //var secret = Environment.GetEnvironmentVariable("PayPalSecret", EnvironmentVariableTarget.User);
-
-            var clientId = "AQ4xW7cQPPl7YsLU4SpnugIIVRDRPEnd4yhicJAbi2bfhNe53_rgZJPPJihC8mbLr3r9Z_SxgElZiZK4";//Environment.GetEnvironmentVariable("PayPalClientId", EnvironmentVariableTarget.User);
-            var secret = "ENPU9dcx-QzC23CKr6YaIp9-2b8wPW_LzjyJ2xAnCUdECsZ7-BY1ldJ438IIDw7_kk1s6SCFqq7HzZ_k";//Environment.GetEnvironmentVariable("PayPalSecret", EnvironmentVariableTarget.User);
+            var clientId = Environment.GetEnvironmentVariable("PAYPAL_CLIENT_ID") ?? Environment.GetEnvironmentVariable("PayPalClientId", EnvironmentVariableTarget.User);
+            var secret = Environment.GetEnvironmentVariable("PAYPAL_CLIENT_SECRET") ?? Environment.GetEnvironmentVariable("PayPalSecret", EnvironmentVariableTarget.User);
             _config = new PayPalConfig
             {
                 ClientId = clientId!,
                 ClientSecret = secret!,
-                BaseUrl = options.Value.PayPalUrl
+                BaseUrl = Environment.GetEnvironmentVariable("PAYPAL_URL") ?? options.Value.PayPalUrl
             };
         }
 
         // Obter token de acesso
         public async Task<string> GetAccessTokenAsync()
         {
+            if (string.IsNullOrEmpty(_config.ClientId))
+            {
+                throw new DomainException("Empty clientId");
+            }
+
             var request = new HttpRequestMessage(HttpMethod.Post, $"{_config.BaseUrl}/v1/oauth2/token");
 
             // Credenciais em Base64

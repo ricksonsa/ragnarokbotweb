@@ -22,15 +22,22 @@ namespace RagnarokBotWeb.Domain.Entities
         }
         public float? Distance { get; set; }
         public string? Sector { get; set; }
-        public float KillerX { get; set; }
-        public float KillerY { get; set; }
-        public float KillerZ { get; set; }
+        public double KillerX { get; set; }
+        public double KillerY { get; set; }
+        public double KillerZ { get; set; }
 
-        public float VictimX { get; set; }
-        public float VictimY { get; set; }
-        public float VictimZ { get; set; }
+        public double VictimX { get; set; }
+        public double VictimY { get; set; }
+        public double VictimZ { get; set; }
         public ScumServer ScumServer { get; set; }
         public string? ImageUrl { get; set; }
+        public string? KillHash { get; set; }
+
+
+        public void SetHash()
+        {
+            KillHash = Math.Abs($"{KillerSteamId64}{TargetSteamId64}{Weapon}{KillerX}{KillerY}{KillerZ}{VictimX}{VictimY}{VictimZ}".GetHashCode()).ToString();
+        }
 
         public static bool IsMine(string? weapon)
         {
@@ -38,5 +45,6 @@ namespace RagnarokBotWeb.Domain.Entities
             weapon = weapon.ToLower();
             return weapon.Contains("trap") || weapon.Contains("mine") || weapon.Contains("claymore");
         }
+
     }
 }

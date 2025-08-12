@@ -6,6 +6,7 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
 {
     public class AppDbContext : DbContext
     {
+        private readonly string _connectionString;
         public DbSet<Player> Players { get; set; }
         public DbSet<Lockpick> Lockpicks { get; set; }
         public DbSet<Bunker> Bunkers { get; set; }
@@ -42,11 +43,6 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Config> Config { get; set; }
 
-        public AppDbContext()
-        {
-            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-        }
-
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -54,8 +50,13 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            // TODO: Load from env config
-            options.UseNpgsql("Host=localhost;Database=ragnarokbot;Username=postgres;Password=ragnarokbot");
+
+            if (!options.IsConfigured)
+            {
+                options.UseNpgsql(_connectionString);
+            }
+            //dotnet ef database update --connection "connection string"
+            //options.UseNpgsql("Host=localhost;Database=ragnarokbot;Username=postgres;Password=ragnarokbot");
             //.EnableSensitiveDataLogging() // Optional: shows parameters in logs
             //.LogTo(Log.Logger.Information, new[] { DbLoggerCategory.Database.Command.Name }, LogLevel.Information);
             //options.UseSqlite("Data Source=app.db");

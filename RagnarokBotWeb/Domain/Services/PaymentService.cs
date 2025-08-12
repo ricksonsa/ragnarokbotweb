@@ -65,40 +65,52 @@ namespace RagnarokBotWeb.Domain.Services
 
             var user = await _userRepository.FindOneWithTenantAsync(u => u.Email == UserLogin()!);
 
-            try
+            var subscription = await _unitOfWork.AppDbContext.Subscriptions.FirstOrDefaultAsync();
+            subscription ??= new Subscription { RollingDays = 30 };
+            var payment = new Payment
             {
-                var returnUrl = $"https://thescumbot.com/dashboard/payment-success";
-                var cancelUrl = $"https://thescumbot.com/dashboard/payment-canceled";
-                var order = await _payPalService.CreateOrderAsync(
-                7.99m,
-                user.Country == "Brazil" ? "BRL" : "USD",
-                "The SCUM Bot",
-                returnUrl,
-                cancelUrl
-                );
+                SubscriptionId = subscription.Id,
+                TenantId = user.Tenant.Id
+            };
 
-                // Encontrar link de aprovação
-                var approveLink = order.links.Find(l => l.rel == "approve");
+            //try
+            //{
+            //    var returnUrl = $"https://thescumbot.com/dashboard/payment-success";
+            //    var cancelUrl = $"https://thescumbot.com/dashboard/payment-canceled";
+            //    var order = await _payPalService.CreateOrderAsync(
+            //    user.Country == "Brazil" ? 44.99m : 7.99m,
+            //    user.Country == "Brazil" ? "BRL" : "USD",
+            //    "The SCUM Bot",
+            //    returnUrl,
+            //    cancelUrl
+            //    );
 
-                var subscription = await _unitOfWork.AppDbContext.Subscriptions.FirstOrDefaultAsync();
-                subscription ??= new Subscription { RollingDays = 30 };
-                var payment = new Payment
-                {
-                    OrderNumber = order.id,
-                    SubscriptionId = subscription.Id,
-                    TenantId = user.Tenant.Id,
-                    Url = approveLink.href,
-                };
+            //    // Encontrar link de aprovação
+            //    var approveLink = order.links.Find(l => l.rel == "approve");
 
-                await _paymentRepository.CreateOrUpdateAsync(payment);
-                await _paymentRepository.SaveAsync();
+            //    var subscription = await _unitOfWork.AppDbContext.Subscriptions.FirstOrDefaultAsync();
+            //    subscription ??= new Subscription { RollingDays = 30 };
+            //    var payment = new Payment
+            //    {
+            //        OrderNumber = order.id,
+            //        SubscriptionId = subscription.Id,
+            //        TenantId = user.Tenant.Id,
+            //        Url = approveLink.href,
+            //    };
 
-                return _mapper.Map<PaymentDto>(payment);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            //    await _paymentRepository.CreateOrUpdateAsync(payment);
+            //    await _paymentRepository.SaveAsync();
+
+            //    return _mapper.Map<PaymentDto>(payment);
+            //}
+            //catch (Exception)
+            //{
+            //    throw;
+            //}
+
+            await _paymentRepository.CreateOrUpdateAsync(payment);
+            await _paymentRepository.SaveAsync();
+            return _mapper.Map<PaymentDto>(payment);
         }
 
         public async Task<PaymentDto> ConfirmPayment(string token)
@@ -109,6 +121,32 @@ namespace RagnarokBotWeb.Domain.Services
             payment.Status = Enums.EPaymentStatus.Confirmed;
             payment.ConfirmDate = DateTime.UtcNow;
             payment.ExpireAt = DateTime.UtcNow.AddDays(payment.Subscription.RollingDays);
+
+            await _paymentRepository.CreateOrUpdateAsync(payment);
+            await _paymentRepository.SaveAsync();
+            return _mapper.Map<PaymentDto>(payment);
+        }
+
+        public async Task<PaymentDto> ConfirmPayment()
+        {
+            var payment = await _paymentRepository.FindOnePending();
+            if (payment is null) throw new NotFoundException("Payment not found");
+
+            payment.Status = Enums.EPaymentStatus.Confirmed;
+            payment.ConfirmDate = DateTime.UtcNow;
+            payment.ExpireAt = DateTime.UtcNow.AddDays(payment.Subscription.RollingDays);
+
+            await _paymentRepository.CreateOrUpdateAsync(payment);
+            await _paymentRepository.SaveAsync();
+            return _mapper.Map<PaymentDto>(payment);
+        }
+
+        public async Task<PaymentDto> CancelPayment(long id)
+        {
+            var payment = await _paymentRepository.FindByIdAsync(id);
+            if (payment is null) throw new NotFoundException("Payment not found");
+
+            payment.Status = Enums.EPaymentStatus.Canceled;
 
             await _paymentRepository.CreateOrUpdateAsync(payment);
             await _paymentRepository.SaveAsync();

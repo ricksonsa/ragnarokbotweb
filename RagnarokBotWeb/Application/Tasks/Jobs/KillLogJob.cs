@@ -1,7 +1,9 @@
-﻿using Quartz;
+﻿using Microsoft.EntityFrameworkCore;
+using Quartz;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -24,15 +26,15 @@ public class KillLogJob(
     public async Task Execute(IJobExecutionContext context)
     {
         logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-        var server = await GetServerAsync(context);
 
         try
         {
+            var server = await GetServerAsync(context);
             var processor = new ScumFileProcessor(server);
 
             string lastLine = string.Empty;
 
-            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService))
+            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService, context.CancellationToken))
             {
                 if (!line.Contains('{'))
                 {
@@ -51,6 +53,8 @@ public class KillLogJob(
                     logger.LogError("Error parsing kill -> {Ex}", ex.Message);
                     continue;
                 }
+
+                if (await unitOfWork.Kills.AnyAsync(k => k.KillHash == kill.KillHash)) return;
 
                 if (IsCompliant())
                 {
@@ -88,9 +92,11 @@ public class KillLogJob(
                 await unitOfWork.SaveAsync();
             }
         }
+        catch (ServerUncompliantException) { }
+        catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError("{Job} Exception -> {Ex}", context.JobDetail.Key.Name, ex.Message);
+            logger.LogError("{Job} Exception -> {Ex} {Stack}", context.JobDetail.Key.Name, ex.Message, ex.StackTrace);
         }
     }
 
@@ -146,8 +152,12 @@ public class KillLogJob(
     private static async Task ExtractMap(IFileService fileService, Kill kill)
     {
         var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
+
+        var center = kill.KillerX == 0 ? ScumCoordinate.MidPoint((kill.VictimX, kill.VictimY), (kill.VictimX, kill.VictimY))
+            : ScumCoordinate.MidPoint((kill.KillerX, kill.KillerY), (kill.VictimX, kill.VictimY));
+
         var result = await extractor.ExtractMapWithPoints(
-            ScumCoordinate.MidPoint((kill.KillerX, kill.KillerY), (kill.VictimX, kill.VictimY)),
+            center,
             [
                 new ScumCoordinate(kill.KillerX, kill.KillerY, Color.Red).WithLabel(kill.KillerName!),
                 new ScumCoordinate(kill.VictimX, kill.VictimY, Color.Black).WithLabel(kill.TargetName!)

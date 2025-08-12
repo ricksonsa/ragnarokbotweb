@@ -32,6 +32,15 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .FirstOrDefaultAsync(payment => payment.OrderNumber == orderNumber);
         }
 
+        public Task<Payment?> FindOnePending()
+        {
+            return DbSet()
+                .Include(payment => payment.Subscription)
+                .Include(payment => payment.Tenant)
+                .Include(payment => payment.Tenant.ScumServers)
+                .FirstOrDefaultAsync(payment => payment.Status == Domain.Enums.EPaymentStatus.Waiting);
+        }
+
         public Task<Page<Payment>> GetPageByServerId(Paginator paginator, long serverId)
         {
             var query = DbSet()

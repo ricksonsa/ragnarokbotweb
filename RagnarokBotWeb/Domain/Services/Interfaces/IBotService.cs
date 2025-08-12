@@ -13,7 +13,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         void PutCommand(BotCommand command);
         Task ConfirmDelivery(long orderId);
         List<BotUser> FindActiveBotsByServerId(long serverId);
-        void ResetBotState(long value);
+        Task ResetBotState(long value);
         Task<BotUser?> FindBotByGuid(Guid guid);
         Task RegisterBot(Guid guid);
 

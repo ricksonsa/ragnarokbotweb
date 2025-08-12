@@ -1,5 +1,6 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Application.LogParser;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
@@ -28,7 +29,7 @@ public class EconomyJob(
 
             var processor = new ScumFileProcessor(server);
 
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService))
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService, context.CancellationToken))
             {
                 if (line.Contains("changed their name"))
                 {
@@ -37,6 +38,8 @@ public class EconomyJob(
                 }
             }
         }
+        catch (ServerUncompliantException) { }
+        catch (FtpNotSetException) { }
         catch (Exception ex)
         {
             logger.LogError(ex.Message);

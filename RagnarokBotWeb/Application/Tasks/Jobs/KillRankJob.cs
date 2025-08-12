@@ -2,6 +2,7 @@
 using Quartz;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -18,21 +19,30 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-            var server = await GetServerAsync(context);
+            try
+            {
+                var server = await GetServerAsync(context);
 
-            var killRankChannel = await channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.KillRank);
-            if (killRankChannel is null) return;
+                var killRankChannel = await channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.KillRank);
+                if (killRankChannel is null) return;
 
-            await discordService.DeleteAllMessagesInChannel(killRankChannel.DiscordId);
-            await SendTopPlayersMonthly(discordService, unitOfWork, server, killRankChannel);
-            await SendTopPlayersWeekly(discordService, unitOfWork, server, killRankChannel);
-            await SendTopPlayersDaily(discordService, unitOfWork, server, killRankChannel);
+                await discordService.DeleteAllMessagesInChannel(killRankChannel.DiscordId);
+                await SendTopPlayersMonthly(discordService, unitOfWork, server, killRankChannel);
+                await SendTopPlayersWeekly(discordService, unitOfWork, server, killRankChannel);
+                await SendTopPlayersDaily(discordService, unitOfWork, server, killRankChannel);
 
-            var sniperRankChannel = await channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.SniperRank);
-            if (sniperRankChannel is null) return;
+                var sniperRankChannel = await channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.SniperRank);
+                if (sniperRankChannel is null) return;
 
-            await discordService.DeleteAllMessagesInChannel(sniperRankChannel.DiscordId);
-            await SendTopSnipers(discordService, unitOfWork, server, sniperRankChannel);
+                await discordService.DeleteAllMessagesInChannel(sniperRankChannel.DiscordId);
+                await SendTopSnipers(discordService, unitOfWork, server, sniperRankChannel);
+            }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         private static async Task SendTopPlayersMonthly(IDiscordService discordService, IUnitOfWork unitOfWork, ScumServer server, Channel channel)
@@ -58,6 +68,22 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             await discordService.SendTopDistanceKillsEmbed(channel.DiscordId, topPlayers, 10);
         }
 
+        private static DateTime GetStartOfWeek(DateTime date, DayOfWeek startOfWeek = DayOfWeek.Monday)
+        {
+            int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+            return date.Date.AddDays(-diff);
+        }
+
+        private static DateTime GetStartOfMonth(DateTime date)
+        {
+            return new DateTime(date.Year, date.Month, 1);
+        }
+
+        private static DateTime GetToday(DateTime date)
+        {
+            return new DateTime(date.Year, date.Month, date.Day);
+        }
+
         private static async Task<List<PlayerStatsDto>> TopPlayers(
           IUnitOfWork unitOfWork,
           ScumServer server,
@@ -68,16 +94,16 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var now = DateTime.UtcNow;
             DateTime periodStart = period switch
             {
-                ERankingPeriod.Daily => now.Date,
-                ERankingPeriod.Weekly => now.Date.AddDays(-7),
-                ERankingPeriod.Monthly => now.Date.AddMonths(-1),
+                ERankingPeriod.Daily => GetToday(now),
+                ERankingPeriod.Weekly => GetStartOfWeek(now, DayOfWeek.Monday),
+                ERankingPeriod.Monthly => GetStartOfMonth(now),
                 _ => now.Date
             };
 
             // Filter kills by server and period
             var kills = unitOfWork.Kills
                 .Include(kill => kill.ScumServer)
-                .Where(k => k.ScumServer.Id == server.Id && k.CreateDate >= periodStart);
+                .Where(k => k.ScumServer.Id == server.Id && k.CreateDate >= periodStart && k.KillerSteamId64 != "-1");
 
             // Group by KillerName
             var killerStats = await kills
@@ -124,7 +150,11 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         {
             var kills = unitOfWork.Kills
                 .Include(kill => kill.ScumServer)
-                .Where(k => k.ScumServer.Id == server.Id && k.Distance > 0 && !Kill.IsMine(k.Weapon));
+                .Where(k =>
+                k.ScumServer.Id == server.Id
+                && k.Distance > 0
+                && k.KillerSteamId64 != "-1"
+                && (k.Weapon != null && !(k.Weapon.ToLower().Contains("trap") || k.Weapon.ToLower().Contains("mine") || k.Weapon.ToLower().Contains("claymore"))));
 
             var longestPerPlayer = await kills
                 .GroupBy(k => k.KillerName)

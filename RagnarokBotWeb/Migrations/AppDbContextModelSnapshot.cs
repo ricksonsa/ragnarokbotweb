@@ -415,20 +415,23 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<string>("KillHash")
+                        .HasColumnType("text");
+
                     b.Property<string>("KillerName")
                         .HasColumnType("text");
 
                     b.Property<string>("KillerSteamId64")
                         .HasColumnType("text");
 
-                    b.Property<float>("KillerX")
-                        .HasColumnType("real");
+                    b.Property<double>("KillerX")
+                        .HasColumnType("double precision");
 
-                    b.Property<float>("KillerY")
-                        .HasColumnType("real");
+                    b.Property<double>("KillerY")
+                        .HasColumnType("double precision");
 
-                    b.Property<float>("KillerZ")
-                        .HasColumnType("real");
+                    b.Property<double>("KillerZ")
+                        .HasColumnType("double precision");
 
                     b.Property<long>("ScumServerId")
                         .HasColumnType("bigint");
@@ -442,14 +445,14 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<string>("TargetSteamId64")
                         .HasColumnType("text");
 
-                    b.Property<float>("VictimX")
-                        .HasColumnType("real");
+                    b.Property<double>("VictimX")
+                        .HasColumnType("double precision");
 
-                    b.Property<float>("VictimY")
-                        .HasColumnType("real");
+                    b.Property<double>("VictimY")
+                        .HasColumnType("double precision");
 
-                    b.Property<float>("VictimZ")
-                        .HasColumnType("real");
+                    b.Property<double>("VictimZ")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Weapon")
                         .HasColumnType("text");
@@ -750,14 +753,14 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<string>("SteamName")
                         .HasColumnType("text");
 
-                    b.Property<float?>("X")
-                        .HasColumnType("real");
+                    b.Property<double?>("X")
+                        .HasColumnType("double precision");
 
-                    b.Property<float?>("Y")
-                        .HasColumnType("real");
+                    b.Property<double?>("Y")
+                        .HasColumnType("double precision");
 
-                    b.Property<float?>("Z")
-                        .HasColumnType("real");
+                    b.Property<double?>("Z")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 

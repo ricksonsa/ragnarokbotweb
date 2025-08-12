@@ -52,7 +52,7 @@ namespace RagnarokBotWeb.Controllers
             {
                 // Capturar o pagamento
                 //var captureResult = await _payPalService.CaptureOrderAsync(token);
-                return Ok(await _paymentService.ConfirmPayment(token));
+                return Ok(await _paymentService.ConfirmPayment());
             }
             catch (Exception ex)
             {
@@ -64,6 +64,13 @@ namespace RagnarokBotWeb.Controllers
         public IActionResult PaymentCancel(string token)
         {
             return Ok(new { message = "Canceled by the user." });
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult PaymentCancelById(long id)
+        {
+
+            return Ok(_paymentService.CancelPayment(id));
         }
 
         [HttpPost("webhook")]

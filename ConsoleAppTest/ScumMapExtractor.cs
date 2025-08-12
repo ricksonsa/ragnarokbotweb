@@ -2,6 +2,7 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
@@ -30,25 +31,25 @@ public class ScumMapExtractor
         _mapHeight = image.Height;
     }
 
-    public static (float x, float y) GetMidpoint((float x1, float y1) point1, (float x2, float y2) point2)
-    {
-        float midX = (point1.x1 + point2.x2) / 2;
-        float midY = (point1.y1 + point2.y2) / 2;
-        return (midX, midY);
-    }
+    //public static (float x, float y) GetMidpoint((float x1, float y1) point1, (float x2, float y2) point2)
+    //{
+    //    float midX = (point1.x1 + point2.x2) / 2;
+    //    float midY = (point1.y1 + point2.y2) / 2;
+    //    return (midX, midY);
+    //}
 
     /// <summary>
     /// Extrai uma porção do mapa equivalente ao tamanho de um setor (3km x 3km)
     /// </summary>
     /// <param name="centerCoordinate">Coordenada central da extração</param>
     /// <param name="points">Lista de pontos para desenhar</param>
-    /// <param name="outputPath">Caminho para salvar a imagem</param>
+    /// <param name="outputStream">Stream para salvar a imagem</param>
     /// <param name="showGrid">Se true, desenha a grid dos setores</param>
     /// <param name="maintainAspectRatio">Se true, mantém proporção quadrada</param>
-    public void ExtractSectorSizeArea(
+    public async Task ExtractSectorSizeArea(
         ScumCoordinate centerCoordinate,
         List<ScumCoordinate> points,
-        string outputPath = "sector_area_extract.png",
+        Stream outputStream,
         bool showGrid = true,
         bool showLabels = true,
         bool maintainAspectRatio = true)
@@ -95,21 +96,16 @@ public class ScumMapExtractor
         }
 
         // Adiciona informações específicas do setor
-        AddSectorContextInfo(finalMap, centerCoordinate, points, sectorSizeInPixels);
+        //AddSectorContextInfo(finalMap, centerCoordinate, points, sectorSizeInPixels);
 
         // Salva a imagem resultante
-        finalMap.Save(outputPath);
+        await finalMap.SaveAsync(outputStream, new JpegEncoder());
 
         // Limpa recursos se criamos nova imagem
         if (finalMap != extractedMap)
         {
             finalMap.Dispose();
         }
-
-        Console.WriteLine($"Área de tamanho de setor extraída e salva em: {outputPath}");
-        Console.WriteLine($"Tamanho: {sectorSizeInPixels}x{sectorSizeInPixels} pixels (~3km x 3km)");
-        Console.WriteLine($"Centro: {centerCoordinate}");
-        Console.WriteLine($"Pontos incluídos: {points.Count}");
     }
 
     /// <summary>
@@ -117,27 +113,22 @@ public class ScumMapExtractor
     /// </summary>
     /// <param name="sectorReference">Referência do setor (ex: "B2")</param>
     /// <param name="points">Lista de pontos para desenhar</param>
-    /// <param name="outputPath">Caminho para salvar a imagem</param>
     /// <param name="showGrid">Se true, desenha a grid dos setores</param>
-    public void ExtractCompleteSector(
+    public async Task<Stream> ExtractCompleteSector(
         string sectorReference,
         List<ScumCoordinate> points,
-        string outputPath = null,
         bool showGrid = true)
     {
         // Usa o centro do setor como coordenada central
         var sectorCenter = ScumCoordinate.FromSectorCenter(sectorReference);
 
-        // Define nome do arquivo se não especificado
-        outputPath ??= $"sector_{sectorReference.ToUpper()}_extract.png";
-
         // Filtra pontos que estão dentro ou próximos do setor
         var relevantPoints = FilterPointsNearSector(points, sectorCenter);
 
-        ExtractSectorSizeArea(sectorCenter, relevantPoints, outputPath, showGrid, true);
-
-        Console.WriteLine($"Setor {sectorReference.ToUpper()} extraído completamente!");
-        Console.WriteLine($"Pontos relevantes incluídos: {relevantPoints.Count} de {points.Count}");
+        var memoryStream = new MemoryStream();
+        await ExtractSectorSizeArea(sectorCenter, relevantPoints, memoryStream, showGrid, true);
+        memoryStream.Position = 0;
+        return memoryStream;
     }
 
     /// <summary>
@@ -212,14 +203,12 @@ public class ScumMapExtractor
     /// <param name="centerCoordinate">Coordenada central (em coordenadas reais do SCUM)</param>
     /// <param name="points">Lista de pontos para desenhar no mapa</param>
     /// <param name="extractSize">Tamanho da área a extrair em pixels</param>
-    /// <param name="outputPath">Caminho para salvar a imagem resultante</param>
     /// <param name="autoFitPoints">Se true, ajusta automaticamente a área para incluir todos os pontos</param>
     /// <param name="showGrid">Se true, desenha a grid dos setores</param>
-    public void ExtractMapWithPoints(
+    public async Task<Stream> ExtractMapWithPoints(
         ScumCoordinate centerCoordinate,
         List<ScumCoordinate> points,
-        int extractSize = 512,
-        string outputPath = "extracted_map.png",
+        int extractSize = 1024,
         bool autoFitPoints = true,
         bool showLabels = true,
         bool showGrid = true)
@@ -260,14 +249,13 @@ public class ScumMapExtractor
         // Adiciona informações de contexto
         //AddContextInfo(extractedMap, centerCoordinate, points, extractRect);
 
-        // Salva a imagem resultante
-        extractedMap.Save(outputPath);
+        var memoryStream = new MemoryStream();
+        await extractedMap.SaveAsync(memoryStream, new JpegEncoder());
+        memoryStream.Position = 0;
 
-        Console.WriteLine($"Mapa extraído salvo em: {outputPath}");
-        Console.WriteLine($"Região: {extractRect.Width}x{extractRect.Height} pixels");
-        Console.WriteLine($"Centro: {centerCoordinate}");
-        Console.WriteLine($"Todos os {points.Count} pontos incluídos na extração");
-        Console.WriteLine($"Grid dos setores: {(showGrid ? "Ativada" : "Desativada")}");
+        return memoryStream;
+
+        // Salva a imagem resultante
     }
 
     /// <summary>
@@ -331,7 +319,7 @@ public class ScumMapExtractor
     /// <param name="showLabels">Se true, mostra os labels dos setores</param>
     public void DrawSectorGrid(Image<Rgba32> map, Color? gridColor = null, float lineWidth = 1f)
     {
-        gridColor ??= Color.White;
+        gridColor ??= Color.Black;
         map.Mutate(ctx =>
         {
             // Desenha linhas verticais (separando colunas 0,1,2,3,4)
@@ -401,7 +389,7 @@ public class ScumMapExtractor
     {
         var color = Color.FromRgba(255, 255, 255, 180); // Amarelo semi-transparente
         var labelColor = Color.White;
-        var font = SystemFonts.CreateFont("Arial", 12, FontStyle.Regular);
+        var font = SystemFonts.CreateFont("Arial", 20, FontStyle.Regular);
 
         map.Mutate(ctx =>
         {
@@ -498,6 +486,37 @@ public class ScumMapExtractor
 
         originalMap.Save(outputPath);
         Console.WriteLine($"Mapa com grid salvo em: {outputPath}");
+    }
+    private Rectangle CalculateOptimalExtractionArea(ScumCoordinate centerCoordinate, List<ScumCoordinate> points, int minSize)
+    {
+        var allPoints = new List<ScumCoordinate>(points) { centerCoordinate };
+        var pixels = allPoints.Select(GameCoordinateToPixel).ToList();
+
+        // Encontra limites de todos os pontos
+        int minX = pixels.Min(p => p.X);
+        int maxX = pixels.Max(p => p.X);
+        int minY = pixels.Min(p => p.Y);
+        int maxY = pixels.Max(p => p.Y);
+
+        // Adiciona margem de 10%
+        int margin = Math.Max(50, Math.Max(maxX - minX, maxY - minY) / 10);
+
+        minX = Math.Max(0, minX - margin);
+        maxX = Math.Min(_mapWidth - 1, maxX + margin);
+        minY = Math.Max(0, minY - margin);
+        maxY = Math.Min(_mapHeight - 1, maxY + margin);
+
+        int width = maxX - minX;
+        int height = maxY - minY;
+
+        // Garante tamanho mínimo
+        if (width < minSize || height < minSize)
+        {
+            var centerPixel = GameCoordinateToPixel(centerCoordinate);
+            return CalculateExtractionRectangle(centerPixel, minSize);
+        }
+
+        return new Rectangle(minX, minY, width, height);
     }
 
     /// <summary>
@@ -619,119 +638,51 @@ public class ScumMapExtractor
         return adjustedPoints;
     }
 
-    private Rectangle CalculateOptimalExtractionArea(ScumCoordinate centerCoordinate, List<ScumCoordinate> points, int minSize)
-    {
-        var allPoints = new List<ScumCoordinate>(points) { centerCoordinate };
-        var pixels = allPoints.Select(GameCoordinateToPixel).ToList();
-
-        // Encontra limites de todos os pontos
-        int minX = pixels.Min(p => p.X);
-        int maxX = pixels.Max(p => p.X);
-        int minY = pixels.Min(p => p.Y);
-        int maxY = pixels.Max(p => p.Y);
-
-        // Adiciona margem de 10%
-        int margin = Math.Max(50, Math.Max(maxX - minX, maxY - minY) / 10);
-
-        minX = Math.Max(0, minX - margin);
-        maxX = Math.Min(_mapWidth - 1, maxX + margin);
-        minY = Math.Max(0, minY - margin);
-        maxY = Math.Min(_mapHeight - 1, maxY + margin);
-
-        int width = maxX - minX;
-        int height = maxY - minY;
-
-        // Garante tamanho mínimo
-        if (width < minSize || height < minSize)
-        {
-            var centerPixel = GameCoordinateToPixel(centerCoordinate);
-            return CalculateExtractionRectangle(centerPixel, minSize);
-        }
-
-        return new Rectangle(minX, minY, width, height);
-    }
-
-    ///// <summary>
-    ///// Desenha todos os pontos no mapa original
-    ///// </summary>
-    //private void DrawPointsOnOriginalMap(Image<Rgba32> originalMap, List<ScumCoordinate> points)
-    //{
-    //    originalMap.Mutate(ctx =>
-    //    {
-    //        // Desenha ponto central (vermelho com borda branca)
-    //        //var centerPixel = GameCoordinateToPixel(centerCoordinate);
-    //        //ctx.Fill(Color.White, new EllipsePolygon(centerPixel.X, centerPixel.Y, 12f));
-    //        //ctx.Fill(Color.Red, new EllipsePolygon(centerPixel.X, centerPixel.Y, 10f));
-
-    //        // Desenha outros pontos (azul com borda branca)
-    //        foreach (var point in points)
-    //        {
-    //            var pointPixel = GameCoordinateToPixel(point);
-
-    //            ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 3f));
-    //            ctx.Fill(point.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 2.5f));
-
-    //            // Label com setor
-    //            //var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
-    //            //var sectorText = point.GetSectorReference();
-    //            //if (!string.IsNullOrEmpty(sectorText))
-    //            //{
-    //            //    // Fundo semi-transparente para o texto
-    //            //    var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
-    //            //    var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
-    //            //    ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
-    //            //    ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
-    //            //}
-    //        }
-    //    });
-    //}
-
     /// <summary>
     /// Desenha todos os pontos no mapa original
     /// </summary>
     private void DrawPointsOnOriginalMap(Image<Rgba32> originalMap, List<ScumCoordinate> points)
     {
         // Resolve sobreposições antes de desenhar
-        var adjustedPoints = ResolveOverlappingPoints(points);
+        //var adjustedPoints = ResolveOverlappingPoints(points);
 
         originalMap.Mutate(ctx =>
         {
             // Desenha pontos
-            foreach (var pointData in adjustedPoints)
+            foreach (var pointData in points)
             {
-                var pointPixel = pointData.PixelPosition;
+                var pointPixel = GameCoordinateToPixel(pointData);
 
-                ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 4.5f));
-                ctx.Fill(pointData.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 4f));
+                ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 10f));
+                ctx.Fill(pointData.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 8f));
 
-                // Linha conectando posição original com ajustada (se moveu)
-                var originalPointPixel = GameCoordinateToPixel(pointData.OriginalCoordinate);
-                if (Math.Abs(pointPixel.X - originalPointPixel.X) > 2 || Math.Abs(pointPixel.Y - originalPointPixel.Y) > 2)
-                {
-                    ctx.DrawLine(Color.FromRgba(0, 0, 255, 150), 1f,
-                        new PointF(originalPointPixel.X, originalPointPixel.Y),
-                        new PointF(pointPixel.X, pointPixel.Y));
-                }
+                //// Linha conectando posição original com ajustada (se moveu)
+                //var originalPointPixel = GameCoordinateToPixel(pointData.OriginalCoordinate);
+                //if (Math.Abs(pointPixel.X - originalPointPixel.X) > 2 || Math.Abs(pointPixel.Y - originalPointPixel.Y) > 2)
+                //{
+                //    ctx.DrawLine(Color.FromRgba(0, 0, 255, 150), 1f,
+                //        new PointF(originalPointPixel.X, originalPointPixel.Y),
+                //        new PointF(pointPixel.X, pointPixel.Y));
+                //}
 
-                if (!string.IsNullOrEmpty(pointData.Label))
-                {
-                    // Label com setor
-                    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
-                    var sectorText = pointData.OriginalCoordinate.GetSectorReference();
-                    if (!string.IsNullOrEmpty(sectorText))
-                    {
-                        // Fundo semi-transparente para o texto
-                        var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
-                        var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
-                        ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
-                        ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
-                    }
-                }
+                //if (!string.IsNullOrEmpty(pointData.Label))
+                //{
+                //    // Label com setor
+                //    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
+                //    var sectorText = pointData.OriginalCoordinate.GetSectorReference();
+                //    if (!string.IsNullOrEmpty(sectorText))
+                //    {
+                //        // Fundo semi-transparente para o texto
+                //        var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
+                //        var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
+                //        ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
+                //        ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
+                //    }
+                //}
 
             }
         });
     }
-
 
     /// <summary>
     /// Adiciona informações de contexto na imagem extraída
@@ -795,10 +746,18 @@ public struct ScumCoordinate
 {
     public double X { get; set; }
     public double Y { get; set; }
-
-    public Color Color { get; set; }
+    public double Z { get; set; }
     public string? Label { get; set; }
+    public Color Color { get; set; }
 
+
+    public ScumCoordinate(double x, double y, double z)
+    {
+        X = x;
+        Y = y;
+        Z = z;
+        Color = Color.Red;
+    }
     public ScumCoordinate(double x, double y)
     {
         X = x;
@@ -811,6 +770,29 @@ public struct ScumCoordinate
         X = x;
         Y = y;
         Color = color;
+    }
+
+    public ScumCoordinate WithLabel(string label)
+    {
+        Label = label;
+        return this;
+    }
+
+    /// <summary>
+    /// Calcula a distância em metros até outra coordenada
+    /// </summary>
+    public double DistanceTo(ScumCoordinate target) => Math.Sqrt(
+        Math.Pow(target.X - X, 2) +
+        Math.Pow(target.Y - Y, 2) +
+        Math.Pow(target.Z - Z, 2));
+
+    public override readonly string ToString() => $"X={X} Y={Y} Z={Z}".Replace(",", ".");
+
+    public static ScumCoordinate MidPoint((float x1, float y1) point1, (float x2, float y2) point2)
+    {
+        float midX = (point1.x1 + point2.x2) / 2;
+        float midY = (point1.y1 + point2.y2) / 2;
+        return new ScumCoordinate(midX, midY);
     }
 
     /// <summary>
@@ -878,16 +860,9 @@ public struct ScumCoordinate
             : "?";
     }
 
-    /// <summary>
-    /// Calcula a distância em metros até outra coordenada
-    /// </summary>
-    public double DistanceTo(ScumCoordinate other)
-    {
-        return Math.Sqrt(Math.Pow(X - other.X, 2) + Math.Pow(Y - other.Y, 2));
-    }
 
-    public override string ToString()
-    {
-        return $"({X:F1}, {Y:F1}) [{GetSectorReference()}]";
-    }
+    //public override string ToString()
+    //{
+    //    return $"({X:F1}, {Y:F1}) [{GetSectorReference()}]";
+    //}
 }

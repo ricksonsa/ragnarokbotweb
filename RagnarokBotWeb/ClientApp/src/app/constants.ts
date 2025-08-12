@@ -2,7 +2,7 @@ export class Constants {
     public static isCompliant = false;
 }
 
-export const COUNSTRIES = [ 
+export const COUNTRIES = [ 
   {name: 'Afghanistan', code: 'AF'}, 
   {name: 'Åland Islands', code: 'AX'}, 
   {name: 'Albania', code: 'AL'}, 

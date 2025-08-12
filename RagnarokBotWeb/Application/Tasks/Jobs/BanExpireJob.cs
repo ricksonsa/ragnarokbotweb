@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Quartz;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -25,40 +26,50 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
-            _logger.LogDebug("Triggered {Job}->Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-
-            var players = _unitOfWork.Players
-                .Include(player => player.Bans)
-                .Where(player =>
-                    player.ScumServer != null
-                    && player.SteamId64 != null
-                    && player.ScumServer.Id == server.Id
-                    && player.Bans.Any(ban => !ban.Processed && !ban.Indefinitely && ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
-
-            foreach (var player in players)
+            try
             {
-                try
-                {
-                    _cacheService.GetFileChangeQueue(server.Id).Enqueue(new Models.FileChangeCommand
-                    {
-                        FileChangeMethod = Domain.Enums.EFileChangeMethod.RemoveLine,
-                        FileChangeType = Domain.Enums.EFileChangeType.BannedUsers,
-                        Value = player.SteamId64!,
-                        ServerId = server.Id
-                    });
+                var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+                _logger.LogDebug("Triggered {Job}->Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
-                    var ban = player.RemoveBan();
-                    if (ban is null) return;
-                    ban.Processed = true;
-                    _unitOfWork.Bans.Update(ban);
-                    await _unitOfWork.SaveAsync();
-                }
-                catch (Exception ex)
+                var players = _unitOfWork.Players
+                    .Include(player => player.Bans)
+                    .Where(player =>
+                        player.ScumServer != null
+                        && player.SteamId64 != null
+                        && player.ScumServer.Id == server.Id
+                        && player.Bans.Any(ban => !ban.Processed && !ban.Indefinitely && ban.ExpirationDate.HasValue && ban.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
+
+                foreach (var player in players)
                 {
-                    _logger.LogError("Error trying to remove player ban -> {Ex}", ex.Message);
+                    try
+                    {
+                        _cacheService.GetFileChangeQueue(server.Id).Enqueue(new Models.FileChangeCommand
+                        {
+                            FileChangeMethod = Domain.Enums.EFileChangeMethod.RemoveLine,
+                            FileChangeType = Domain.Enums.EFileChangeType.BannedUsers,
+                            Value = player.SteamId64!,
+                            ServerId = server.Id
+                        });
+
+                        var ban = player.RemoveBan();
+                        if (ban is null) return;
+                        ban.Processed = true;
+                        _unitOfWork.Bans.Update(ban);
+                        await _unitOfWork.SaveAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError("Error trying to remove player ban -> {Ex}", ex.Message);
+                    }
                 }
             }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception)
+            {
+                throw;
+            }
+
         }
     }
 }

@@ -25,7 +25,7 @@ import { AccountDto } from './models/account.dto';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { ThemeService } from './services/theme.service';
-import { Constants, COUNSTRIES } from './constants';
+import { Constants, COUNTRIES } from './constants';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
@@ -74,7 +74,7 @@ export class AppComponent implements OnInit {
   loading = false;
   theme: string | null;
   block = true;
-  countries = COUNSTRIES;
+  countries = COUNTRIES;
 
   private readonly notification = inject(NzNotificationService);
   paths: string[] = [];

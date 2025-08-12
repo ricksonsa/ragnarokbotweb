@@ -14,6 +14,12 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             _appDbContext = context;
         }
 
+        public override Task CreateOrUpdateAsync(Warzone entity)
+        {
+            entity.WarzoneItems.ForEach(wi => _appDbContext.Items.Attach(wi.Item));
+            return base.CreateOrUpdateAsync(entity);
+        }
+
         public Task<List<Warzone>> FindActiveByServerId(long serverId)
         {
             return DbSet()

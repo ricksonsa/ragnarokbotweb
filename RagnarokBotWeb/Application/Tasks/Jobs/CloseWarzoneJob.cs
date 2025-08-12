@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -25,11 +26,22 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         {
             _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
 
-            var server = await GetServerAsync(context, ftpRequired: false);
-            var warzoneId = GetValueFromContext<long>(context, "warzone_id");
-            if (warzoneId == 0) return;
+            try
+            {
+                var server = await GetServerAsync(context, ftpRequired: false);
+                var warzoneId = GetValueFromContext<long>(context, "warzone_id");
+                if (warzoneId == 0) return;
 
-            await _warzoneService.CloseWarzone(server, context.CancellationToken);
+                await _warzoneService.CloseWarzone(server, context.CancellationToken);
+            }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
     }
 }

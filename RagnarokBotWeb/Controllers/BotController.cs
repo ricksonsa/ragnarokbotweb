@@ -22,9 +22,9 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            return Ok(_botService.GetBots());
+            return Ok(await Task.Run(_botService.GetBots));
         }
 
         [HttpPost("register")]

@@ -59,7 +59,7 @@ namespace RagnarokBotWeb.Application.LogParser
 
             if (preParseKill.Killer.IsInGameEvent || preParseKill.Victim.IsInGameEvent) return null;
 
-            return new Kill
+            var kill = new Kill
             {
                 CreateDate = date,
                 Distance = distance,
@@ -79,6 +79,9 @@ namespace RagnarokBotWeb.Application.LogParser
                 VictimY = preParseKill.Victim.ClientLocation.Y,
                 VictimZ = preParseKill.Victim.ClientLocation.Z
             };
+
+            kill.SetHash();
+            return kill;
         }
 
     }
