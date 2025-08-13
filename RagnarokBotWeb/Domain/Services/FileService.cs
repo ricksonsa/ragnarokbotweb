@@ -114,8 +114,6 @@ namespace RagnarokBotWeb.Domain.Services
             return $"{cdnUrlPrefix}/{fileName}";
         }
 
-
-
         public void DeleteFile(string fileName, string storagePath = "cdn-storage")
         {
             var filePath = Path.Combine(storagePath, fileName);

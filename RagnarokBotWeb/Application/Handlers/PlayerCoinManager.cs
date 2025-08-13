@@ -12,7 +12,7 @@ namespace RagnarokBotWeb.Application.Handlers
 
         public async Task RemoveCoinsBySteamIdAsync(string steamId, long serverId, long amount)
         {
-            await uow.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducestoplayerbysteamid({0}, {1}, {2})", steamId, serverId, amount);
+            await uow.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducetoplayerbysteamid({0}, {1}, {2})", steamId, serverId, amount);
         }
 
         public async Task AddCoinsByPlayerId(long playerId, long amount)
