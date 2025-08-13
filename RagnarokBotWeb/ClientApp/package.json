@@ -26,7 +26,6 @@
         "chart.js": "^4.5.0",
         "cron-parser": "^5.0.4",
         "cronstrue": "^2.56.0",
-        "http2": "^3.3.6",
         "jose": "^6.0.8",
         "ng-zorro-antd": "^19.1.0",
         "ng2-charts": "^8.0.0",

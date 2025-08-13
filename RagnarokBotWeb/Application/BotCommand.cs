@@ -56,24 +56,35 @@ namespace RagnarokBotWeb.Application
             return this;
         }
 
-        public BotCommand Kick(string steamId)
+        public BotCommand Silence(string steamId, bool checkTargetOnline = true)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.Silence,
+                Value = steamId,
+                CheckTargetOnline = checkTargetOnline
+            });
+            return this;
+        }
+
+        public BotCommand Kick(string steamId, bool checkTargetOnline = true)
         {
             Values.Add(new BotCommandValue
             {
                 Type = ECommandType.Kick,
                 Value = steamId,
-                CheckTargetOnline = true
+                CheckTargetOnline = checkTargetOnline
             });
             return this;
         }
 
-        public BotCommand Ban(string steamId)
+        public BotCommand Ban(string steamId, bool checkTargetOnline = true)
         {
             Values.Add(new BotCommandValue
             {
                 Type = ECommandType.Ban,
                 Value = steamId,
-                CheckTargetOnline = true
+                CheckTargetOnline = checkTargetOnline
             });
             return this;
         }
@@ -99,7 +110,7 @@ namespace RagnarokBotWeb.Application
             return this;
         }
 
-        public BotCommand Teleport(string target, string coordinates, bool checkTargetOnline = false)
+        public BotCommand Teleport(string target, string coordinates, bool checkTargetOnline = true)
         {
             Values.Add(new BotCommandValue
             {
@@ -112,7 +123,7 @@ namespace RagnarokBotWeb.Application
             return this;
         }
 
-        public BotCommand Delivery(string target, string value, int amount)
+        public BotCommand Delivery(string target, string value, int amount, bool checkTargetOnline = true)
         {
             Values.Add(new BotCommandValue
             {
@@ -120,12 +131,12 @@ namespace RagnarokBotWeb.Application
                 Type = ECommandType.SimpleDelivery,
                 Value = value,
                 Amount = amount,
-                CheckTargetOnline = true
+                CheckTargetOnline = checkTargetOnline
             });
             return this;
         }
 
-        public BotCommand MagazineDelivery(string coordinates, string item, int amount, int ammoCount)
+        public BotCommand MagazineDelivery(string coordinates, string item, int amount, int ammoCount, bool checkTargetOnline = true)
         {
             Values.Add(new BotCommandValue
             {
@@ -134,24 +145,11 @@ namespace RagnarokBotWeb.Application
                 Value = ammoCount.ToString(),
                 Amount = amount,
                 Coordinates = coordinates,
-                CheckTargetOnline = true
+                CheckTargetOnline = checkTargetOnline
             });
             return this;
         }
 
-        public BotCommand Delivery(string target, string value, int amount, BotCommand extra)
-        {
-            Extra = extra;
-            Values.Add(new BotCommandValue
-            {
-                Type = ECommandType.SimpleDelivery,
-                Target = target,
-                Value = value,
-                Amount = amount,
-                CheckTargetOnline = true
-            });
-            return this;
-        }
 
         public BotCommand Announce(string value)
         {

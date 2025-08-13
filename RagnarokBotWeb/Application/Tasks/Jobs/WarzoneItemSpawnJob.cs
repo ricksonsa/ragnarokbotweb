@@ -55,7 +55,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 // coordinates needs double quote
                 var coordinates = spawnPoint.Teleport.Coordinates.Contains("{") ? $"\"{spawnPoint.Teleport.Coordinates}\"" : spawnPoint.Teleport.Coordinates;
-                command.Delivery(coordinates, warzoneItem.Item.Code, 1);
+                command.Delivery(coordinates, warzoneItem.Item.Code, 1, checkTargetOnline: false);
 
                 if (!string.IsNullOrEmpty(warzone.DeliveryText))
                 {
@@ -66,8 +66,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError("{Job} Exception -> {Ex} {Stack}", context.JobDetail.Key.Name, ex.Message, ex.StackTrace);
                 throw;
             }
 

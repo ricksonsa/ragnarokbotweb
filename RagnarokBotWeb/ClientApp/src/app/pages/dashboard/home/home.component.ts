@@ -56,6 +56,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   loadInterval: any;
   maxSlots = 0;
   playerCount = 0;
+  maxSlotsBattleMetrics = 0;
+  playerCountBattleMetrics = 0;
   loading = false;
 
   warzones: WarzoneDto[] = [];
@@ -126,6 +128,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadPlayerStatistics();
     this.loadPlayersKills();
     this.loadPlayersLockpicks();
+    this.loadBattlemetricsData();
   }
 
   isRunningWarzone() {
@@ -230,20 +233,23 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   loadAccount() {
     this.accountService.account()
-      .pipe(switchMap((account) => {
+      .subscribe((account) => {
         this.account = account;
         this.maxSlots = account.server?.slots ?? 0;
-        if (account.server?.battleMetricsId && this.battlemetricsData == null)
-          return this.battlemetrics.getBattlemetricsStatus(account.server!.battleMetricsId);
-        return of(null);
-      }))
-      .subscribe((battlemetrics) => {
-        if (battlemetrics) {
-          this.battlemetricsData = battlemetrics;
-          this.maxSlots = battlemetrics.data?.attributes?.maxPlayers ?? 0;
-          this.playerCount = battlemetrics.data?.attributes?.players ?? 0;
-        }
       });
+  }
+
+  loadBattlemetricsData() {
+    if (this.account?.server.battleMetricsId) {
+      this.battlemetrics.getBattlemetricsStatus(this.account.server.battleMetricsId)
+        .subscribe({
+          next: (battlemetrics) => {
+            this.battlemetricsData = battlemetrics;
+            this.maxSlotsBattleMetrics = battlemetrics.data?.attributes?.maxPlayers ?? 0;
+            this.playerCountBattleMetrics = battlemetrics.data?.attributes?.players ?? 0;
+          }
+        });
+    }
   }
 
   loadCount() {

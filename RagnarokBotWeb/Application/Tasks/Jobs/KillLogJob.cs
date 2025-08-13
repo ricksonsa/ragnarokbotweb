@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Quartz;
+﻿using Quartz;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Entities;
@@ -53,8 +52,6 @@ public class KillLogJob(
                     logger.LogError("Error parsing kill -> {Ex}", ex.Message);
                     continue;
                 }
-
-                if (await unitOfWork.Kills.AnyAsync(k => k.KillHash == kill.KillHash)) return;
 
                 if (IsCompliant())
                 {

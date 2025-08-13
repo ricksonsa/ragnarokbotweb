@@ -19,16 +19,18 @@ public static class FtpClientFactory
                 LogDurations = false,
                 LogPassword = false,
                 LogUserName = false,
-                LogToConsole = true,
-                RetryAttempts = 5,
+                LogToConsole = false,
+                RetryAttempts = 10,
                 EncryptionMode = FtpEncryptionMode.Auto,
-                ConnectTimeout = 10000,
+                ConnectTimeout = 20000,
+                ReadTimeout = 20000,
+                TimeConversion = FtpDate.UTC,
+                DataConnectionConnectTimeout = 20000,
+                DataConnectionReadTimeout = 20000,
                 DataConnectionType = FtpDataConnectionType.AutoPassive,
                 ValidateAnyCertificate = acceptInvalidCertificates
             }
         };
-
-        client.AutoConnect(cancellationToken);
 
         // Custom certificate validation if needed
         if (!acceptInvalidCertificates)
@@ -71,7 +73,12 @@ public static class FtpClientFactory
                 LogUserName = false,
                 LogToConsole = false,
                 EncryptionMode = encryptionMode,
-                ConnectTimeout = 5000,
+                RetryAttempts = 10,
+                ConnectTimeout = 20000,
+                TimeConversion = FtpDate.UTC,
+                ReadTimeout = 20000,
+                DataConnectionConnectTimeout = 20000,
+                DataConnectionReadTimeout = 20000,
                 DataConnectionType = FtpDataConnectionType.AutoPassive,
                 ValidateAnyCertificate = !validateCertificate,
                 // Additional SSL/TLS settings

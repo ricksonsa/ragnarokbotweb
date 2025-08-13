@@ -63,10 +63,8 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task UpdatePlayersOnline(UpdateFromStringRequest input)
         {
             var serverId = ServerId();
-
             var players = ListPlayersParser.Parse(input.Value);
             _cacheService.SetConnectedPlayers(serverId!.Value, players);
-            _logger.LogInformation("Receiver player list from server [{Server}]: {}", serverId.Value, JsonConvert.SerializeObject(players, Formatting.Indented));
             await _playerService.UpdateFromScumPlayers(serverId.Value, players);
         }
 

@@ -44,8 +44,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 var orders = await _orderRepository.FindManyByServer(server.Id);
 
                 if (orders.Count == 0) return;
-                if (!_botService.IsBotOnline(server.Id)) return;
-
+                var isBotOnline = _botService.IsBotOnline(server.Id);
                 var players = _cacheService.GetConnectedPlayers(server.Id);
 
                 foreach (var order in orders)
@@ -60,6 +59,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                     if (order.OrderType == EOrderType.Pack)
                     {
+                        if (!isBotOnline) return;
                         var deliveryText = order.ResolvedDeliveryText();
                         if (deliveryText is not null) command.Say(deliveryText);
 
@@ -76,6 +76,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     }
                     else if (order.OrderType == EOrderType.Warzone)
                     {
+                        if (!isBotOnline) return;
                         if (order.Warzone is null) return;
                         var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
                         command.Data = "order_" + order.Id.ToString();
@@ -83,6 +84,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     }
                     else if (order.OrderType == EOrderType.UAV)
                     {
+                        if (!isBotOnline) return;
                         if (order.ScumServer?.Uav is null) return;
 
                         await new UavHandler(

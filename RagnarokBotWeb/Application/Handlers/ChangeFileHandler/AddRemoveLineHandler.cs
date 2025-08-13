@@ -23,7 +23,7 @@ namespace RagnarokBotWeb.Application.Handlers.ChangeFileHandler
                 .FirstOrDefaultAsync(server => server.Id == command.ServerId);
 
             if (server!.Ftp is null) throw new Exception("Server does not have a ftp configuration");
-            var client = _ftpService.GetClient(server.Ftp);
+            var client = await _ftpService.GetClientAsync(server.Ftp);
             var remotePath = server!.Ftp.RootFolder + "/Saved/Config/WindowsServer/" + _file;
 
             switch (command.FileChangeMethod)

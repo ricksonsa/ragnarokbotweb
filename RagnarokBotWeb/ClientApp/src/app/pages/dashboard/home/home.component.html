@@ -16,8 +16,8 @@
 
 <div class="grid">
   <nz-card nzSize="small" class="statistics-card">
-    <nz-statistic [nzValue]="playerCount" nzTitle="Players Online"
-      [nzSuffix]="'/' + maxSlots?.toString()"></nz-statistic>
+    <nz-statistic [nzValue]="playerCount > playerCountBattleMetrics ? playerCount : playerCountBattleMetrics"
+      nzTitle="Players Online" [nzSuffix]="'/' + maxSlots?.toString()"></nz-statistic>
   </nz-card>
 
   <nz-card nzSize="small" class="statistics-card">

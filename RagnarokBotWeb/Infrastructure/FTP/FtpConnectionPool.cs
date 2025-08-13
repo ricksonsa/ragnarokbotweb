@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace RagnarokBotWeb.Infrastructure.FTP;
 
-public class FtpConnectionPool : IDisposable
+public class FtpConnectionPool : IAsyncDisposable
 {
     private class PooledClient
     {
@@ -16,116 +16,90 @@ public class FtpConnectionPool : IDisposable
         {
             Client = client;
             CreatedAt = DateTime.UtcNow;
-            InUse = false;
         }
     }
 
-    private readonly Timer _cleanupTimer;
     private readonly ILogger<FtpConnectionPool> _logger;
-
-    // Pools keyed by ftp info: key -> list of pooled clients
     private readonly ConcurrentDictionary<string, ConcurrentBag<PooledClient>> _pools = new();
-
-    // Locks per key to avoid concurrent client creation
-    private readonly ConcurrentDictionary<string, object> _locks = new();
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+    private readonly CancellationTokenSource _cts = new();
 
     public FtpConnectionPool(ILogger<FtpConnectionPool> logger)
     {
         _logger = logger;
-        _cleanupTimer = new Timer(RemoveExpiredConnections, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+        _ = Task.Run(CleanupLoopAsync);
     }
 
-    public AsyncFtpClient GetClient(Ftp ftp, CancellationToken cancellationToken = default)
+    public async Task<AsyncFtpClient> GetClientAsync(Ftp ftp, CancellationToken cancellationToken = default)
     {
         var key = GetKey(ftp);
         var bag = _pools.GetOrAdd(key, _ => new ConcurrentBag<PooledClient>());
-        var lockObj = _locks.GetOrAdd(key, _ => new object());
+        var semaphore = _locks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
 
-        // Try to find an available client
+        // Try reuse
         foreach (var pooledClient in bag)
         {
             if (!pooledClient.InUse && !IsExpired(pooledClient.CreatedAt))
             {
-                // Mark as in use and check connection
-                if (TryLeaseClient(pooledClient))
+                lock (pooledClient)
                 {
-                    try
-                    {
-                        if (!pooledClient.Client.IsConnected)
-                            pooledClient.Client.Connect();
-
-                        return pooledClient.Client;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to connect reused FTP client.");
-                        DisposeClient(pooledClient.Client);
-                        bag.TryTake(out var _); // Remove bad client
-                        break; // will create new client
-                    }
+                    if (pooledClient.InUse) continue;
+                    pooledClient.InUse = true;
                 }
-            }
-            else if (IsExpired(pooledClient.CreatedAt) && !pooledClient.InUse)
-            {
-                if (bag.TryTake(out var expiredClient))
+
+                try
                 {
-                    DisposeClient(expiredClient.Client);
-                    _logger.LogInformation("Expired FTP connection for key '{Key}' removed during GetClient.", key);
+                    if (!pooledClient.Client.IsConnected)
+                        await pooledClient.Client.Connect(cancellationToken);
+
+                    return pooledClient.Client;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to reuse FTP client, will remove.");
+                    await DisposeClientAsync(pooledClient.Client);
+                    bag.TryTake(out _);
+                    break;
                 }
             }
         }
 
-        // No reusable client available, create new one (locked per key)
-        lock (lockObj)
+        // No reusable client, create new
+        await semaphore.WaitAsync(cancellationToken);
+        try
         {
-            // Double-check inside lock (in case other thread added client)
+            // Double-check after lock
             foreach (var pooledClient in bag)
             {
                 if (!pooledClient.InUse && !IsExpired(pooledClient.CreatedAt))
                 {
-                    if (TryLeaseClient(pooledClient))
+                    lock (pooledClient)
                     {
-                        try
-                        {
-                            if (!pooledClient.Client.IsConnected)
-                                pooledClient.Client.Connect();
-
-                            return pooledClient.Client;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning(ex, "Failed to connect reused FTP client.");
-                            DisposeClient(pooledClient.Client);
-                            bag.TryTake(out var _);
-                            break;
-                        }
+                        if (pooledClient.InUse) continue;
+                        pooledClient.InUse = true;
                     }
+
+                    if (!pooledClient.Client.IsConnected)
+                        await pooledClient.Client.Connect(cancellationToken);
+
+                    return pooledClient.Client;
                 }
             }
 
-            // Create new client
             var newClient = FtpClientFactory.CreateClient(ftp, cancellationToken: cancellationToken);
-            try
-            {
-                newClient.Connect();
-                var pooled = new PooledClient(newClient) { InUse = true };
-                bag.Add(pooled);
-                return newClient;
-            }
-            catch (Exception ex)
-            {
-                newClient.Dispose();
-                _logger.LogError(ex, "Failed to connect new FTP client. Ftp Address[{Address}]", ftp.Address);
-                throw;
-            }
+            await newClient.Connect(cancellationToken);
+
+            var pooled = new PooledClient(newClient) { InUse = true };
+            bag.Add(pooled);
+            return newClient;
+        }
+        finally
+        {
+            semaphore.Release();
         }
     }
 
-    /// <summary>
-    /// Release a leased client back to the pool for reuse.
-    /// Caller MUST call this after done using the client.
-    /// </summary>
-    public void ReleaseClient(AsyncFtpClient client)
+    public Task ReleaseClientAsync(AsyncFtpClient client)
     {
         foreach (var (_, bag) in _pools)
         {
@@ -137,95 +111,78 @@ public class FtpConnectionPool : IDisposable
                     {
                         if (!pooledClient.InUse)
                             throw new InvalidOperationException("Client already released.");
-
                         pooledClient.InUse = false;
-
-                        // Optional: check client health and dispose if disconnected
-                        if (!pooledClient.Client.IsConnected)
-                        {
-                            DisposeClient(pooledClient.Client);
-                            bag.TryTake(out var _); // Remove from pool
-                        }
                     }
-                    return;
+                    return Task.CompletedTask;
                 }
             }
         }
 
-        // If client not found in pool, dispose it to be safe
-        DisposeClient(client);
+        // Not in pool, dispose
+        return DisposeClientAsync(client);
     }
 
-
-    private bool TryLeaseClient(PooledClient pooledClient)
-    {
-        // Atomically check and set InUse to true if it was false
-        lock (pooledClient)
-        {
-            if (pooledClient.InUse)
-                return false;
-            pooledClient.InUse = true;
-            return true;
-        }
-    }
-
-    private void RemoveExpiredConnections(object? state)
-    {
-        foreach (var (key, bag) in _pools)
-        {
-            var validClients = new List<PooledClient>();
-
-            while (bag.TryTake(out var item))
-            {
-                if (IsExpired(item.CreatedAt) && !item.InUse)
-                {
-                    DisposeClient(item.Client);
-                    _logger.LogInformation("Expired FTP connection for key '{Key}' removed.", key);
-                }
-                else
-                {
-                    validClients.Add(item);
-                }
-            }
-
-            foreach (var client in validClients)
-                bag.Add(client);
-        }
-    }
-
-    private void DisposeClient(AsyncFtpClient client)
+    private async Task DisposeClientAsync(AsyncFtpClient client)
     {
         try
         {
             if (client.IsConnected)
-                client.Disconnect();
-
-            client.Dispose();
+                await client.Disconnect();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e, "Error while disconnecting FTP client.");
+            _logger.LogError(ex, "Error disconnecting FTP client.");
+        }
+        finally
+        {
+            client.Dispose();
         }
     }
 
-    private static bool IsExpired(DateTime createdAt) =>
-        DateTime.UtcNow - createdAt > TimeSpan.FromMinutes(2);
-
-    private static string GetKey(Ftp ftp) =>
-        $"{ftp.UserName}@{ftp.Address}";
-
-    public void Dispose()
+    private async Task CleanupLoopAsync()
     {
-        _cleanupTimer.Dispose();
+        while (!_cts.Token.IsCancellationRequested)
+        {
+            try
+            {
+                foreach (var (key, bag) in _pools)
+                {
+                    var keep = new List<PooledClient>();
+                    while (bag.TryTake(out var pooled))
+                    {
+                        if (IsExpired(pooled.CreatedAt) && !pooled.InUse)
+                        {
+                            await DisposeClientAsync(pooled.Client);
+                            _logger.LogInformation("Removed expired FTP client for {Key}", key);
+                        }
+                        else
+                        {
+                            keep.Add(pooled);
+                        }
+                    }
+                    foreach (var item in keep) bag.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in cleanup loop.");
+            }
 
+            await Task.Delay(TimeSpan.FromMinutes(1), _cts.Token);
+        }
+    }
+
+    private static string GetKey(Ftp ftp) => $"{ftp.UserName}@{ftp.Address}";
+    private static bool IsExpired(DateTime createdAt) => DateTime.UtcNow - createdAt > TimeSpan.FromMinutes(2);
+
+    public async ValueTask DisposeAsync()
+    {
+        _cts.Cancel();
         foreach (var (_, bag) in _pools)
         {
-            while (bag.TryTake(out var item))
-            {
-                DisposeClient(item.Client);
-            }
+            while (bag.TryTake(out var pooled))
+                await DisposeClientAsync(pooled.Client);
         }
-
-        GC.SuppressFinalize(this);
+        _cts.Dispose();
     }
 }

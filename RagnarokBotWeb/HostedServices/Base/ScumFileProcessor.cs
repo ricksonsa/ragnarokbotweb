@@ -4,6 +4,7 @@ using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Serilog;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -17,6 +18,8 @@ public class ScumFileProcessor
     private readonly ILogger<ScumFileProcessor> _logger;
     private readonly ScumServer _scumServer;
     private readonly Ftp _ftp;
+    private static readonly ConcurrentDictionary<(EFileType, long), SemaphoreSlim> _semaphores = [];
+    private static readonly SemaphoreSlim _ftpLock = new(1, 1);
 
     public ScumFileProcessor(ScumServer server)
     {
@@ -32,38 +35,23 @@ public class ScumFileProcessor
         return string.IsNullOrWhiteSpace(line) || line.Contains("Game version");
     }
 
-    private void DeleteLocalFiles(string localPath, IEnumerable<string> files)
-    {
-        foreach (var file in files)
-        {
-            var path = Path.Combine(localPath + file);
-            try
-            {
-                File.Delete(path);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Unable to delete file {Path} with error {Ex}", path, ex.Message);
-            }
-        }
-    }
-
     private async Task<List<FtpListItem>> GetLogFiles(AsyncFtpClient client, string? rootFolder, EFileType fileType)
     {
-        DateTime today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _scumServer.GetTimeZoneOrDefault());
-        var from = today.AddDays(-10);
+        var today = DateTime.UtcNow;
 
         try
         {
-            return (await client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/",
-                          FtpListOption.Modify | FtpListOption.Size))
-              .Where(file => file.Name.StartsWith(fileType.ToString().ToLower() + "_") && file.RawModified.Date >= from && file.RawModified.Date <= today.AddDays(5))
+            return (await client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/", FtpListOption.Modify | FtpListOption.Size))
+              .Where(file => file.Name.StartsWith(fileType.ToString().ToLower())
+              && file.RawModified.Month == today.Month
+              || file.RawModified.Month == today.Month - 1
+              || file.RawModified.Month == today.Month + 1)
               .OrderBy(file => file.RawModified)
               .ToList();
         }
         catch (Exception ex)
         {
-            _logger.LogDebug("Error GetLogFiles type {Type} -> {Ex}", fileType.ToString(), ex.Message);
+            _logger.LogError("Error GetLogFiles type {Type} -> {Ex}", fileType.ToString(), ex.Message);
             throw;
         }
     }
@@ -72,15 +60,14 @@ public class ScumFileProcessor
     {
         try
         {
-            return (await client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/",
-                          FtpListOption.Modify | FtpListOption.Size))
+            return (await client.GetListing(rootFolder + "/Saved/SaveFiles/Logs/", FtpListOption.Modify | FtpListOption.Size))
               .Where(file => file.Name.StartsWith(fileType.ToString().ToLower() + "_") && file.RawModified.Date >= from && file.RawModified.Date <= to)
               .OrderBy(file => file.RawModified)
               .ToList();
         }
         catch (Exception ex)
         {
-            _logger.LogDebug("Error GetLogFiles type {Type} -> {Ex}", fileType.ToString(), ex.Message);
+            _logger.LogError("Error GetLogFiles type {Type} -> {Ex}", fileType.ToString(), ex.Message);
             throw;
         }
     }
@@ -179,252 +166,6 @@ public class ScumFileProcessor
         }
     }
 
-
-    public async IAsyncEnumerable<string> UnreadFileLinesAsync(
-    EFileType fileType,
-    IReaderPointerRepository readerPointerRepository,
-    IFtpService ftpService,
-    [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        if (_ftp is null)
-            yield break;
-
-        AsyncFtpClient client = null!;
-        try
-        {
-            client = ftpService.GetClient(_ftp, cancellationToken);
-
-            List<FtpListItem> ftpFiles = await GetLogFiles(client, _ftp.RootFolder, fileType);
-
-            var filteredFiles = new List<(FtpListItem File, ReaderPointer? Pointer)>();
-
-            foreach (var file in ftpFiles)
-            {
-                _logger.LogDebug("File fetched {File}", file.Name);
-                var pointer = await readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
-                if (pointer == null || pointer.LastUpdated != file.Modified || pointer.FileSize != file.Size)
-                {
-                    filteredFiles.Add((file, pointer));
-                }
-            }
-
-            if (filteredFiles.Count == 0)
-            {
-                _logger.LogDebug("No unread or updated files found for {Type}. Skipping UnreadFileLinesAsync.", fileType);
-                yield break;
-            }
-
-            string localPath = Path.Combine(GetLocalPath(), "logs");
-            Directory.CreateDirectory(localPath);
-
-            foreach (var (file, pointer) in filteredFiles)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                try
-                {
-                    await ftpService.CopyFilesAsync(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList(), cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error copying file {FileName}", file.Name);
-                    continue;
-                }
-
-                ReaderPointer currentPointer = pointer is not null ? UpdateReaderPointer(pointer, file) : BuildReaderPointer(file);
-
-                string filePath = Path.Combine(localPath, file.Name);
-
-                await foreach (var line in ReadLinesFromFileAsync(filePath, currentPointer, readerPointerRepository, cancellationToken))
-                {
-                    string cleaned = new string(line.Where(c => !char.IsControl(c) || c == '\r' || c == '\n').ToArray());
-                    _logger.LogDebug("Yielding cleaned: {V}", cleaned);
-                    yield return cleaned;
-                }
-            }
-            _logger.LogDebug("Finished reading process");
-        }
-        finally
-        {
-            if (client != null)
-            {
-                ftpService.ReleaseClient(client);
-            }
-        }
-    }
-
-
-    public async IAsyncEnumerable<string> UnreadFileLinesAsync(
-        EFileType fileType,
-        IReaderPointerRepository readerPointerRepository,
-        IFtpService ftpService)
-    {
-        if (_ftp is null) yield break;
-
-        AsyncFtpClient client = ftpService.GetClient(_ftp);
-        List<FtpListItem> ftpFiles = await GetLogFiles(client, _ftp.RootFolder, fileType);
-        List<(FtpListItem, ReaderPointer?)> filteredFiles = [];
-
-        // Filter to read only files that are new or were modified
-        foreach (var file in ftpFiles)
-        {
-            _logger.LogDebug("File fetched {File}", file.Name);
-            var pointer = await readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
-            if (pointer == null || pointer.LastUpdated != file.Modified || pointer.FileSize != file.Size)
-            {
-                filteredFiles.Add((file, pointer));
-            }
-        }
-
-        if (filteredFiles.Count == 0)
-        {
-            _logger.LogDebug("No unread or updated files found for {Type}. Skipping UnreadFileLinesAsync.", fileType);
-            yield break;
-        }
-
-        string localPath = Path.Combine(GetLocalPath(), "logs");
-        Directory.CreateDirectory(localPath);
-        try
-        {
-            await ftpService.CopyFilesAsync(client, localPath, filteredFiles.Select(f => f.Item1.FullName).ToList());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Error trying to copy files");
-            _logger.LogError("Exception [{Ex}]", ex.Message);
-            _logger.LogError("Inner Exception [{Ex}]", ex.InnerException?.Message);
-            throw;
-        }
-
-        foreach (var file in filteredFiles)
-        {
-            ReaderPointer pointer = file.Item2 is not null ? UpdateReaderPointer(file.Item2, file.Item1) : BuildReaderPointer(file.Item1);
-            string filePath = Path.Combine(localPath, file.Item1!.Name);
-
-            int lineNumber = 0;
-            using var reader = new StreamReader(filePath, Encoding.Unicode);
-
-            while (await reader.ReadLineAsync() is { } line)
-            {
-                if (lineNumber < pointer.LineNumber)
-                {
-                    lineNumber++;
-                    continue;
-                }
-
-                if (IsIrrelevantLine(line))
-                {
-                    lineNumber++;
-                    continue;
-                }
-
-                yield return line;
-                _logger.LogDebug("Reading file File[{FileName}:{FileModified}]", file.Item1!.Name, file.Item1!.Modified);
-                _logger.LogDebug("Yielding: {V}", line);
-
-                lineNumber++;
-            }
-
-            if (lineNumber != pointer.LineNumber)
-            {
-                pointer.LineNumber = lineNumber;
-
-                try
-                {
-                    await readerPointerRepository.CreateOrUpdateAsync(pointer);
-                    await readerPointerRepository.SaveAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("UnreadFileLinesAsync error {Exception}", ex);
-                }
-            }
-        }
-
-        await client.Disconnect();
-    }
-
-    public async IAsyncEnumerable<string> FileLinesAsync(
-    EFileType fileType,
-    IFtpService ftpService,
-    DateTime from,
-    DateTime to,
-    [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        if (_ftp is null)
-            yield break;
-
-        AsyncFtpClient client = null!;
-        try
-        {
-            client = ftpService.GetClient(_ftp);
-
-            List<FtpListItem> ftpFiles = await GetLogFiles(client, _ftp.RootFolder, from, to, fileType);
-
-            var filesToDownload = new List<FtpListItem>();
-
-            string localPath = Path.Combine(GetLocalPath(), "logs");
-            Directory.CreateDirectory(localPath);
-
-            foreach (FtpListItem ftpFile in ftpFiles)
-            {
-                var localFilePath = Path.Combine(localPath, ftpFile.Name);
-                var localFile = new FileInfo(localFilePath);
-
-                if (!File.Exists(localFile.FullName) || ftpFile.Size != localFile.Length)
-                    filesToDownload.Add(ftpFile);
-            }
-
-            try
-            {
-                await ftpService.CopyFilesAsync(client, localPath, filesToDownload.Select(f => f.FullName).ToList(), cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error trying to copy files");
-                throw;
-            }
-
-            foreach (var file in ftpFiles)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var localFilePath = Path.Combine(localPath, file.Name);
-                FileInfo localFile = new FileInfo(localFilePath);
-
-                if (!localFile.Exists)
-                {
-                    _logger.LogWarning("File {FileName} does not exist locally after download. Skipping.", file.Name);
-                    continue;
-                }
-
-                // We separate reading logic into a helper to avoid yield in try/catch
-                await foreach (var line in ReadLinesFromLocalFileAsync(localFile.FullName, cancellationToken))
-                {
-                    string? yieldedLine = null;
-                    try
-                    {
-                        yieldedLine = line;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error reading local file {FilePath}", localFile.FullName);
-                        yield break; // or continue, depending on your logic
-                    }
-                    yield return yieldedLine;
-                }
-
-            }
-        }
-        finally
-        {
-            if (client != null)
-            {
-                ftpService.ReleaseClient(client);
-            }
-        }
-    }
-
     private async IAsyncEnumerable<string> ReadLinesFromLocalFileAsync(string filePath, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(filePath, Encoding.UTF8);
@@ -444,10 +185,134 @@ public class ScumFileProcessor
         }
     }
 
+    public async IAsyncEnumerable<string> UnreadFileLinesAsync(
+        EFileType fileType,
+        IReaderPointerRepository readerPointerRepository,
+        IFtpService ftpService,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (_ftp is null)
+            yield break;
+
+        AsyncFtpClient client = null!;
+        var semaphore = _semaphores.GetOrAdd((fileType, _scumServer.Id), new SemaphoreSlim(1, 1));
+        await semaphore.WaitAsync(cancellationToken);
+
+        try
+        {
+            // Get pooled client safely
+            client = await ftpService.GetClientAsync(_ftp, cancellationToken);
+
+            // Fetch files from FTP
+            List<FtpListItem> ftpFiles = await GetLogFiles(client, _ftp.RootFolder, fileType);
+
+            var filteredFiles = new List<(FtpListItem File, ReaderPointer? Pointer)>();
+
+            foreach (var file in ftpFiles)
+            {
+                var pointer = await readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
+                if (pointer == null || pointer.LastUpdated != file.Modified || pointer.FileSize != file.Size)
+                {
+                    filteredFiles.Add((file, pointer));
+                }
+            }
+
+            if (filteredFiles.Count == 0)
+                yield break;
+
+            string localPath = Path.Combine(GetLocalPath(), "logs");
+            Directory.CreateDirectory(localPath);
+
+            await ftpService.CopyFilesAsync(client, localPath, filteredFiles.Select(f => f.File.FullName).ToList(), cancellationToken);
+
+            foreach (var (file, pointer) in filteredFiles)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                ReaderPointer currentPointer = pointer is not null
+                    ? UpdateReaderPointer(pointer, file)
+                    : BuildReaderPointer(file);
+
+                string filePath = Path.Combine(localPath, file.Name);
+
+                await foreach (var line in ReadLinesFromFileAsync(filePath, currentPointer, readerPointerRepository, cancellationToken))
+                {
+                    string cleaned = new string(line.Where(c => !char.IsControl(c) || c == '\r' || c == '\n').ToArray());
+                    yield return cleaned;
+                }
+            }
+        }
+        finally
+        {
+            semaphore.Release();
+            if (client != null)
+                await ftpService.ReleaseClientAsync(client);
+        }
+    }
+
+    public async IAsyncEnumerable<string> FileLinesAsync(
+        EFileType fileType,
+        IFtpService ftpService,
+        DateTime from,
+        DateTime to,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (_ftp is null)
+            yield break;
+
+        AsyncFtpClient client = null!;
+        var semaphore = _semaphores.GetOrAdd((fileType, _scumServer.Id), new SemaphoreSlim(1, 1));
+        await semaphore.WaitAsync(cancellationToken);
+
+        try
+        {
+            client = await ftpService.GetClientAsync(_ftp, cancellationToken);
+
+            List<FtpListItem> ftpFiles = await GetLogFiles(client, _ftp.RootFolder, from, to, fileType);
+
+            string localPath = Path.Combine(GetLocalPath(), "logs");
+            Directory.CreateDirectory(localPath);
+
+            var filesToDownload = ftpFiles
+                .Where(f =>
+                {
+                    var localFilePath = Path.Combine(localPath, f.Name);
+                    var localFile = new FileInfo(localFilePath);
+                    return !localFile.Exists || f.Size != localFile.Length;
+                })
+                .ToList();
+
+            if (filesToDownload.Count > 0)
+                await ftpService.CopyFilesAsync(client, localPath, filesToDownload.Select(f => f.FullName).ToList(), cancellationToken);
+
+            foreach (var file in ftpFiles)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var localFilePath = Path.Combine(localPath, file.Name);
+                FileInfo localFile = new FileInfo(localFilePath);
+
+                if (!localFile.Exists)
+                    continue;
+
+                await foreach (var line in ReadLinesFromLocalFileAsync(localFile.FullName, cancellationToken))
+                {
+                    string cleaned = new string(line.Where(c => !char.IsControl(c) || c == '\r' || c == '\n').ToArray());
+                    yield return cleaned;
+                }
+            }
+        }
+        finally
+        {
+            semaphore.Release();
+            if (client != null)
+                await ftpService.ReleaseClientAsync(client);
+        }
+    }
 
     public async Task<string> DownloadRaidTimes(IFtpService ftpService)
     {
-        var client = ftpService.GetClient(_ftp);
+        var client = await ftpService.GetClientAsync(_ftp);
         var remotePath = $"{_ftp.RootFolder}/Saved/Config/WindowsServer/RaidTimes.json";
         string localPath = GetLocalPath();
 

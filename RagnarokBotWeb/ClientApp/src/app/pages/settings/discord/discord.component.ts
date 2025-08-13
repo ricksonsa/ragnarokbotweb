@@ -19,7 +19,7 @@ import { Alert } from '../../../models/alert';
 import { ChannelDto } from '../../../models/channel.dto';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { Observable, pipe, Subscription, switchMap } from 'rxjs';
+import { Observable, pipe, Subscription, switchMap, take } from 'rxjs';
 
 @Component({
   selector: 'app-discord',
@@ -116,6 +116,7 @@ export class DiscordComponent implements OnInit, OnDestroy {
 
   loadAccount(force = false) {
     this.authService.account(force)
+      .pipe(take(1))
       .subscribe({
         next: (account) => {
           this.account = account;

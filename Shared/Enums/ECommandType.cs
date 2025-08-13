@@ -17,6 +17,7 @@
         ListSquads,
         ChangeFame,
         ChangeGold,
-        ChangeMoney
+        ChangeMoney,
+        Silence
     }
 }

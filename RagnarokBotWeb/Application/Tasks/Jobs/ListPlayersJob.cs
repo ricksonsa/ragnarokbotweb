@@ -21,12 +21,10 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 if (!botService.IsBotOnline(serverId)) return;
 
-                if (!cacheService.GetCommandQueue(serverId).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
-                {
-                    var command = new BotCommand();
-                    command.ListPlayers();
-                    cacheService.GetCommandQueue(serverId).Enqueue(command);
-                }
+                var command = new BotCommand();
+                command.ListPlayers();
+                cacheService.GetCommandQueue(serverId).Enqueue(command);
+
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }

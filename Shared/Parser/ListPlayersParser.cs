@@ -1,4 +1,5 @@
 ﻿using Shared.Models;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Shared.Parser
@@ -8,7 +9,7 @@ namespace Shared.Parser
         public static List<ScumPlayer> Parse(string data)
         {
             var players = new List<ScumPlayer>();
-            string[] values = Regex.Split(data.TrimStart().TrimEnd(), $"\r\n\r\n");
+            string[] values = data.Trim().Split(new string[] { "\r\n\r\n", "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
 
             try
             {
@@ -16,7 +17,7 @@ namespace Shared.Parser
                 {
                     var pattern = @"^\d+\.\s*(?<name>.+)\r?\nSteam: (?<steamName>.+) \((?<steamId>\d+)\)\r?\nFame: (?<fame>\d+)\s*\r?\nAccount balance: (?<accountBalance>\d+)\r?\nGold balance: (?<goldBalance>\d+)\r?\nLocation: X=(?<x>-?\d+\.?\d*) Y=(?<y>-?\d+\.?\d*) Z=(?<z>-?\d+\.?\d*)";
 
-                    var match = Regex.Match(value, pattern, RegexOptions.Multiline);
+                    var match = Regex.Match(value.TrimStart(), pattern, RegexOptions.Multiline);
                     if (match.Success)
                     {
                         players.Add(new ScumPlayer
@@ -27,9 +28,9 @@ namespace Shared.Parser
                             Fame = int.Parse(match.Groups["fame"].Value),
                             AccountBalance = int.Parse(match.Groups["accountBalance"].Value),
                             GoldBalance = int.Parse(match.Groups["goldBalance"].Value),
-                            X = double.Parse(match.Groups["x"].Value),
-                            Y = double.Parse(match.Groups["y"].Value),
-                            Z = double.Parse(match.Groups["z"].Value)
+                            X = double.Parse(match.Groups["x"].Value, CultureInfo.InvariantCulture),
+                            Y = double.Parse(match.Groups["y"].Value, CultureInfo.InvariantCulture),
+                            Z = double.Parse(match.Groups["z"].Value, CultureInfo.InvariantCulture)
                         });
                     }
                 }

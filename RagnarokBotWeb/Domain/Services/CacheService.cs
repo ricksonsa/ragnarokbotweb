@@ -84,7 +84,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public void SetConnectedPlayers(long serverId, List<ScumPlayer> players)
         {
-            _connectedPlayers[serverId] = players.DistinctBy(player => player.SteamID).ToList();
+            _connectedPlayers[serverId] = players;
         }
 
         public void AddServers(List<Entities.ScumServer> servers)

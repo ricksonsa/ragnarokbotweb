@@ -9,15 +9,19 @@ namespace RagnarokBotWeb.Domain.Services;
 
 public class FtpService(FtpConnectionPool pool) : IFtpService
 {
-    public AsyncFtpClient GetClient(Ftp ftp, CancellationToken cancellationToken = default)
+    private static readonly SemaphoreSlim _ftpLock = new(1, 1);
+
+    public async Task<AsyncFtpClient> GetClientAsync(Ftp ftp, CancellationToken cancellationToken = default)
     {
-        return pool.GetClient(ftp, cancellationToken: cancellationToken);
+        return await pool.GetClientAsync(ftp, cancellationToken: cancellationToken);
     }
 
     public async Task CopyFilesAsync(AsyncFtpClient client, string targetFolder, IList<string> remoteFilePaths, CancellationToken token = default)
     {
+        //await _ftpLock.WaitAsync(token);
         var states = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
         if (states.Any(result => result.IsFailed)) throw new Exception("Error while copying files from FTP");
+        //_ftpLock.Release();
     }
 
     public async Task UpdateINILine(AsyncFtpClient client, string remoteFilePath, string key, string newValue)
@@ -47,8 +51,6 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
                     await client.UploadStream(updatedStream, remoteFilePath);
                 }
             }
-            await client.Disconnect();
-
         }
         catch (Exception)
         {
@@ -121,8 +123,8 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
         await client.Disconnect();
     }
 
-    public void ReleaseClient(AsyncFtpClient client)
+    public async Task ReleaseClientAsync(AsyncFtpClient client)
     {
-        pool.ReleaseClient(client);
+        await pool.ReleaseClientAsync(client);
     }
 }

@@ -240,20 +240,23 @@ namespace RagnarokBotWeb
             builder.Services.AddHttpClient();
             builder.Services.AddMvc();
             builder.Services.AddRateLimiting();
+
             var app = builder.Build();
 
-            app.UseSimpleRateLimit(maxRequests: 100, timeWindowMinutes: 1);
-            app.UseCors(builder.Environment.IsDevelopment() ? DefaultCorsPolicy : ProductionCorsPolicy);
             if (app.Environment.IsDevelopment())
             {
+                app.UseCors(DefaultCorsPolicy);
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
             else
             {
+                app.UseCors(ProductionCorsPolicy);
                 app.UseHsts();
                 app.UseHttpsRedirection();
+                app.UseSimpleRateLimit(maxRequests: 100, timeWindowMinutes: 1);
             }
+
             app.UseMiddleware<ExceptionMiddleware>();
 
             // Serve Angular static files

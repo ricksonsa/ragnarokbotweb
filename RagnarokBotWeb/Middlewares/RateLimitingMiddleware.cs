@@ -2,10 +2,9 @@
 
 namespace RagnarokBotWeb.Middlewares
 {
-    // Rate limiting middleware
     public class RateLimitingMiddleware
     {
-        private static readonly ConcurrentDictionary<string, List<DateTime>> _requests = new();
+        private static readonly ConcurrentDictionary<string, ConcurrentQueue<DateTime>> _requests = new();
         private readonly RequestDelegate _next;
         private readonly int _maxRequests;
         private readonly TimeSpan _timeWindow;
@@ -21,18 +20,19 @@ namespace RagnarokBotWeb.Middlewares
         {
             var clientIP = GetClientIP(context);
 
+            // Only apply rate limiting to /api/bots
             if (context.Request.Path.HasValue && context.Request.Path.Value.Contains("/api/bots"))
-                await _next(context);
-
-            if (IsRateLimited(clientIP))
             {
-                context.Response.StatusCode = 429; // Too Many Requests
-                if (context.Response.Headers.TryAdd("Retry-After", "60"))
+                if (IsRateLimited(clientIP))
+                {
+                    context.Response.StatusCode = 429; // Too Many Requests
+                    context.Response.Headers["Retry-After"] = "60";
                     await context.Response.WriteAsync("Rate limit exceeded. Please try again later.");
-
-                return;
+                    return; // Important: don't call _next()
+                }
             }
 
+            // Continue pipeline
             await _next(context);
         }
 
@@ -43,24 +43,24 @@ namespace RagnarokBotWeb.Middlewares
             var now = DateTime.UtcNow;
             var cutoff = now - _timeWindow;
 
-            // Get or create request history for this IP
-            var requests = _requests.GetOrAdd(clientIP, new List<DateTime>());
+            // Get or create queue for this IP
+            var queue = _requests.GetOrAdd(clientIP, _ => new ConcurrentQueue<DateTime>());
 
-            lock (requests)
+            // Remove old timestamps
+            while (queue.TryPeek(out var oldest) && oldest < cutoff)
             {
-                // Remove old requests outside the time window
-                requests.RemoveAll(r => r < cutoff);
-
-                // Check if limit exceeded
-                if (requests.Count >= _maxRequests)
-                {
-                    return true;
-                }
-
-                // Add current request
-                requests.Add(now);
-                return false;
+                queue.TryDequeue(out _);
             }
+
+            // Check limit
+            if (queue.Count >= _maxRequests)
+            {
+                return true;
+            }
+
+            // Add current request
+            queue.Enqueue(now);
+            return false;
         }
 
         private string GetClientIP(HttpContext context)
@@ -68,15 +68,11 @@ namespace RagnarokBotWeb.Middlewares
             // Check for forwarded IP first (if behind proxy/load balancer)
             var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
             if (!string.IsNullOrEmpty(forwardedFor))
-            {
                 return forwardedFor.Split(',')[0].Trim();
-            }
 
             var realIP = context.Request.Headers["X-Real-IP"].FirstOrDefault();
             if (!string.IsNullOrEmpty(realIP))
-            {
                 return realIP;
-            }
 
             return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }

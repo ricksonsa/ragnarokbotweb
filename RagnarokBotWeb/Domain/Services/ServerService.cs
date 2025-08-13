@@ -159,7 +159,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (ftp is null) throw new DomainException("Invalid ftp server");
             try
             {
-                var client = _ftpService.GetClient(ftp);
+                var client = await _ftpService.GetClientAsync(ftp);
                 using (var stream = await client.OpenRead($@"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini"))
                 using (var reader = new StreamReader(stream, encoding: Encoding.UTF8))
                     while (await reader.ReadLineAsync() is { } line)
