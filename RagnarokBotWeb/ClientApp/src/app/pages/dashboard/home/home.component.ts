@@ -26,6 +26,7 @@ import { PlayerStatsDto, LockpickStatsDto } from '../../../models/player-stats.d
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { Alert } from '../../../models/alert';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { RouterModule } from '@angular/router';
 Chart.register(...registerables);
 
 @Component({
@@ -34,6 +35,7 @@ Chart.register(...registerables);
   styleUrls: ['./home.component.scss'],
   imports: [
     CommonModule,
+    RouterModule,
     ReactiveFormsModule,
     NzCardModule,
     NzStatisticModule,

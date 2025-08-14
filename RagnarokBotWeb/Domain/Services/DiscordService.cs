@@ -249,7 +249,7 @@ namespace RagnarokBotWeb.Domain.Services
             int rank = 1;
             foreach (var p in stats)
             {
-                sb.AppendLine($"{rank,4}  {Truncate(p.PlayerName, 20),-20}  {p.SuccessCount,7}  {p.FailCount,5}  {p.SuccessRate,6:F2}%");
+                sb.AppendLine($"{rank,4}  {Truncate(p.PlayerName, 20),-20}  {p.SuccessCount,7}  {p.FailCount,5}  {Convert.ToInt32(Math.Round(p.SuccessRate)),6:F2}%");
                 rank++;
             }
 
@@ -282,7 +282,7 @@ namespace RagnarokBotWeb.Domain.Services
             int rank = 1;
             foreach (var p in players)
             {
-                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {Convert.ToInt32(Math.Round(p.KillDistance / 1000f)),12:F1} | {Truncate(p.WeaponName, 16)}");
+                sb.AppendLine($"{rank,2} | {Truncate(p.PlayerName, 18),-18} | {Convert.ToInt32(Math.Round(p.KillDistance / 100f)),12:F1} | {Truncate(p.WeaponName, 16)}");
                 rank++;
             }
 
@@ -557,7 +557,7 @@ namespace RagnarokBotWeb.Domain.Services
                 embedBuilder.AddField("Weapon", kill.DisplayWeapon, false);
 
             if (server.ShowKillDistance)
-                embedBuilder.AddField("Distance", kill.Distance.HasValue ? $"{Math.Round(kill.Distance.Value / 1000f)}m" : "Unknown", false);
+                embedBuilder.AddField("Distance", kill.Distance.HasValue ? $"{Convert.ToInt32(Math.Round(kill.Distance.Value / 100f))}m" : "Unknown", false);
 
             if (server.ShowKillSector)
                 embedBuilder.AddField("Sector", kill.Sector, false);

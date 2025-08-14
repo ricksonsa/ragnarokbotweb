@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { PackageDto } from '../../../models/package.dto';
@@ -12,10 +12,11 @@ import { Router, RouterModule } from '@angular/router';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilChanged, firstValueFrom } from 'rxjs';
+import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilChanged, firstValueFrom, Subscription } from 'rxjs';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { Alert } from '../../../models/alert';
+import { ServerService } from '../../../services/server.service';
 
 @Component({
   selector: 'app-packages',
@@ -37,7 +38,7 @@ import { Alert } from '../../../models/alert';
     NzDividerModule
   ]
 })
-export class PackagesComponent implements OnInit {
+export class PackagesComponent implements OnInit, OnDestroy {
 
   dataSource: PackageDto[] = [];
   total = 0;
@@ -46,15 +47,36 @@ export class PackagesComponent implements OnInit {
   searchControl = new FormControl();
   suggestions$: Observable<PackageDto[]> = of([]);
   isLoading = true;
+  discord$: Subscription;
+  channels: { key: string; value: string; }[];
 
   constructor(
     private readonly packageService: PackageService,
+    private readonly serverService: ServerService,
     private readonly router: Router,
     private readonly eventManager: EventManager) { }
 
   ngOnInit() {
     // this.loadPage();
     this.setUpFilter();
+    this.loadDiscordChannels();
+  }
+
+  ngOnDestroy(): void {
+    this.discord$?.unsubscribe();
+  }
+
+  loadDiscordChannels() {
+    this.discord$ = this.serverService.getDiscordChannels()
+      .subscribe({
+        next: (channels => {
+          this.channels = channels;
+        })
+      });
+  }
+
+  getDiscordName(discordId: any) {
+    return this.channels.filter(channel => channel.key == discordId)[0];
   }
 
   loadPage() {
@@ -87,7 +109,7 @@ export class PackagesComponent implements OnInit {
           if (page) {
             this.dataSource = page.content;
             this.total = page.totalElements;
-            this.pageIndex = page.number;
+            this.pageIndex = 1;
             this.pageSize = page.size;
           }
           this.isLoading = false

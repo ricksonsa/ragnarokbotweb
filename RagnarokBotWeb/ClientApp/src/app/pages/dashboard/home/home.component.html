@@ -16,8 +16,13 @@
 
 <div class="grid">
   <nz-card nzSize="small" class="statistics-card">
-    <nz-statistic [nzValue]="playerCount > playerCountBattleMetrics ? playerCount : playerCountBattleMetrics"
-      nzTitle="Players Online" [nzSuffix]="'/' + maxSlots?.toString()"></nz-statistic>
+    <nz-statistic [nzValue]="playerCount" nzTitle="Players Online Reported By Bot"
+      [nzSuffix]="'/' + (maxSlots?.toString() ?? '0')"></nz-statistic>
+  </nz-card>
+
+  <nz-card *ngIf="playerCountBattleMetrics > 0" nzSize="small" class="statistics-card">
+    <nz-statistic [nzValue]="playerCountBattleMetrics" nzTitle="Players Online Battlemetrics"
+      [nzSuffix]="'/' + (maxSlots?.toString() ?? '0')"></nz-statistic>
   </nz-card>
 
   <nz-card nzSize="small" class="statistics-card">
@@ -57,65 +62,71 @@
   </nz-card>
 
   <nz-card nzSize="small" class="statistics-card fit-content" nzTitle="Lockpicks General">
-    <nz-table nzSize="small" #lockpickTable [nzData]="lockpicks" nzShowPagination="false">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Lock Type</th>
-          <th>Locks Picked</th>
-          <th>Failed Attempts</th>
-          <th>Success Rate</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let data of lockpickTable.data">
-          <td>{{data.playerName}}</td>
-          <td>{{getLockType(data.lockType)}}</td>
-          <td>{{data.successCount}}</td>
-          <td>{{data.failCount}}</td>
-          <td>{{getPercentage(data.successRate)}}%</td>
-        </tr>
-      </tbody>
-    </nz-table>
+    <div class="wrapper">
+      <nz-table nzSize="small" #lockpickTable [nzData]="lockpicks" nzShowPagination="false">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Lock Type</th>
+            <th>Locks Picked</th>
+            <th>Failed Attempts</th>
+            <th>Success Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let data of lockpickTable.data">
+            <td>{{data.playerName}}</td>
+            <td>{{getLockType(data.lockType)}}</td>
+            <td>{{data.successCount}}</td>
+            <td>{{data.failCount}}</td>
+            <td>{{getPercentage(data.successRate)}}%</td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </div>
   </nz-card>
 
   <nz-card nzSize="small" class="statistics-card fit-content" nzTitle="Kills General">
-    <nz-table nzSize="small" #killTable [nzData]="kills" nzShowPagination="false">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Steam ID</th>
-          <th>Kill Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let data of killTable.data">
-          <td>{{data.playerName}}</td>
-          <td>{{data.steamId}}</td>
-          <td>{{data.killCount}}</td>
-        </tr>
-      </tbody>
-    </nz-table>
+    <div class="wrapper">
+      <nz-table nzSize="small" #killTable [nzData]="kills" nzShowPagination="false">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Steam ID</th>
+            <th>Kill Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let data of killTable.data">
+            <td>{{data.playerName}}</td>
+            <td>{{data.steamId}}</td>
+            <td>{{data.killCount}}</td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </div>
   </nz-card>
 
   <nz-card nzSize="small" class="fit-content" nzTitle="Online Players">
-    <nz-table nzSize="small" #playersTable [nzData]="players" nzShowPagination="false">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Money</th>
-          <th>Gold</th>
-          <th>Coins</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let data of playersTable.data">
-          <td><a href="">{{data.name}}</a></td>
-          <td>{{data.money}}</td>
-          <td>{{data.gold}}</td>
-          <td>{{data.coin}}</td>
-        </tr>
-      </tbody>
-    </nz-table>
+    <div class="wrapper">
+      <nz-table nzSize="small" #playersTable [nzData]="players" nzShowPagination="false">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Money</th>
+            <th>Gold</th>
+            <th>Coins</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let data of playersTable.data">
+            <td><a [routerLink]="['/management', 'players', data.id]">{{data.name}}</a></td>
+            <td>{{data.money}}</td>
+            <td>{{data.gold}}</td>
+            <td>{{data.coin}}</td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </div>
   </nz-card>
 </div>

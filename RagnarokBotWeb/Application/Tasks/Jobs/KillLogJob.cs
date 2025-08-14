@@ -53,34 +53,35 @@ public class KillLogJob(
                     continue;
                 }
 
+                var squads = cacheService.GetSquads(server.Id);
+                kill.IsSameSquad = IsSameSquad(kill, squads);
+
                 if (IsCompliant())
                 {
-                    var squads = cacheService.GetSquads(server.Id);
-                    var isSameSquad = IsSameSquad(kill, squads);
-
-                    if (!server.ShowSameSquadKill && isSameSquad) return;
-
                     if (server.UseKillFeed)
                     {
                         bool postKillFeed = true;
+
+                        if (!server.ShowSameSquadKill && kill.IsSameSquad) postKillFeed = false;
 
                         if (Kill.IsMine(kill.Weapon) && !server.ShowMineKill)
                             postKillFeed = false;
 
                         if (postKillFeed)
                         {
-                            HandleAnnounceText(cacheService, server, kill); // Announce kill in game
                             if (server.ShowKillOnMap) await HandleShowMap(logger, fileService, kill);
                             await discordService.SendKillFeedEmbed(server, kill);
                         }
                     }
 
                     var coinHandler = new PlayerCoinManager(unitOfWork);
-                    if (server.CoinKillAwardAmount > 0 && isSameSquad)
+                    if (server.CoinKillAwardAmount > 0 && !kill.IsSameSquad)
                         await coinHandler.AddCoinsBySteamIdAsync(kill.KillerSteamId64!, server.Id, server.CoinKillAwardAmount);
 
-                    if (server.CoinDeathPenaltyAmount > 0 && !isSameSquad)
+                    if (server.CoinDeathPenaltyAmount > 0 && !kill.IsSameSquad)
                         await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
+
+                    HandleAnnounceText(cacheService, server, kill); // Announce kill in game
                 }
 
                 logger.LogDebug("Adding new kill entry: {Killer} -> {Target}", kill.KillerName, kill.TargetName);

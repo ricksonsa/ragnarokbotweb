@@ -69,6 +69,7 @@ export class CustomTasksComponent implements OnInit {
       scheduledTaskType: ["0", [Validators.required]],
       isActive: [true, [Validators.required]],
       blockedRaidTimes: [false, [Validators.required]],
+      minPlayerOnline: [null]
     });
 
   }
@@ -77,13 +78,13 @@ export class CustomTasksComponent implements OnInit {
   }
 
   addCondition(type: string, condition: string, value: string) {
-    if (value?.length === 0 
-      || type?.length === 0 
-      || condition?.length === 0 ) return;
+    if (value?.length === 0
+      || type?.length === 0
+      || condition?.length === 0) return;
 
-      if (this.conditions.some(c => c.startsWith(type))) {
-        this.removeCondition(this.conditions.findIndex(c => c.startsWith(type)));
-      }
+    if (this.conditions.some(c => c.startsWith(type))) {
+      this.removeCondition(this.conditions.findIndex(c => c.startsWith(type)));
+    }
 
     this.conditions.push(type + condition + value);
   }

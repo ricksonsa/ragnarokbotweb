@@ -32,6 +32,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public ScumServer ScumServer { get; set; }
         public string? ImageUrl { get; set; }
         public string? KillHash { get; set; }
+        public bool IsSameSquad { get; set; }
 
 
         public void SetHash()

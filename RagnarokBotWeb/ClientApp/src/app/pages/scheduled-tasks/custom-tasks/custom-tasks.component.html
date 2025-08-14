@@ -72,48 +72,21 @@
         <nz-form-control [nzSpan]="2">
           <label nz-checkbox formControlName="blockedRaidTimes"></label>
         </nz-form-control>
-        <p nz-typography style="margin: 0;" nzType="secondary">Determine whether this Task will be executed during raid period or not.</p>
+        <p nz-typography style="margin: 0;" nzType="secondary">Determine whether this Task will be executed during raid
+          period or not.</p>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="conditions">Conditions</nz-form-label>
-        <nz-form-control [nzSpan]="24" [nzExtra]="commandsExtra">
-          <nz-input-group nzSearch nzSize="large" [nzAddOnAfter]="suffixButton">
-            <div class="group">
-              <nz-select #conditionName name="value" nzPlaceHolder="Condition Type" nzAllowClear>
-                <nz-option nzLabel="Online Player Count" nzValue="PlayerCount"></nz-option>
-              </nz-select>
-              <nz-select #conditionType name="value" nzPlaceHolder="=" nzAllowClear>
-                <nz-option nzLabel="Equals" nzValue="="></nz-option>
-                <nz-option nzLabel="Lesser Then" nzValue="<"></nz-option>
-                <nz-option nzLabel="Greater Then" nzValue=">"></nz-option>
-              </nz-select>
-              <input #conditionValue type="text" nz-input placeholder="Value" />
-            </div>
-          </nz-input-group>
-          <ng-template #suffixButton>
-            <button nz-button nzType="primary" nzSize="large" nzSearch
-              (click)="addCondition(conditionName.activatedValue, conditionType.activatedValue, conditionValue.value)">
-              Add
-            </button>
-          </ng-template>
-
-          <div *ngIf="conditions.length > 0">
-            <nz-list style="margin-top: 20px;" nzBordered="true">
-              @for (time of conditions; track $index) {
-              <nz-list-item>
-                <p style="margin: 0;">{{time}}</p>
-                <button style="height: 20px; width: 20px;" nz-button nzType="default" (click)="removeCondition($index)">
-                  <nz-icon style="font-size: 10px;" nzType="close" />
-                </button>
-              </nz-list-item>
-              }
-            </nz-list>
-          </div>
+        <nz-form-label [nzSpan]="0" nzFor="minPlayerOnline">Minimum Player Required</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="minPlayerOnlineExtra"
+          nzErrorTip="The interval have to be greater then 10 seconds.">
+          <input formControlName="minPlayerOnline" nz-input name="minPlayerOnline" type="number" id="minPlayerOnline" />
         </nz-form-control>
       </nz-form-item>
-      <ng-template #commandsExtra>
-        <p>You can add conditions like online player count number requirement for this task to be executed.</p>
+      <ng-template #minPlayerOnlineExtra>
+        <p>The minimum number of players online required to start the event. Leave it blank for always
+          start
+          idepentently of players online.</p>
       </ng-template>
     </form>
   </nz-card>

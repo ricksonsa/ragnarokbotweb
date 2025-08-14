@@ -74,7 +74,7 @@ export class OrdersComponent implements OnInit {
           if (page) {
             this.dataSource = page.content;
             this.total = page.totalElements;
-            this.pageIndex = page.number;
+            this.pageIndex = 1;
             this.pageSize = page.size;
           }
           this.isLoading = false

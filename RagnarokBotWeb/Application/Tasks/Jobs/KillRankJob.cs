@@ -103,7 +103,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             // Filter kills by server and period
             var kills = unitOfWork.Kills
                 .Include(kill => kill.ScumServer)
-                .Where(k => k.ScumServer.Id == server.Id && k.CreateDate >= periodStart && k.KillerSteamId64 != "-1");
+                .Where(k => k.ScumServer.Id == server.Id && k.CreateDate >= periodStart && k.KillerSteamId64 != "-1" && !k.IsSameSquad);
 
             // Group by KillerName
             var killerStats = await kills
@@ -154,7 +154,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 k.ScumServer.Id == server.Id
                 && k.Distance > 0
                 && k.KillerSteamId64 != "-1"
-                && (k.Weapon != null && !(k.Weapon.ToLower().Contains("trap") || k.Weapon.ToLower().Contains("mine") || k.Weapon.ToLower().Contains("claymore"))));
+                && !k.IsSameSquad
+                && k.Weapon != null && !(k.Weapon.ToLower().Contains("trap") || k.Weapon.ToLower().Contains("mine") || k.Weapon.ToLower().Contains("claymore")));
 
             var longestPerPlayer = await kills
                 .GroupBy(k => k.KillerName)

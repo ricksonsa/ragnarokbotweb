@@ -18,10 +18,10 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
 
     public async Task CopyFilesAsync(AsyncFtpClient client, string targetFolder, IList<string> remoteFilePaths, CancellationToken token = default)
     {
-        //await _ftpLock.WaitAsync(token);
+        await _ftpLock.WaitAsync(token);
         var states = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
         if (states.Any(result => result.IsFailed)) throw new Exception("Error while copying files from FTP");
-        //_ftpLock.Release();
+        _ftpLock.Release();
     }
 
     public async Task UpdateINILine(AsyncFtpClient client, string remoteFilePath, string key, string newValue)
