@@ -64,9 +64,13 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public Task<List<Order>> FindManyCommandByServer(long serverId)
         {
+            var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-5);
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
-                .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId && order.Status == EOrderStatus.Command)
+                .Where(order => order.ScumServer != null
+                    && order.ScumServer.Id == serverId
+                    && order.Status == EOrderStatus.Command
+                    && order.UpdateDate < fiveMinutesAgo)
                 .OrderBy(order => order.CreateDate)
                 .ToListAsync();
         }

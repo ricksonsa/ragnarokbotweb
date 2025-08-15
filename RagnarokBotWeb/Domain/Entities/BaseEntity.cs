@@ -10,6 +10,8 @@ namespace RagnarokBotWeb.Domain.Entities
         public long Id { get; set; }
 
         public DateTime CreateDate { get; set; }
+        public DateTime? UpdateDate { get; set; }
+
 
         protected BaseEntity()
         {

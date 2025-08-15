@@ -15,7 +15,6 @@ public class KillLogJob(
     ILogger<KillLogJob> logger,
     IScumServerRepository scumServerRepository,
     IUnitOfWork unitOfWork,
-    IReaderPointerRepository readerPointerRepository,
     IDiscordService discordService,
     IFileService fileService,
     IFtpService ftpService,
@@ -29,11 +28,11 @@ public class KillLogJob(
         try
         {
             var server = await GetServerAsync(context);
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, unitOfWork);
 
             string lastLine = string.Empty;
 
-            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService, context.CancellationToken))
+            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), ftpService, context.CancellationToken))
             {
                 if (!line.Contains('{'))
                 {
@@ -131,7 +130,7 @@ public class KillLogJob(
                 .Replace("{weapon}", kill.DisplayWeapon)
                 .Replace("{sector}", kill.Sector);
 
-            cacheService.GetCommandQueue(server.Id).Enqueue(new BotCommand().Say(msg));
+            cacheService.EnqueueCommand(server.Id, new BotCommand().Say(msg));
         }
     }
 

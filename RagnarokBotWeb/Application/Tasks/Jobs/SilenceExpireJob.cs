@@ -44,7 +44,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 {
                     try
                     {
-                        _cacheService.GetFileChangeQueue(server.Id).Enqueue(new Models.FileChangeCommand
+                        _cacheService.EnqueueFileChangeCommand(server.Id, new Models.FileChangeCommand
                         {
                             FileChangeMethod = Domain.Enums.EFileChangeMethod.RemoveLine,
                             FileChangeType = Domain.Enums.EFileChangeType.SilencedUsers,

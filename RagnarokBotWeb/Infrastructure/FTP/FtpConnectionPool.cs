@@ -64,8 +64,9 @@ public class FtpConnectionPool : IAsyncDisposable
             }
         }
 
-        // No reusable client, create new
         await semaphore.WaitAsync(cancellationToken);
+
+        // No reusable client, create new
         try
         {
             // Double-check after lock
@@ -153,7 +154,7 @@ public class FtpConnectionPool : IAsyncDisposable
                         if (IsExpired(pooled.CreatedAt) && !pooled.InUse)
                         {
                             await DisposeClientAsync(pooled.Client);
-                            _logger.LogInformation("Removed expired FTP client for {Key}", key);
+                            _logger.LogDebug("Removed expired FTP client for {Key}", key);
                         }
                         else
                         {

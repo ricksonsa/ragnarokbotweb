@@ -25,7 +25,7 @@ namespace RagnarokBotWeb.Application.Handlers
 
             if (!string.IsNullOrEmpty(server.Guild.DiscordLink))
             {
-                _cacheService.GetCommandQueue(server.Id).Enqueue(new BotCommand().Say(server.Guild.DiscordLink));
+                _cacheService.EnqueueCommand(server.Id, new BotCommand().Say(server.Guild.DiscordLink));
                 value.Post = false;
             }
         }

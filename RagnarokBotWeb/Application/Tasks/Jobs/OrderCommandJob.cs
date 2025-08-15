@@ -101,7 +101,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         await _orderRepository.SaveAsync();
                     }
 
-                    if (command != null) _cacheService.GetCommandQueue(order.ScumServer.Id).Enqueue(command);
+                    if (command != null) _cacheService.EnqueueCommand(order.ScumServer.Id, command);
 
                 }
             }

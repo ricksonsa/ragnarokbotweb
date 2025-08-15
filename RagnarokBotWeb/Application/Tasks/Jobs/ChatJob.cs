@@ -17,7 +17,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs;
 public class ChatJob(
     ILogger<ChatJob> logger,
     IScumServerRepository scumServerRepository,
-    IReaderPointerRepository readerPointerRepository,
+    IUnitOfWork uow,
     IPlayerRegisterRepository playerRegisterRepository,
     IPlayerRepository playerRespository,
     IOrderService orderService,
@@ -38,9 +38,9 @@ public class ChatJob(
 
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, uow);
 
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService, context.CancellationToken))
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService, context.CancellationToken))
             {
                 var parsed = new ChatTextParser().Parse(line);
                 if (parsed is null)

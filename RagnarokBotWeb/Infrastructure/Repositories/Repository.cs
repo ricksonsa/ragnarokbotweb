@@ -63,6 +63,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public virtual void Update(T entity)
         {
+            entity.UpdateDate = DateTime.UtcNow;
             _dbSet.Update(entity);
         }
 

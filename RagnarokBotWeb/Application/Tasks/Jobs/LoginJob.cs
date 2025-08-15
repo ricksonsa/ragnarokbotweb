@@ -11,7 +11,7 @@ public class LoginJob(
     ILogger<LoginJob> logger,
     IScumServerRepository scumServerRepository,
     IPlayerService playerService,
-    IReaderPointerRepository readerPointerRepository,
+    IUnitOfWork uow,
     IFtpService ftpService
     ) : AbstractJob(scumServerRepository), IJob
 {
@@ -24,8 +24,8 @@ public class LoginJob(
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(server);
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService, context.CancellationToken))
+            var processor = new ScumFileProcessor(server, uow);
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService, context.CancellationToken))
             {
                 if (string.IsNullOrEmpty(line)) continue;
 

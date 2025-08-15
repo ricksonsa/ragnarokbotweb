@@ -62,7 +62,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     command.Say(warzone.ResolveDeliveryText(warzoneItem, spawnPoint));
                 }
 
-                _cacheService.GetCommandQueue(server.Id).Enqueue(command);
+                _cacheService.EnqueueCommand(server.Id, command);
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }

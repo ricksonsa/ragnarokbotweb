@@ -46,6 +46,12 @@ namespace RagnarokBotWeb.Controllers
             return Ok(await _botService.GetCommand(new Guid(guid)));
         }
 
+        [HttpGet("commands/peek")]
+        public IActionResult PeekReadyCommands(long serverId)
+        {
+            return Ok(_botService.PeekCommand(serverId));
+        }
+
         [HttpPost("players")]
         public async Task<IActionResult> UpdatePlayers(UpdateFromStringRequest input)
         {
@@ -73,7 +79,6 @@ namespace RagnarokBotWeb.Controllers
             _botService.PutCommand(command);
             return Ok();
         }
-
 
         [HttpPatch("deliveries/{id}/confirm")]
         public async Task<IActionResult> ConfirmDelivery(long id)

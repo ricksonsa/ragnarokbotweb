@@ -14,6 +14,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ICacheService _cacheService;
         private readonly IPlayerService _playerService;
         private readonly IOrderService _orderService;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IScumServerRepository _scumServerRepository;
 
         public BotService(
@@ -22,13 +23,15 @@ namespace RagnarokBotWeb.Domain.Services
             IPlayerService playerService,
             IOrderService orderService,
             ILogger<BotService> logger,
-            IScumServerRepository scumServerRepository) : base(httpContext)
+            IScumServerRepository scumServerRepository,
+            IUnitOfWork unitOfWork) : base(httpContext)
         {
             _cacheService = cacheService;
             _playerService = playerService;
             _orderService = orderService;
             _logger = logger;
             _scumServerRepository = scumServerRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task ConnectBot(Guid guid)
@@ -55,9 +58,11 @@ namespace RagnarokBotWeb.Domain.Services
         public void DisconnectBot(Guid guid)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+            if (!serverId.HasValue)
+                throw new UnauthorizedAccessException();
 
-            _cacheService.GetConnectedBots(serverId.Value).Remove(guid);
+            _cacheService.GetConnectedBots(serverId.Value).TryRemove(guid, out var removedBot);
+            _logger.LogInformation("Disconnecting Bot {Bot} from server {Server}", removedBot, serverId!.Value);
         }
 
         public async Task UpdatePlayersOnline(UpdateFromStringRequest input)
@@ -77,7 +82,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var flags = ListFlagsParser.Parse(input.Value);
             _cacheService.SetFlags(serverId.Value, flags);
-            await new ScumFileProcessor(server).SaveFlagList(JsonConvert.SerializeObject(flags, Formatting.Indented));
+            await new ScumFileProcessor(server, _unitOfWork).SaveFlagList(JsonConvert.SerializeObject(flags, Formatting.Indented));
         }
 
         public async Task UpdateSquads(UpdateFromStringRequest input)
@@ -89,7 +94,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var squads = ListSquadsParser.Parse(input.Value);
             _cacheService.SetSquads(serverId.Value, squads);
-            await new ScumFileProcessor(server).SaveSquadList(JsonConvert.SerializeObject(squads, Formatting.Indented));
+            await new ScumFileProcessor(server, _unitOfWork).SaveSquadList(JsonConvert.SerializeObject(squads, Formatting.Indented));
         }
 
         public bool IsBotOnline()
@@ -113,16 +118,15 @@ namespace RagnarokBotWeb.Domain.Services
 
             await ConnectBot(guid);
 
-
-            if (_cacheService.GetCommandQueue(serverId.Value).TryDequeue(out var command))
+            if (_cacheService.TryDequeueCommand(serverId.Value, out var command))
             {
-                if (command.Values.Any(x => x.CheckTargetOnline))
+                if (command is not null && command.Values.Any(x => x.CheckTargetOnline))
                 {
                     try
                     {
                         if (!(_cacheService.GetConnectedPlayers(serverId.Value).Any(player => player.SteamID == command.Values.FirstOrDefault(x => x.CheckTargetOnline)?.Target)))
                         {
-                            _cacheService.GetCommandQueue(serverId.Value).Enqueue(command);
+                            _cacheService.EnqueueCommand(serverId.Value, command);
                             return null;
                         }
                     }
@@ -134,6 +138,16 @@ namespace RagnarokBotWeb.Domain.Services
                 return command;
             }
 
+            return null;
+        }
+
+        public BotCommand? PeekCommand(long serverId)
+        {
+            if (_cacheService.TryDequeueCommand(serverId, out var command))
+            {
+                if (command is not null) _cacheService.EnqueueCommand(serverId, command);
+                return command;
+            }
             return null;
         }
 
@@ -173,7 +187,7 @@ namespace RagnarokBotWeb.Domain.Services
                 if (diff >= 20)
                 {
                     _cacheService.ClearConnectedPlayers(serverId);
-                    _cacheService.GetConnectedBots(serverId).Remove(bot.Guid);
+                    DisconnectBot(bot.Guid);
                 }
             }
 
@@ -194,7 +208,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             try
             {
-                return _cacheService.GetConnectedBots(serverId.Value)[guid];
+                if (_cacheService.GetConnectedBots(serverId.Value).TryGetValue(guid, out var bot)) return bot;
+                return null;
             }
             catch (Exception)
             {
@@ -209,21 +224,22 @@ namespace RagnarokBotWeb.Domain.Services
             var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             ValidateSubscription(server!);
 
-            try
-            {
-                if (_cacheService.GetConnectedBots(serverId.Value).TryGetValue(guid, out var bot))
+            _cacheService.GetConnectedBots(serverId.Value).AddOrUpdate(
+                guid,
+                _ =>
                 {
-                    bot.LastInteracted = DateTime.UtcNow;
-                    bot.LastPinged = DateTime.UtcNow;
-                    _cacheService.GetConnectedBots(serverId.Value)[guid] = bot;
-                }
-                else
+                    var bot = new BotUser(guid);
+                    _logger.LogInformation("Connecting bot {Bot} server {Server}", bot, serverId!.Value);
+                    return bot;
+                },
+                (_, existing) =>
                 {
-                    _cacheService.GetConnectedBots(serverId.Value)[guid] = new BotUser(guid);
+                    existing.LastInteracted = DateTime.UtcNow;
+                    existing.LastPinged = DateTime.UtcNow;
+                    _logger.LogInformation("Updating connected bot {Bot} server {Server}", existing, serverId!.Value);
+                    return existing;
                 }
-
-            }
-            catch (Exception) { }
+            );
         }
     }
 }

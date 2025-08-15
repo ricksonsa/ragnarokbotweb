@@ -1,7 +1,6 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Exceptions;
-using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -12,10 +11,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs;
 public class EconomyJob(
     ILogger<EconomyJob> logger,
     IScumServerRepository scumServerRepository,
-    IReaderPointerRepository readerPointerRepository,
     IPlayerService playerService,
     IFtpService ftpService,
-    DiscordChannelPublisher publisher
+    IUnitOfWork uow
 ) : AbstractJob(scumServerRepository), IJob
 {
     public async Task Execute(IJobExecutionContext context)
@@ -27,9 +25,9 @@ public class EconomyJob(
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, uow);
 
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, readerPointerRepository, ftpService, context.CancellationToken))
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService, context.CancellationToken))
             {
                 if (line.Contains("changed their name"))
                 {
@@ -42,7 +40,8 @@ public class EconomyJob(
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError(ex.Message);
+            logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
+            throw;
         }
     }
 }

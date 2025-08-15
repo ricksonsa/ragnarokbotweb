@@ -36,6 +36,8 @@ namespace RagnarokBotWeb.Application.Handlers.ChangeFileHandler
                     await _ftpService.RemoveLine(client, remotePath, command.Value);
                     break;
             }
+
+            await _ftpService.ReleaseClientAsync(client);
         }
     }
 }

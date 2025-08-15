@@ -23,7 +23,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 var command = new BotCommand();
                 command.ListPlayers();
-                cacheService.GetCommandQueue(serverId).Enqueue(command);
+                cacheService.EnqueueCommand(serverId, command);
 
             }
             catch (ServerUncompliantException) { }

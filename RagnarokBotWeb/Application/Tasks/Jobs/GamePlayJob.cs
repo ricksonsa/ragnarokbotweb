@@ -17,7 +17,6 @@ public class GamePlayJob(
     IScumServerRepository scumServerRepository,
     IBunkerService bunkerService,
     IUnitOfWork unitOfWork,
-    IReaderPointerRepository readerPointerRepository,
     IFtpService ftpService,
     IFileService fileService,
     IDiscordService discordService,
@@ -31,8 +30,8 @@ public class GamePlayJob(
         try
         {
             var server = await GetServerAsync(context);
-            var processor = new ScumFileProcessor(server);
-            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), readerPointerRepository, ftpService, context.CancellationToken))
+            var processor = new ScumFileProcessor(server, unitOfWork);
+            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), ftpService, context.CancellationToken))
             {
                 if (IsCompliant()) await HandleArmedTrap(unitOfWork, cache, server, line, logger);
                 await HandleLockpick(unitOfWork, discordService, fileService, server, line);
@@ -129,13 +128,13 @@ public class GamePlayJob(
                     var flag = cache.GetFlags(server.Id).FirstOrDefault(flag => squadLeader != null && flag.SteamId == squadLeader.SteamId);
                     if (flag is null) enforcePenality = true;
 
-                    if (enforcePenality || new ScumCoordinate(flag!.X, flag.Y, flag.Z).DistanceTo(trapCoordinate) > 50)
+                    if (enforcePenality || Math.Round(new ScumCoordinate(flag!.X, flag.Y, flag.Z).DistanceTo(trapCoordinate)) > 7020)
                     {
                         var msg = $"{trapLog.User} armed a mine outside flag area!";
                         var command = new BotCommand()
                             .Teleport(trapLog.SteamId, trapCoordinate.ToString(), checkTargetOnline: true);
 
-                        cache.GetCommandQueue(server.Id).Enqueue(command);
+                        cache.EnqueueCommand(server.Id, command);
 
                         if (server.CoinReductionPerInvalidMineKill > 0)
                         {

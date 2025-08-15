@@ -2,6 +2,7 @@ using FluentFTP;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.Infrastructure.Repositories;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Serilog;
 using System.Collections.Concurrent;
@@ -15,24 +16,37 @@ public class ScumFileProcessor
     private static readonly Func<string, string> AppDataPathFunc =
         server => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", server);
 
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ScumFileProcessor> _logger;
     private readonly ScumServer _scumServer;
     private readonly Ftp _ftp;
-    private static readonly ConcurrentDictionary<(EFileType, long), SemaphoreSlim> _semaphores = [];
-    private static readonly SemaphoreSlim _ftpLock = new(1, 1);
+    private static readonly ConcurrentDictionary<(string, long), (SemaphoreSlim, DateTime)> _semaphores = [];
 
-    public ScumFileProcessor(ScumServer server)
+    public ScumFileProcessor(ScumServer server, IUnitOfWork unitOfWork)
     {
         var loggerFactory = new LoggerFactory();
         loggerFactory.AddSerilog();
         _logger = loggerFactory.CreateLogger<ScumFileProcessor>();
         _scumServer = server;
         _ftp = server.Ftp!;
+        _unitOfWork = unitOfWork;
+        ClearOldSemaphores();
     }
 
     private static bool IsIrrelevantLine(string line)
     {
-        return string.IsNullOrWhiteSpace(line) || line.Contains("Game version");
+        return string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line) || line.Contains("Game version");
+    }
+
+    private static bool IsExpired(DateTime createdAt) => DateTime.UtcNow - createdAt > TimeSpan.FromMinutes(10);
+
+    private static void ClearOldSemaphores()
+    {
+        foreach (var item in _semaphores)
+        {
+            var (_, date) = item.Value;
+            if (IsExpired(date)) _semaphores.TryRemove(item);
+        }
     }
 
     private async Task<List<FtpListItem>> GetLogFiles(AsyncFtpClient client, string? rootFolder, EFileType fileType)
@@ -86,7 +100,7 @@ public class ScumFileProcessor
             FileSize = item.Size,
             LastUpdated = item.Modified,
             ScumServer = _scumServer,
-            FileDate = DateTime.Now
+            FileDate = item.Created
         };
     }
 
@@ -100,12 +114,12 @@ public class ScumFileProcessor
     private async IAsyncEnumerable<string> ReadLinesFromFileAsync(
     string filePath,
     ReaderPointer currentPointer,
-    IReaderPointerRepository readerPointerRepository,
     [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         int lineNumber = 0;
         int linesSinceLastPointerUpdate = 0;
         const int PointerUpdateInterval = 100;
+        var readerPointerRepository = new ReaderPointerRepository(_unitOfWork.CreateDbContext());
 
         using var reader = new StreamReader(filePath, Encoding.UTF8);
 
@@ -187,23 +201,19 @@ public class ScumFileProcessor
 
     public async IAsyncEnumerable<string> UnreadFileLinesAsync(
         EFileType fileType,
-        IReaderPointerRepository readerPointerRepository,
         IFtpService ftpService,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (_ftp is null)
             yield break;
 
+        var readerPointerRepository = new ReaderPointerRepository(_unitOfWork.CreateDbContext());
         AsyncFtpClient client = null!;
-        var semaphore = _semaphores.GetOrAdd((fileType, _scumServer.Id), new SemaphoreSlim(1, 1));
-        await semaphore.WaitAsync(cancellationToken);
 
         try
         {
-            // Get pooled client safely
             client = await ftpService.GetClientAsync(_ftp, cancellationToken);
 
-            // Fetch files from FTP
             List<FtpListItem> ftpFiles = await GetLogFiles(client, _ftp.RootFolder, fileType);
 
             var filteredFiles = new List<(FtpListItem File, ReaderPointer? Pointer)>();
@@ -222,53 +232,91 @@ public class ScumFileProcessor
 
             string localPath = Path.Combine(GetLocalPath(), "logs");
             Directory.CreateDirectory(localPath);
-
             await ftpService.CopyFilesAsync(client, localPath, filteredFiles.Select(f => f.File.FullName).ToList(), cancellationToken);
 
-            foreach (var (file, pointer) in filteredFiles)
+            var channel = System.Threading.Channels.Channel.CreateUnbounded<string>();
+            var writer = channel.Writer;
+
+            var processingTask = Task.Run(async () =>
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                ReaderPointer currentPointer = pointer is not null
-                    ? UpdateReaderPointer(pointer, file)
-                    : BuildReaderPointer(file);
-
-                string filePath = Path.Combine(localPath, file.Name);
-
-                await foreach (var line in ReadLinesFromFileAsync(filePath, currentPointer, readerPointerRepository, cancellationToken))
+                try
                 {
-                    string cleaned = new string(line.Where(c => !char.IsControl(c) || c == '\r' || c == '\n').ToArray());
-                    yield return cleaned;
+                    var tasks = filteredFiles.Select(async (filePointer) =>
+                    {
+                        var (file, pointer) = filePointer;
+                        var (semaphore, date) = _semaphores.GetOrAdd((file.FullName, _scumServer.Id), (new SemaphoreSlim(1, 1), DateTime.Now));
+
+                        await semaphore.WaitAsync(cancellationToken);
+                        try
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+
+                            ReaderPointer currentPointer = pointer is not null
+                                ? UpdateReaderPointer(pointer, file)
+                                : BuildReaderPointer(file);
+
+                            string filePath = Path.Combine(localPath, file.Name);
+
+                            await foreach (var line in ReadLinesFromFileAsync(filePath, currentPointer, cancellationToken))
+                            {
+                                string cleaned = new string(line.Where(c => !char.IsControl(c) || c == '\r' || c == '\n').ToArray());
+                                if (!(string.IsNullOrWhiteSpace(cleaned) || string.IsNullOrEmpty(cleaned) || cleaned.Contains("Game version")))
+                                {
+                                    await writer.WriteAsync(cleaned, cancellationToken);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error processing file {FileName}", file.Name);
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
+
+                    await Task.WhenAll(tasks);
                 }
+                finally
+                {
+                    writer.Complete();
+                }
+            }, cancellationToken);
+
+            await foreach (var line in channel.Reader.ReadAllAsync(cancellationToken))
+            {
+                yield return line;
             }
+
+            await processingTask;
         }
         finally
         {
-            semaphore.Release();
             if (client != null)
                 await ftpService.ReleaseClientAsync(client);
         }
     }
 
     public async IAsyncEnumerable<string> FileLinesAsync(
-        EFileType fileType,
-        IFtpService ftpService,
-        DateTime from,
-        DateTime to,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+     EFileType fileType,
+     IFtpService ftpService,
+     DateTime from,
+     DateTime to,
+     [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (_ftp is null)
             yield break;
 
         AsyncFtpClient client = null!;
-        var semaphore = _semaphores.GetOrAdd((fileType, _scumServer.Id), new SemaphoreSlim(1, 1));
-        await semaphore.WaitAsync(cancellationToken);
 
         try
         {
             client = await ftpService.GetClientAsync(_ftp, cancellationToken);
-
             List<FtpListItem> ftpFiles = await GetLogFiles(client, _ftp.RootFolder, from, to, fileType);
+
+            if (ftpFiles.Count == 0)
+                yield break;
 
             string localPath = Path.Combine(GetLocalPath(), "logs");
             Directory.CreateDirectory(localPath);
@@ -285,26 +333,61 @@ public class ScumFileProcessor
             if (filesToDownload.Count > 0)
                 await ftpService.CopyFilesAsync(client, localPath, filesToDownload.Select(f => f.FullName).ToList(), cancellationToken);
 
-            foreach (var file in ftpFiles)
+            var channel = System.Threading.Channels.Channel.CreateUnbounded<string>();
+            var writer = channel.Writer;
+
+            var processingTask = Task.Run(async () =>
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var localFilePath = Path.Combine(localPath, file.Name);
-                FileInfo localFile = new FileInfo(localFilePath);
-
-                if (!localFile.Exists)
-                    continue;
-
-                await foreach (var line in ReadLinesFromLocalFileAsync(localFile.FullName, cancellationToken))
+                try
                 {
-                    string cleaned = new string(line.Where(c => !char.IsControl(c) || c == '\r' || c == '\n').ToArray());
-                    yield return cleaned;
+                    var tasks = ftpFiles.Select(async (file) =>
+                    {
+                        var (semaphore, date) = _semaphores.GetOrAdd((file.FullName, _scumServer.Id), (new SemaphoreSlim(1, 1), DateTime.Now));
+
+                        await semaphore.WaitAsync(cancellationToken);
+                        try
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+
+                            var localFilePath = Path.Combine(localPath, file.Name);
+                            FileInfo localFile = new(localFilePath);
+
+                            if (!localFile.Exists)
+                                return;
+
+                            await foreach (var line in ReadLinesFromLocalFileAsync(localFile.FullName, cancellationToken))
+                            {
+                                string cleaned = new string(line.Where(c => !char.IsControl(c) || c == '\r' || c == '\n').ToArray());
+                                await writer.WriteAsync(cleaned, cancellationToken);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error processing file {FileName}", file.Name);
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
+
+                    await Task.WhenAll(tasks);
                 }
+                finally
+                {
+                    writer.Complete();
+                }
+            }, cancellationToken);
+
+            await foreach (var line in channel.Reader.ReadAllAsync(cancellationToken))
+            {
+                yield return line;
             }
+
+            await processingTask;
         }
         finally
         {
-            semaphore.Release();
             if (client != null)
                 await ftpService.ReleaseClientAsync(client);
         }

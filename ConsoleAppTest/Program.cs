@@ -109,7 +109,10 @@ Location: X=431209.000 Y=-834088.000 Z=2188.610
 
                 var players = Parse(list).DistinctBy(x => x.SteamID);
                 var json = JsonConvert.SerializeObject(players, Formatting.Indented);
-                Console.WriteLine();
+                var d1 = new ScumCoordinate(120690.578, -808264.750, 13222.057);
+                var d2 = new ScumCoordinate(125631.469, -813236.875, 13115.753);
+                var distance = d1.DistanceTo(d2).ToString();
+                Console.WriteLine(distance);
 
                 // Lista de pontos usando diferentes métodos
                 //var points = new List<ScumCoordinate>

@@ -21,5 +21,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task UpdateFlags(UpdateFromStringRequest input);
         Task UpdateSquads(UpdateFromStringRequest input);
         List<BotUser> GetBots();
+        BotCommand? PeekCommand(long serverId);
     }
 }

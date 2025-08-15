@@ -135,7 +135,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 var command = new BotCommand();
                 command.ListPlayers();
-                _cacheService.GetCommandQueue(server.Id).Enqueue(command);
+                _cacheService.EnqueueCommand(server.Id, command);
             }
         }
 
@@ -264,7 +264,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (dto.Whitelist)
             {
-                _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+                _cacheService.EnqueueFileChangeCommand(player.ScumServerId, new Application.Models.FileChangeCommand
                 {
                     Method = "vip",
                     FileChangeType = Enums.EFileChangeType.Whitelist,
@@ -294,7 +294,7 @@ namespace RagnarokBotWeb.Domain.Services
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
 
-            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            _cacheService.EnqueueFileChangeCommand(player.ScumServerId, new Application.Models.FileChangeCommand
             {
                 FileChangeType = Enums.EFileChangeType.SilencedUsers,
                 FileChangeMethod = Enums.EFileChangeMethod.AddLine,
@@ -321,7 +321,7 @@ namespace RagnarokBotWeb.Domain.Services
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
 
-            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            _cacheService.EnqueueFileChangeCommand(player.ScumServerId, new Application.Models.FileChangeCommand
             {
                 FileChangeType = Enums.EFileChangeType.BannedUsers,
                 FileChangeMethod = Enums.EFileChangeMethod.AddLine,
@@ -364,7 +364,7 @@ namespace RagnarokBotWeb.Domain.Services
                 { }
             }
 
-            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            _cacheService.EnqueueFileChangeCommand(player.ScumServerId, new Application.Models.FileChangeCommand
             {
                 FileChangeType = Enums.EFileChangeType.Whitelist,
                 FileChangeMethod = Enums.EFileChangeMethod.RemoveLine,
@@ -394,7 +394,7 @@ namespace RagnarokBotWeb.Domain.Services
             _unitOfWork.Silences.Update(silence);
             await _unitOfWork.SaveAsync();
 
-            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            _cacheService.EnqueueFileChangeCommand(player.ScumServerId, new Application.Models.FileChangeCommand
             {
                 FileChangeType = Enums.EFileChangeType.SilencedUsers,
                 FileChangeMethod = Enums.EFileChangeMethod.RemoveLine,
@@ -425,7 +425,7 @@ namespace RagnarokBotWeb.Domain.Services
             _unitOfWork.Bans.Update(ban);
             await _unitOfWork.SaveAsync();
 
-            _cacheService.GetFileChangeQueue(player.ScumServerId).Enqueue(new Application.Models.FileChangeCommand
+            _cacheService.EnqueueFileChangeCommand(player.ScumServerId, new Application.Models.FileChangeCommand
             {
                 FileChangeType = Enums.EFileChangeType.BannedUsers,
                 FileChangeMethod = Enums.EFileChangeMethod.RemoveLine,
@@ -528,7 +528,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (!IsBotConnected())
                 throw new DomainException("There is no bots online at the moment");
 
-            _cacheService.GetCommandQueue(player.ScumServerId).Enqueue(new BotCommand().ChangeFame(player.SteamId64!, dto.Amount));
+            _cacheService.EnqueueCommand(player.ScumServerId, new BotCommand().ChangeFame(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 
@@ -548,7 +548,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (!IsBotConnected())
                 throw new DomainException("There is no bots online at the moment");
 
-            _cacheService.GetCommandQueue(player.ScumServerId).Enqueue(new BotCommand().ChangeGold(player.SteamId64!, dto.Amount));
+            _cacheService.EnqueueCommand(player.ScumServerId, new BotCommand().ChangeGold(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 
@@ -568,7 +568,7 @@ namespace RagnarokBotWeb.Domain.Services
             if (!IsBotConnected())
                 throw new DomainException("There is no bots online at the moment");
 
-            _cacheService.GetCommandQueue(player.ScumServerId).Enqueue(new BotCommand().ChangeMoney(player.SteamId64!, dto.Amount));
+            _cacheService.EnqueueCommand(player.ScumServerId, new BotCommand().ChangeMoney(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 

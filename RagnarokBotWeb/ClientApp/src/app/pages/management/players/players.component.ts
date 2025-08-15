@@ -9,7 +9,7 @@ import { PlayerDto } from '../../../models/player.dto';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { RouterModule } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { debounceTime, distinctUntilChanged, Observable, of, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, Observable, of, startWith, switchMap, tap } from 'rxjs';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -46,78 +46,46 @@ export class PlayersComponent implements OnInit {
 
   constructor(private readonly playerService: PlayerService) { }
 
+  pageIndex$ = new BehaviorSubject<number>(1);
+  pageSize$ = new BehaviorSubject<number>(10);
+
   ngOnInit() {
-    this.loadPlayers();
-    this.setUpFilter();
+    this.suggestions$ = combineLatest([
+      this.searchControl.valueChanges.pipe(startWith(''), debounceTime(300), distinctUntilChanged()),
+      this.pageIndex$,
+      this.pageSize$
+    ]).pipe(
+      tap(() => {
+        this.isLoading = true;
+      }),
+      switchMap(([query, pageIndex, pageSize]) =>
+        this.playerService.getPlayers(pageSize, pageIndex, query)
+      ),
+      tap(page => {
+        if (this.pageIndex > page.totalPages) {
+          this.pageIndex = 1;
+          this.pageIndex$.next(1);
+        }
+        this.dataSource = page.content;
+        this.total = page.totalElements;
+        this.pageIndex = page.number;
+        this.pageSize = page.size;
+        this.isLoading = false;
+      }),
+      switchMap(page => of(page.content))
+    );
   }
 
-  loadPage() {
-    const query = this.searchControl.value; // Get value from the input field
-
-    this.isLoading = true;
-    this.suggestions$ = this.playerService.getPlayers(this.pageSize, this.pageIndex, query)
-      .pipe(
-        tap(() => (this.isLoading = false)),
-        switchMap((page) => {
-          this.dataSource = page.content;
-          this.total = page.totalElements;
-          this.pageIndex = page.number;
-          this.pageSize = page.size;
-          return of(page.content);
-        })
-      );
+  pageIndexChange(index: number) {
+    this.pageIndex$.next(index);
   }
 
-  setUpFilter() {
-    this.suggestions$ = this.searchControl.valueChanges
-      .pipe(
-        startWith(''), // Triggers API call on page load with an empty value
-        debounceTime(300), // Wait 300ms after the last input
-        distinctUntilChanged(), // Ignore same consecutive values
-        tap(() => (this.isLoading = true)), // Show loading indicator
-        switchMap(value => this.playerService.getPlayers(this.pageSize, this.pageIndex, value)
-        ),
-        tap((page) => {
-          if (page) {
-            this.dataSource = page.content;
-            this.total = page.totalElements;
-            this.pageIndex = page.number;
-            this.pageSize = page.size;
-          }
-          this.isLoading = false;
-        }),
-        switchMap((page) => {
-          return of(page.content);
-        })
-      ); // Hide loading indicator
+  pageSizeChange(size: number) {
+    this.pageSize$.next(size);
   }
 
   getDate(date: Date) {
     const remaining = getDaysBetweenDates(new Date(date));
     return `${remaining} days to expire`;
-  }
-
-  loadPlayers() {
-    this.playerService.getPlayers(this.pageSize, this.pageIndex)
-      .subscribe({
-        next: (page) => {
-          this.dataSource = page.content;
-          this.total = page.totalElements;
-          this.pageIndex = page.number;
-          this.pageSize = page.size;
-        }
-      });
-  }
-
-  pageIndexChange(index: number) {
-    this.pageIndex = index;
-    this.loadPage();
-    this.setUpFilter();
-  }
-
-  pageSizeChange(size: number) {
-    this.pageSize = size;
-    this.loadPage();
-    this.setUpFilter();
   }
 }

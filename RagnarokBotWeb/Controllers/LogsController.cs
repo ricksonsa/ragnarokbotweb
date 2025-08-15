@@ -5,6 +5,7 @@ using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
+using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using System.Globalization;
 
 namespace RagnarokBotWeb.Controllers
@@ -17,53 +18,19 @@ namespace RagnarokBotWeb.Controllers
         private readonly ILogger<LogsController> _logger;
         private readonly IServerService _serverService;
         private readonly IFtpService _ftpService;
+        private readonly IUnitOfWork _unitOfWork;
 
         public LogsController(
             ILogger<LogsController> logger,
             IServerService serverService,
-            IFtpService ftpService)
+            IFtpService ftpService,
+            IUnitOfWork unitOfWork)
         {
             _logger = logger;
             _serverService = serverService;
             _ftpService = ftpService;
+            _unitOfWork = unitOfWork;
         }
-
-        //[HttpGet("kills-async")]
-        //public async Task GetKillsAsync(DateTime from, DateTime to, string? filter)
-        //{
-        //    Response.ContentType = "application/json";
-        //    _logger.Log(LogLevel.Debug, "REST Request to fetch all logs for kills");
-        //    var server = await _serverService.GetServer();
-        //    var processor = new ScumFileProcessor(server);
-
-        //    var lastLine = string.Empty;
-        //    await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Kill, _ftpService, from, to))
-        //    {
-        //        if (!line.Contains('{'))
-        //        {
-        //            lastLine = line;
-        //            continue;
-        //        }
-
-        //        PreParseKill? kill = KillLogParser.KillParse(lastLine, line);
-        //        if (kill is null) continue;
-
-        //        if (!string.IsNullOrEmpty(filter))
-        //        {
-        //            if (!kill.Weapon.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
-        //                || !kill.Victim.ProfileName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
-        //                || !kill.Victim.UserId.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
-        //                || !kill.Killer.ProfileName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
-        //                || !kill.Killer.UserId.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
-        //                || !kill.TimeOfDay.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
-        //                ) continue;
-        //        }
-
-        //        var buffer = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(kill));
-        //        await Response.Body.WriteAsync(buffer);
-        //        await Response.Body.FlushAsync();
-        //    }
-        //}
 
         private GenericLogValue ParseGenericLog(string line)
         {
@@ -78,7 +45,7 @@ namespace RagnarokBotWeb.Controllers
         {
             _logger.Log(LogLevel.Debug, "REST Request to fetch logs for kills");
             var server = await _serverService.GetServer();
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, _unitOfWork);
 
             var lastLine = string.Empty;
             List<PreParseKill> preKills = [];
@@ -103,7 +70,7 @@ namespace RagnarokBotWeb.Controllers
         {
             _logger.Log(LogLevel.Debug, "REST Request to fetch logs for lockpicks");
             var server = await _serverService.GetServer();
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, _unitOfWork);
 
             List<LockpickLog> lockpicks = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Gameplay, _ftpService, from, to))
@@ -127,7 +94,7 @@ namespace RagnarokBotWeb.Controllers
         {
             _logger.Log(LogLevel.Debug, "REST Request to fetch logs for economy");
             var server = await _serverService.GetServer();
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, _unitOfWork);
 
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Economy, _ftpService, from, to))
@@ -143,7 +110,7 @@ namespace RagnarokBotWeb.Controllers
         {
             _logger.Log(LogLevel.Debug, "REST Request to fetch logs for vehicles");
             var server = await _serverService.GetServer();
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, _unitOfWork);
 
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Vehicle_Destruction, _ftpService, from, to))
@@ -159,7 +126,7 @@ namespace RagnarokBotWeb.Controllers
         {
             _logger.Log(LogLevel.Debug, "REST Request to fetch logs for login");
             var server = await _serverService.GetServer();
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, _unitOfWork);
 
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Login, _ftpService, from, to))
@@ -175,7 +142,7 @@ namespace RagnarokBotWeb.Controllers
         {
             _logger.Log(LogLevel.Debug, "REST Request to fetch logs for buried chests");
             var server = await _serverService.GetServer();
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, _unitOfWork);
 
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Gameplay, _ftpService, from, to))
@@ -194,7 +161,7 @@ namespace RagnarokBotWeb.Controllers
         {
             _logger.Log(LogLevel.Debug, "REST Request to fetch logs for violations");
             var server = await _serverService.GetServer();
-            var processor = new ScumFileProcessor(server);
+            var processor = new ScumFileProcessor(server, _unitOfWork);
 
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Violations, _ftpService, from, to))

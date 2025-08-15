@@ -32,7 +32,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPage([FromQuery] Paginator paginator, string? filter)
         {
-            _logger.LogInformation("Get request to fetch a page of orders");
+            _logger.LogDebug("Get request to fetch a page of orders");
             var page = await _orderService.GetPacksPageByFilterAsync(paginator, filter);
             return Ok(page);
         }
@@ -40,7 +40,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpGet("best-sellers")]
         public async Task<IActionResult> GetBestSellingOrders()
         {
-            _logger.LogInformation("Get request to fetch a best sellers");
+            _logger.LogDebug("Get request to fetch a best sellers");
             var page = await _orderService.GetBestSellingOrdersPacks();
             return Ok(page);
         }
@@ -48,7 +48,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpPatch("players/{playerId}/welcomepack")]
         public async Task<IActionResult> DeliverWelcomePack(long playerId)
         {
-            _logger.LogInformation("Patch request to deliver welcomepack");
+            _logger.LogDebug("Patch request to deliver welcomepack");
             var order = await _orderService.PlaceWelcomePackOrder(playerId);
             return Ok(order);
         }

@@ -17,18 +17,21 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ILogger<TaskService> _logger;
         private readonly ISchedulerFactory _schedulerFactory;
         private readonly IScumServerRepository _scumServerRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
 
         public TaskService(
             ISchedulerFactory schedulerFactory,
             IScumServerRepository scumServerRepository,
             ICacheService cacheService,
-            ILogger<TaskService> logger)
+            ILogger<TaskService> logger,
+            IUnitOfWork unitOfWork)
         {
             _schedulerFactory = schedulerFactory;
             _scumServerRepository = scumServerRepository;
             _cacheService = cacheService;
             _logger = logger;
+            _unitOfWork = unitOfWork;
         }
 
         private static ITrigger CronTrigger(string cron, bool startNow = false)
@@ -83,6 +86,12 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, OneMinTrigger());
+
+            job = JobBuilder.Create<OrderResetJob>()
+                .WithIdentity(nameof(OrderResetJob), $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, FiveMinTrigger());
 
             job = JobBuilder.Create<ListPlayersJob>()
                 .WithIdentity(nameof(ListPlayersJob), $"ServerJobs({server.Id})")
@@ -277,7 +286,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             foreach (var server in await _scumServerRepository.FindActive())
             {
-                var processor = new ScumFileProcessor(server);
+                var processor = new ScumFileProcessor(server, _unitOfWork);
 
                 try
                 {
@@ -300,7 +309,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             foreach (var server in await _scumServerRepository.FindActive())
             {
-                var processor = new ScumFileProcessor(server);
+                var processor = new ScumFileProcessor(server, _unitOfWork);
 
                 try
                 {
@@ -323,7 +332,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             foreach (var server in await _scumServerRepository.FindActive())
             {
-                var processor = new ScumFileProcessor(server);
+                var processor = new ScumFileProcessor(server, _unitOfWork);
 
                 try
                 {

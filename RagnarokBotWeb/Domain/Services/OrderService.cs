@@ -245,8 +245,10 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task ResetCommandOrders(long serverId)
         {
             var orders = await _orderRepository.FindManyCommandByServer(serverId);
+            var commands = _cacheService.GetCommandQueue(serverId);
             foreach (var order in orders)
             {
+                if (commands.Any(command => command.Data.Contains(order.Id.ToString()))) continue;
                 order.Status = EOrderStatus.Created;
                 await _orderRepository.CreateOrUpdateAsync(order);
                 await _orderRepository.SaveAsync();

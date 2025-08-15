@@ -372,7 +372,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (!string.IsNullOrEmpty(warzone.StartMessage))
             {
-                _cacheService.GetCommandQueue(server.Id).Enqueue(new BotCommand().Announce(warzone.StartMessage));
+                _cacheService.EnqueueCommand(server.Id, new BotCommand().Announce(warzone.StartMessage));
             }
 
             if (warzone.DiscordChannelId != null)

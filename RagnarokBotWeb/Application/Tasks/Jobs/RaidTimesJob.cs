@@ -12,6 +12,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         ILogger<RaidTimesJob> logger,
         IScumServerRepository scumServerRepository,
         IFtpService ftpService,
+        IUnitOfWork uow,
         ICacheService cache
         ) : AbstractJob(scumServerRepository), IJob
     {
@@ -23,7 +24,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 var server = await GetServerAsync(context);
                 if (server.Ftp is null) return;
 
-                var processor = new ScumFileProcessor(server);
+                var processor = new ScumFileProcessor(server, uow);
                 var data = await processor.DownloadRaidTimes(ftpService);
                 var raidTime = JsonConvert.DeserializeObject<RaidTimes>(data);
                 if (raidTime == null) return;
@@ -31,9 +32,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
                 throw;
             }
 

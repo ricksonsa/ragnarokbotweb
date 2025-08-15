@@ -23,20 +23,22 @@ public class FileChangeJob(
         try
         {
             var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
-            if (cacheService.GetFileChangeQueue(server.Id).TryDequeue(out var command))
+            if (cacheService.TryDequeueFileChangeCommand(server.Id, out var command))
             {
                 try
                 {
+                    if (command is null) throw new ArgumentNullException("command");
                     var handler = new ChangeFileHandlerFactory(ftpService, unitOfWork).CreateAddRemoveLineHandler(command.FileChangeType);
                     await handler.Handle(command);
-                    if (command.BotCommand is not null) cacheService.GetCommandQueue(command.ServerId).Enqueue(command.BotCommand);
+                    if (command.BotCommand is not null) cacheService.EnqueueCommand(command.ServerId, command.BotCommand);
                 }
+                catch (ArgumentNullException) { }
                 catch (Exception ex)
                 {
-                    if (command.Retries <= 5)
+                    if (command!.Retries <= 5)
                     {
                         command.Retries += 1;
-                        cacheService.GetFileChangeQueue(command.ServerId).Enqueue(command);
+                        cacheService.EnqueueFileChangeCommand(command.ServerId, command);
                     }
                     logger.LogError(ex.Message);
                 }
@@ -44,9 +46,9 @@ public class FileChangeJob(
         }
         catch (ServerUncompliantException) { }
         catch (FtpNotSetException) { }
-        catch (Exception)
+        catch (Exception ex)
         {
-
+            logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
             throw;
         }
 
