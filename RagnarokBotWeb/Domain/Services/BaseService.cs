@@ -20,7 +20,7 @@ namespace RagnarokBotWeb.Domain.Services
             try { return long.Parse(tenantIdString!); }
             catch (Exception)
             {
-                if (throwWhenNull) throw new UnauthorizedException("Invalid server id");
+                if (throwWhenNull) throw new UnauthorizedException($"Unauthorized {_httpContextAccessor.HttpContext?.GetEndpoint()}");
                 return null;
             }
         }
@@ -41,7 +41,7 @@ namespace RagnarokBotWeb.Domain.Services
             try { return long.Parse(serverIdString!); }
             catch (Exception)
             {
-                if (throwWhenNull) throw new UnauthorizedException("Invalid server id");
+                if (throwWhenNull) throw new UnauthorizedException($"Unauthorized {_httpContextAccessor.HttpContext?.GetEndpoint()}");
                 return null;
             }
         }
@@ -53,7 +53,7 @@ namespace RagnarokBotWeb.Domain.Services
 
         public void ValidateSubscription(ScumServer server)
         {
-            if (server is null) throw new UnauthorizedException("Invalid server");
+            if (server is null) throw new UnauthorizedException($"Unauthorized {_httpContextAccessor.HttpContext?.GetEndpoint()}");
             if (!server.IsCompliant()) throw new DomainException("Free subscription doesn't have access to this feature");
         }
 

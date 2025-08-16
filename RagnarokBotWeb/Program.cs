@@ -139,6 +139,7 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<LoadRaidTimesHostedService>();
             builder.Services.AddHostedService<LoadSquadsHostedService>();
             builder.Services.AddHostedService<LoadFlagsHostedService>();
+            builder.Services.AddHostedService<LoadCustomTasksHostedService>();
 
             builder.Services.AddHostedService<DiscordBotService>();
             builder.Services.AddHostedService<DiscordEventService>();
@@ -178,6 +179,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IBunkerRepository, BunkerRepository>();
             builder.Services.AddScoped<IWarzoneRepository, WarzoneRepository>();
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+            builder.Services.AddScoped<ICustomTaskRepository, CustomTaskRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFileService, FileService>();

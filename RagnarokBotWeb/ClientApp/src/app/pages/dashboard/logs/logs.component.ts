@@ -40,7 +40,7 @@ import { GenericLogValue } from '../../../models/generic-log-value';
   ]
 })
 export class LogsComponent implements OnInit, OnDestroy {
-  options = ['Login', 'Lockpick', 'Kills', 'Economy', 'Chests', 'Vehicles', "Violations"];
+  options = ['Login', 'Lockpick', 'Kills', 'Economy', 'Chests', 'Vehicles', 'Violations', 'Chat'];
   selectedDateFrom = new Date();
   selectedDateTo = new Date();
   selectedSegment = 'Login';
@@ -55,6 +55,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   logins: GenericLogValue[] = [];
   buriedChests: GenericLogValue[] = [];
   violations: GenericLogValue[] = [];
+  chat: GenericLogValue[] = [];
   constructor(private readonly logService: LogService) {
   }
 
@@ -94,6 +95,9 @@ export class LogsComponent implements OnInit, OnDestroy {
         this.loadBuriedChests(this.selectedDateFrom, this.selectedDateTo);
         break;
       case 'Violations':
+        this.loadViolations(this.selectedDateFrom, this.selectedDateTo);
+        break;
+      case 'Chat':
         this.loadViolations(this.selectedDateFrom, this.selectedDateTo);
         break;
     }
@@ -150,6 +154,29 @@ export class LogsComponent implements OnInit, OnDestroy {
       return this.violations;
     else
       return this.violations.filter(x => x.line.toLowerCase().includes(this.searchControl.value.toLowerCase()));
+  }
+
+  getChat() {
+    if (this.searchControl.value === '' || this.searchControl.value === ' ' || this.searchControl.value == null)
+      return this.chat;
+    else
+      return this.chat.filter(x => x.line.toLowerCase().includes(this.searchControl.value.toLowerCase()));
+  }
+
+  loadChat(from: Date, to: Date) {
+    this.loading = true;
+    this.subs?.unsubscribe();
+    this.subs = this.logService.getChat(from, to)
+      .subscribe({
+        next: (chat) => {
+          this.loading = false;
+          chat.forEach(e => e.line = e.line.substring(21));
+          this.chat = chat;
+        },
+        error: (err) => {
+          this.loading = false;
+        }
+      })
   }
 
   loadLogins(from: Date, to: Date) {

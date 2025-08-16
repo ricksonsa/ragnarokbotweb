@@ -50,6 +50,10 @@ namespace RagnarokBotClient
                         tasks.Add(() => _scumManager.SayLocal(commandValue.Value));
                         break;
 
+                    case ECommandType.SayOrCommand:
+                        tasks.Add(() => _scumManager.SayOrCommand(commandValue.Value));
+                        break;
+
                     case ECommandType.TeleportPlayer:
                         tasks.Add(() => _scumManager.Teleport(commandValue.Target!, commandValue.Coordinates!));
                         break;

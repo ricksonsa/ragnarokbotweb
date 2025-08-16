@@ -9,5 +9,13 @@
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
+
+        public static IEnumerable<string> ToLines(this string s)
+        {
+            using var reader = new StringReader(s);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+                yield return line;
+        }
     }
 }

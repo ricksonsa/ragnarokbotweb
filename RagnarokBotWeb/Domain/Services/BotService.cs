@@ -116,7 +116,7 @@ namespace RagnarokBotWeb.Domain.Services
             var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             ValidateSubscription(server!);
 
-            await ConnectBot(guid);
+            await RegisterBot(guid);
 
             if (_cacheService.TryDequeueCommand(serverId.Value, out var command))
             {
@@ -132,9 +132,11 @@ namespace RagnarokBotWeb.Domain.Services
                     }
                     catch (Exception)
                     {
+                        _logger.LogInformation("Retrieved commands {Command}", command.ToString());
                         return command;
                     }
                 }
+                _logger.LogInformation("Retrieved commands {Command}", command?.ToString());
                 return command;
             }
 
@@ -235,7 +237,6 @@ namespace RagnarokBotWeb.Domain.Services
                 (_, existing) =>
                 {
                     existing.LastInteracted = DateTime.UtcNow;
-                    existing.LastPinged = DateTime.UtcNow;
                     _logger.LogInformation("Updating connected bot {Bot} server {Server}", existing, serverId!.Value);
                     return existing;
                 }

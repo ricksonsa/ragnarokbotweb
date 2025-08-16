@@ -35,6 +35,8 @@ namespace RagnarokBotWeb.Application.Mapping
             CreateMap<Order, OrderDto>();
             CreateMap<User, AccountDto>().ReverseMap();
 
+            CreateMap<CustomTask, CustomTaskDto>().ReverseMap();
+
             CreateMap<Uav, UavDto>().ReverseMap();
 
             CreateMap<Subscription, SubscriptionDto>().ReverseMap();
@@ -56,18 +58,50 @@ namespace RagnarokBotWeb.Application.Mapping
                 .ForMember(dest => dest.PackItems, opt => opt.Ignore());
 
             CreateMap<Player, PlayerDto>()
-                .ForMember((dto) => dto.IsVip, opt => opt.MapFrom(player => player.IsVip()))
-                .ForMember((dto) => dto.IsBanned, opt => opt.MapFrom(player => player.IsBanned()))
-                .ForMember((dto) => dto.IsSilenced, opt => opt.MapFrom(player => player.IsSilenced()))
-                .ForMember((dto) => dto.VipExpiresAt,
-                    opt => opt.MapFrom(player => player.IsVip() ? player.Vips.OrderByDescending(v => v.ExpirationDate).First(x => x.Indefinitely || !x.Processed).ExpirationDate : null))
-                .ForMember((dto) => dto.BanExpiresAt,
-                    opt => opt.MapFrom(player => player.IsBanned() ? player.Bans.OrderByDescending(v => v.ExpirationDate).First(x => x.Indefinitely || !x.Processed).ExpirationDate : null))
-                .ForMember((dto) => dto.SilenceExpiresAt,
-                    opt => opt.MapFrom(player => player.IsSilenced() ? player.Silences.OrderByDescending(v => v.ExpirationDate).First(x => x.Indefinitely || !x.Processed).ExpirationDate : null));
+        .ForMember(dto => dto.IsVip,
+            opt => opt.MapFrom(player => player.IsVip()))
+        .ForMember(dto => dto.IsBanned,
+            opt => opt.MapFrom(player => player.IsBanned()))
+        .ForMember(dto => dto.IsSilenced,
+            opt => opt.MapFrom(player => player.IsSilenced()))
+        .ForMember(dto => dto.LastLoggedIn,
+            opt => opt.MapFrom(player =>
+                player.ScumServer != null
+                && !string.IsNullOrEmpty(player.ScumServer.TimeZoneId)
+                && player.LastLoggedIn.HasValue
+                    ? TimeZoneInfo.ConvertTimeFromUtc(
+                        player.LastLoggedIn.Value,
+                        TimeZoneInfo.FindSystemTimeZoneById(player.ScumServer.TimeZoneId))
+                    : (DateTime?)null))
+        .ForMember(dto => dto.VipExpiresAt,
+            opt => opt.MapFrom(player =>
+                player.IsVip()
+                    ? player.Vips
+                        .Where(v => v.Indefinitely || !v.Processed)
+                        .OrderByDescending(v => v.ExpirationDate)
+                        .Select(v => (DateTime?)v.ExpirationDate)
+                        .FirstOrDefault()
+                    : null))
+        .ForMember(dto => dto.BanExpiresAt,
+            opt => opt.MapFrom(player =>
+                player.IsBanned()
+                    ? player.Bans
+                        .Where(b => b.Indefinitely || !b.Processed)
+                        .OrderByDescending(b => b.ExpirationDate)
+                        .Select(b => (DateTime?)b.ExpirationDate)
+                        .FirstOrDefault()
+                    : null))
+        .ForMember(dto => dto.SilenceExpiresAt,
+            opt => opt.MapFrom(player =>
+                player.IsSilenced()
+                    ? player.Silences
+                        .Where(s => s.Indefinitely || !s.Processed)
+                        .OrderByDescending(s => s.ExpirationDate)
+                        .Select(s => (DateTime?)s.ExpirationDate)
+                        .FirstOrDefault()
+                    : null));
 
             CreateMap<Button, ButtonDto>();
-
             CreateMap<Guild, GuildDto>()
                 .ForMember((dto) => dto.ServerId, opt => opt.MapFrom(server => server.ScumServer.Id));
 

@@ -1,122 +1,106 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NzButtonModule } from 'ng-zorro-antd/button';
+import { Component, OnInit } from '@angular/core';
 import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzTableModule } from 'ng-zorro-antd/table';
+import { CommonModule } from '@angular/common';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzListModule } from 'ng-zorro-antd/list';
-import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { NzSelectModule } from 'ng-zorro-antd/select';
+import { Router, RouterModule } from '@angular/router';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
-import { NzTypographyModule } from 'ng-zorro-antd/typography';
-
-import cronstrue from 'cronstrue';
-import { CronEditorModule, CronOptions } from 'ngx-cron-editor';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { Observable, of, tap, switchMap, startWith, debounceTime, distinctUntilChanged, firstValueFrom, BehaviorSubject, combineLatest } from 'rxjs';
+import { NzPopoverModule } from 'ng-zorro-antd/popover';
+import { WarzoneService } from '../../../services/warzone.service';
+import { WarzoneDto } from '../../../models/warzone.dto';
+import { EventManager, EventWithContent } from '../../../services/event-manager.service';
+import { Alert } from '../../../models/alert';
+import { TaskService } from '../../../services/task.service';
+import { CustomTaskDto } from '../../../models/custom-task.dto';
 
 @Component({
-  selector: 'app-custom-tasks',
+  selector: 'app-warzones',
   templateUrl: './custom-tasks.component.html',
   styleUrls: ['./custom-tasks.component.scss'],
   imports: [
     CommonModule,
-    FormsModule,
     ReactiveFormsModule,
+    RouterModule,
+    FormsModule,
+    NzPopoverModule,
     NzCardModule,
-    NzFormModule,
-    NzInputModule,
-    NzSelectModule,
-    NzSpaceModule,
     NzIconModule,
-    NzCheckboxModule,
-    NzListModule,
-    NzTypographyModule,
+    NzInputModule,
     NzPopconfirmModule,
+    NzTableModule,
     NzButtonModule,
-    CronEditorModule
+    NzSpaceModule,
+    NzDividerModule
   ]
 })
 export class CustomTasksComponent implements OnInit {
-  taskForm!: FormGroup;
-  private fb = inject(NonNullableFormBuilder);
-  cronEditor = false;
-  cron = new FormControl();
-  times: string[] = [];
-  conditions: string[] = [];
 
-  public cronOptions: CronOptions = {
-    defaultTime: "00:00:00",
-    hideMinutesTab: false,
-    hideHourlyTab: false,
-    hideDailyTab: false,
-    hideWeeklyTab: false,
-    hideMonthlyTab: false,
-    hideYearlyTab: false,
-    hideAdvancedTab: false,
-    hideSpecificWeekDayTab: false,
-    hideSpecificMonthWeekTab: false,
-    use24HourTime: true,
-    hideSeconds: false,
-    cronFlavor: "standard" //standard or quartz
-  };
+  dataSource: CustomTaskDto[] = [];
+  total = 0;
+  pageIndex = 1;
+  pageSize = 10;
+  searchControl = new FormControl();
+  suggestions$: Observable<CustomTaskDto[]> = of([]);
+  isLoading = true;
 
-  constructor() {
-    this.taskForm = this.fb.group({
-      id: [null],
-      name: [null, [Validators.required]],
-      scheduledTaskType: ["0", [Validators.required]],
-      isActive: [true, [Validators.required]],
-      blockedRaidTimes: [false, [Validators.required]],
-      minPlayerOnline: [null]
-    });
+  constructor(
+    private readonly taskService: TaskService,
+    private readonly eventManager: EventManager,
+    private readonly router: Router) { }
 
-  }
+  pageIndex$ = new BehaviorSubject<number>(1);
+  pageSize$ = new BehaviorSubject<number>(10);
 
   ngOnInit() {
+    this.suggestions$ = combineLatest([
+      this.searchControl.valueChanges.pipe(startWith(''), debounceTime(300), distinctUntilChanged()),
+      this.pageIndex$,
+      this.pageSize$
+    ]).pipe(
+      tap(() => {
+        this.isLoading = true;
+      }),
+      switchMap(([query, pageIndex, pageSize]) =>
+        this.taskService.getPage(pageSize, pageIndex, query)
+      ),
+      tap(page => {
+        if (this.pageIndex > page.totalPages) {
+          this.pageIndex = 1;
+          this.pageIndex$.next(1);
+        }
+        this.dataSource = page.content;
+        this.total = page.totalElements;
+        this.pageIndex = page.number;
+        this.pageSize = page.size;
+        this.isLoading = false;
+      }),
+      switchMap(page => of(page.content))
+    );
   }
 
-  addCondition(type: string, condition: string, value: string) {
-    if (value?.length === 0
-      || type?.length === 0
-      || condition?.length === 0) return;
-
-    if (this.conditions.some(c => c.startsWith(type))) {
-      this.removeCondition(this.conditions.findIndex(c => c.startsWith(type)));
-    }
-
-    this.conditions.push(type + condition + value);
+  pageIndexChange(index: number) {
+    this.pageIndex$.next(index);
   }
 
-  removeCondition(index: number) {
-    this.conditions.splice(index, 1);
+  pageSizeChange(size: number) {
+    this.pageSize$.next(size);
   }
 
-  addTime() {
-    var value = this.cron.value!.toString();
-    if (!this.times.find(time => time === value)) this.times.push(value);
+  confirmDelete(id: number) {
+    firstValueFrom(this.taskService.delete(id))
+      .then(() => {
+        this.pageSizeChange(this.pageSize);
+        this.pageIndexChange(this.pageIndex);
+        this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Custom Task number ${id} deleted.`, 'success')));
+      });
   }
 
-  removeTime(index: number) {
-    this.times.splice(index, 1);
-  }
+  cancelDelete() { }
 
-  getTimes() {
-    return this.times.map(time => {
-      return cronstrue.toString(time);
-    });
-  }
-
-  GetCommandValuesTitle() {
-    switch (this.taskForm.value.scheduledTaskType) {
-      case '0': return 'Commands';
-      case '1': return 'Server Settings';
-      default: return undefined;
-    }
-  }
-
-  save() {
-
-  }
 }

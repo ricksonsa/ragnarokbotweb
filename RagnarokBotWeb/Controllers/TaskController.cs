@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Controllers
@@ -19,6 +21,45 @@ namespace RagnarokBotWeb.Controllers
             _taskService = taskService;
         }
 
+        [HttpPost("custom-tasks")]
+        public async Task<IActionResult> CreateCustomTask(CustomTaskDto customTask)
+        {
+            return Ok(await _taskService.CreateTask(customTask));
+        }
+
+        [HttpPut("custom-tasks/{id}")]
+        public async Task<IActionResult> UpdateCustomTask(long id, CustomTaskDto customTask)
+        {
+            return Ok(await _taskService.UpdateTask(id, customTask));
+        }
+
+        [HttpGet("custom-tasks")]
+        public async Task<IActionResult> GetAllTasks([FromQuery] Paginator paginator, string? filter)
+        {
+            return Ok(await _taskService.GetTaskPageByFilterAsync(paginator, filter));
+        }
+
+        [HttpGet("custom-tasks/{id}")]
+        public async Task<IActionResult> GetCustomTask(long id)
+        {
+            return Ok(await _taskService.FetchTaskById(id));
+        }
+
+        [HttpDelete("custom-tasks/{id}")]
+        public async Task<IActionResult> DeleteCustomTask(long id)
+        {
+            return Ok(await _taskService.DeleteCustomTask(id));
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPackById(long id)
+        {
+            var task = await _taskService.FetchTaskById(id);
+            if (task is null) return NotFound("Task not found");
+            return Ok(task);
+        }
+
+        [ValidateAccessLevel(Domain.Enums.AccessLevel.Admin)]
         [HttpPatch("trigger")]
         public async Task<IActionResult> TriggerJob(string jobId, string groupId)
         {

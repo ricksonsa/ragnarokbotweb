@@ -96,6 +96,8 @@ namespace RagnarokBotWeb.Domain.Services
                 RootFolder = rootPath
             };
 
+            var oldFtp = server.Ftp;
+
             Dictionary<string, string> data = [];
             data.Add("ServerName", "");
             data.Add("MaxPlayers", "");
@@ -103,15 +105,15 @@ namespace RagnarokBotWeb.Domain.Services
             server.Name = data["ServerName"];
             server.Slots = int.Parse(data["MaxPlayers"]);
 
-            if (server.Ftp is not null)
-            {
-                _unitOfWork.Ftps.Remove(server.Ftp);
-                await _unitOfWork.SaveAsync();
-            }
             server.Ftp = newFtp;
-
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();
+
+            if (oldFtp is not null)
+            {
+                _unitOfWork.Ftps.Remove(oldFtp);
+                await _unitOfWork.SaveAsync();
+            }
 
             await _taskService.FtpConfigAddedAsync(server);
 

@@ -8,7 +8,7 @@ $border-radius: 10px;
   justify-content: center;
   gap: 10px;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 
   h4 {
     margin: 0;
@@ -35,6 +35,10 @@ $border-radius: 10px;
     min-width: 100px;
     margin-bottom: 20px;
   }
+}
+
+nz-layout {
+  background-color: #161515 !important;
 }
 
 nz-sider {

@@ -13,7 +13,6 @@ namespace RagnarokBotWeb.Application
 
         public BotCommandValue() { }
 
-
         public BotCommandValue(bool checkTargetOnline)
         {
             CheckTargetOnline = checkTargetOnline;
@@ -28,6 +27,15 @@ namespace RagnarokBotWeb.Application
 
         public BotCommand() { }
 
+        public BotCommand SayOrCommand(string value)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.SayOrCommand,
+                Value = value
+            });
+            return this;
+        }
 
         public BotCommand ListPlayers()
         {
@@ -195,6 +203,11 @@ namespace RagnarokBotWeb.Application
                 CheckTargetOnline = true
             });
             return this;
+        }
+
+        public override string ToString()
+        {
+            return string.Join(';', Values?.Select(x => x.Type.ToString()) ?? []);
         }
     }
 }

@@ -18,6 +18,7 @@
         ChangeFame,
         ChangeGold,
         ChangeMoney,
-        Silence
+        Silence,
+        SayOrCommand
     }
 }

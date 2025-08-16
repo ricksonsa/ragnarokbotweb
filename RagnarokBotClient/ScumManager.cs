@@ -165,6 +165,11 @@ namespace RagnarokBotClient
             return RunCommand($"{text}");
         }
 
+        public Task SayOrCommand(string text)
+        {
+            return RunCommand($"{text}", tab: 1);
+        }
+
         public Task Command(string text)
         {
             if (!text.StartsWith("#"))

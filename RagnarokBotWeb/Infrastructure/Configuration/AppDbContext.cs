@@ -42,6 +42,7 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Config> Config { get; set; }
+        public DbSet<CustomTask> CustomTasks { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {

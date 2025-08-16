@@ -15,9 +15,8 @@ namespace RagnarokBotClient
         private readonly WebApi _remote;
         private readonly ScumManager _scumManager;
 
-        private Process _gameProcess;
+        private Process? _gameProcess;
         private bool _setup = false;
-        private string _identifier;
 
         ConcurrentQueue<BotCommand> _commandQueue = [];
         private CancellationTokenSource _cancellationTokenSource;
@@ -27,8 +26,10 @@ namespace RagnarokBotClient
         private long _serverId = 0;
         private long _timeToLoadWorld = 30;
         private IniFile _iniFile;
-
-        private const string BASE_URL = "https://api.thescumbot.com:8082";
+        private string _gameDirPath;
+        //private const string BASE_URL = "https://api.thescumbot.com:8082";
+        private const string BASE_URL = "http://localhost:8080";
+        private static bool connected = false;
 
         public Guid Guid { get; set; }
 
@@ -36,7 +37,6 @@ namespace RagnarokBotClient
         {
             InitializeComponent();
             Logger.OnLogging += Logger_OnLogging;
-            _identifier = Environment.UserName;
             PasswordBox.UseSystemPasswordChar = true;
             _exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
             LoadCredentials();
@@ -66,23 +66,27 @@ namespace RagnarokBotClient
                 var result = await _remote.GetAsync<UpdateResult>("api/application/version");
                 if (result.Version != GetVersion())
                 {
-                    var dialogResult = MessageBox.Show("New version available, click ok to update.", "Update", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
-                    if (dialogResult == DialogResult.OK)
+                    Invoke(new Action(async () =>
                     {
-                        await DownloadVersion(result.Version);
-                        UpdateStatus("Updating version...", force: true);
-                        await Task.Delay(1000);
-                        StartUpdater();
-                        Application.Exit();
-                    }
+                        var dialogResult = MessageBox.Show("New version available, click ok to update.", "Update", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                        if (dialogResult == DialogResult.OK)
+                        {
+                            await DownloadVersion(result.Version);
+                            UpdateStatus("Updating version...", force: true);
+                            await Task.Delay(1000);
+                            StartUpdater();
+                            Application.Exit();
+                        }
+                    }));
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                Invoke(new Action(() =>
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error)));
             }
-
         }
+
 
         private async Task DownloadVersion(string version)
         {
@@ -126,42 +130,75 @@ namespace RagnarokBotClient
             }
         }
 
-        private async Task CheckStatusLoop(CancellationToken token)
+        private async Task CheckStatusLoop()
         {
-            while (!token.IsCancellationRequested)
+            while (true)
             {
-                try
+                if (!_cancellationTokenSource.Token.IsCancellationRequested)
                 {
-                    var bot = await _remote.GetAsync<BotUser>($"api/bots/guid/{Guid}");
-                    if (bot != null)
+                    try
                     {
-                        var diff = (DateTime.UtcNow - bot.LastPinged!.Value).TotalMinutes;
-                        if (diff >= 5)
+                        var bot = await _remote.GetAsync<BotUser>($"api/bots/guid/{Guid}");
+
+                        if (bot == null)
                         {
-                            _ = _scumManager.ReconnectToServer();
-                            await _remote.PostAsync($"api/bots/register?guid={Guid}");
+                            UpdateStatus("Bot not found on server.", false);
+                        }
+                        else if (bot.NeedsReconnect)
+                        {
+                            connected = true;
+                            UpdateStatus("Bot flagged for reconnect.", false);
+
+                            try
+                            {
+                                // Reconnect to the game
+                                await _scumManager.ReconnectToServer();
+
+                                // Re-register bot
+                                await UnregisterBot();
+                                await RegisterBot();
+                                UpdateStatus("Bot reconnected and registered.", false);
+                                await CanStartReceivingCommandsCheck(_cancellationTokenSource.Token);
+
+                            }
+                            catch (Exception ex)
+                            {
+                                UpdateStatus($"Reconnect failed: {ex.Message}", false);
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    UpdateStatus("CheckStatusLoop Exception:", false);
-                    UpdateStatus(ex.Message, false);
+                    catch (Exception ex)
+                    {
+                        UpdateStatus("CheckStatusLoop Exception:", false);
+                        UpdateStatus(ex.Message, false);
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(60));
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(60), token);
             }
         }
 
         private async Task CanStartReceivingCommandsCheck(CancellationToken token)
         {
-            UpdateStatus("Waiting for server confirmation.");
+            UpdateStatus("Waiting for server confirmation...");
+
             while (!token.IsCancellationRequested)
             {
                 try
                 {
                     var bot = await _remote.GetAsync<BotUser>($"api/bots/guid/{Guid}");
-                    if (bot != null && bot.LastPinged.HasValue) return;
+                    if (bot != null && bot.LastPinged.HasValue)
+                    {
+                        connected = true;
+                        UpdateStatus("Server confirmation received. Ready to receive commands.");
+                        return;
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    // Normal when stopping
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -169,9 +206,17 @@ namespace RagnarokBotClient
                     UpdateStatus(ex.Message, false);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(10), token);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), token);
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
             }
         }
+
 
         private async Task SendCheckState(CancellationToken token)
         {
@@ -181,22 +226,24 @@ namespace RagnarokBotClient
             {
                 try
                 {
+
                     UpdateStatus("sending check-state", false);
                     var command = new BotCommand();
                     command.Values = [
                     new BotCommandValue
-                    {
-                        Type = Shared.Enums.ECommandType.SayLocal,
-                        Value = $"!check-state-{Guid}"
-                    }];
+                        {
+                            Type = Shared.Enums.ECommandType.SayLocal,
+                            Value = $"!check-state-{Guid}"
+                        }];
                     _commandQueue.Enqueue(command);
-                    await Task.Delay(TimeSpan.FromSeconds(120), token);
+
                 }
                 catch (Exception ex)
                 {
                     UpdateStatus("SendCheckState Exception:", false);
                     UpdateStatus(ex.Message, false);
                 }
+                await Task.Delay(TimeSpan.FromSeconds(120), token);
 
             }
         }
@@ -214,6 +261,15 @@ namespace RagnarokBotClient
                 var lines = File.ReadAllLines(path);
                 EmailBox.Text = lines[0];
                 PasswordBox.Text = lines[1];
+            }
+        }
+
+        public void LoadGameDir()
+        {
+            var path = Path.Combine(_exePath, "gamedir");
+            if (File.Exists(path))
+            {
+                _gameDirPath = File.ReadAllText(path);
             }
         }
 
@@ -296,6 +352,9 @@ namespace RagnarokBotClient
                 _remote.SetAuthToken(tokenResult.AccessToken);
                 ServersPanel.Invoke(new Action(() => ServersPanel.Visible = false));
                 ServersPanel.Invoke(new Action(() => ServersPanel.Enabled = false));
+                _ = Task.Run(CheckStatusLoop);
+                _ = Task.Run(ProcessCommand);
+                _ = Task.Run(ReceiveCommand);
             }
             Loading = false;
 
@@ -321,17 +380,22 @@ namespace RagnarokBotClient
             return _remote.PostAsync($"api/bots/register?guid={Guid}");
         }
 
+        public Task UnregisterBot()
+        {
+            return _remote.DeleteAsync($"api/bots/unregister?guid={Guid}");
+        }
+
         public void Start()
         {
             if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
-                return; // already running
+                return;
+
+            _cancellationTokenSource = new CancellationTokenSource();
+            var token = _cancellationTokenSource!.Token;
+            _scumManager.Token = token;
 
             try
             {
-                _cancellationTokenSource = new CancellationTokenSource();
-                var token = _cancellationTokenSource.Token;
-                _scumManager.Token = token;
-
                 StartButton.Invoke(() => StartButton.Text = "Stop");
 
                 Task.Run(async () =>
@@ -344,14 +408,8 @@ namespace RagnarokBotClient
                             await _scumManager.ReconnectToServer();
                             await Task.Delay(TimeSpan.FromSeconds(Math.Max(_timeToLoadWorld, 1)), token);
                             await RegisterBot();
-
-                            _ = Task.Run(() => CheckStatusLoop(token));
-                            _ = Task.Run(() => ProcessCommand(token));
                             _ = Task.Run(() => SendCheckState(token));
-
                             await CanStartReceivingCommandsCheck(token);
-                            _ = ReceiveCommand(token);
-
                         }
                         else
                         {
@@ -377,10 +435,9 @@ namespace RagnarokBotClient
         {
             _ = _remote.DeleteAsync($"api/bots/unregister?guid={Guid}");
             _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource?.Dispose();
+            connected = false;
             if (StatusValue.InvokeRequired)
             {
-
                 StartButton.Invoke(new Action(() => StartButton.Text = "Start"));
             }
             else
@@ -388,43 +445,36 @@ namespace RagnarokBotClient
                 StartButton.Text = "Start";
             }
             UpdateStatus("Stopped.");
-            UpdateStatus("Waiting.");
         }
 
-        private Task<bool> HealthCheck(CancellationToken token)
+        private async Task<bool> HealthCheck(CancellationToken token)
         {
             UpdateStatus("Checking server status.");
-            if (token.IsCancellationRequested) token.ThrowIfCancellationRequested();
+            token.ThrowIfCancellationRequested();
 
-            return _remote.GetAsync("healthz").ContinueWith((val) =>
+            try
             {
-                if (token.IsCancellationRequested) token.ThrowIfCancellationRequested();
-
-                try
-                {
-                    if (val.Result == "Healthy")
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        UpdateStatus("Could not connect to server.");
-                        return false;
-                    }
-                }
-                catch (Exception)
-                {
-                    UpdateStatus("Could not connect to server.");
-                    return false;
-                }
-            });
+                var result = await _remote.GetAsync("healthz");
+                return result == "Healthy";
+            }
+            catch
+            {
+                UpdateStatus("Could not connect to server.");
+                return false;
+            }
         }
+
 
         private async Task GameCheck(CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
             var processes = Process.GetProcessesByName("SCUM");
             UpdateStatus("Waiting for SCUM process.");
+            //if (!processes.Any() && !string.IsNullOrEmpty(_gameDirPath))
+            //{
+            //    Process.Start(_gameDirPath);
+            //    await Task.Delay(5000, token);
+            //}
             while (!processes.Any())
             {
                 token.ThrowIfCancellationRequested();
@@ -432,6 +482,19 @@ namespace RagnarokBotClient
                 continue;
             }
             _gameProcess = processes.First();
+            //try
+            //{
+            //    _gameProcess.EnableRaisingEvents = true;
+
+            //}
+            //catch (Exception) { }
+            //_gameDirPath = Path.Combine(_gameProcess.StartInfo.WorkingDirectory, _gameProcess.StartInfo.FileName);
+            //try
+            //{
+            //    File.WriteAllText(Path.Combine(_exePath, "gamedir"), _gameDirPath);
+            //}
+            //catch (Exception) { }
+
             _gameProcess.Exited += ScumProcess_Exited;
             UpdateStatus($"SCUM process found with PID: {_gameProcess.Id}.", false);
             UpdateStatus("Attempting to connect to game server.");
@@ -439,62 +502,71 @@ namespace RagnarokBotClient
             return;
         }
 
-        private async Task ReceiveCommand(CancellationToken token)
+        private async Task ReceiveCommand()
         {
             UpdateStatus("Server connection confirmed.");
             UpdateStatus("Receiving commands.");
-            while (!token.IsCancellationRequested)
+            while (true)
             {
                 try
                 {
-                    var command = await _remote.GetAsync($"api/bots/commands?guid={Guid}");
-
-                    if (!string.IsNullOrEmpty(command))
+                    if (connected)
                     {
-                        _commandQueue.Enqueue(JsonConvert.DeserializeObject<BotCommand>(command)!);
-                    }
-                    await Task.Delay(3000, token);
-                }
-                catch (Exception) { }
+                        var command = await _remote.GetAsync($"api/bots/commands?guid={Guid}");
 
+                        if (!string.IsNullOrEmpty(command))
+                        {
+                            _commandQueue.Enqueue(JsonConvert.DeserializeObject<BotCommand>(command)!);
+                            UpdateStatus("Command received.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    UpdateStatus($"ReceiveCommand error: {ex.Message}", false);
+                }
+                await Task.Delay(3000);
             }
         }
 
-        private async Task ProcessCommand(CancellationToken token)
+        private async Task ProcessCommand()
         {
-            while (!token.IsCancellationRequested)
+            UpdateStatus("Reading command queue.");
+            while (true)
             {
                 try
                 {
-                    if (_commandQueue.TryDequeue(out BotCommand command))
+                    if (_commandQueue.TryDequeue(out BotCommand? command) && command is not null)
                     {
                         var tasks = new CommandHandler(_scumManager, _remote).Handle(command);
-                        if (tasks == null || tasks.Count == 0) continue;
-
-                        foreach (var task in tasks)
+                        if (tasks != null && tasks.Count > 0)
                         {
-                            await task();
+                            foreach (var task in tasks)
+                            {
+                                UpdateStatus("Processing command.");
+                                await task();
+                            }
                         }
-
-                        await Task.Delay(2000, token);
                     }
 
                 }
                 catch (Exception) { }
-
+                await Task.Delay(2000);
             }
         }
 
         private void ScumProcess_Exited(object? sender, EventArgs e)
         {
             UpdateStatus("SCUM process closed.");
-            _gameProcess.Exited -= ScumProcess_Exited;
+            _gameProcess!.Exited -= ScumProcess_Exited;
+            _gameProcess = null;
             Stop();
         }
 
         private void UpdateStatus(string status, bool changeLabel = true, bool force = false)
         {
             var action = new Action(() => LogBox.Text += $"\n {new DateTimeOffset(DateTime.Now)} {status}");
+            var scrollAction = new Action(LogBox.ScrollToCaret);
             var clearTextAction = new Action(() =>
             {
                 if (LogBox.Text.Length >= 15000) LogBox.Text = string.Empty;
@@ -506,15 +578,17 @@ namespace RagnarokBotClient
                 {
                     StatusValue.Invoke(action);
                     StatusValue.Invoke(clearTextAction);
+                    StatusValue.Invoke(scrollAction);
                 }
             }
             else
             {
                 if (changeLabel) StatusValue.Text = status;
-                if (debugCheckBox.Checked && !force)
+                if (debugCheckBox.Checked || force)
                 {
                     action?.Invoke();
                     clearTextAction?.Invoke();
+                    scrollAction?.Invoke();
                 }
             }
         }
@@ -540,7 +614,6 @@ namespace RagnarokBotClient
         private void TestBtn_Click(object sender, EventArgs e)
         {
             UpdateStatus("Added test command", false);
-
         }
 
         private void Form1_Load(object sender, EventArgs e) { }
@@ -549,16 +622,15 @@ namespace RagnarokBotClient
 
         private void label1_Click(object sender, EventArgs e) { }
 
-        private void ServerListBox_SelectedIndexChanged(object sender, EventArgs e)
+        private async void ServerListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (ServerListBox.SelectedIndex == -1) return;
             var test = ((dynamic)sender).SelectedItem as string;
             _serverId = long.Parse(test!.Split(" - ")[0]);
-            ServersPanel.Invoke(new Action(() => ServersPanel.Visible = false));
-            ServersPanel.Invoke(new Action(() => ServersPanel.Enabled = false));
+            ServersPanel.Visible = false;
+            ServersPanel.Enabled = false;
 
-
-            Login();
+            await Login(); // <-- FIX
         }
 
         private void thescumbotSite_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

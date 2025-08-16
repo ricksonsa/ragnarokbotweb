@@ -3,7 +3,7 @@
     [(nzCollapsed)]="isCollapsed" [nzTrigger]="null">
     <div class="sidebar-logo">
       <a href="/" target="_blank">
-        <img src="assets/images/bot-logo.png" alt="logo">
+        <img src="assets/images/thescumbot.png" alt="logo">
         <h1 style="font-size: 12px;" nz-tooltip [nzTooltipTitle]="account?.server?.name ?? 'The SCUM Bot'"
           [nzTooltipPlacement]="['bottomRight', 'right']">{{ getName() }}</h1>
       </a>
@@ -88,19 +88,19 @@
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="events/warzones">Warzones</a>
           </li>
-          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+          <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="events/quests">Quests</a>
-          </li>
+          </li> -->
         </ul>
       </li>
 
       <li nz-submenu nzOpen nzTitle="Scheduled Tasks" nzIcon="clock-circle">
         <ul>
-          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+          <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="scheduled-tasks/default">Default (Coming Soon)</a>
-          </li>
+          </li> -->
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
-            <a routerLink="scheduled-tasks/custom">Custom (Coming Soon)</a>
+            <a routerLink="scheduled-tasks/custom-tasks">Tasks</a>
           </li>
         </ul>
       </li>
@@ -174,12 +174,15 @@
 <div class="login" *ngIf="!logged && !register">
   <nz-card class="login-container">
     <div class="logo-holder">
-      <img width="48" height="48" src="assets/images/bot-logo.png" alt="">
-      <h4 style="margin: 0;" nz-typography>The SCUM Bot</h4>
+      <img style="position: absolute; bottom: 360px;" width="200" height="200" src="assets/images/thescumbot.png"
+        alt="">
+      <br>
+      <br>
+      <!-- <h4 style="margin: 0;" nz-typography>The SCUM Bot</h4> -->
     </div>
-    <p nz-typography> Manage your SCUM private server with automation tools and insights
-      powered by The SCUM Bot. Log in to configure events, spawns, and more.</p>
-    <br>
+    <h5 nz-typography>Sign In</h5>
+    <!-- <p nz-typography> Manage your SCUM private server with automation tools and insights
+      powered by The SCUM Bot. Log in to configure events, spawns, and more.</p> -->
     <form nz-form [formGroup]="loginForm">
       <nz-space style="width: 100%;" nzDirection="vertical">
         <p style="margin: 0; text-align: start;" *nzSpaceItem nz-typography>E-mail</p>
@@ -213,11 +216,12 @@
 <div class="login" *ngIf="!logged && register">
   <nz-card class="login-container">
     <div class="logo-holder">
-      <img width="48" height="48" src="assets/images/bot-logo.png" alt="">
-      <h4 style="margin: 0;" nz-typography>The SCUM Bot</h4>
+      <img style="position: absolute; bottom: 560px;" width="200" height="200" src="assets/images/thescumbot.png"
+        alt="">
+      <br>
+      <br>
     </div>
     <h5 nz-typography>Sign Up</h5>
-    <br>
     <form nz-form [formGroup]="registerForm" (action)="signup()">
       <!-- <nz-space style="width: 100%;" nzDirection="vertical"> -->
       <p style="margin: 0; text-align: start;" nz-typography>Name</p>

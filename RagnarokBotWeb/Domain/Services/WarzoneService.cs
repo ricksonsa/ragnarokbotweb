@@ -144,13 +144,14 @@ namespace RagnarokBotWeb.Domain.Services
                 try
                 {
                     await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), warzone.DiscordMessageId!.Value);
+                    if (warzone.IsRunning)
+                    {
+                        warzone.DiscordMessageId = await GenerateDiscordWarzoneButton(warzone);
+                    }
                 }
-                catch (Exception)
-                { }
-
-                if (warzone.IsRunning)
+                catch (Exception ex)
                 {
-                    warzone.DiscordMessageId = await GenerateDiscordWarzoneButton(warzone);
+                    _logger.LogError(ex, "Warzone update discord exception");
                 }
             }
             else if (!string.IsNullOrEmpty(warzoneDto.DiscordChannelId) && warzoneDto.DiscordChannelId != previousDiscordId)
@@ -159,8 +160,10 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), warzone.DiscordMessageId!.Value);
                 }
-                catch (Exception)
-                { }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Warzone remove discord message exception");
+                }
             }
 
             _unitOfWork.Warzones.Update(warzone);

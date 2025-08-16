@@ -1,37 +1,48 @@
-﻿using Newtonsoft.Json;
+﻿using AutoMapper;
+using Newtonsoft.Json;
 using Quartz;
 using Quartz.Impl.Matchers;
 using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
+using RagnarokBotWeb.Domain.Exceptions;
+using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Domain.Services
 {
-    public class TaskService : ITaskService
+    public class TaskService : BaseService, ITaskService
     {
         private readonly ILogger<TaskService> _logger;
         private readonly ISchedulerFactory _schedulerFactory;
+        private readonly IMapper _mapper;
         private readonly IScumServerRepository _scumServerRepository;
+        private readonly ICustomTaskRepository _customTaskRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
 
         public TaskService(
+            IHttpContextAccessor httpContextAccessor,
             ISchedulerFactory schedulerFactory,
             IScumServerRepository scumServerRepository,
+            ICustomTaskRepository customTaskRepository,
             ICacheService cacheService,
             ILogger<TaskService> logger,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IMapper mapper) : base(httpContextAccessor)
         {
             _schedulerFactory = schedulerFactory;
             _scumServerRepository = scumServerRepository;
+            _customTaskRepository = customTaskRepository;
             _cacheService = cacheService;
             _logger = logger;
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         private static ITrigger CronTrigger(string cron, bool startNow = false)
@@ -257,10 +268,10 @@ namespace RagnarokBotWeb.Domain.Services
             _cacheService.AddServers([server]);
         }
 
-        public async Task DeleteJob(string jobKey)
+        public async Task DeleteJob(string jobKey, string groupKey)
         {
             var scheduler = await _schedulerFactory.GetScheduler();
-            await scheduler.DeleteJob(new JobKey(jobKey));
+            await scheduler.DeleteJob(new JobKey(jobKey, groupKey));
         }
 
         public async Task LoadAllServersTasks(CancellationToken cancellationToken)
@@ -278,6 +289,14 @@ namespace RagnarokBotWeb.Domain.Services
             foreach (var server in await _scumServerRepository.GetActiveServersWithFtp())
             {
                 await ScheduleFtpServerTasks(server, cancellationToken);
+            }
+        }
+
+        public async Task LoadCustomServersTasks(CancellationToken cancellationToken)
+        {
+            foreach (var task in await _customTaskRepository.GetServersEnabledCustomTasks())
+            {
+                await ScheduleCustomTask(task, cancellationToken);
             }
         }
 
@@ -442,6 +461,109 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 _logger.LogError(ex.Message);
             }
+        }
+
+        public async Task<Page<CustomTaskDto>> GetTaskPageByFilterAsync(Paginator paginator, string? filter)
+        {
+            var serverId = ServerId();
+            var page = await _customTaskRepository.GetPageByServerAndFilter(paginator, serverId!.Value, filter);
+            return new Page<CustomTaskDto>(page.Content.Select(_mapper.Map<CustomTaskDto>), page.TotalPages, page.TotalElements, page.Number, page.Size);
+        }
+
+        public async Task<CustomTaskDto?> FetchTaskById(long id)
+        {
+            var serverId = ServerId();
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            if (server == null) throw new NotFoundException("Invalid server");
+            ValidateServerOwner(server);
+
+            var customTask = await _customTaskRepository.FindByIdAsync(id);
+            return _mapper.Map<CustomTaskDto>(customTask);
+        }
+
+        public async Task<CustomTaskDto> CreateTask(CustomTaskDto customTaskDto)
+        {
+            var serverId = ServerId();
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            if (server == null) throw new NotFoundException("Invalid server");
+            ValidateSubscription(server);
+
+            var customTask = _mapper.Map<CustomTask>(customTaskDto);
+            customTask.ScumServerId = server.Id;
+            await _customTaskRepository.CreateOrUpdateAsync(customTask);
+            await _customTaskRepository.SaveAsync();
+
+            await ScheduleCustomTask(customTask);
+
+            return _mapper.Map<CustomTaskDto>(customTask);
+        }
+
+        public async Task<CustomTaskDto> UpdateTask(long id, CustomTaskDto customTaskDto)
+        {
+            var serverId = ServerId();
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            if (server == null) throw new NotFoundException("Invalid server");
+            ValidateSubscription(server);
+
+            var customTask = await _customTaskRepository.FindByIdAsync(id);
+            if (customTask == null) throw new NotFoundException("CustomTask not found");
+
+            customTask = _mapper.Map(customTaskDto, customTask);
+            customTask.ScumServerId = serverId!.Value;
+            await _customTaskRepository.CreateOrUpdateAsync(customTask);
+            await _customTaskRepository.SaveAsync();
+
+            await ScheduleCustomTask(customTask);
+
+            return _mapper.Map<CustomTaskDto>(customTask);
+        }
+
+        public async Task<CustomTaskDto> DeleteCustomTask(long id)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+            var serverId = ServerId();
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            if (server == null) throw new NotFoundException("Invalid server");
+            ValidateSubscription(server);
+
+            var customTask = await _customTaskRepository.FindByIdAsync(id);
+            if (customTask == null) throw new NotFoundException("CustomTask not found");
+
+            var key = $"{nameof(CustomTaskJob)}({customTask.Id})";
+            var group = $"CustomTasks({customTask.ScumServerId})";
+
+            _customTaskRepository.Delete(customTask);
+            await _customTaskRepository.SaveAsync();
+
+            try
+            {
+                if (await scheduler.CheckExists(new JobKey(key, group))) await DeleteJob(key, group);
+            }
+            catch (Exception) { }
+
+            return _mapper.Map<CustomTaskDto>(customTask);
+        }
+
+        public async Task ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken = default)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
+            var key = $"{nameof(CustomTaskJob)}({customTask.Id})";
+            var group = $"CustomTasks({customTask.ScumServerId})";
+
+            var customTaskJob = JobBuilder.Create<CustomTaskJob>()
+                .WithIdentity(key, group)
+                .UsingJobData("server_id", customTask.ScumServerId!.Value)
+                .UsingJobData("custom_task_id", customTask.Id)
+                .Build();
+
+            try
+            {
+                if (await scheduler.CheckExists(new JobKey(key, group), cancellationToken)) await DeleteJob(key, group);
+            }
+            catch (Exception) { }
+
+            var trigger = TriggerBuilder.Create().WithCronSchedule(customTask.Cron);
+            await scheduler.ScheduleJob(customTaskJob, trigger.Build(), cancellationToken);
         }
     }
 }

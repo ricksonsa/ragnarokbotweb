@@ -171,5 +171,21 @@ namespace RagnarokBotWeb.Controllers
 
             return Ok(log);
         }
+
+        [HttpGet("chat")]
+        public async Task<IActionResult> GetChatLogs(DateTime from, DateTime to)
+        {
+            _logger.Log(LogLevel.Debug, "REST Request to fetch logs for chat");
+            var server = await _serverService.GetServer();
+            var processor = new ScumFileProcessor(server, _unitOfWork);
+
+            List<GenericLogValue> log = [];
+            await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Chat, _ftpService, from, to))
+            {
+                log.Add(ParseGenericLog(line));
+            }
+
+            return Ok(log);
+        }
     }
 }
