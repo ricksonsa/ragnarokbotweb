@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Handlers.ChangeFileHandler;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -12,7 +13,8 @@ public class FileChangeJob(
     IScumServerRepository scumServerRepository,
     IFtpService ftpService,
     IUnitOfWork unitOfWork,
-    ICacheService cacheService
+    ICacheService cacheService,
+    BotSocketServer socketServer
 ) : AbstractJob(scumServerRepository), IJob
 {
     public async Task Execute(IJobExecutionContext context)
@@ -30,7 +32,7 @@ public class FileChangeJob(
                     if (command is null) throw new ArgumentNullException("command");
                     var handler = new ChangeFileHandlerFactory(ftpService, unitOfWork).CreateAddRemoveLineHandler(command.FileChangeType);
                     await handler.Handle(command);
-                    if (command.BotCommand is not null) cacheService.EnqueueCommand(command.ServerId, command.BotCommand);
+                    if (command.BotCommand is not null) await socketServer.SendCommandAsync(command.ServerId, command.BotCommand);
                 }
                 catch (ArgumentNullException) { }
                 catch (Exception ex)

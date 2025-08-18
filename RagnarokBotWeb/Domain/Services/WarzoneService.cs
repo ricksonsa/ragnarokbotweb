@@ -2,9 +2,10 @@
 using Discord;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
-using RagnarokBotWeb.Application;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Pagination;
+using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -21,6 +22,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IFileService _fileService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDiscordService _discordService;
+        private readonly BotSocketServer _socketServer;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly ISchedulerFactory _schedulerFactory;
         private readonly IMapper _mapper;
@@ -38,7 +40,8 @@ namespace RagnarokBotWeb.Domain.Services
             ITaskService taskService,
             ICacheService cacheService,
             ISchedulerFactory schedulerFactory,
-            IFileService fileService) : base(httpContextAccessor)
+            IFileService fileService,
+            BotSocketServer socketServer) : base(httpContextAccessor)
         {
             _logger = logger;
             _warzoneRepository = warzoneRepository;
@@ -50,6 +53,7 @@ namespace RagnarokBotWeb.Domain.Services
             _cacheService = cacheService;
             _schedulerFactory = schedulerFactory;
             _fileService = fileService;
+            _socketServer = socketServer;
         }
 
         public async Task<WarzoneDto> CreateWarzoneAsync(WarzoneDto createWarzone)
@@ -375,7 +379,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (!string.IsNullOrEmpty(warzone.StartMessage))
             {
-                _cacheService.EnqueueCommand(server.Id, new BotCommand().Announce(warzone.StartMessage));
+                await _socketServer.SendCommandAsync(server.Id, new Shared.Models.BotCommand().Announce(warzone.StartMessage));
             }
 
             if (warzone.DiscordChannelId != null)
@@ -405,15 +409,30 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task<WarzoneDto?> CloseWarzone(ScumServer server, CancellationToken token = default)
         {
-            var warzones = await _unitOfWork.Warzones
-                .Include(warzone => warzone.ScumServer)
-                .ToListAsync();
+            var scheduler = await _schedulerFactory.GetScheduler();
+            Warzone? warzone = null;
 
-            var warzone = warzones.FirstOrDefault(wz => wz.IsRunning);
+            var jobKey = new JobKey(nameof(WarzoneItemSpawnJob), $"WarzoneJobs({server.Id})");
+            if (await scheduler.CheckExists(jobKey))
+            {
+                IJobDetail? jobDetail = await scheduler.GetJobDetail(jobKey, token);
+                if (jobDetail == null) return null;
+
+                if (jobDetail.JobDataMap.TryGetLong("warzone_id", out var warzoneId))
+                {
+                    warzone = await _unitOfWork.Warzones
+                       .Include(warzone => warzone.ScumServer)
+                       .FirstOrDefaultAsync(wz => wz.Id == warzoneId);
+                }
+                else
+                {
+                    return null;
+                }
+            }
 
             if (warzone == null) return null;
-
             warzone.Stop();
+
             _unitOfWork.Warzones.Update(warzone);
             await _unitOfWork.SaveAsync();
 

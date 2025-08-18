@@ -3,8 +3,10 @@ using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 using System.Text.RegularExpressions;
 
@@ -106,6 +108,8 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 "jpg" or "jpeg" => new JpegEncoder { Quality = jpegQuality },
                 "png" => new PngEncoder { CompressionLevel = PngCompressionLevel.Level4 },
+                "webp" => new WebpEncoder() { UseAlphaCompression = false },
+                "gif" => new GifEncoder(),
                 _ => new JpegEncoder { Quality = jpegQuality } // default fallback
             };
 

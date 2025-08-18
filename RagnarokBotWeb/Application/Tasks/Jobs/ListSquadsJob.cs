@@ -1,14 +1,14 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Domain.Exceptions;
-using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
     public class ListSquadsJob(
-     ICacheService cacheService,
      ILogger<ListSquadsJob> logger,
-     IBotService botService,
+     BotSocketServer botSocket,
      IScumServerRepository scumServerRepository) : AbstractJob(scumServerRepository), IJob
     {
         public async Task Execute(IJobExecutionContext context)
@@ -19,14 +19,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
                 long serverId = server.Id;
 
-                if (!botService.IsBotOnline(serverId)) return;
-
-                if (!cacheService.GetCommandQueue(serverId).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
-                {
-                    var command = new BotCommand();
-                    command.ListSquads();
-                    cacheService.EnqueueCommand(serverId, command);
-                }
+                if (!botSocket.IsBotConnected(serverId)) return;
+                if (!botSocket.IsBotConnected(serverId)) return;
+                await botSocket.SendCommandAsync(serverId, new BotCommand().ListFlags());
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }

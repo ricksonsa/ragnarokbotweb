@@ -1,5 +1,7 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
@@ -7,14 +9,16 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
     {
         private ILogger<CustomJob> _logger;
         private readonly ICacheService _cacheService;
+        private readonly BotSocketServer _socketServer;
 
-        public CustomJob(ILogger<CustomJob> logger, ICacheService cacheService)
+        public CustomJob(ILogger<CustomJob> logger, ICacheService cacheService, BotSocketServer socketServer)
         {
             _logger = logger;
             _cacheService = cacheService;
+            _socketServer = socketServer;
         }
 
-        public Task Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
             var jobName = context.JobDetail.Key.Name;
 
@@ -22,8 +26,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             long? serverId = dataMap.GetLong("server_id");
             string? commandsString = dataMap.GetString("commands");
 
-            if (serverId is null) return Task.CompletedTask;
-            if (commandsString is null) return Task.CompletedTask;
+            if (serverId is null) return;
+            if (commandsString is null) return;
 
             IEnumerable<string> commands = commandsString.ToString()!.Split(";");
 
@@ -34,10 +38,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             {
                 var botCommand = new BotCommand();
                 botCommand.Command(command);
-                _cacheService.GetCommandQueue(serverId.Value).Enqueue(botCommand);
+                await _socketServer.SendCommandAsync(serverId.Value, botCommand);
             }
-
-            return Task.CompletedTask;
         }
     }
 }

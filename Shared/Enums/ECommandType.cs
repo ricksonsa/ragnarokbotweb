@@ -19,6 +19,7 @@
         ChangeGold,
         ChangeMoney,
         Silence,
-        SayOrCommand
+        SayOrCommand,
+        Reconnect
     }
 }

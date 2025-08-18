@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using RagnarokBotWeb.Application;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Crosscutting.Utils;
 using RagnarokBotWeb.Domain.Entities;
@@ -19,6 +19,7 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly ILogger<PlayerService> _logger;
         private readonly ICacheService _cacheService;
+        private readonly BotSocketServer _botSocketServer;
         private readonly IPlayerRepository _playerRepository;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly IDiscordService _discordService;
@@ -35,7 +36,8 @@ namespace RagnarokBotWeb.Domain.Services
             IScumServerRepository scumServerRepository,
             IServiceProvider serviceProvider,
             IUnitOfWork unitOfWork,
-            IDiscordService discordService) : base(contextAccessor)
+            IDiscordService discordService,
+            BotSocketServer botSocketServer) : base(contextAccessor)
         {
             _logger = logger;
             _cacheService = cacheService;
@@ -45,14 +47,7 @@ namespace RagnarokBotWeb.Domain.Services
             _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
             _discordService = discordService;
-        }
-
-        private bool IsBotConnected()
-        {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
-
-            return _cacheService.GetConnectedBots(serverId.Value).Any();
+            _botSocketServer = botSocketServer;
         }
 
         public async Task<PlayerDto> GetPlayer(long id)
@@ -131,12 +126,11 @@ namespace RagnarokBotWeb.Domain.Services
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
 
-            if (!_cacheService.GetCommandQueue(server.Id).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
-            {
-                var command = new BotCommand();
-                command.ListPlayers();
-                _cacheService.EnqueueCommand(server.Id, command);
-            }
+
+            var command = new BotCommand();
+            command.ListPlayers();
+            await _botSocketServer.SendCommandAsync(server.Id, command);
+
         }
 
         public ScumPlayer? PlayerDisconnected(long serverId, string steamId64)
@@ -513,8 +507,6 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<PlayerDto>(player);
         }
 
-
-
         public async Task<PlayerDto> UpdateFame(long id, ChangeAmountDto dto)
         {
             var player = await _playerRepository.FindByIdAsync(id);
@@ -525,10 +517,10 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateServerOwner(player.ScumServer);
             ValidateSubscription(player.ScumServer);
 
-            if (!IsBotConnected())
+            if (!_botSocketServer.IsBotConnected(player.ScumServerId))
                 throw new DomainException("There is no bots online at the moment");
 
-            _cacheService.EnqueueCommand(player.ScumServerId, new BotCommand().ChangeFame(player.SteamId64!, dto.Amount));
+            await _botSocketServer.SendCommandAsync(player.ScumServerId, new BotCommand().ChangeFame(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 
@@ -545,10 +537,10 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateServerOwner(player.ScumServer);
             ValidateSubscription(player.ScumServer);
 
-            if (!IsBotConnected())
+            if (!_botSocketServer.IsBotConnected(player.ScumServerId))
                 throw new DomainException("There is no bots online at the moment");
 
-            _cacheService.EnqueueCommand(player.ScumServerId, new BotCommand().ChangeGold(player.SteamId64!, dto.Amount));
+            await _botSocketServer.SendCommandAsync(player.ScumServerId, new BotCommand().ChangeGold(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 
@@ -565,10 +557,10 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateServerOwner(player.ScumServer);
             ValidateSubscription(player.ScumServer);
 
-            if (!IsBotConnected())
+            if (!_botSocketServer.IsBotConnected(player.ScumServerId))
                 throw new DomainException("There is no bots online at the moment");
 
-            _cacheService.EnqueueCommand(player.ScumServerId, new BotCommand().ChangeMoney(player.SteamId64!, dto.Amount));
+            await _botSocketServer.SendCommandAsync(player.ScumServerId, new BotCommand().ChangeMoney(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 

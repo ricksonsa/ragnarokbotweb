@@ -1,7 +1,9 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Shared.Models;
 using static RagnarokBotWeb.Crosscutting.Utils.StringUtils;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
@@ -11,6 +13,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
     ILogger<CustomTaskJob> logger,
     ICustomTaskRepository customTaskRepository,
     ICacheService cache,
+    BotSocketServer socketServer,
     IScumServerRepository scumServerRepository) : AbstractJob(scumServerRepository), IJob
     {
         public async Task Execute(IJobExecutionContext context)
@@ -41,7 +44,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 if (!string.IsNullOrEmpty(customTask.StartMessage))
                 {
-                    cache.EnqueueCommand(server.Id, new BotCommand().Say(customTask.StartMessage));
+                    await socketServer.SendCommandAsync(server.Id, new BotCommand().Say(customTask.StartMessage));
                 }
 
                 if (string.IsNullOrEmpty(customTask.Commands)) return;
@@ -71,7 +74,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 }
 
                 if (command is not null)
-                    cache.EnqueueCommand(server.Id, command);
+                    await socketServer.SendCommandAsync(server.Id, command);
 
             }
             catch (ServerUncompliantException) { }

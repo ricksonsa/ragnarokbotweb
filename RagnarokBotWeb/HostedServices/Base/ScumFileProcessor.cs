@@ -14,7 +14,12 @@ namespace RagnarokBotWeb.HostedServices.Base;
 public class ScumFileProcessor
 {
     private static readonly Func<string, string> AppDataPathFunc =
-        server => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", server);
+        server =>
+        {
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", server);
+            Directory.CreateDirectory(path);
+            return path;
+        };
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ScumFileProcessor> _logger;

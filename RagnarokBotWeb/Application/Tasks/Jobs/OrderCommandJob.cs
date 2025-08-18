@@ -1,10 +1,12 @@
 ﻿using Quartz;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Domain.Business;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Enums;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
@@ -59,49 +61,18 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                     if (order.OrderType == EOrderType.Pack)
                     {
-                        if (!isBotOnline) return;
-                        var deliveryText = order.ResolvedDeliveryText();
-                        if (deliveryText is not null) command.Say(deliveryText);
-
-                        if (order.Pack is null) return;
-                        foreach (var packItem in order.Pack.PackItems)
-                        {
-                            if (packItem.AmmoCount > 0)
-                                command.MagazineDelivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount, packItem.AmmoCount);
-                            else
-                                command.Delivery(order.Player.SteamId64, packItem.Item.Code, packItem.Amount);
-                        }
-
-                        command.Data = "order_" + order.Id.ToString();
+                        HandlePackOrder(isBotOnline, order, command);
                     }
                     else if (order.OrderType == EOrderType.Warzone)
                     {
-                        if (!isBotOnline) return;
-                        if (order.Warzone is null) return;
-                        var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
-                        command.Data = "order_" + order.Id.ToString();
-                        command.Teleport(order.Player.SteamId64, teleport.Teleport.Coordinates);
+                        HandleWarzoneOrder(isBotOnline, order, command);
                     }
                     else if (order.OrderType == EOrderType.UAV)
                     {
-                        if (!isBotOnline) return;
-                        if (order.ScumServer?.Uav is null) return;
-
-                        await new UavHandler(
-                            _discordService,
-                            _fileService,
-                            players,
-                            server).Execute(order.Player, order.Uav!);
-
-                        var deliveryText = order.ResolvedDeliveryText();
-                        if (deliveryText is not null) command.Say(deliveryText);
-
-                        order.Status = EOrderStatus.Done;
-                        _orderRepository.Update(order);
-                        await _orderRepository.SaveAsync();
+                        await HandleUavOrder(server, isBotOnline, players, order, command);
                     }
 
-                    if (command != null) _cacheService.EnqueueCommand(order.ScumServer.Id, command);
+                    if (command != null) await _botService.SendCommand(order.ScumServer.Id, command);
 
                 }
             }
@@ -112,6 +83,52 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 _logger.LogError("OrderCommandJob Exception -> {Ex}", ex.Message);
                 throw;
             }
+        }
+
+        private async Task HandleUavOrder(Domain.Entities.ScumServer server, bool isBotOnline, List<ScumPlayer> players, Order order, BotCommand command)
+        {
+            if (!isBotOnline) return;
+            if (order.ScumServer?.Uav is null) return;
+
+            await new UavHandler(
+                _discordService,
+                _fileService,
+                players,
+                server).Execute(order.Player!, order.Uav!);
+
+            var deliveryText = order.ResolvedDeliveryText();
+            if (deliveryText is not null) command.Say(deliveryText);
+
+            order.Status = EOrderStatus.Done;
+            _orderRepository.Update(order);
+            await _orderRepository.SaveAsync();
+        }
+
+        private static void HandleWarzoneOrder(bool isBotOnline, Order order, BotCommand command)
+        {
+            if (!isBotOnline) return;
+            if (order.Warzone is null) return;
+            var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
+            command.Data = "order_" + order.Id.ToString();
+            command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
+        }
+
+        private static void HandlePackOrder(bool isBotOnline, Order order, BotCommand command)
+        {
+            if (!isBotOnline) return;
+            var deliveryText = order.ResolvedDeliveryText();
+            if (deliveryText is not null) command.Say(deliveryText);
+
+            if (order.Pack is null) return;
+            foreach (var packItem in order.Pack.PackItems)
+            {
+                if (packItem.AmmoCount > 0)
+                    command.MagazineDelivery(order.Player!.SteamId64!, packItem.Item.Code, packItem.Amount, packItem.AmmoCount);
+                else
+                    command.Delivery(order.Player!.SteamId64!, packItem.Item.Code, packItem.Amount);
+            }
+
+            command.Data = "order_" + order.Id.ToString();
         }
     }
 }

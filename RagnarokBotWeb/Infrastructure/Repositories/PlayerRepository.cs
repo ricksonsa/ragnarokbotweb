@@ -75,6 +75,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .OrderByDescending(player => player.Id)
             .Where(player => player.ScumServer.Id == serverId);
 
         if (!string.IsNullOrEmpty(filter))

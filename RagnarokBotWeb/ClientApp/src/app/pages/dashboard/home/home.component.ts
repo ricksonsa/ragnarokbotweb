@@ -9,7 +9,6 @@ import { ServerService } from '../../../services/server.service';
 import { AuthenticationService } from '../../../services/authentication.service';
 import { AccountDto } from '../../../models/account.dto';
 import { BattlemetricsService } from '../../../services/battlemetrics.service';
-import { of, switchMap } from 'rxjs';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { BotService } from '../../../services/bot.service';
 import { NzTableModule } from 'ng-zorro-antd/table';
@@ -193,10 +192,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   loadBots() {
-    this.botService.getBots()
+    this.botService.getBotCount()
       .subscribe({
         next: (bots) => {
-          this.botsOnline = bots.length;
+          this.botsOnline = bots.value;
         }
       });
   }
@@ -259,8 +258,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (players) => {
           this.players = players;
-          if (this.battlemetrics == null)
-            this.playerCount = players.length;
+          this.playerCount = players.length;
         }
       })
   }

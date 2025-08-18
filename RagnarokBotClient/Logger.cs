@@ -6,6 +6,7 @@ namespace RagnarokBotClient
     {
         public static event EventHandler<string> OnLogging;
         private static string m_exePath = string.Empty;
+
         public static void LogWrite(string logMessage)
         {
             m_exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);

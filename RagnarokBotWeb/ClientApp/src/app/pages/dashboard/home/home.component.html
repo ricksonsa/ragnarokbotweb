@@ -15,15 +15,17 @@
 </ng-template>
 
 <div class="grid">
-  <nz-card nzSize="small" class="statistics-card">
-    <nz-statistic [nzValue]="playerCount" nzTitle="Players Online Reported By Bot"
+  <nz-card nzSize="small" class="statistics-card" *ngIf="botsOnline > 0; else battlemetrics">
+    <nz-statistic [nzValue]="playerCount" nzTitle="Players Online"
       [nzSuffix]="'/' + (maxSlots?.toString() ?? '0')"></nz-statistic>
   </nz-card>
 
-  <nz-card *ngIf="playerCountBattleMetrics > 0" nzSize="small" class="statistics-card">
-    <nz-statistic [nzValue]="playerCountBattleMetrics" nzTitle="Players Online Battlemetrics"
-      [nzSuffix]="'/' + (maxSlots?.toString() ?? '0')"></nz-statistic>
-  </nz-card>
+  <ng-template #battlemetrics>
+    <nz-card nzSize="small" class="statistics-card">
+      <nz-statistic [nzValue]="playerCountBattleMetrics" nzTitle="Players Online"
+        [nzSuffix]="'/' + (maxSlots?.toString() ?? '0')"></nz-statistic>
+    </nz-card>
+  </ng-template>
 
   <nz-card nzSize="small" class="statistics-card">
     <nz-statistic [nzValue]="botsOnline" [nzTitle]="botPrefix"></nz-statistic>
@@ -107,7 +109,7 @@
     </div>
   </nz-card>
 
-  <nz-card nzSize="small" class="fit-content" nzTitle="Online Players">
+  <nz-card nzSize="small" class="fit-content statistics-card" nzTitle="Online Players">
     <div class="wrapper">
       <nz-table nzSize="small" #playersTable [nzData]="players" nzShowPagination="false">
         <thead>

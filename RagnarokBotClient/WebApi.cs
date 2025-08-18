@@ -31,11 +31,18 @@ namespace RagnarokBotClient
                 {
                     return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync())!;
                 }
+                else
+                {
+                    var messageString = await response.Content.ReadAsStringAsync();
+                    var error = JsonConvert.DeserializeObject<ErrorDetail>(messageString);
+                    if (error is not null) MessageBox.Show(string.Join('\n', error.details), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
 
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+                throw;
             }
             return default!;
 
@@ -130,5 +137,14 @@ namespace RagnarokBotClient
             var response = await _httpClient.DeleteAsync(url);
             return response.IsSuccessStatusCode;
         }
+
+
+        class ErrorDetail
+        {
+            public int statusCode { get; set; }
+            public string message { get; set; }
+            public string details { get; set; }
+        }
+
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using Quartz;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Application.Mapping;
@@ -139,6 +140,7 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<LoadRaidTimesHostedService>();
             builder.Services.AddHostedService<LoadSquadsHostedService>();
             builder.Services.AddHostedService<LoadFlagsHostedService>();
+            builder.Services.AddHostedService<BotSocketServerHostedService>();
             builder.Services.AddHostedService<LoadCustomTasksHostedService>();
 
             builder.Services.AddHostedService<DiscordBotService>();
@@ -146,7 +148,7 @@ namespace RagnarokBotWeb
 
             builder.Services.AddSingleton<IMessageEventHandlerFactory, MessageEventHandlerFactory>();
             builder.Services.AddSingleton<IInteractionEventHandlerFactory, InteractionEventHandlerFactory>();
-
+            builder.Services.AddSingleton<BotSocketServer>();
 
             builder.Services.Configure<AppSettings>(options =>
             {

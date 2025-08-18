@@ -1,11 +1,16 @@
-﻿namespace RagnarokBotWeb.Application.Models
+﻿using System.Net.Sockets;
+
+namespace RagnarokBotWeb.Application.Models
 {
     public class BotUser
     {
         public Guid Guid { get; set; }
         public string SteamId { get; set; }
         public DateTime LastInteracted { get; set; }
+        public DateTime? LastCommand { get; set; }
         public DateTime? LastPinged { get; set; }
+        public TcpClient? TcpClient { get; set; }
+        public long ServerId { get; set; }
 
         public BotUser() { }
 
@@ -15,7 +20,7 @@
             LastInteracted = DateTime.UtcNow;
         }
 
-        public override string ToString() => $"Guid[{Guid}] SteamId[{SteamId}] LastInteracted[{LastInteracted}] LastPinged[{LastPinged}]";
+        public override string ToString() => $"Guid[{Guid}] Server[{ServerId}] SteamId[{SteamId}] LastInteracted[{LastInteracted}] LastPinged[{LastPinged}]";
 
     }
 }

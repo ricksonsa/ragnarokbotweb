@@ -1,29 +1,28 @@
-﻿using Shared.Enums;
+﻿using MessagePack;
+using Shared.Enums;
 
-namespace RagnarokBotWeb.Application
+namespace Shared.Models
 {
+    [MessagePackObject]
     public class BotCommandValue
     {
-        public string? Coordinates { get; set; }
-        public string? Target { get; set; }
-        public string Value { get; set; }
-        public int Amount { get; set; } = 1;
-        public ECommandType Type { get; set; }
-        public bool CheckTargetOnline { get; set; }
+        [Key(0)] public string? Coordinates { get; set; }
+        [Key(1)] public string? Target { get; set; }
+        [Key(2)] public string Value { get; set; }
+        [Key(3)] public int Amount { get; set; } = 1;
+        [Key(4)] public ECommandType Type { get; set; }
+        [Key(5)] public bool CheckTargetOnline { get; set; }
 
         public BotCommandValue() { }
-
-        public BotCommandValue(bool checkTargetOnline)
-        {
-            CheckTargetOnline = checkTargetOnline;
-        }
+        public BotCommandValue(bool checkTargetOnline) => CheckTargetOnline = checkTargetOnline;
     }
 
+    [MessagePackObject]
     public class BotCommand
     {
-        public List<BotCommandValue> Values { get; set; } = [];
-        public BotCommand Extra { get; set; }
-        public string Data { get; set; }
+        [Key(0)] public List<BotCommandValue> Values { get; set; } = [];
+        [Key(1)] public BotCommand Extra { get; set; }
+        [Key(2)] public string Data { get; set; }
 
         public BotCommand() { }
 
@@ -103,6 +102,15 @@ namespace RagnarokBotWeb.Application
             {
                 Value = command,
                 Type = ECommandType.Command
+            });
+            return this;
+        }
+
+        public BotCommand Reconnect()
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.Reconnect
             });
             return this;
         }

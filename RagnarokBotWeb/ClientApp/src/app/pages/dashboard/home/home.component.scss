@@ -2,12 +2,14 @@
     flex-grow: 0 !important;
     width: fit-content;
     max-height: 436px !important;
+    text-align: center;
     overflow-y: auto;
 }
 
 .graph-card {
     flex-grow: 1 !important;
     width: auto;
+    text-align: center;
     max-height: 436px !important;
     max-width: 400px !important;
 }

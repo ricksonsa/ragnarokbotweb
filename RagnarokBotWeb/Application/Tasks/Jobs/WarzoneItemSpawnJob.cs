@@ -51,7 +51,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 var warzoneItem = WarzoneRandomSelector.SelectItem(warzone);
                 var spawnPoint = WarzoneRandomSelector.SelectSpawnPoint(warzone);
 
-                var command = new BotCommand();
+                var command = new Shared.Models.BotCommand();
 
                 // coordinates needs double quote
                 var coordinates = spawnPoint.Teleport.Coordinates.Contains("{") ? $"\"{spawnPoint.Teleport.Coordinates}\"" : spawnPoint.Teleport.Coordinates;
@@ -62,7 +62,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     command.Say(warzone.ResolveDeliveryText(warzoneItem, spawnPoint));
                 }
 
-                _cacheService.EnqueueCommand(server.Id, command);
+                await _botService.SendCommand(server.Id, command);
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }

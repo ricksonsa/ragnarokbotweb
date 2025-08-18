@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Entities;
@@ -18,7 +19,8 @@ public class KillLogJob(
     IDiscordService discordService,
     IFileService fileService,
     IFtpService ftpService,
-    ICacheService cacheService
+    ICacheService cacheService,
+    BotSocketServer botSocketServer
 ) : AbstractJob(scumServerRepository), IJob
 {
     public async Task Execute(IJobExecutionContext context)
@@ -80,7 +82,7 @@ public class KillLogJob(
                     if (server.CoinDeathPenaltyAmount > 0 && !kill.IsSameSquad)
                         await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
 
-                    HandleAnnounceText(cacheService, server, kill); // Announce kill in game
+                    await HandleAnnounceText(botSocketServer, server, kill); // Announce kill in game
                 }
 
                 logger.LogDebug("Adding new kill entry: {Killer} -> {Target}", kill.KillerName, kill.TargetName);
@@ -119,7 +121,7 @@ public class KillLogJob(
         return false;
     }
 
-    private static void HandleAnnounceText(ICacheService cacheService, ScumServer server, Kill kill)
+    private static async Task HandleAnnounceText(BotSocketServer botSocketServer, ScumServer server, Kill kill)
     {
         if (!string.IsNullOrEmpty(server.KillAnnounceText))
         {
@@ -130,7 +132,7 @@ public class KillLogJob(
                 .Replace("{weapon}", kill.DisplayWeapon)
                 .Replace("{sector}", kill.Sector);
 
-            cacheService.EnqueueCommand(server.Id, new BotCommand().Say(msg));
+            await botSocketServer.SendCommandAsync(server.Id, new Shared.Models.BotCommand().Say(msg));
         }
     }
 

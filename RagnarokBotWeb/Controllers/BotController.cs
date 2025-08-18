@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RagnarokBotWeb.Application;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -27,29 +26,19 @@ namespace RagnarokBotWeb.Controllers
             return Ok(await Task.Run(_botService.GetBots));
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterBot(string guid)
+        [HttpGet("count")]
+        public IActionResult GetCount()
         {
-            await _botService.RegisterBot(new Guid(guid));
-            return Ok();
+            return Ok(new
+            {
+                Value = _botService.GetConnectedBots().Count
+            });
         }
 
         [HttpGet("guid/{guid}")]
         public async Task<IActionResult> GetBotByGuid(string guid)
         {
             return Ok(await _botService.FindBotByGuid(new Guid(guid)));
-        }
-
-        [HttpGet("commands")]
-        public async Task<IActionResult> GetReadyCommands(string guid)
-        {
-            return Ok(await _botService.GetCommand(new Guid(guid)));
-        }
-
-        [HttpGet("commands/peek")]
-        public IActionResult PeekReadyCommands(long serverId)
-        {
-            return Ok(_botService.PeekCommand(serverId));
         }
 
         [HttpPost("players")]
@@ -73,24 +62,10 @@ namespace RagnarokBotWeb.Controllers
             return Ok();
         }
 
-        [HttpPost("commands")]
-        public IActionResult CreateCommand(BotCommand command)
-        {
-            _botService.PutCommand(command);
-            return Ok();
-        }
-
         [HttpPatch("deliveries/{id}/confirm")]
         public async Task<IActionResult> ConfirmDelivery(long id)
         {
             await _botService.ConfirmDelivery(id);
-            return Ok();
-        }
-
-        [HttpDelete("unregister")]
-        public IActionResult UnregisterBot(string guid)
-        {
-            _botService.DisconnectBot(new Guid(guid));
             return Ok();
         }
     }

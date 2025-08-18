@@ -6,13 +6,13 @@
 		<Nullable>enable</Nullable>
 		<UseWindowsForms>true</UseWindowsForms>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<ApplicationIcon>bot2.ico</ApplicationIcon>
+		<ApplicationIcon>thescumbot.ico</ApplicationIcon>
 		<PackageProjectUrl>www.thescumbot.com</PackageProjectUrl>
-		<PackageIcon>bot2.png</PackageIcon>
+		<PackageIcon>thescumbot.png</PackageIcon>
 
-		<Version>1.0.1.0</Version>
-		<AssemblyVersion>1.0.1.0</AssemblyVersion>
-		<FileVersion>1.0.1.0</FileVersion>
+		<Version>1.0.3.0</Version>
+		<AssemblyVersion>1.0.3.0</AssemblyVersion>
+		<FileVersion>1.0.3.0</FileVersion>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -24,7 +24,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="bot2.ico" />
+		<Content Include="thescumbot.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -45,7 +45,11 @@
 			<PackagePath>\</PackagePath>
 		</None>
 		<None Update="TheSCUMBot.ini">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Update="thescumbot.png">
+		  <Pack>True</Pack>
+		  <PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
 

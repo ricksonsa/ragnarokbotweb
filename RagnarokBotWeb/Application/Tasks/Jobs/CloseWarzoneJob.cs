@@ -8,16 +8,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
     public class CloseWarzoneJob : AbstractJob, IJob
     {
         private readonly ILogger<CloseWarzoneJob> _logger;
-        private readonly IBotService _botService;
         private readonly IWarzoneService _warzoneService;
 
         public CloseWarzoneJob(
           IScumServerRepository scumServerRepository,
-          IBotService botService,
           ILogger<CloseWarzoneJob> logger,
           IWarzoneService warzoneService) : base(scumServerRepository)
         {
-            _botService = botService;
             _logger = logger;
             _warzoneService = warzoneService;
         }

@@ -1,4 +1,5 @@
 ﻿using Shared.Enums;
+using Shared.Models;
 using System.Text;
 
 namespace RagnarokBotClient
@@ -23,11 +24,11 @@ namespace RagnarokBotClient
                 switch (commandValue.Type)
                 {
                     case ECommandType.SimpleDelivery:
-                        tasks.Add(() => _scumManager.SpawnItem(commandValue.Value!, commandValue.Amount, commandValue.Target!));
+                        tasks.Add(() => HandleDelivery(commandValue));
                         break;
 
                     case ECommandType.MagazineDelivery:
-                        tasks.Add(() => _scumManager.SpawnItem(commandValue.Target!, commandValue.Amount, int.Parse(commandValue.Value), commandValue.Coordinates!));
+                        tasks.Add(() => HandleMagazineDelivery(commandValue));
                         break;
 
                     case ECommandType.Kick:
@@ -91,6 +92,37 @@ namespace RagnarokBotClient
             }
 
             return tasks;
+        }
+
+        private async Task HandleMagazineDelivery(BotCommandValue commandValue)
+        {
+            int remaining = commandValue.Amount;
+
+            while (remaining > 0)
+            {
+                int batch = Math.Min(10, remaining);
+
+                await _scumManager.SpawnItem(
+                    commandValue.Target!,
+                    batch,
+                    int.Parse(commandValue.Value),
+                    commandValue.Coordinates!
+                );
+
+                remaining -= batch;
+            }
+        }
+
+        private async Task HandleDelivery(BotCommandValue commandValue)
+        {
+            int remaining = commandValue.Amount;
+
+            while (remaining > 0)
+            {
+                int batch = Math.Min(10, remaining);
+                await _scumManager.SpawnItem(commandValue.Value!, batch, commandValue.Target!);
+                remaining -= batch;
+            }
         }
 
         private async Task HandleListPlayers()

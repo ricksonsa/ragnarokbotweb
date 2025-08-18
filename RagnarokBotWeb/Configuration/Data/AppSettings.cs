@@ -9,6 +9,7 @@
         public string TwentySecondsCron { get; set; }
         public string BaseUrl { get; set; }
         public string PayPalUrl { get; set; }
+        public int SocketServerPort { get; set; }
     }
 
     public class SecuritySettings

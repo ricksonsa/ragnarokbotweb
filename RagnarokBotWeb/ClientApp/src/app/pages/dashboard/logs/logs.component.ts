@@ -98,7 +98,7 @@ export class LogsComponent implements OnInit, OnDestroy {
         this.loadViolations(this.selectedDateFrom, this.selectedDateTo);
         break;
       case 'Chat':
-        this.loadViolations(this.selectedDateFrom, this.selectedDateTo);
+        this.loadChat(this.selectedDateFrom, this.selectedDateTo);
         break;
     }
   }

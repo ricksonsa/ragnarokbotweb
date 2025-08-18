@@ -1,6 +1,6 @@
-﻿using RagnarokBotWeb.Application.Models;
+﻿using RagnarokBotWeb.Application.BotServer;
+using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
-using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Handlers
@@ -9,13 +9,16 @@ namespace RagnarokBotWeb.Application.Handlers
     {
         private readonly ScumServer _server;
         private readonly IScumServerRepository _scumServerRepository;
-        private readonly ICacheService _cacheService;
+        private readonly BotSocketServer _socketServer;
 
-        public DiscordCommandHandler(ScumServer server, IScumServerRepository scumServerRepository, ICacheService cacheService)
+        public DiscordCommandHandler(
+            ScumServer server,
+            IScumServerRepository scumServerRepository,
+            BotSocketServer socketServer)
         {
             _server = server;
             _scumServerRepository = scumServerRepository;
-            _cacheService = cacheService;
+            _socketServer = socketServer;
         }
 
         public async Task ExecuteAsync(ChatTextParseResult value)
@@ -25,7 +28,7 @@ namespace RagnarokBotWeb.Application.Handlers
 
             if (!string.IsNullOrEmpty(server.Guild.DiscordLink))
             {
-                _cacheService.EnqueueCommand(server.Id, new BotCommand().Say(server.Guild.DiscordLink));
+                await _socketServer.SendCommandAsync(server.Id, new Shared.Models.BotCommand().Say(server.Guild.DiscordLink));
                 value.Post = false;
             }
         }

@@ -1,4 +1,5 @@
 using Quartz;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
@@ -23,6 +24,7 @@ public class ChatJob(
     IOrderService orderService,
     IDiscordService discordService,
     ICacheService cacheService,
+    BotSocketServer botSocket,
     IFtpService ftpService,
     DiscordChannelPublisher publisher
 ) : AbstractJob(scumServerRepository), IJob
@@ -53,6 +55,7 @@ public class ChatJob(
                 {
                     var chatCommandHandler = new ExclamationCommandHandlerFactory(
                    server,
+                   botSocket,
                    cacheService,
                    scumServerRepository,
                    playerRespository,
@@ -72,17 +75,7 @@ public class ChatJob(
                     if (match.Success)
                     {
                         var guid = new Guid(match.Value);
-                        var bot = cacheService.GetConnectedBots(server.Id)
-                          .Where(bot => bot.Key == guid)
-                          .Select(b => b.Value)
-                          .FirstOrDefault();
-
-                        if (bot is not null)
-                        {
-                            bot.SteamId = parsed.SteamId;
-                            bot.LastPinged = DateTime.UtcNow;
-                            cacheService.GetConnectedBots(server.Id)[guid] = bot;
-                        }
+                        botSocket.BotPingUpdate(server.Id, guid, parsed.SteamId);
                     }
                     else
                     {
@@ -93,7 +86,7 @@ public class ChatJob(
                 {
                     if (!IsCommand(parsed)
                         && IsServerAllowed(server, parsed)
-                        && !IsBotSteamId(cacheService, server, parsed)
+                        && !IsBotSteamId(botSocket, server, parsed)
                         && parsed.Post)
                     {
                         await publisher.Publish(server,
@@ -123,8 +116,8 @@ public class ChatJob(
             || parsed.ChatType == "Local" && server.SendLocalChatToDiscord;
     }
 
-    private static bool IsBotSteamId(ICacheService cacheService, ScumServer server, ChatTextParseResult parsed)
+    private static bool IsBotSteamId(BotSocketServer botSocket, ScumServer server, ChatTextParseResult parsed)
     {
-        return cacheService.GetConnectedBots(server.Id).Any(b => b.Value.SteamId == parsed.SteamId);
+        return botSocket.GetBots(server.Id).Any(bot => bot.SteamId == parsed.SteamId);
     }
 }

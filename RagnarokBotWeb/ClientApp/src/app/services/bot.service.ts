@@ -9,6 +9,10 @@ export class BotService {
     constructor(private readonly http: HttpClient) { }
 
     getBots() {
-        return this.http.get<any[]>(`${environment.apiUrl}/api/bots`);
+        return this.http.get<{ value: number }>(`${environment.apiUrl}/api/bots`);
+    }
+
+    getBotCount() {
+        return this.http.get<{ value: number }>(`${environment.apiUrl}/api/bots/count`);
     }
 }

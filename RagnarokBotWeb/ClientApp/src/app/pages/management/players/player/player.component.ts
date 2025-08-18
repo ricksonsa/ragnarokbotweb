@@ -357,7 +357,7 @@ export class PlayerComponent implements OnInit {
   addMoneyValue = 0;
   addMoney() {
     this.addingLoader = true;
-    this.playerService.updateFame(this.playerForm.value.id, this.addMoneyValue)
+    this.playerService.updateMoney(this.playerForm.value.id, this.addMoneyValue)
       .subscribe({
         next: (player) => {
           this.addingMoney = false;

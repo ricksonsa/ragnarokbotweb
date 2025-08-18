@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
+using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
@@ -20,7 +21,8 @@ public class GamePlayJob(
     IFtpService ftpService,
     IFileService fileService,
     IDiscordService discordService,
-    ICacheService cache
+    ICacheService cache,
+    BotSocketServer socketServer
 ) : AbstractJob(scumServerRepository), IJob
 {
 
@@ -33,7 +35,7 @@ public class GamePlayJob(
             var processor = new ScumFileProcessor(server, unitOfWork);
             await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), ftpService, context.CancellationToken))
             {
-                if (IsCompliant()) await HandleArmedTrap(unitOfWork, cache, server, line, logger);
+                if (IsCompliant()) await HandleArmedTrap(socketServer, unitOfWork, cache, server, line, logger);
                 await HandleLockpick(unitOfWork, discordService, fileService, server, line);
                 await HandleBunkerState(bunkerService, server, line);
             }
@@ -106,7 +108,7 @@ public class GamePlayJob(
         }
     }
 
-    private static async Task HandleArmedTrap(IUnitOfWork unitOfWork, ICacheService cache, ScumServer server, string line, ILogger<GamePlayJob> logger)
+    private static async Task HandleArmedTrap(BotSocketServer socketServer, IUnitOfWork unitOfWork, ICacheService cache, ScumServer server, string line, ILogger<GamePlayJob> logger)
     {
         if (line.Contains("[LogTrap] Armed"))
         {
@@ -131,10 +133,10 @@ public class GamePlayJob(
                     if (enforcePenality || Math.Round(new ScumCoordinate(flag!.X, flag.Y, flag.Z).DistanceTo(trapCoordinate)) > 7020)
                     {
                         var msg = $"{trapLog.User} armed a mine outside flag area!";
-                        var command = new BotCommand()
+                        var command = new Shared.Models.BotCommand()
                             .Teleport(trapLog.SteamId, trapCoordinate.ToString(), checkTargetOnline: true);
 
-                        cache.EnqueueCommand(server.Id, command);
+                        await socketServer.SendCommandAsync(server.Id, command);
 
                         if (server.CoinReductionPerInvalidMineKill > 0)
                         {

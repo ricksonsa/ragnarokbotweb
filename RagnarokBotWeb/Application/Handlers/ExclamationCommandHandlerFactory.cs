@@ -1,4 +1,5 @@
-﻿using RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Application.BotServer;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -10,6 +11,7 @@ namespace RagnarokBotWeb.Application.Handlers
 
         public ExclamationCommandHandlerFactory(
             ScumServer server,
+            BotSocketServer botSocketServer,
             ICacheService cacheService,
             IScumServerRepository scumServerRepository,
             IPlayerRepository playerRepository,
@@ -20,7 +22,7 @@ namespace RagnarokBotWeb.Application.Handlers
             _handlers = new()
             {
                { "!welcomepack", new WelcomePackCommandHandler(playerRepository, playerRegisterRepository, discordService, orderService) },
-               { "!discord", new DiscordCommandHandler(server, scumServerRepository, cacheService) },
+               { "!discord", new DiscordCommandHandler(server, scumServerRepository, botSocketServer) },
                { "!orderconfirm", new ConfirmOrderCommand(orderService) }
             };
         }

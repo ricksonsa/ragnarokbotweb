@@ -1,4 +1,5 @@
 ﻿using RagnarokBotWeb.Domain.Enums;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Application.Models
 {

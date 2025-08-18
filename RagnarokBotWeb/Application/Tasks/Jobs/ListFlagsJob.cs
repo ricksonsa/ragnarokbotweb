@@ -2,11 +2,11 @@
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
     public class ListFlagsJob(
-     ICacheService cacheService,
      ILogger<ListFlagsJob> logger,
      IBotService botService,
      IScumServerRepository scumServerRepository) : AbstractJob(scumServerRepository), IJob
@@ -20,13 +20,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 long serverId = server.Id;
 
                 if (!botService.IsBotOnline(serverId)) return;
-
-                if (!cacheService.GetCommandQueue(serverId).Any(command => command.Values.Any(cv => cv.Type == Shared.Enums.ECommandType.SimpleDelivery)))
-                {
-                    var command = new BotCommand();
-                    command.ListFlags();
-                    cacheService.EnqueueCommand(serverId, command);
-                }
+                await botService.SendCommand(serverId, new BotCommand().ListFlags());
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
