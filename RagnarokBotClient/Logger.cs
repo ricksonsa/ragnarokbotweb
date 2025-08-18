@@ -7,22 +7,25 @@ namespace RagnarokBotClient
         public static event EventHandler<string> OnLogging;
         private static string m_exePath = string.Empty;
 
-        public static void LogWrite(string logMessage)
+        public static void LogWrite(string logMessage, bool write = false)
         {
             m_exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            if (!File.Exists(m_exePath + "\\" + "ragnarokbot_debug.txt"))
+            if (!File.Exists(m_exePath + "\\" + "log.txt"))
             {
-                File.Create(m_exePath + "\\" + "ragnarokbot_debug.txt");
+                File.Create(m_exePath + "\\" + "log.txt");
             }
 
             try
             {
-                using (StreamWriter w = File.AppendText(m_exePath + "\\" + "ragnarokbot_debug.txt"))
+                if (write)
                 {
-                    AppendLog(logMessage, w);
-                    OnLogging?.Invoke(null, logMessage);
+                    using (StreamWriter w = File.AppendText(m_exePath + "\\" + "log.txt"))
+                    {
+                        AppendLog(logMessage, w);
+                    }
                 }
+                OnLogging?.Invoke(null, logMessage);
             }
             catch (Exception ex)
             {

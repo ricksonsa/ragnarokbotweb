@@ -24,10 +24,11 @@ namespace RagnarokBotClient
                 using StreamWriter sw = new StreamWriter(ms);
                 sw.WriteLine("[TheSCUMBot]");
                 sw.WriteLine("BotServerEndpoint=api.thescumbot.com");
+                sw.WriteLine("BotServerPort=9000");
                 sw.WriteLine("ServerEndpoint=https://api.thescumbot.com:8082");
                 sw.WriteLine("OpenChatKey=t");
                 sw.WriteLine("MsDelayBetweenInteractions=0");
-                sw.WriteLine("TimeToLoadWorldSeconds=5");
+                sw.WriteLine("TimeToLoadWorldSeconds=10");
             }
         }
 

@@ -60,6 +60,13 @@
       </nz-form-item>
 
       <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Joined Date</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <p style="margin: 0;"><b>{{ playerForm.value.createDate | date: 'fullDate' }}</b></p>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Registered on Discord</nz-form-label>
         <nz-form-control [nzSpan]="24">
           <nz-icon nz-popover [nzPopoverContent]="playerForm.value.discordId ? 'Yes' : 'No'" style="font-size: 18px;"
@@ -108,13 +115,13 @@
         <nz-form-control [nzSpan]="24">
           <nz-icon *ngIf="!playerForm.value.isVip" nz-popover nzPopoverContent="No" style="font-size: 18px;"
             nzType="close" class="danger"></nz-icon>
-          <p style="margin: 0;" nzType="secondary"
-            *ngIf="playerForm.value.isVip && playerForm.value.vipExpiresAt" nz-typography>
+          <p style="margin: 0;" nzType="secondary" *ngIf="playerForm.value.isVip && playerForm.value.vipExpiresAt"
+            nz-typography>
             Until {{date(playerForm.value.vipExpiresAt) | date: 'fullDate'}}
           </p>
 
-          <p style="margin: 0;" nzType="secondary"
-            *ngIf="playerForm.value.isVip && !playerForm.value.vipExpiresAt" nz-typography>Forever</p>
+          <p style="margin: 0;" nzType="secondary" *ngIf="playerForm.value.isVip && !playerForm.value.vipExpiresAt"
+            nz-typography>Forever</p>
         </nz-form-control>
         <button nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove {{ playerForm.value.name }}'s vip?"
           (nzOnConfirm)="confirmVipRemove(playerForm.value.id)" nzPopconfirmPlacement="topLeft" [nzOkText]="'Yes'"
@@ -235,7 +242,8 @@
     <p nz-typography nzType="secondary">Players added to whitelist will have priority on joining the server, and
       the game will kick a non whitelisted players when it's full.</p>
     <br>
-    <nz-select nzShowSearch [(ngModel)]="selectedDiscordId" style="width: 100%;" nzPlaceHolder="Select the discord role">
+    <nz-select nzShowSearch [(ngModel)]="selectedDiscordId" style="width: 100%;"
+      nzPlaceHolder="Select the discord role">
       <nz-option *ngFor="let role of discordRoles" [nzValue]="role.discordId" [nzLabel]="role.name"></nz-option>
     </nz-select>
     <p nz-typography nzType="secondary">The selected role will be applied to the player on discord and will be

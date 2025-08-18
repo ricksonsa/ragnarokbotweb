@@ -101,7 +101,8 @@ export class DiscordComponent implements OnInit, OnDestroy {
       "mine-kill": [],
       "lockpick-alert": [],
       "admin-alert": [],
-      "lockpick-admin": []
+      "lockpick-admin": [],
+      "wallet-balance": []
     });
   }
   ngOnDestroy(): void {

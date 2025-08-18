@@ -17,8 +17,7 @@ namespace RagnarokBotWeb.HostedServices
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.Log(LogLevel.Information, "Initializing BotSocketServer");
-            _ = Task.Run(() => _server.StartAsync(stoppingToken), stoppingToken);
-            return Task.CompletedTask;
+            return _server.StartAsync(stoppingToken);
         }
     }
 }

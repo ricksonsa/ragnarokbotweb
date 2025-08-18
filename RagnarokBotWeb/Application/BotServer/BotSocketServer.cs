@@ -14,29 +14,39 @@ namespace RagnarokBotWeb.Application.BotServer
     {
         private readonly TcpListener _listener;
         private readonly ILogger<BotSocketServer> _logger;
-        private readonly Timer _timer;
         private readonly ConcurrentDictionary<long, ConcurrentDictionary<string, BotUser>> _bots = new();
 
         public BotSocketServer(ILogger<BotSocketServer> logger, IOptions<AppSettings> options)
         {
             _listener = new TcpListener(IPAddress.Any, options.Value.SocketServerPort);
             _logger = logger;
-            _timer = new Timer(TimerCallback, null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2));
         }
 
-        private void TimerCallback(object? state)
+        private async Task PingLoop(CancellationToken token)
         {
-            var now = DateTime.UtcNow;
-
-            foreach (var serverPair in _bots)
+            while (!token.IsCancellationRequested)
             {
-                foreach (var botPair in serverPair.Value)
+                await Task.Delay(TimeSpan.FromMinutes(8), token);
+
+                try
                 {
-                    var bot = botPair.Value;
-                    var diff = (now - bot.LastInteracted).TotalMinutes;
-                    if (diff >= 5)
-                        DisconnectBot(bot);
+                    var now = DateTime.UtcNow;
+
+                    foreach (var serverPair in _bots)
+                    {
+                        foreach (var botPair in serverPair.Value)
+                        {
+                            var bot = botPair.Value;
+                            if (!botPair.Value.LastPinged.HasValue || (now - bot.LastPinged!.Value).TotalMinutes >= 8)
+                            {
+                                await SendCommandAsync(serverPair.Key, bot.Guid.ToString(), new BotCommand().Reconnect());
+                                DisconnectBot(bot);
+                            }
+                        }
+                    }
                 }
+                catch (Exception)
+                { }
             }
         }
 
@@ -45,78 +55,173 @@ namespace RagnarokBotWeb.Application.BotServer
             if (_bots.TryGetValue(bot.ServerId, out var botsForServer))
             {
                 botsForServer.TryRemove(bot.Guid.ToString(), out _);
+                _logger.LogInformation("Disconnecting Bot {Bot}", bot);
             }
 
-            bot.TcpClient?.Dispose();
-            _logger.LogInformation("Disconnecting Bot {Bot}", bot);
+            try
+            {
+                bot.TcpClient?.Dispose();
+            }
+            catch (Exception)
+            { }
+        }
+
+        public async Task SendCommandAsync(long serverId, BotCommand command)
+        {
+            if (!_bots.TryGetValue(serverId, out var botsForServer)) return;
+
+            var bot = botsForServer.Values
+                .Where(b => b.TcpClient?.Connected == true)
+                .OrderBy(b => b.LastCommand ?? DateTime.MinValue)
+                .FirstOrDefault();
+
+            if (bot != null)
+            {
+                try
+                {
+                    await SendLengthedMessage(command, bot);
+                    bot.LastCommand = DateTime.UtcNow;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send command to bot {Bot}", bot);
+                    DisconnectBot(bot);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("No connected bots found for server {ServerId}", serverId);
+            }
         }
 
         private static async Task SendLengthedMessage(BotCommand command, BotUser bot)
         {
             var body = MessagePackSerializer.Serialize(command);
             var lengthPrefix = BitConverter.GetBytes(body.Length);
-            await bot.TcpClient!.GetStream().WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
-            await bot.TcpClient!.GetStream().WriteAsync(body, 0, body.Length);
+
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(lengthPrefix);
+
+            var stream = bot.TcpClient!.GetStream();
+            await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
+            await stream.WriteAsync(body, 0, body.Length);
+            await stream.FlushAsync();
         }
 
         private async Task HandleClientAsync(TcpClient client, CancellationToken token)
         {
             using var stream = client.GetStream();
-            var buffer = new byte[1024];
 
-            int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, token);
-            if (bytesRead == 0) return;
+            BotUser? bot = null;
 
-            var data = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
-            var parts = data.Split(':');
-            if (parts.Length < 2) { client.Dispose(); return; }
-
-            if (!long.TryParse(parts[0], out var serverId)) return;
-
-            var guidString = parts[1];
-            if (!Guid.TryParse(guidString, out var guid)) return;
-
-            var bot = new BotUser(guid)
+            try
             {
-                TcpClient = client,
-                ServerId = serverId
-            };
+                // --- Handshake ---
+                var handshake = await ReceiveStringAsync(stream, token);
+                if (string.IsNullOrWhiteSpace(handshake)) return;
 
-            var serverBots = _bots.GetOrAdd(serverId, _ => new ConcurrentDictionary<string, BotUser>());
-            serverBots[guidString] = bot;
+                var parts = handshake.Split(':', 2);
+                if (parts.Length < 2) return;
+                if (!long.TryParse(parts[0], out var serverId)) return;
+                if (!Guid.TryParse(parts[1], out var guid)) return;
 
-            _logger.LogInformation("Connecting bot {Bot} server {Server}", bot, serverId);
-
-            while (!token.IsCancellationRequested)
-            {
-                try
+                bot = new BotUser(guid)
                 {
-                    bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, token);
-                    if (bytesRead == 0) break; // disconnected
+                    TcpClient = client,
+                    ServerId = serverId,
+                    LastInteracted = DateTime.UtcNow
+                };
 
-                    var message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    if (message.Contains("ACK"))
+                var serverBots = _bots.GetOrAdd(serverId, _ => new ConcurrentDictionary<string, BotUser>());
+                serverBots[guid.ToString()] = bot;
+
+                _logger.LogInformation("Bot {Guid} connected", guid);
+
+                // --- Message loop ---
+                while (!token.IsCancellationRequested && client.Connected)
+                {
+                    var line = await ReceiveStringAsync(stream, token);
+                    if (string.IsNullOrEmpty(line)) break;
+
+                    if (line.StartsWith("ACK:", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (serverBots.TryGetValue(guidString, out var existingBot))
+                        var ackParts = line.Split(':', 3);
+                        if (ackParts.Length == 3 &&
+                            long.TryParse(ackParts[1], out long ackServerId) &&
+                            Guid.TryParse(ackParts[2], out var ackGuid))
                         {
-                            existingBot.LastInteracted = DateTime.UtcNow;
-                            serverBots[guidString] = existingBot;
+                            var serverBotsAck = _bots.GetOrAdd(
+                                ackServerId,
+                                _ => new ConcurrentDictionary<string, BotUser>());
+
+                            serverBotsAck.AddOrUpdate(
+                                ackGuid.ToString(),
+                                _ =>
+                                {
+                                    if (bot is not null) DisconnectBot(bot);
+                                    var newBot = new BotUser(ackGuid)
+                                    {
+                                        TcpClient = client,
+                                        ServerId = ackServerId,
+                                        LastInteracted = DateTime.UtcNow
+                                    };
+                                    _logger.LogInformation("Bot {Guid} connected", ackGuid);
+                                    return newBot;
+                                },
+                                (_, existingBot) =>
+                                {
+                                    existingBot.LastInteracted = DateTime.UtcNow;
+                                    _logger.LogDebug("Bot {Guid} ACK updated", ackGuid);
+                                    return existingBot;
+                                });
                         }
-                        _logger.LogDebug("Updating connected bot {Bot} server {Server}", bot, serverId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Unknown message from bot: {Msg}", line);
                     }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Client error for bot {Bot}", bot);
-                    break;
-                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Client error");
+            }
+            finally
+            {
+                if (bot != null) DisconnectBot(bot);
+                client.Dispose();
+            }
+        }
+
+        private async Task<string?> ReceiveStringAsync(NetworkStream stream, CancellationToken token)
+        {
+            var lengthBuffer = new byte[4];
+            int read = await stream.ReadAsync(lengthBuffer, 0, 4, token);
+            if (read == 0) return null;
+
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(lengthBuffer);
+
+            int length = BitConverter.ToInt32(lengthBuffer, 0);
+            if (length <= 0) return null;
+
+            var buffer = new byte[length];
+            int offset = 0;
+            while (offset < length)
+            {
+                int chunk = await stream.ReadAsync(buffer, offset, length - offset, token);
+                if (chunk == 0) return null; // disconnected
+                offset += chunk;
             }
 
-            DisconnectBot(bot);
+            return Encoding.UTF8.GetString(buffer);
         }
+
 
         public async Task StartAsync(CancellationToken token = default)
         {
+            _ = Task.Run(() => PingLoop(token), token);
+
             while (!token.IsCancellationRequested)
             {
                 try
@@ -158,30 +263,6 @@ namespace RagnarokBotWeb.Application.BotServer
                 }
             }
         }
-
-        public async Task SendCommandAsync(long serverId, BotCommand command)
-        {
-            if (!_bots.TryGetValue(serverId, out var botsForServer)) return;
-
-            var bot = botsForServer.Values
-                .Where(b => b.LastPinged.HasValue)
-                .OrderBy(b => b.LastCommand)
-                .FirstOrDefault();
-
-            if (bot != null && bot.TcpClient?.Connected == true)
-            {
-                try
-                {
-                    await SendLengthedMessage(command, bot);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to send command to bot {Bot}", bot);
-                    DisconnectBot(bot);
-                }
-            }
-        }
-
 
         public async Task SendCommandAsync(long serverId, string guid, BotCommand command)
         {

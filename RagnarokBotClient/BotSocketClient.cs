@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿// ===== FIXED CLIENT =====
+using MessagePack;
 using RagnarokBotClient;
 using Shared.Models;
 using System.Net.Sockets;
@@ -9,13 +10,16 @@ public class BotSocketClient
     private readonly string _host;
     private readonly int _port;
     private TcpClient? _client;
-    private string _botId;
+    private string _botId = string.Empty;
     private readonly long _serverId;
+    private readonly object _botIdLock = new object();
 
     private System.Windows.Forms.Timer _keepAliveTimer;
 
-    public event EventHandler<BotCommand> OnMessageReceived;
-    public event EventHandler OnPinged;
+    public string BotId => _botId;
+
+    public event EventHandler<BotCommand>? OnMessageReceived;
+    public event EventHandler? OnPinged;
 
     public BotSocketClient(string host, int port, long serverId)
     {
@@ -29,31 +33,36 @@ public class BotSocketClient
 
     private async void KeepAliveTimer_Tick(object? sender, EventArgs e)
     {
-        await SendMessageAsync($"{_serverId}:{_botId}");
+        if (_client?.Connected == true)
+        {
+            await SendStringMessageAsync(_client.GetStream(), $"{_serverId}:{_botId}");
+        }
     }
 
-    public async Task ConnectAsync(string botId, CancellationToken token = default)
+    public async Task ConnectAsync(CancellationToken token = default)
     {
-        _botId = botId;
-
         while (!token.IsCancellationRequested)
         {
             try
             {
+                lock (_botIdLock)
+                {
+                    _botId = Guid.NewGuid().ToString();
+                }
                 _client = new TcpClient();
                 await _client.ConnectAsync(_host, _port, token);
 
                 Logger.LogWrite("Connected to server");
 
-                // send bot ID immediately
-                await SendMessageAsync($"{_serverId}:{_botId}");
+                // send bot ID immediately (handshake) - use string message
+                await SendStringMessageAsync(_client.GetStream(), $"{_serverId}:{_botId}", token);
 
                 _ = ListenAsync(token); // fire-and-forget listen loop
                 return; // exit connect loop on success
             }
             catch (Exception ex) when (!token.IsCancellationRequested)
             {
-                Logger.LogWrite($"Connection failed: {ex.Message}. Retrying in 5s...");
+                Logger.LogWrite($"Connection failed: {ex.Message}. Retrying in 10s...");
                 await Task.Delay(TimeSpan.FromSeconds(10), token);
             }
         }
@@ -69,17 +78,28 @@ public class BotSocketClient
         {
             using var stream = _client.GetStream();
 
-            while (!token.IsCancellationRequested)
+            while (!token.IsCancellationRequested && _client.Connected)
             {
-                var command = await ReceiveMessage(stream, token);
+                // Try to receive MessagePack data (commands from server)
+                var command = await ReceiveMessagePackAsync(stream, token);
                 if (command == null)
                 {
-                    Logger.LogWrite("Disconnected from server.");
+                    Logger.LogWrite("Received null command or disconnected from server.");
                     break; // trigger reconnect
                 }
 
-                Logger.LogWrite("Command received.");
-                await SendMessageAsync(stream, $"ACK:{_botId}", token);
+                // Check if it's a reconnect command
+                if (command.Values != null && command.Values.Any(cmd => cmd.Type == Shared.Enums.ECommandType.Reconnect))
+                {
+                    Logger.LogWrite("Received reconnect command from server.");
+                    OnMessageReceived?.Invoke(this, command);
+                    break; // trigger reconnect
+                }
+
+                // Send ACK as string message
+                await SendStringMessageAsync(stream, $"ACK:{_serverId}:{_botId}", token);
+
+                Logger.LogWrite("Command received and ACK sent.");
                 OnMessageReceived?.Invoke(this, command);
             }
         }
@@ -91,24 +111,22 @@ public class BotSocketClient
         {
             _keepAliveTimer.Stop();
 
-            // Dispose old client
             try { _client?.Close(); } catch { }
             _client = null;
 
-            // Try reconnect
             await ReconnectLoopAsync(token);
         }
     }
 
     private async Task ReconnectLoopAsync(CancellationToken token)
     {
-        Logger.LogWrite("Attempting to reconnect...");
+        if (!token.IsCancellationRequested) Logger.LogWrite("Attempting to reconnect...");
 
         while (!token.IsCancellationRequested)
         {
             try
             {
-                await ConnectAsync(_botId, token);
+                await ConnectAsync(token);
                 Logger.LogWrite("Reconnected successfully.");
                 return;
             }
@@ -120,79 +138,67 @@ public class BotSocketClient
         }
     }
 
-    public async Task HandleServerMessage(NetworkStream stream, CancellationToken token)
-    {
-        var command = await ReceiveMessage(stream, token);
-        if (command != null)
-        {
-            Logger.LogWrite($"Command received.");
-
-            // send ACK back
-            var now = DateTime.UtcNow;
-            await SendMessageAsync(stream, $"ACK:{_botId}");
-            OnMessageReceived?.Invoke(this, command);
-        }
-    }
-
-    public async Task<BotCommand?> ReceiveMessage(NetworkStream stream, CancellationToken token)
+    // Receive MessagePack serialized BotCommand
+    public async Task<BotCommand?> ReceiveMessagePackAsync(NetworkStream stream, CancellationToken token)
     {
         try
         {
-            // Read length prefix (4 bytes)
             var lengthBuffer = new byte[4];
             int read = await stream.ReadAsync(lengthBuffer, 0, 4, token);
-            if (read == 0) return null; // disconnected
+            if (read == 0) return null;
+
+            // Server sends big-endian length, so reverse if we're little-endian
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(lengthBuffer);
 
             int length = BitConverter.ToInt32(lengthBuffer, 0);
-            if (length <= 0) return null;
+            if (length <= 0 || length > 1024 * 1024) // Add reasonable size limit
+            {
+                Logger.LogWrite($"Invalid message length: {length}");
+                return null;
+            }
 
-            // Read full message
             var data = new byte[length];
             int offset = 0;
             while (offset < length)
             {
                 int chunk = await stream.ReadAsync(data, offset, length - offset, token);
-                if (chunk == 0) return null; // disconnected mid-message
+                if (chunk == 0) return null;
                 offset += chunk;
             }
 
-            // Deserialize using MessagePack
             return MessagePackSerializer.Deserialize<BotCommand>(data);
         }
         catch (OperationCanceledException)
         {
-            return null; // clean cancellation
+            return null;
         }
         catch (Exception ex)
         {
-            // optionally log ex
+            Logger.LogWrite($"Receive MessagePack error: {ex.Message}");
             return null;
         }
     }
 
-    public async Task SendMessageAsync(string message)
+    // Send string message (for handshake and ACK)
+    public async Task SendStringMessageAsync(NetworkStream stream, string message, CancellationToken token = default)
     {
-        if (_client == null || !_client.Connected) return;
+        try
+        {
+            byte[] data = Encoding.UTF8.GetBytes(message);
 
-        var bytes = Encoding.UTF8.GetBytes(message);
-        await _client.GetStream().WriteAsync(bytes, 0, bytes.Length);
+            byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(lengthPrefix);
+
+            await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length, token);
+            await stream.WriteAsync(data, 0, data.Length, token);
+            await stream.FlushAsync(token);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWrite($"Send string message error: {ex.Message}");
+            throw;
+        }
     }
-
-    public async Task SendMessageAsync(NetworkStream stream, string message, CancellationToken token = default)
-    {
-        // Encode the message into bytes
-        byte[] data = Encoding.UTF8.GetBytes(message);
-
-        // Prefix with the length (4 bytes, big endian)
-        byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
-
-        if (BitConverter.IsLittleEndian)
-            Array.Reverse(lengthPrefix); // ensure network order
-
-        // Send length + data
-        await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length, token);
-        await stream.WriteAsync(data, 0, data.Length, token);
-        await stream.FlushAsync(token);
-    }
-
 }

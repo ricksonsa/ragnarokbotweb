@@ -92,13 +92,13 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
 
-            var job = JobBuilder.Create<BotAliveJob>()
-                .WithIdentity(nameof(BotAliveJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, OneMinTrigger());
+            //var job = JobBuilder.Create<BotAliveJob>()
+            //    .WithIdentity(nameof(BotAliveJob), $"ServerJobs({server.Id})")
+            //    .UsingJobData("server_id", server.Id)
+            //    .Build();
+            //await scheduler.ScheduleJob(job, OneMinTrigger());
 
-            job = JobBuilder.Create<OrderResetJob>()
+            var job = JobBuilder.Create<OrderResetJob>()
                 .WithIdentity(nameof(OrderResetJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();

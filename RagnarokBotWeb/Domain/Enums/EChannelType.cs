@@ -12,6 +12,7 @@ namespace RagnarokBotWeb.Domain.Enums
         public static readonly ChannelTemplateValue WelcomePack = new("register");
         public static readonly ChannelTemplateValue Taxi = new("taxi");
         public static readonly ChannelTemplateValue KillRank = new("kill-rank");
+        public static readonly ChannelTemplateValue WalletBalance = new("wallet-balance");
         public static readonly ChannelTemplateValue SniperRank = new("sniper-rank");
         public static readonly ChannelTemplateValue TopKillerDay = new("top-killer-rank");
         public static readonly ChannelTemplateValue LockPickRank = new("lockpick-rank");

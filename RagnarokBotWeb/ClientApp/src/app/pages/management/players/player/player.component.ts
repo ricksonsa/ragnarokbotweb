@@ -95,7 +95,8 @@ export class PlayerComponent implements OnInit {
       banExpiresAt: [null],
       isSilenced: [false],
       silenceExpiresAt: [null],
-      lastLoggedIn: [null]
+      lastLoggedIn: [null],
+      createDate: [null]
     });
   }
 

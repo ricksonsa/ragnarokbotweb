@@ -28,12 +28,11 @@ namespace RagnarokBotClient
         private string _gameDirPath;
 
         private string BASE_API_URL = "https://api.thescumbot.com:8082";
-        private string BASE_URL = "api.thescumbot.com";
+        private string BOT_SERVER_ENDPOINT = "api.thescumbot.com";
+        private int BOT_SERVER_PORT = 9000;
 
         private static bool connected = false;
         private BotSocketClient _client;
-
-        public Guid Guid { get; set; }
 
         public Form1()
         {
@@ -43,9 +42,8 @@ namespace RagnarokBotClient
             _exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
             LoadCredentials();
             _scumManager = new ScumManager();
-            Guid = Guid.NewGuid();
-            _remote = new WebApi(new Settings(BASE_API_URL));
             LoadIni();
+            _remote = new WebApi(new Settings(BASE_API_URL));
             Text += $" - {GetVersion()}";
             Task.Run(CheckVersion);
 
@@ -118,8 +116,10 @@ namespace RagnarokBotClient
             {
                 _timeToLoadWorld = timeToLoadWorld;
             }
-            BASE_URL = _iniFile.Read("BotServerEndpoint");
+            BOT_SERVER_ENDPOINT = _iniFile.Read("BotServerEndpoint");
             BASE_API_URL = _iniFile.Read("ServerEndpoint");
+            var portString = _iniFile.Read("BotServerPort");
+            if (int.TryParse(portString, out var port)) BOT_SERVER_PORT = port;
         }
 
         private async Task SendCheckState(CancellationToken token)
@@ -130,21 +130,23 @@ namespace RagnarokBotClient
             {
                 try
                 {
-                    UpdateStatus("sending check-state", false);
-                    var command = new BotCommand();
-                    command.Values = [
-                    new BotCommandValue
+                    if (!string.IsNullOrEmpty(_client.BotId))
+                    {
+                        UpdateStatus("sending check-state", false);
+                        var command = new BotCommand();
+                        command.Values = [
+                        new BotCommandValue
                     {
                         Type = Shared.Enums.ECommandType.SayLocal,
-                        Value = $"!check-state-{Guid}"
+                        Value = $"!check-state-{_client.BotId}"
                     }];
-                    _commandQueue.Enqueue(command);
+                        _commandQueue.Enqueue(command);
+                    }
 
                 }
                 catch (Exception ex)
                 {
-                    UpdateStatus("SendCheckState Exception:", false);
-                    UpdateStatus(ex.Message, false);
+                    Logger.LogWrite($"SendCheckState Exception: {ex.Message}", write: true);
                 }
                 await Task.Delay(TimeSpan.FromSeconds(120), token);
 
@@ -213,9 +215,7 @@ namespace RagnarokBotClient
                 Loading = false;
                 AuthFeedback.Invoke(new Action(() => AuthFeedback.Visible = true));
                 tokenResult = null;
-                Debug.WriteLine(ex.Message);
-                UpdateStatus("Failed to connect.", force: true);
-                UpdateStatus(ex.Message, force: true);
+                Logger.LogWrite($"Failed to connect: {ex.Message}", write: true);
             }
             finally
             {
@@ -242,9 +242,7 @@ namespace RagnarokBotClient
                 Loading = false;
                 AuthFeedback.Invoke(new Action(() => AuthFeedback.Visible = true));
                 tokenResult = null;
-                Debug.WriteLine(ex.Message);
-                UpdateStatus("Failed to connect.", force: true);
-                UpdateStatus(ex.Message, force: true);
+                Logger.LogWrite($"Failed to connect: {ex.Message}", write: true);
             }
 
             if (tokenResult is not null)
@@ -276,16 +274,6 @@ namespace RagnarokBotClient
                 UpdateStatus(message);
         }
 
-        public Task RegisterBot()
-        {
-            return _remote.PostAsync($"api/bots/register?guid={Guid}");
-        }
-
-        public Task UnregisterBot()
-        {
-            return _remote.DeleteAsync($"api/bots/unregister?guid={Guid}");
-        }
-
         public void Start()
         {
             if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
@@ -309,8 +297,7 @@ namespace RagnarokBotClient
                             await _scumManager.ReconnectToServer();
                             await Task.Delay(TimeSpan.FromSeconds(Math.Max(_timeToLoadWorld, 1)), token);
 
-                            Guid = Guid.NewGuid();
-                            await _client.ConnectAsync(Guid.ToString(), token);
+                            await _client.ConnectAsync(token);
                             _ = SendCheckState(token);
                             UpdateStatusSafe("Started...");
                         }
@@ -323,7 +310,7 @@ namespace RagnarokBotClient
                     catch (Exception ex)
                     {
                         Stop();
-                        UpdateStatusSafe($"Unexpected error: {ex.Message}");
+                        Logger.LogWrite($"Error: {ex.Message}", write: true);
                     }
                 }, token);
             }
@@ -333,10 +320,8 @@ namespace RagnarokBotClient
             }
         }
 
-
         public void Stop()
         {
-            _ = _remote.DeleteAsync($"api/bots/unregister?guid={Guid}");
             _cancellationTokenSource?.Cancel();
             connected = false;
             if (StatusValue.InvokeRequired)
@@ -362,11 +347,10 @@ namespace RagnarokBotClient
             }
             catch
             {
-                UpdateStatus("Could not connect to server.");
+                Logger.LogWrite($"Server is not available", write: true);
                 return false;
             }
         }
-
 
         private async Task GameCheck(CancellationToken token)
         {
@@ -517,17 +501,17 @@ namespace RagnarokBotClient
             if (ServerListBox.SelectedIndex == -1) return;
             var test = ((dynamic)sender).SelectedItem as string;
             _serverId = long.Parse(test!.Split(" - ")[0]);
-            ConnectToSocketServer();
 
             ServersPanel.Visible = false;
             ServersPanel.Enabled = false;
 
+            InitializeSocketClient();
             await Login();
         }
 
-        private void ConnectToSocketServer()
+        private void InitializeSocketClient()
         {
-            _client = new(BASE_URL, 9000, _serverId);
+            _client = new(BOT_SERVER_ENDPOINT, BOT_SERVER_PORT, _serverId);
             _client.OnMessageReceived += Client_OnMessageReceived;
         }
 

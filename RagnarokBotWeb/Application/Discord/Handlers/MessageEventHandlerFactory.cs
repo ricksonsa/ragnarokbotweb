@@ -16,7 +16,8 @@ public class MessageEventHandlerFactory : IMessageEventHandlerFactory
         { "buy_package", (serviceProvider) => new BuyPackageEvent(serviceProvider) },
         { "buy_warzone", (serviceProvider) => new BuyWarzoneEvent(serviceProvider) },
         { "uav_scan_trigger", (serviceProvider) => new BuyUavTriggerEvent(serviceProvider) },
-        { "uav_zone_select", (serviceProvider) => new UavSelectEvent(serviceProvider) }
+        { "uav_zone_select", (serviceProvider) => new UavSelectEvent(serviceProvider) },
+        { "wallet_balance", (serviceProvider) => new WalletBalanceEvent(serviceProvider) }
     };
 
     public IMessageEventHandler? GetHandler(SocketMessage message)

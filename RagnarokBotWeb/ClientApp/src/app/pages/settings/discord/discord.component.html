@@ -112,7 +112,7 @@
             bellow.</span></p>
       </ng-template>
 
-      <nz-divider nzText="Interactable Channels"></nz-divider>
+      <nz-divider nzText="Channels"></nz-divider>
       <br>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="register">Welcomepack/Registering Channel</nz-form-label>
@@ -153,13 +153,25 @@
         </nz-form-control>
       </nz-form-item>
 
-      <nz-divider nzText="Log Channels"></nz-divider>
-      <br>
-      <nz-form-item>
+      <!-- <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="abusePublic">No Admin Abuse Channel</nz-form-label>
         <nz-form-control [nzSpan]="24">
           <nz-select nzShowSearch id="abusePublic" nzPlaceHolder="Select a discord channel"
             formControlName="no-admin-abuse-public">
+            <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
+            @for (channel of channels; track $index) {
+            <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
+              [nzDisabled]="channel.disabled"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item> -->
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="walletBalance">Wallet Balance</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <nz-select nzShowSearch id="walletBalance" nzPlaceHolder="Select a discord channel"
+            formControlName="wallet-balance">
             <nz-option [nzValue]="null" nzLabel="Disabled"></nz-option>
             @for (channel of channels; track $index) {
             <nz-option [nzValue]="channel.discordId" [nzLabel]="channel.name"
