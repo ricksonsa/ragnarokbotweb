@@ -64,6 +64,48 @@ namespace RagnarokBotWeb.Domain.Services
             return user.Username;
         }
 
+        public async Task<IUserMessage> SendEmbedToChannel(CreateEmbed createEmbed)
+        {
+            var channel = _client.GetChannel(createEmbed.DiscordId) as IMessageChannel;
+
+            if (channel != null)
+            {
+                var embedBuilder = new EmbedBuilder()
+                    .WithTitle(createEmbed.Title)
+                    .WithDescription(createEmbed.Text)
+                    .WithFooter(GetAuthor())
+                    .WithColor(createEmbed.Color);
+
+
+                if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{createEmbed.ImageUrl}");
+                if (createEmbed.TimeStamp) embedBuilder.WithCurrentTimestamp();
+
+                var builder = new ComponentBuilder();
+
+                createEmbed.Buttons.ForEach(button =>
+                {
+                    builder.WithButton(
+                        label: button.Label,
+                        customId: button.ActionId,
+                        style: ButtonStyle.Primary);
+                });
+
+
+                createEmbed.Fields.ForEach(field =>
+                {
+                    embedBuilder.AddField(
+                        new EmbedFieldBuilder()
+                        .WithName(field.Title)
+                        .WithValue(field.Message)
+                        .WithIsInline(field.Inline));
+                });
+
+                return await channel.SendMessageAsync(embed: embedBuilder.Build(), components: builder.Build());
+            }
+
+            return null;
+        }
+
         public async Task SendEmbedToUserDM(CreateEmbed createEmbed)
         {
             var user = await GetDiscordUser(createEmbed.GuildId, createEmbed.DiscordId);
@@ -75,7 +117,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithTitle(createEmbed.Title)
                 .WithDescription(createEmbed.Text)
                 .WithFooter(GetAuthor())
-                .WithColor(Color.DarkOrange);
+                .WithColor(createEmbed.Color);
 
             if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{createEmbed.ImageUrl}");
             if (createEmbed.TimeStamp) embedBuilder.WithCurrentTimestamp();
@@ -88,6 +130,15 @@ namespace RagnarokBotWeb.Domain.Services
                     label: button.Label,
                     customId: button.ActionId,
                     style: ButtonStyle.Primary);
+            });
+
+            createEmbed.Fields.ForEach(field =>
+            {
+                embedBuilder.AddField(
+                    new EmbedFieldBuilder()
+                    .WithName(field.Title)
+                    .WithValue(field.Message)
+                    .WithIsInline(field.Inline));
             });
 
             await dmChannel.SendMessageAsync(embed: embedBuilder.Build(), components: builder.Build());
@@ -228,9 +279,9 @@ namespace RagnarokBotWeb.Domain.Services
             Console.WriteLine($"Deleted {deletedCount} messages older than {date:u}.");
         }
         public async Task SendLockpickRankEmbed(
-            ulong channelId,
-           List<LockpickStatsDto> stats,
-           string lockType)
+             ulong channelId,
+             List<LockpickStatsDto> stats,
+             string lockType)
         {
             var channel = _client.GetChannel(channelId) as IMessageChannel;
             if (channel == null) return;
@@ -243,13 +294,15 @@ namespace RagnarokBotWeb.Domain.Services
 
             var sb = new StringBuilder();
             sb.AppendLine("```");
-            sb.AppendLine("RANK | Player               | Success | Fails |   %");
-            sb.AppendLine("-----|----------------------|---------|-------|--------");
+            sb.AppendLine($"{"RANK",4} | {"Player",-20} | {"Success",7} | {"Attempts",8} | {"%",6}");
+            sb.AppendLine("-----|----------------------|---------|----------|--------");
 
             int rank = 1;
             foreach (var p in stats)
             {
-                sb.AppendLine($"{rank,4}  {Truncate(p.PlayerName, 20),-20}  {p.SuccessCount,7}  {p.FailCount,5}  {Convert.ToInt32(Math.Round(p.SuccessRate)),6:F2}%");
+                sb.AppendLine(
+                    $"{rank,4} | {Truncate(p.PlayerName, 20),-20} | {p.SuccessCount,7} | {p.Attempts,8} | {p.SuccessRate,6:F2}%"
+                );
                 rank++;
             }
 
@@ -335,50 +388,6 @@ namespace RagnarokBotWeb.Domain.Services
             if (channel != null) return channel.SendMessageAsync(message);
             throw new Exception("Channel not found");
         }
-
-        public async Task<IUserMessage> SendEmbedToChannel(CreateEmbed createEmbed)
-        {
-            var channel = _client.GetChannel(createEmbed.DiscordId) as IMessageChannel;
-
-            if (channel != null)
-            {
-                var embedBuilder = new EmbedBuilder()
-                    .WithTitle(createEmbed.Title)
-                    .WithDescription(createEmbed.Text)
-                    .WithFooter(GetAuthor())
-                    .WithColor(createEmbed.Color);
-
-
-                if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{createEmbed.ImageUrl}");
-                if (createEmbed.TimeStamp) embedBuilder.WithCurrentTimestamp();
-
-                var builder = new ComponentBuilder();
-
-                createEmbed.Buttons.ForEach(button =>
-                {
-                    builder.WithButton(
-                        label: button.Label,
-                        customId: button.ActionId,
-                        style: ButtonStyle.Primary);
-                });
-
-
-                createEmbed.Fields.ForEach(field =>
-                {
-                    embedBuilder.AddField(
-                        new EmbedFieldBuilder()
-                        .WithName(field.Title)
-                        .WithValue(field.Message)
-                        .WithIsInline(field.Inline));
-                });
-
-                return await channel.SendMessageAsync(embed: embedBuilder.Build(), components: builder.Build());
-            }
-
-            return null;
-        }
-
-
 
         public async Task RemoveMessage(ulong channelId, ulong messageId)
         {

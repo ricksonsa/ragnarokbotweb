@@ -36,7 +36,7 @@ public class GamePlayJob(
             await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), ftpService, context.CancellationToken))
             {
                 if (IsCompliant()) await HandleArmedTrap(socketServer, unitOfWork, cache, server, line, logger);
-                await HandleLockpick(unitOfWork, discordService, fileService, server, line);
+                await HandleLockpick(unitOfWork, discordService, fileService, server, line, logger);
                 await HandleBunkerState(bunkerService, server, line);
             }
         }
@@ -48,55 +48,79 @@ public class GamePlayJob(
         }
     }
 
-    private static async Task HandleLockpick(IUnitOfWork uow, IDiscordService discordService, IFileService fileService, ScumServer server, string line)
+    private static async Task HandleLockpick(IUnitOfWork uow, IDiscordService discordService, IFileService fileService, ScumServer server, string line, ILogger<GamePlayJob> logger)
     {
         if (line.Contains("[LogMinigame] [LockpickingMinigame_C]") ||
             line.Contains("[LogMinigame] [BP_DialLockMinigame_C]"))
         {
             var lockpick = LockpickLogParser.Parse(line);
-            if (lockpick is null) return;
-            uow.ScumServers.Attach(server);
-            await uow.Lockpicks.AddAsync(new Lockpick
-            {
-                LockType = lockpick.LockType,
-                Attempts = lockpick.FailedAttempts,
-                Name = lockpick.User,
-                ScumId = lockpick.ScumId,
-                SteamId64 = lockpick.SteamId,
-                AttemptDate = DateTime.UtcNow,
-                ScumServer = server,
-                Success = lockpick.Success
+            if (lockpick is null || IsDiscardLockpickType(lockpick)) return;
 
-            });
-            await uow.SaveAsync();
+            try
+            {
+                var dbContext = uow.CreateDbContext();
+                dbContext.ScumServers.Attach(server);
+                await dbContext.Lockpicks.AddAsync(new Lockpick
+                {
+                    LockType = lockpick.LockType,
+                    TargetObject = lockpick.TargetObject,
+                    Attempts = lockpick.FailedAttempts,
+                    Name = lockpick.User,
+                    ScumId = lockpick.ScumId,
+                    SteamId64 = lockpick.SteamId,
+                    AttemptDate = DateTime.UtcNow,
+                    ScumServer = server,
+                    Success = lockpick.Success
+
+                });
+                await dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "HandleLockpick Persistance Exception");
+            }
 
             if (server.SendVipLockpickAlert && server.Tenant.IsCompliant())
             {
-                var player = await uow.Players.Include(player => player.Vips).FirstOrDefaultAsync(player => player.SteamId64 == lockpick.OwnerSteamId);
-                if (player is not null && player.IsVip() && player.DiscordId.HasValue)
+                try
                 {
-                    var centerCoord = new ScumCoordinate(lockpick.X, lockpick.Y);
-                    var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
-                    var result = await extractor.ExtractMapWithPoints(centerCoord, [new ScumCoordinate(lockpick.X, lockpick.Y).WithLabel(lockpick.TargetObject)]);
-                    var imageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/lockpicks", cdnUrlPrefix: "images/lockpicks");
-                    var embed = new CreateEmbed()
+                    var player = await uow.Players.Include(player => player.Vips).FirstOrDefaultAsync(player => player.SteamId64 == lockpick.OwnerSteamId);
+                    if (player is not null && player.IsVip() && player.DiscordId.HasValue)
                     {
-                        Color = Color.Red,
-                        ImageUrl = imageUrl,
-                        DiscordId = player.DiscordId.Value,
-                        GuildId = server.Guild!.DiscordId,
-                        Fields = [
-                            new CreateEmbedField("Sector", centerCoord.GetSectorReference(), true),
-                            new CreateEmbedField("Lock", lockpick.DisplayLockType, true),
-                            new CreateEmbedField("Unlocked", lockpick.Success ? "Yes" : "No", true)
-                        ],
-                        Title = "THE SCUM BOT ALERT",
-                        Text = "Warning!!! Someone is trying to pick one of your locks!!!"
-                    };
-                    await discordService.SendEmbedToUserDM(embed);
+                        var centerCoord = new ScumCoordinate(lockpick.X, lockpick.Y);
+                        var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
+                        var result = await extractor.ExtractMapWithPoints(centerCoord, [new ScumCoordinate(lockpick.X, lockpick.Y).WithLabel(lockpick.TargetObject)]);
+                        var imageUrl = await fileService.SaveImageStreamAsync(result, "image/jpg", storagePath: "cdn-storage/lockpicks", cdnUrlPrefix: "images/lockpicks");
+                        var embed = new CreateEmbed()
+                        {
+                            Color = Color.Red,
+                            ImageUrl = imageUrl,
+                            DiscordId = player.DiscordId.Value,
+                            GuildId = server.Guild!.DiscordId,
+                            Fields = [
+                                new CreateEmbedField("Sector", centerCoord.GetSectorReference(), true),
+                                new CreateEmbedField("Lock", lockpick.DisplayLockType, true),
+                                new CreateEmbedField("Unlocked", lockpick.Success ? "Yes" : "No", true)
+                            ],
+                            Title = "THE SCUM BOT ALERT",
+                            Text = "Someone is trying to pick one of your locks!!!"
+                        };
+                        await discordService.SendEmbedToUserDM(embed);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Send Vip Alert Exception");
                 }
             }
         }
+    }
+
+    private static bool IsDiscardLockpickType(LockpickLog lockpick)
+    {
+        return lockpick.TargetObject.Contains("BPLockpick_Medical_Container")
+            || lockpick.TargetObject.Contains("BPLockpick_NPP_DepletedUraniumStorage")
+            || lockpick.TargetObject.Contains("BPLockpick_Hazmat_Suit_Locker");
     }
 
     private static async Task HandleBunkerState(IBunkerService bunkerService, ScumServer server, string line)
@@ -113,7 +137,7 @@ public class GamePlayJob(
         if (line.Contains("[LogTrap] Armed"))
         {
             var trapLog = TrapLogParser.Parse(line);
-            if (trapLog is not null)
+            if (trapLog is not null && IsMineTrap(trapLog))
             {
                 logger.LogInformation("HandleArmedTrap triggered for server {Server} player {Player} location {Location}", server.Id, trapLog.User, trapLog.ToString());
 
@@ -136,8 +160,6 @@ public class GamePlayJob(
                         var command = new Shared.Models.BotCommand()
                             .Teleport(trapLog.SteamId, trapCoordinate.ToString(), checkTargetOnline: true);
 
-                        await socketServer.SendCommandAsync(server.Id, command);
-
                         if (server.CoinReductionPerInvalidMineKill > 0)
                         {
                             msg += " Coin penalty applied.";
@@ -146,9 +168,17 @@ public class GamePlayJob(
 
                         if (server.AnnounceMineOutsideFlag) command.Say(msg);
 
+                        await socketServer.SendCommandAsync(server.Id, command);
                     }
                 }
             }
         }
+    }
+
+    private static bool IsMineTrap(TrapLog trapLog)
+    {
+        return trapLog.TrapName.Contains("Anti-personnel mine")
+            || trapLog.TrapName.Contains("PROM-1 Mine")
+            || trapLog.TrapName.Contains("Small anti-personnel mine");
     }
 }

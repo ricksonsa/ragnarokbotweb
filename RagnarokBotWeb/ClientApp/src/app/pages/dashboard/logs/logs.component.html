@@ -40,10 +40,23 @@
         <ng-container *ngSwitchCase="'Chests'" [ngTemplateOutlet]="buriedChestsTemplate"></ng-container>
         <ng-container *ngSwitchCase="'Violations'" [ngTemplateOutlet]="violationsTemplate"></ng-container>
         <ng-container *ngSwitchCase="'Chat'" [ngTemplateOutlet]="chatTemplate"></ng-container>
+        <ng-container *ngSwitchCase="'Traps'" [ngTemplateOutlet]="trapsTemplate"></ng-container>
       </ng-container>
     </div>
   </nz-card>
 </div>
+
+<ng-template #trapsTemplate>
+  <div class="empty" *ngIf="getTraps().length === 0">
+    <nz-empty></nz-empty>
+  </div>
+  @for (value of getTraps(); track $index) {
+  <p style="margin: 0;">Date: <span style="font-weight: bold;">{{value.date | date: 'MM/dd/yyyy hh:MM:ss'}}</span></p>
+  <p style="margin: 0;"><span style="font-weight: bold;">{{value.line}}</span>
+  </p>
+  <nz-divider></nz-divider>
+  }
+</ng-template>
 
 <ng-template #chatTemplate>
   <div class="empty" *ngIf="getChat().length === 0">

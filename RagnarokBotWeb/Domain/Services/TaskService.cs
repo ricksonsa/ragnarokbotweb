@@ -158,11 +158,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
 
-            job = JobBuilder.Create<PaydayJob>()
-                .WithIdentity(nameof(PaydayJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0/30 * * * ?"));
+            await AddPaydayJob(server);
 
             _logger.LogInformation("Loaded server tasks for server id {Id}", server.Id);
         }
@@ -242,6 +238,33 @@ namespace RagnarokBotWeb.Domain.Services
             await scheduler.ScheduleJob(job, CronTrigger("0/30 * * * * ?"));
 
             _logger.LogInformation("Loaded ftp tasks for server id {Id}", server.Id);
+        }
+
+        public async Task AddPaydayJob(ScumServer server)
+        {
+
+            var scheduler = await _schedulerFactory.GetScheduler();
+            var jobKey = new JobKey(nameof(PaydayJob), $"ServerJobs({server.Id})");
+            try
+            {
+                if (await scheduler.CheckExists(jobKey)) await DeleteJob(jobKey.Name, jobKey.Group);
+            }
+            catch (Exception) { }
+            if (server.CoinAwardIntervalMinutes > 0)
+            {
+                ITrigger trigger = TriggerBuilder.Create()
+                    .WithSimpleSchedule(x => x
+                    .WithIntervalInMinutes((int)server.CoinAwardIntervalMinutes)
+                    .RepeatForever())
+                    .Build();
+
+                var job = JobBuilder.Create<PaydayJob>()
+                    .WithIdentity(jobKey)
+                    .UsingJobData("server_id", server.Id)
+                    .Build();
+
+                await scheduler.ScheduleJob(job, trigger);
+            }
         }
 
         public async Task NewServerAddedAsync(ScumServer server)

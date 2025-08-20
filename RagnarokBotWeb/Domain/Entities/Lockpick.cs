@@ -4,6 +4,7 @@
     {
         public string LockType { get; set; }
         public string SteamId64 { get; set; }
+        public string TargetObject { get; set; }
         public long ScumId { get; set; }
         public string Name { get; set; }
         public DateTime AttemptDate { get; set; }

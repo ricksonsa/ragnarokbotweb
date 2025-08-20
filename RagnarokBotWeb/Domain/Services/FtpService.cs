@@ -3,6 +3,7 @@ using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.FTP;
+using System.Net.Sockets;
 using System.Text;
 
 namespace RagnarokBotWeb.Domain.Services;
@@ -13,128 +14,215 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
 
     public async Task<AsyncFtpClient> GetClientAsync(Ftp ftp, CancellationToken cancellationToken = default)
     {
-        return await pool.GetClientAsync(ftp, cancellationToken: cancellationToken);
+        try
+        {
+            return await pool.GetClientAsync(ftp, cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // If we can't get a client, clear the pool for this FTP server and try once more
+            await pool.ClearPoolAsync(ftp);
+            throw new DomainException($"Unable to connect to FTP server: {ex.Message}", ex);
+        }
     }
 
     public async Task CopyFilesAsync(AsyncFtpClient client, string targetFolder, IList<string> remoteFilePaths, CancellationToken token = default)
     {
         int retryCount = 0;
+        const int maxRetries = 3;
+
         await _ftpLock.WaitAsync(token);
-        var states = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
-        if (states.Any(result => result.IsFailed))
+        try
         {
-            while (retryCount < 3)
+            List<FtpResult> results;
+
+            do
             {
-                retryCount += 1;
-                states = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
+                results = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
+
+                if (results.Any(result => result.IsFailed))
+                {
+                    retryCount++;
+                    if (retryCount < maxRetries)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), token); // Exponential backoff
+                    }
+                }
+            }
+            while (results.Any(result => result.IsFailed) && retryCount < maxRetries);
+
+            if (results.Any(result => result.IsFailed))
+            {
+                throw new DomainException("Error while copying files from FTP after multiple retries");
             }
         }
-        if (states.Any(result => result.IsFailed)) throw new Exception("Error while copying files from FTP");
-
-        _ftpLock.Release();
+        finally
+        {
+            _ftpLock.Release();
+        }
     }
 
     public async Task UpdateINILine(AsyncFtpClient client, string remoteFilePath, string key, string newValue)
     {
         try
         {
-            //string tempLocalPath = "temp_file.txt"; // Temporary local file
-            //string remoteFilePath = $"{ftp.RootFolder}/Saved/Config/WindowsServer/ServerSettings.ini
+            using var stream = new MemoryStream();
+            await client.DownloadStream(stream, remoteFilePath);
+            stream.Position = 0;
 
-            using (MemoryStream stream = new())
+            var content = await new StreamReader(stream).ReadToEndAsync();
+            string[] lines = content.Split(Environment.NewLine);
+            int lineIndex = Array.FindIndex(lines, line => line.Contains(key));
+
+            if (lineIndex != -1)
             {
-                await client.DownloadStream(stream, remoteFilePath);
-                stream.Position = 0;
+                lines[lineIndex] = $"{lines[lineIndex].Split("=")[0]}={newValue}";
+                string updatedContent = string.Join(Environment.NewLine, lines);
 
-                var content = await new StreamReader(stream).ReadToEndAsync();
-                string[] lines = content.Split(Environment.NewLine);
-
-                int lineIndex = Array.FindIndex(lines, line => line.Contains(key));
-
-                if (lineIndex != -1)
-                {
-                    lines[lineIndex] = $"{lines[lineIndex].Split("=")[0]}={newValue}"; // Replace line
-
-                    string updatedContent = string.Join(Environment.NewLine, lines);
-                    MemoryStream updatedStream = new(Encoding.UTF8.GetBytes(updatedContent));
-
-                    await client.UploadStream(updatedStream, remoteFilePath);
-                }
+                using var updatedStream = new MemoryStream(Encoding.UTF8.GetBytes(updatedContent));
+                await client.UploadStream(updatedStream, remoteFilePath);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw new DomainException("Invalid ftp server");
+            throw new DomainException($"Failed to update INI file: {ex.Message}", ex);
         }
     }
-
 
     public async Task<Stream?> DownloadFile(AsyncFtpClient client, string remoteFilePath)
     {
         try
         {
-            MemoryStream stream = new();
+            var stream = new MemoryStream();
             if (await client.DownloadStream(stream, remoteFilePath))
             {
                 stream.Position = 0;
-                await client.Disconnect();
                 return stream;
             }
             return null;
-
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw new DomainException("Invalid ftp server");
+            throw new DomainException($"Failed to download file: {ex.Message}", ex);
         }
     }
+
     public async Task RemoveLine(AsyncFtpClient client, string remotePath, string lineToRemove)
     {
-        using var downloadStream = new MemoryStream();
-        if (await client.DownloadStream(downloadStream, remotePath))
+        try
         {
-            downloadStream.Position = 0;
-            using var reader = new StreamReader(downloadStream, Encoding.UTF8);
-            string content = await reader.ReadToEndAsync();
+            using var downloadStream = new MemoryStream();
+            if (await client.DownloadStream(downloadStream, remotePath))
+            {
+                downloadStream.Position = 0;
+                using var reader = new StreamReader(downloadStream, Encoding.UTF8);
+                string content = await reader.ReadToEndAsync();
 
-            var newLines = content
-                .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
-                .Where(line => !line.Contains(lineToRemove));
+                var newLines = content
+                    .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
+                    .Where(line => !line.Contains(lineToRemove));
 
-            string modifiedContent = string.Join("\n", newLines);
+                string modifiedContent = string.Join("\n", newLines);
 
-            using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(modifiedContent));
-            uploadStream.Position = 0;
-            await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
+                using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(modifiedContent));
+                uploadStream.Position = 0;
+                await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
+            }
         }
-
-        await client.Disconnect();
+        catch (Exception ex)
+        {
+            throw new DomainException($"Failed to remove line from file: {ex.Message}", ex);
+        }
     }
 
     public async Task AddLine(AsyncFtpClient client, string remotePath, string lineToAdd)
     {
-        using var downloadStream = new MemoryStream();
-        if (await client.DownloadStream(downloadStream, remotePath))
+        try
         {
-            downloadStream.Position = 0;
-            using var reader = new StreamReader(downloadStream, Encoding.UTF8);
-            string content = await reader.ReadToEndAsync();
+            using var downloadStream = new MemoryStream();
+            if (await client.DownloadStream(downloadStream, remotePath))
+            {
+                downloadStream.Position = 0;
+                using var reader = new StreamReader(downloadStream, Encoding.UTF8);
+                string content = await reader.ReadToEndAsync();
 
-            var lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
-            lines.Add(lineToAdd);
+                var lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
+                lines.Add(lineToAdd);
 
-            string modifiedContent = string.Join("\n", lines);
+                string modifiedContent = string.Join("\n", lines);
 
-            using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(modifiedContent));
-            uploadStream.Position = 0;
-            await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
+                using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(modifiedContent));
+                uploadStream.Position = 0;
+                await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
+            }
         }
-
-        await client.Disconnect();
+        catch (Exception ex)
+        {
+            throw new DomainException($"Failed to add line to file: {ex.Message}", ex);
+        }
     }
 
     public async Task ReleaseClientAsync(AsyncFtpClient client)
     {
         await pool.ReleaseClientAsync(client);
+    }
+
+    /// <summary>
+    /// Clears the connection pool for a specific FTP server (useful when server connectivity issues are detected)
+    /// </summary>
+    public async Task ClearPoolForServerAsync(Ftp ftp)
+    {
+        await pool.ClearPoolAsync(ftp);
+    }
+
+    /// <summary>
+    /// Handles FTP operation with automatic retry and pool clearing on failure
+    /// </summary>
+    public async Task<T> ExecuteWithRetryAsync<T>(Ftp ftp, Func<AsyncFtpClient, Task<T>> operation, CancellationToken cancellationToken = default)
+    {
+        AsyncFtpClient? client = null;
+        try
+        {
+            client = await GetClientAsync(ftp, cancellationToken);
+            return await operation(client);
+        }
+        catch (Exception ex) when (IsNetworkError(ex))
+        {
+            // Clear pool and try once more
+            await pool.ClearPoolAsync(ftp);
+
+            if (client != null)
+            {
+                // Don't return this client to the pool since it's likely bad
+                await pool.ReleaseClientAsync(client);
+                client = null;
+            }
+
+            try
+            {
+                client = await GetClientAsync(ftp, cancellationToken);
+                return await operation(client);
+            }
+            catch (Exception retryEx)
+            {
+                throw new DomainException($"FTP operation failed after retry: {retryEx.Message}", retryEx);
+            }
+        }
+        finally
+        {
+            if (client != null)
+            {
+                await pool.ReleaseClientAsync(client);
+            }
+        }
+    }
+
+    private static bool IsNetworkError(Exception ex)
+    {
+        return ex is TimeoutException ||
+               ex is SocketException ||
+               ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
+               ex.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
+               ex.Message.Contains("network", StringComparison.OrdinalIgnoreCase);
     }
 }

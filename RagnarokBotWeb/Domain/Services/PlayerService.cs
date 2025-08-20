@@ -55,7 +55,11 @@ namespace RagnarokBotWeb.Domain.Services
             var player = await _playerRepository.FindByIdAsync(id);
             if (player is null) throw new NotFoundException("Player not found");
 
-            return _mapper.Map<PlayerDto>(player);
+            var playerDto = _mapper.Map<PlayerDto>(player);
+            playerDto.Online = _cacheService.GetConnectedPlayers(player.ScumServerId)
+                .Any(p => p.SteamID == playerDto.SteamId64);
+
+            return playerDto;
         }
 
         public async Task<Page<PlayerDto>> GetPlayers(Paginator paginator, string? filter)
@@ -65,7 +69,8 @@ namespace RagnarokBotWeb.Domain.Services
             var content = page.Content.Select(_mapper.Map<PlayerDto>);
             foreach (var player in content)
             {
-                player.Online = _cacheService.GetConnectedPlayers(serverId.Value).Any(connectedPlayer => connectedPlayer.SteamID == player.SteamId64);
+                player.Online = _cacheService.GetConnectedPlayers(serverId.Value)
+                    .Any(connectedPlayer => connectedPlayer.SteamID == player.SteamId64);
             }
             return new Page<PlayerDto>(content, page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
@@ -73,33 +78,34 @@ namespace RagnarokBotWeb.Domain.Services
         public bool IsPlayerConnected(string steamId64, long? serverId)
         {
             if (serverId.HasValue)
-            {
-                return _cacheService.GetConnectedPlayers(serverId.Value).Any(player => player.SteamID.Equals(steamId64));
-            }
+                return _cacheService.GetConnectedPlayers(serverId.Value)
+                    .Any(player => player.SteamID.Equals(steamId64));
 
             serverId = ServerId();
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server");
 
-            return _cacheService.GetConnectedPlayers(serverId.Value).Any(player => player.SteamID.Equals(steamId64));
+            return _cacheService.GetConnectedPlayers(serverId.Value)
+                .Any(player => player.SteamID.Equals(steamId64));
         }
 
         public List<ScumPlayer> OnlinePlayers(long serverId) => _cacheService.GetConnectedPlayers(serverId);
 
         public async Task<List<ScumPlayer>> OfflinePlayers(long serverId)
         {
-            var allUsers = (await _playerRepository.GetAllByServerId(serverId)).Select(user => new ScumPlayer
-            {
-                Name = user.Name,
-                SteamID = user.SteamId64,
-                AccountBalance = user.Money ?? 0,
-                Fame = user.Fame ?? 0,
-                SteamName = user.SteamName,
-                GoldBalance = user.Gold ?? 0,
-                X = user.X ?? 0,
-                Y = user.Y ?? 0,
-                Z = user.Z ?? 0,
+            var allUsers = (await _playerRepository.GetAllByServerId(serverId))
+                .Select(user => new ScumPlayer
+                {
+                    Name = user.Name,
+                    SteamID = user.SteamId64,
+                    AccountBalance = user.Money ?? 0,
+                    Fame = user.Fame ?? 0,
+                    SteamName = user.SteamName,
+                    GoldBalance = user.Gold ?? 0,
+                    X = user.X ?? 0,
+                    Y = user.Y ?? 0,
+                    Z = user.Z ?? 0,
 
-            }).ToList();
+                }).ToList();
             var values = _cacheService.GetConnectedPlayers(serverId);
             return allUsers.ExceptBy(values.Select(v => v.SteamID), u => u.SteamID).ToList();
         }
@@ -135,7 +141,10 @@ namespace RagnarokBotWeb.Domain.Services
 
         public ScumPlayer? PlayerDisconnected(long serverId, string steamId64)
         {
-            var player = _cacheService.GetConnectedPlayers(serverId).FirstOrDefault(p => p.SteamID == steamId64);
+            var player = _cacheService
+                .GetConnectedPlayers(serverId)
+                .FirstOrDefault(p => p.SteamID == steamId64);
+
             if (player is not null)
             {
                 _cacheService.GetConnectedPlayers(serverId).Remove(player);

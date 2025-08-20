@@ -8,9 +8,7 @@ namespace RagnarokBotWeb.Application.LogParser
     {
         public ChatTextParseResult? Parse(string line)
         {
-            // 2025.07.13-21.42.02: '76561198002224431:Korosu 殺(1)' 'Admin: teste'
-
-            string pattern = @"(?<date>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2}): '?(?<steamId>\d+):(?<name>.+?)'? '(?<type>Admin|Global|Local): (?<text>.+)'";
+            string pattern = @"(?<date>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2}): '?(?<steamId>\d+):(?<name>.+?)'? '(?<type>Admin|Global|Local|Squad): (?<text>.+)'";
 
             Match match = Regex.Match(line, pattern);
             if (match.Success)

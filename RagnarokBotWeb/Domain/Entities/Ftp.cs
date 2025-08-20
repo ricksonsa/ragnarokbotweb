@@ -1,4 +1,5 @@
-﻿using RagnarokBotWeb.Domain.Enums;
+﻿using FluentFTP;
+using RagnarokBotWeb.Domain.Enums;
 
 namespace RagnarokBotWeb.Domain.Entities
 {
@@ -16,6 +17,14 @@ namespace RagnarokBotWeb.Domain.Entities
         public Ftp(EHostProvider provider)
         {
             Provider = provider;
+        }
+
+        public FtpConfig GetFtpConfig()
+        {
+            return new FtpConfig
+            {
+
+            };
         }
 
     }

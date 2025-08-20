@@ -49,20 +49,18 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 if (string.IsNullOrEmpty(customTask.Commands)) return;
 
-                BotCommand? command = null;
+                List<BotCommand> commands = [];
                 switch (customTask.TaskType)
                 {
                     case Domain.Enums.ECustomTaskType.BatchCommandExecute:
-                        command = new();
                         foreach (var line in customTask.Commands.ToLines())
-                            command = command.SayOrCommand(line);
+                            commands.Add(new BotCommand().SayOrCommand(line));
                         break;
 
                     case Domain.Enums.ECustomTaskType.ExecuteOneRandomly:
-                        command = new();
                         var lines = customTask.Commands.ToLines();
                         int index = new Random().Next(lines.Count());
-                        command = command.SayOrCommand(lines.ElementAt(index));
+                        commands.Add(new BotCommand().SayOrCommand(lines.ElementAt(index)));
                         break;
 
                         //case Domain.Enums.ECustomTaskType.ServerSettings:
@@ -73,7 +71,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         //    break;
                 }
 
-                if (command is not null)
+                foreach (var command in commands)
                     await socketServer.SendCommandAsync(server.Id, command);
 
             }
@@ -81,7 +79,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             catch (FtpNotSetException) { }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "CustomTaskJob Exception");
             }
 
         }

@@ -26,5 +26,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<CustomTaskDto> UpdateTask(long id, CustomTaskDto task);
         Task ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken = default);
         Task<CustomTaskDto> DeleteCustomTask(long id);
+        Task AddPaydayJob(ScumServer server);
     }
 }

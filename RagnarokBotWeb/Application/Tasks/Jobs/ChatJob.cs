@@ -70,16 +70,11 @@ public class ChatJob(
 
                 if (parsed.Text.Contains("!check-state"))
                 {
-
                     var match = Regex.Match(parsed.Text, @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
                     if (match.Success)
                     {
                         var guid = new Guid(match.Value);
                         botSocket.BotPingUpdate(server.Id, guid, parsed.SteamId);
-                    }
-                    else
-                    {
-                        logger.LogError("Could not parse the string [{}] to Guid", parsed.Text);
                     }
                 }
                 else

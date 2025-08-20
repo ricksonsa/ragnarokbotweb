@@ -9,7 +9,8 @@ namespace RagnarokBotWeb.Application.Models
         public DateTime LastInteracted { get; set; }
         public DateTime? LastCommand { get; set; }
         public DateTime? LastPinged { get; set; }
-        public TcpClient? TcpClient { get; set; }
+        public DateTime? LastReconnectSent { get; set; }
+        [System.Text.Json.Serialization.JsonIgnore] public TcpClient? TcpClient { get; set; }
         public long ServerId { get; set; }
 
         public BotUser() { }

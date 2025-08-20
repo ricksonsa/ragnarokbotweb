@@ -51,4 +51,9 @@ export class LogService {
         let url = `${environment.apiUrl}/api/logs/chat?from=${from.toUTCString()}&to=${to.toUTCString()}`;
         return this.http.get<GenericLogValue[]>(url);
     }
+
+    getTraps(from: Date, to: Date) {
+        let url = `${environment.apiUrl}/api/logs/traps?from=${from.toUTCString()}&to=${to.toUTCString()}`;
+        return this.http.get<GenericLogValue[]>(url);
+    }
 }

@@ -45,21 +45,23 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.LogError(ex, "LockpickRankJob Exception");
                 throw;
             }
-
         }
 
         private static async Task<List<LockpickStatsDto>> GetLockpickRank(
-            IUnitOfWork unitOfWork,
-            ScumServer server,
-            string lockType)
+          IUnitOfWork unitOfWork,
+          ScumServer server,
+          string lockType)
         {
             var lockpicks = unitOfWork.Lockpicks
                 .Include(kill => kill.ScumServer)
-                .Where(l => l.ScumServer.Id == server.Id && l.LockType == lockType && l.AttemptDate.Date == DateTime.UtcNow.Date);
+                .Where(l => l.ScumServer.Id == server.Id
+                         && l.LockType == lockType
+                         && l.AttemptDate.Date == DateTime.UtcNow.Date);
 
             var stats = await lockpicks
                 .GroupBy(l => l.Name)
@@ -68,7 +70,10 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     PlayerName = g.Key,
                     SuccessCount = g.Count(l => l.Success),
                     FailCount = g.Count(l => !l.Success),
-                    SuccessRate = g.Any() ? (double)g.Count(l => l.Success) / g.Count() * 100 : 0
+                    Attempts = g.Sum(l => l.Attempts),
+                    SuccessRate = g.Any()
+                        ? (double)g.Count(l => l.Success) / g.Count() * 100
+                        : 0
                 })
                 .OrderByDescending(p => p.SuccessCount)
                 .ThenByDescending(p => p.SuccessRate)
@@ -78,13 +83,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             return stats;
         }
 
-
         public class LockpickStatsDto
         {
             public string PlayerName { get; set; }
             public string LockType { get; set; }
             public int SuccessCount { get; set; }
             public int FailCount { get; set; }
+            public int Attempts { get; set; }
             public double SuccessRate { get; set; } // As a percentage
         }
 

@@ -12,5 +12,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task UpdateINILine(AsyncFtpClient client, string remoteFilePath, string key, string newValue);
         Task<Stream?> DownloadFile(AsyncFtpClient client, string remoteFilePath);
         Task ReleaseClientAsync(AsyncFtpClient client);
+        Task<T> ExecuteWithRetryAsync<T>(Ftp ftp, Func<AsyncFtpClient, Task<T>> operation, CancellationToken cancellationToken = default);
+        Task ClearPoolForServerAsync(Ftp ftp);
     }
 }

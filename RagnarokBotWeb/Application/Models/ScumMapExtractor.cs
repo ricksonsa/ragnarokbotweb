@@ -208,7 +208,7 @@ public class ScumMapExtractor
     public async Task<Stream> ExtractMapWithPoints(
         ScumCoordinate centerCoordinate,
         List<ScumCoordinate> points,
-        int extractSize = 1024,
+        int extractSize = 512,
         bool autoFitPoints = true,
         bool showLabels = true,
         bool showGrid = true)
@@ -665,21 +665,17 @@ public class ScumMapExtractor
                 //        new PointF(pointPixel.X, pointPixel.Y));
                 //}
 
-                //if (!string.IsNullOrEmpty(pointData.Label))
-                //{
-                //    // Label com setor
-                //    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
-                //    var sectorText = pointData.OriginalCoordinate.GetSectorReference();
-                //    if (!string.IsNullOrEmpty(sectorText))
-                //    {
-                //        // Fundo semi-transparente para o texto
-                //        var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
-                //        var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
-                //        ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
-                //        ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
-                //    }
-                //}
+                if (!string.IsNullOrEmpty(pointData.Label))
+                {
+                    // Label
+                    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
+                    // Fundo semi-transparente para o texto
+                    var textSize = TextMeasurer.MeasureSize(pointData.Label, new TextOptions(font));
+                    var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
+                    ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
+                    ctx.DrawText(pointData.Label, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
 
+                }
             }
         });
     }

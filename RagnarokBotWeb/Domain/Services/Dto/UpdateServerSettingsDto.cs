@@ -14,6 +14,7 @@
         public long CoinDeathPenaltyAmount { get; set; }
         public long CoinKillAwardAmount { get; set; }
         public long WelcomePackCoinAward { get; set; }
+        public string TimeZoneId { get; set; }
         public List<string> RestartTimes { get; set; }
     }
 }

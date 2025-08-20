@@ -40,7 +40,7 @@ import { GenericLogValue } from '../../../models/generic-log-value';
   ]
 })
 export class LogsComponent implements OnInit, OnDestroy {
-  options = ['Login', 'Lockpick', 'Kills', 'Economy', 'Chests', 'Vehicles', 'Violations', 'Chat'];
+  options = ['Login', 'Lockpick', 'Kills', 'Economy', 'Chests', 'Traps', 'Vehicles', 'Violations', 'Chat'];
   selectedDateFrom = new Date();
   selectedDateTo = new Date();
   selectedSegment = 'Login';
@@ -56,6 +56,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   buriedChests: GenericLogValue[] = [];
   violations: GenericLogValue[] = [];
   chat: GenericLogValue[] = [];
+  traps: GenericLogValue[] = [];
   constructor(private readonly logService: LogService) {
   }
 
@@ -99,6 +100,9 @@ export class LogsComponent implements OnInit, OnDestroy {
         break;
       case 'Chat':
         this.loadChat(this.selectedDateFrom, this.selectedDateTo);
+        break;
+      case 'Traps':
+        this.loadTraps(this.selectedDateFrom, this.selectedDateTo);
         break;
     }
   }
@@ -156,11 +160,34 @@ export class LogsComponent implements OnInit, OnDestroy {
       return this.violations.filter(x => x.line.toLowerCase().includes(this.searchControl.value.toLowerCase()));
   }
 
+  getTraps() {
+    if (this.searchControl.value === '' || this.searchControl.value === ' ' || this.searchControl.value == null)
+      return this.traps;
+    else
+      return this.traps.filter(x => x.line.toLowerCase().includes(this.searchControl.value.toLowerCase()));
+  }
+
   getChat() {
     if (this.searchControl.value === '' || this.searchControl.value === ' ' || this.searchControl.value == null)
       return this.chat;
     else
       return this.chat.filter(x => x.line.toLowerCase().includes(this.searchControl.value.toLowerCase()));
+  }
+
+  loadTraps(from: Date, to: Date) {
+    this.loading = true;
+    this.subs?.unsubscribe();
+    this.subs = this.logService.getTraps(from, to)
+      .subscribe({
+        next: (traps) => {
+          this.loading = false;
+          traps.forEach(e => e.line = e.line.substring(21));
+          this.traps = traps;
+        },
+        error: (err) => {
+          this.loading = false;
+        }
+      })
   }
 
   loadChat(from: Date, to: Date) {

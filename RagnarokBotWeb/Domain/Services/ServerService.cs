@@ -448,6 +448,7 @@ namespace RagnarokBotWeb.Domain.Services
                 server.AllowMinesOutsideFlag = true;
             }
 
+            await _taskService.AddPaydayJob(server);
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();
 

@@ -42,7 +42,7 @@ namespace RagnarokBotWeb.Application.LogParser
                         X = float.Parse(match.Groups["x"].Value, CultureInfo.InvariantCulture),
                         Y = float.Parse(match.Groups["y"].Value, CultureInfo.InvariantCulture),
                         Z = float.Parse(match.Groups["z"].Value, CultureInfo.InvariantCulture),
-                        OwnerScumId = int.Parse(match.Groups["ownerScumId"].Value),
+                        //OwnerScumId = int.Parse(match.Groups["ownerScumId"].Value),
                         OwnerSteamId = match.Groups["ownerSteamId"].Value,
                         OwnerName = match.Groups["ownerName"].Value,
                         Line = logLine,

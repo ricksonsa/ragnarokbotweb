@@ -187,5 +187,24 @@ namespace RagnarokBotWeb.Controllers
 
             return Ok(log);
         }
+
+        [HttpGet("traps")]
+        public async Task<IActionResult> GetTrapLogs(DateTime from, DateTime to)
+        {
+            _logger.Log(LogLevel.Debug, "REST Request to fetch logs for traps");
+            var server = await _serverService.GetServer();
+            var processor = new ScumFileProcessor(server, _unitOfWork);
+
+            List<GenericLogValue> log = [];
+            await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Gameplay, _ftpService, from, to))
+            {
+                if (line.Contains("[LogTrap]"))
+                {
+                    log.Add(ParseGenericLog(line));
+                }
+            }
+
+            return Ok(log);
+        }
     }
 }

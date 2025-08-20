@@ -32,7 +32,7 @@ namespace RagnarokBotClient
             }
         }
 
-        private Task Sleep(int ms = 600)
+        private Task Sleep(int ms = 200)
         {
             return Task.Delay(ms + delayBetweenInteractions);
         }
@@ -66,7 +66,7 @@ namespace RagnarokBotClient
 
             Sleep().Wait();
             SendKeys.SendWait("^{v}");
-            Sleep(250).Wait();
+            Sleep().Wait();
 
             Token.ThrowIfCancellationRequested();
 
@@ -76,14 +76,14 @@ namespace RagnarokBotClient
             {
                 case 0:
                 default:
-                    Sleep(1000).Wait();
+                    Sleep().Wait();
                     break;
                 case 1:
-                    Sleep(1000).Wait();
+                    Sleep(500).Wait();
                     SendKeys.SendWait("{tab}");
-                    Sleep(1000).Wait();
+                    Sleep(500).Wait();
                     SendKeys.SendWait("{tab}");
-                    Sleep(1000).Wait();
+                    Sleep(500).Wait();
                     break;
             }
 

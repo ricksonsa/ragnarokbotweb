@@ -75,20 +75,35 @@ public class KillLogJob(
                         }
                     }
 
-                    var coinHandler = new PlayerCoinManager(unitOfWork);
-                    if (server.CoinKillAwardAmount > 0 && !kill.IsSameSquad)
-                        await coinHandler.AddCoinsBySteamIdAsync(kill.KillerSteamId64!, server.Id, server.CoinKillAwardAmount);
+                    try
+                    {
+                        var coinHandler = new PlayerCoinManager(unitOfWork);
+                        if (server.CoinKillAwardAmount > 0 && !kill.IsSameSquad)
+                            await coinHandler.AddCoinsBySteamIdAsync(kill.KillerSteamId64!, server.Id, server.CoinKillAwardAmount);
 
-                    if (server.CoinDeathPenaltyAmount > 0 && !kill.IsSameSquad)
-                        await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
+                        if (server.CoinDeathPenaltyAmount > 0 && !kill.IsSameSquad)
+                            await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "PlayerCoinManager Exception");
+                    }
 
                     await HandleAnnounceText(botSocketServer, server, kill); // Announce kill in game
                 }
 
-                logger.LogDebug("Adding new kill entry: {Killer} -> {Target}", kill.KillerName, kill.TargetName);
-                unitOfWork.ScumServers.Attach(server);
-                await unitOfWork.Kills.AddAsync(kill);
-                await unitOfWork.SaveAsync();
+                try
+                {
+                    var dbContext = unitOfWork.CreateDbContext();
+                    dbContext.ScumServers.Attach(server);
+                    await dbContext.Kills.AddAsync(kill);
+                    await dbContext.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "KillLogJob Persistance Exception");
+                }
+
             }
         }
         catch (ServerUncompliantException) { }
@@ -96,6 +111,7 @@ public class KillLogJob(
         catch (Exception ex)
         {
             logger.LogError("{Job} Exception -> {Ex} {Stack}", context.JobDetail.Key.Name, ex.Message, ex.StackTrace);
+            throw;
         }
     }
 
