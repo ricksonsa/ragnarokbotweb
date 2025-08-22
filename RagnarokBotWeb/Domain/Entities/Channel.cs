@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RagnarokBotWeb.Domain.Entities.Base;
 
 namespace RagnarokBotWeb.Domain.Entities;
 

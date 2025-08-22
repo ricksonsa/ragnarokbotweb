@@ -1,15 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Crosscutting.Utils;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
-using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Models;
+using System.Globalization;
 using static RagnarokBotWeb.Application.Tasks.Jobs.KillRankJob;
 using static RagnarokBotWeb.Application.Tasks.Jobs.LockpickRankJob;
 
@@ -19,7 +18,7 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly ILogger<PlayerService> _logger;
         private readonly ICacheService _cacheService;
-        private readonly BotSocketServer _botSocketServer;
+        private readonly IBotService _botService;
         private readonly IPlayerRepository _playerRepository;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly IDiscordService _discordService;
@@ -37,7 +36,7 @@ namespace RagnarokBotWeb.Domain.Services
             IServiceProvider serviceProvider,
             IUnitOfWork unitOfWork,
             IDiscordService discordService,
-            BotSocketServer botSocketServer) : base(contextAccessor)
+            IBotService botService) : base(contextAccessor)
         {
             _logger = logger;
             _cacheService = cacheService;
@@ -47,7 +46,7 @@ namespace RagnarokBotWeb.Domain.Services
             _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
             _discordService = discordService;
-            _botSocketServer = botSocketServer;
+            _botService = botService;
         }
 
         public async Task<PlayerDto> GetPlayer(long id)
@@ -135,7 +134,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var command = new BotCommand();
             command.ListPlayers();
-            await _botSocketServer.SendCommandAsync(server.Id, command);
+            await _botService.SendCommand(server.Id, command);
 
         }
 
@@ -151,58 +150,6 @@ namespace RagnarokBotWeb.Domain.Services
             }
 
             return null;
-        }
-
-        public async Task UpdateFromScumPlayers(long serverId, List<ScumPlayer>? players)
-        {
-            if (players is null) players = _cacheService.GetConnectedPlayers(serverId);
-
-            using var scope = _serviceProvider.CreateScope(); // inject IServiceProvider
-            var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-            foreach (var player in players)
-            {
-                try
-                {
-                    var user = await ctx.Players
-                                    .Include(p => p.ScumServer)
-                                    .Include(p => p.ScumServer.Guild)
-                                    .FirstOrDefaultAsync(p => p.SteamId64 == player.SteamID && p.ScumServerId == serverId);
-
-                    user ??= new();
-                    user.X = player.X;
-                    user.Y = player.Y;
-                    user.Z = player.Z;
-                    user.Name = player.Name;
-                    user.SteamId64 = player.SteamID;
-                    user.SteamName = player.SteamName;
-                    user.Gold = player.GoldBalance;
-                    user.Money = player.AccountBalance;
-                    user.Fame = player.Fame;
-                    user.LastLoggedIn = DateTime.UtcNow;
-                    user.ScumServer ??= (await ctx.ScumServers.Include(server => server.Guild).FirstOrDefaultAsync(server => server.Id == serverId))!;
-                    if (!string.IsNullOrEmpty(user.DiscordName) && user.DiscordId.HasValue && user.ScumServer.Guild is not null)
-                    {
-                        var discordUser = await _discordService.GetDiscordUser(user.ScumServer.Guild.DiscordId, user.DiscordId.Value);
-                        user.DiscordName = discordUser?.DisplayName;
-                    }
-
-                    if (user.Id == 0)
-                    {
-                        await ctx.Players.AddAsync(user);
-                    }
-                    else
-                    {
-                        ctx.Players.Update(user);
-                    }
-
-                    await ctx.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    throw;
-                }
-            }
         }
 
         public async Task<IEnumerable<Player>> GetAllUsersAsync()
@@ -508,7 +455,7 @@ namespace RagnarokBotWeb.Domain.Services
             }
             else
             {
-                await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, dto.Amount);
+                await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, Math.Abs(dto.Amount));
             }
 
             player.Coin += dto.Amount;
@@ -526,10 +473,10 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateServerOwner(player.ScumServer);
             ValidateSubscription(player.ScumServer);
 
-            if (!_botSocketServer.IsBotConnected(player.ScumServerId))
+            if (!_botService.IsBotOnline(player.ScumServerId))
                 throw new DomainException("There is no bots online at the moment");
 
-            await _botSocketServer.SendCommandAsync(player.ScumServerId, new BotCommand().ChangeFame(player.SteamId64!, dto.Amount));
+            await _botService.SendCommand(player.ScumServerId, new BotCommand().ChangeFame(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 
@@ -546,10 +493,10 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateServerOwner(player.ScumServer);
             ValidateSubscription(player.ScumServer);
 
-            if (!_botSocketServer.IsBotConnected(player.ScumServerId))
+            if (!_botService.IsBotOnline(player.ScumServerId))
                 throw new DomainException("There is no bots online at the moment");
 
-            await _botSocketServer.SendCommandAsync(player.ScumServerId, new BotCommand().ChangeGold(player.SteamId64!, dto.Amount));
+            await _botService.SendCommand(player.ScumServerId, new BotCommand().ChangeGold(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 
@@ -566,10 +513,10 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateServerOwner(player.ScumServer);
             ValidateSubscription(player.ScumServer);
 
-            if (!_botSocketServer.IsBotConnected(player.ScumServerId))
+            if (!_botService.IsBotOnline(player.ScumServerId))
                 throw new DomainException("There is no bots online at the moment");
 
-            await _botSocketServer.SendCommandAsync(player.ScumServerId, new BotCommand().ChangeMoney(player.SteamId64!, dto.Amount));
+            await _botService.SendCommand(player.ScumServerId, new BotCommand().ChangeMoney(player.SteamId64!, dto.Amount));
 
             player.Fame += dto.Amount;
 
@@ -715,7 +662,7 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     Amount = x.Count, // players in that month only
                     Color = ColorUtil.GetRandomColor(),
-                    Name = new DateTime(x.Year, x.Month, 1).ToString("MMMM")
+                    Name = new DateTime(x.Year, x.Month, 1).ToString("MMMM", CultureInfo.InvariantCulture)
                 })
                 .ToList();
         }

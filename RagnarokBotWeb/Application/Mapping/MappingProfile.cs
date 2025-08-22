@@ -135,6 +135,18 @@ namespace RagnarokBotWeb.Application.Mapping
                .ForMember(dest => dest.SpawnPoints, opt => opt.Ignore())
                .ForMember(dest => dest.Teleports, opt => opt.Ignore())
                .ForMember(dest => dest.ScumServer, opt => opt.Ignore());
+
+            CreateMap<Taxi, TaxiDto>()
+                   .ForPath((dto) => dto.ScumServerId, opt => opt.MapFrom(taxi => taxi.ScumServer.Id))
+              .ReverseMap()
+                 .ForPath((taxi) => taxi.ScumServer.Id, opt => opt.MapFrom(dto => dto.ScumServerId))
+                 .ForMember(dest => dest.TaxiTeleports, opt => opt.Ignore())
+                 .ForMember(dest => dest.ScumServer, opt => opt.Ignore());
+
+            CreateMap<TaxiTeleport, TaxiTeleportDto>()
+               .ForPath((dto) => dto.TaxiId, opt => opt.MapFrom(taxiTeleport => taxiTeleport.Taxi.Id))
+               .ReverseMap()
+                  .ForPath((taxiTeleport) => taxiTeleport.Taxi.Id, opt => opt.MapFrom(dto => dto.TaxiId));
         }
     }
 }

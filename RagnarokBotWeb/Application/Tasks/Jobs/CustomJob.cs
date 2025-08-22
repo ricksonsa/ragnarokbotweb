@@ -1,5 +1,4 @@
 ﻿using Quartz;
-using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using Shared.Models;
 
@@ -9,13 +8,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
     {
         private ILogger<CustomJob> _logger;
         private readonly ICacheService _cacheService;
-        private readonly BotSocketServer _socketServer;
+        private readonly IBotService _botService;
 
-        public CustomJob(ILogger<CustomJob> logger, ICacheService cacheService, BotSocketServer socketServer)
+        public CustomJob(ILogger<CustomJob> logger, ICacheService cacheService)
         {
             _logger = logger;
             _cacheService = cacheService;
-            _socketServer = socketServer;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -38,7 +36,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             {
                 var botCommand = new BotCommand();
                 botCommand.Command(command);
-                await _socketServer.SendCommandAsync(serverId.Value, botCommand);
+                await _botService.SendCommand(serverId.Value, botCommand);
             }
         }
     }

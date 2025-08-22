@@ -54,7 +54,7 @@ public class GuildService(IGuildRepository guildRepository) : IGuildService
             {
                 DiscordId = socketGuild.Id,
                 DiscordName = socketGuild.Name,
-                Token = $"{Guid.NewGuid()}-{socketGuild.Id}" // FIXME: Resolver esse debito de codigo
+                Token = $"{Guid.NewGuid()}-{socketGuild.Id}"
             };
             await guildRepository.CreateOrUpdateAsync(guild);
             await guildRepository.SaveAsync();

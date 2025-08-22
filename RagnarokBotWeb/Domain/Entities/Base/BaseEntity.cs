@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RagnarokBotWeb.Domain.Entities
+namespace RagnarokBotWeb.Domain.Entities.Base
 {
     public abstract class BaseEntity
     {

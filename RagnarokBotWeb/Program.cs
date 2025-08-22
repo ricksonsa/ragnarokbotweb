@@ -182,6 +182,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IWarzoneRepository, WarzoneRepository>();
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
             builder.Services.AddScoped<ICustomTaskRepository, CustomTaskRepository>();
+            builder.Services.AddScoped<ITaxiRepository, TaxiRepository>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFileService, FileService>();
@@ -202,6 +203,7 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IReaderPointerService, ReaderPointerService>();
             builder.Services.AddScoped<IWarzoneService, WarzoneService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<ITaxiService, TaxiService>();
             builder.Services.AddScoped<PayPalService>();
 
             builder.Services.AddScoped<StartupDiscordTemplate>();

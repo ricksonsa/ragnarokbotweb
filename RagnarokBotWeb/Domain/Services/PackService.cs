@@ -152,6 +152,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var previousImage = pack.ImageUrl;
             var previousDiscordId = pack.DiscordChannelId;
+            var message = pack.DiscordMessageId;
             _mapper.Map(packDto, pack);
 
             if (!string.IsNullOrEmpty(pack.ImageUrl) && pack.ImageUrl != previousImage)
@@ -162,28 +163,23 @@ namespace RagnarokBotWeb.Domain.Services
 
             RemovePackItems(packDto, pack);
 
+            try
+            {
+                await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), message!.Value);
+            }
+            catch (Exception) { }
+
             if (pack.Enabled)
             {
                 try
                 {
-                    await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), pack.DiscordMessageId ?? 0);
-
-                    pack.DiscordChannelId = packDto.DiscordChannelId;
+                    pack.DiscordChannelId = packDto.DiscordChannelId!;
                     pack.DiscordMessageId = await GenerateDiscordPackButton(pack);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError("Error trying to create discord buttons for package {Pack} -> {Ex}", pack.Id, ex.Message);
                 }
-
-            }
-            else
-            {
-                try
-                {
-                    await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), pack.DiscordMessageId ?? 0);
-                }
-                catch (Exception) { }
             }
 
             _unitOfWork.AppDbContext.Packs.Update(pack);

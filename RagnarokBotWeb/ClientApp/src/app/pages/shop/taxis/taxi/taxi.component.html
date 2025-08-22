@@ -1,0 +1,230 @@
+<nz-space nzSize="middle">
+  <button (click)="goBack()" *nzSpaceItem nz-button nzType="default">
+    <nz-icon nzType="arrow-left"></nz-icon>
+    Taxis
+  </button>
+  <button *nzSpaceItem [disabled]="!packageForm.value.id" nz-popconfirm nz-button nzType="default" nzDanger="true"
+    nzPopconfirmTitle="Are you sure you want to delete this item?" (nzOnConfirm)="confirmDelete(packageForm.value.id)"
+    (nzOnCancel)="cancelDelete()" nzPopconfirmPlacement="topLeft" [nzOkText]="'Yes'" nzCancelText="No"
+    [nzOkDanger]="true">
+    <nz-icon nzType="delete"></nz-icon>
+    Delete Taxi
+  </button>
+  <button *nzSpaceItem nz-button nzType="primary" (click)="save()" [nzLoading]="loading">
+    Save Taxi
+  </button>
+</nz-space>
+<br>
+<br>
+<div class="main">
+  <nz-card nzSize="small" nzTitle="Taxi">
+    <div class="blocker"></div>
+    <form nz-form [formGroup]="packageForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Name*</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the package name!">
+          <input formControlName="name" nz-input name="name" type="text" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="description">Description</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the package description!">
+          <textarea formControlName="description" nz-input name="description" type="text" id="description"></textarea>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="enabled">Enabled</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="enabled"></label>
+        </nz-form-control>
+        <p nz-typography nzType="secondary">Determine whether this Taxi will be active. Disabled
+          Taxi won't be started in the game.</p>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="bottom">
+        <nz-form-label [nzSpan]="0" nzFor="warzoneThumbnail">Taxi Thumbnail</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="uploadBtn">
+          <img *ngIf="avatarUrl" nz-image width="200px" height="200px"
+            [nzSrc]="!isUploaded ? avatarUrl : (apiUrl + '/' + avatarUrl)" alt="" />
+          <ng-template #uploadBtn>
+            <nz-upload nzAction="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+              [nzBeforeUpload]="handleBeforeUpload">
+              <button style="display: none;" #upload></button>
+            </nz-upload>
+
+            <button nz-button (click)="upload.click()">
+              <nz-icon nzType="upload" />
+              Upload
+            </button>
+            <button *ngIf="packageForm.value.imageUrl != null" style="margin-left: 1px;" nz-button nzDanger
+              (click)="removeImage()">
+              Remove
+            </button>
+          </ng-template>
+
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="discordChannelId">Discord Channel</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="discordChannelExtra">
+          <nz-select formControlName="discordChannelId" id="discordChannelId" formControlName="discordChannelId"
+            nzShowSearch nzPlaceHolder="Select the discord channel in which the Taxi Event will be displayed">
+            <nz-option *ngFor="let ch of channels" [nzValue]="ch.discordId" [nzLabel]="ch.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <ng-template #discordChannelExtra>
+        <p *ngIf="account?.server?.discord">The discord channel in which the Taxi Event will be displayed.</p>
+        <span *ngIf="!account?.server?.discord">
+          <nz-alert nzType="warning" [nzMessage]="discordInstalledMessage"></nz-alert>
+          <ng-template #discordInstalledMessage>
+            <div class="discord-success">
+              <nz-icon nzType="discord" nzTheme="fill" style="font-size: 40px; color: #7289da;" />
+              <div>
+                <p style="margin: 0;">Discord server is not configured.</p>
+                <p style="margin: 0;"><a [routerLink]="'/servers/' + account?.serverId + '/settings/discord'">Click
+                    here</a> and follow the instructions to set up the discord server.</p>
+              </div>
+            </div>
+          </ng-template>
+        </span>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="taxiType">Taxi Selection Type</nz-form-label>
+        <nz-form-control [nzSpan]="24"
+          nzExtra="Select whether the user will select a taxi teleport or it will be selected randomly.">
+          <nz-select formControlName="taxiType" id="taxiType" formControlName="taxiType">
+            <nz-option [nzValue]="0" nzLabel="Randomly Selected"></nz-option>
+            <nz-option [nzValue]="1" nzLabel="Player Selection"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="price">Price</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="priceExtra"
+          nzErrorTip="Please input the price to teleport to the event!">
+          <input formControlName="price" nz-input name="price" type="number" id="price" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="vipPrice">VIP Price</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="priceExtra">
+          <input formControlName="vipPrice" nz-input name="vipPrice" type="number" id="vipPrice" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #priceExtra>
+        <p>The price in coins to teleport to the event.</p>
+      </ng-template>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="isVipOnly">VIP Only</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="isVipOnly"></label>
+        </nz-form-control>
+        <p nzType="secondary">Determine whether the teleport will only be available for
+          VIP Players.</p>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="isBlockPurchaseRaidTime">Block Teleport During Raid Times</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="isBlockPurchaseRaidTime"></label>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="purchaseCooldownSeconds">Teleport Cooldown (seconds)</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="purchaseCooldownExtra">
+          <input formControlName="purchaseCooldownSeconds" nz-input name="purchaseCooldownSeconds" type="number"
+            id="purchaseCooldownSeconds" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #purchaseCooldownExtra>
+        <p>Set a time in seconds to block the teleport for players. The player will be able to teleport
+          to the Taxi again once this time passes. Leave it blank if not needed.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="stockPerPlayer">Stock Per Player</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="dailyPackageExtra">
+          <input formControlName="stockPerPlayer" nz-input name="stockPerPlayer" type="number" id="stockPerPlayer" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #dailyPackageExtra>
+        <p>You can set how many times a player can use the teleport per day. Leave it blank for infinite
+          stock.</p>
+      </ng-template>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="stockPerVipPlayer">Stock Per Vip Player</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="dailyPackageExtraVip">
+          <input formControlName="stockPerVipPlayer" nz-input name="stockPerVipPlayer" type="number"
+            id="stockPerVipPlayer" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #dailyPackageExtraVip>
+        <p>You can set how many times a player can use the teleport per day. Leave it blank for infinite
+      </ng-template>
+    </form>
+  </nz-card>
+
+  <nz-card nzSize="small" nzTitle="Taxi Teleport">
+    <div class="blocker"></div>
+    <form [formGroup]="teleportForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Name</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <input formControlName="name" placeholder="Name of the teleport point" nz-input name="name" type="text"
+            id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="coordinates">Coordinates</nz-form-label>
+        <nz-form-control [nzSpan]="24" [nzExtra]="coordinatesExtra">
+          <input formControlName="coordinates"
+            placeholder="{X=-365234.031 Y=32936.133 Z=35726.176|P=322.996277 Y=172.876053 R=0.000000}" nz-input
+            name="coordinates" type="text" id="coordinates" />
+        </nz-form-control>
+      </nz-form-item>
+      <ng-template #coordinatesExtra>
+        <p style="margin: 0">The ingame coordinates to teleport to. You can press control-c inside the game to get the
+          coordinates.</p>
+      </ng-template>
+
+      <button nz-button nzType="primary" (click)="addTeleport()">Add Teleport</button><br><br>
+
+      <nz-table nzShowPagination="false" [nzData]="['']">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Coordinates</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (taxiTeleport of teleports; track $index) {
+          <tr>
+            <td>{{ taxiTeleport.teleport.name }}</td>
+            <td>{{ taxiTeleport.teleport.coordinates }}</td>
+            <td>
+              <button nzSize="large" style="height: 20px; width: 20px;" [nzDanger]="true" nz-button nzType="link"
+                (click)="removeTeleport($index)">
+                <nz-icon style="font-size: 20px;" nzType="close" />
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </nz-table>
+    </form>
+  </nz-card>
+
+</div>

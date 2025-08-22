@@ -68,6 +68,7 @@ export class ServerComponent implements OnInit {
   channels: ChannelDto[] = [];
   isCompliant = Constants.isCompliant;
   timezones$: Observable<{ id: string, displayName: string }[]>;
+  serverLoading = false;
 
   private fb = inject(NonNullableFormBuilder);
 
@@ -141,12 +142,17 @@ export class ServerComponent implements OnInit {
       });
       return;
     }
+    this.serverLoading = true;
     const form = this.serverForm.value;
     form.restartTimes = this.times;
     this.serverService.updateSettings(form)
       .subscribe({
         next: (server) => {
           this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('', 'Server Settings Updated', 'success')));
+          this.serverLoading = false;
+        },
+        error: (err) => {
+          this.serverLoading = false;
         }
       });
   }

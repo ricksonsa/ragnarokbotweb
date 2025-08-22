@@ -43,6 +43,9 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Config> Config { get; set; }
         public DbSet<CustomTask> CustomTasks { get; set; }
+        public DbSet<Taxi> Taxis { get; set; }
+        public DbSet<TaxiTeleport> TaxiTeleports { get; set; }
+        public DbSet<Exchange> Exchanges { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -79,33 +82,44 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
             }
 
             modelBuilder.Entity<Uav>()
-            .HasOne(u => u.ScumServer)
-            .WithOne(s => s.Uav)
-            .HasForeignKey<ScumServer>(s => s.UavId);
+                .HasOne(u => u.ScumServer)
+                .WithOne(s => s.Uav)
+                .HasForeignKey<ScumServer>(s => s.UavId);
+
+            modelBuilder.Entity<Exchange>()
+                .HasOne(u => u.ScumServer)
+                .WithOne(s => s.Exchange)
+                .HasForeignKey<ScumServer>(s => s.ExchangeId);
 
             modelBuilder.Entity<PackItem>()
-            .HasOne(wi => wi.Item)
-            .WithMany()
-            .HasForeignKey(wi => wi.ItemId)
-            .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(wi => wi.Item)
+                .WithMany()
+                .HasForeignKey(wi => wi.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<WarzoneItem>()
-            .HasOne(wi => wi.Item)
-            .WithMany()
-            .HasForeignKey(wi => wi.ItemId)
-            .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(wi => wi.Item)
+                .WithMany()
+                .HasForeignKey(wi => wi.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<WarzoneSpawn>()
-            .HasOne(wi => wi.Teleport)
-            .WithMany()
-            .HasForeignKey(wi => wi.TeleportId)
-            .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(wi => wi.Teleport)
+                .WithMany()
+                .HasForeignKey(wi => wi.TeleportId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<WarzoneTeleport>()
-            .HasOne(wi => wi.Teleport)
-            .WithMany()
-            .HasForeignKey(wi => wi.TeleportId)
-            .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(wi => wi.Teleport)
+                .WithMany()
+                .HasForeignKey(wi => wi.TeleportId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaxiTeleport>()
+                .HasOne(tt => tt.Teleport)
+                .WithMany()
+                .HasForeignKey(tt => tt.TeleportId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         public void MigrateDatabase()

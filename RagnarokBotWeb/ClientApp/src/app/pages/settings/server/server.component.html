@@ -206,7 +206,7 @@
     </form>
   </nz-card>
   <ng-template #saveSettings>
-    <button [disabled]="!accountDto?.server?.ftp" nz-button nzType="primary" (click)="updateSettings()">Save</button>
+    <button [disabled]="!accountDto?.server?.ftp" nz-button nzType="primary" [nzLoading]="serverLoading" (click)="updateSettings()">Save</button>
   </ng-template>
 
   <!-- <div class="last"></div> -->

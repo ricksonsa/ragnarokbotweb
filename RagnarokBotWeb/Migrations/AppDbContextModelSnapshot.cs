@@ -375,6 +375,77 @@ namespace RagnarokBotWeb.Migrations
                     b.ToTable("DiscordRoles");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Exchange", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("Deleted")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("DeliveryText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DiscordChannelId")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("DiscordMessageId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsBlockPurchaseRaidTime")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVipOnly")
+                        .HasColumnType("boolean");
+
+                    b.Property<long?>("MinPlayerOnline")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Price")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PurchaseCooldownSeconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ScumServerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("StockPerPlayer")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("StockPerVipPlayer")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<long>("VipPrice")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Exchanges");
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Ftp", b =>
                 {
                     b.Property<long>("Id")
@@ -640,6 +711,12 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<long?>("TaxiId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TaxiTeleportId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Uav")
                         .HasColumnType("text");
 
@@ -657,6 +734,8 @@ namespace RagnarokBotWeb.Migrations
 
                     b.HasIndex("ScumServerId");
 
+                    b.HasIndex("TaxiId");
+
                     b.HasIndex("WarzoneId");
 
                     b.ToTable("Orders");
@@ -669,9 +748,6 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Commands")
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamp without time zone");
@@ -706,6 +782,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<bool>("IsWelcomePack")
                         .HasColumnType("boolean");
 
+                    b.Property<long?>("MinPlayerOnline")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -716,7 +795,7 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<long?>("PurchaseCooldownSeconds")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("ScumServerId")
+                    b.Property<long?>("ScumServerId")
                         .HasColumnType("bigint");
 
                     b.Property<long?>("StockPerPlayer")
@@ -1048,6 +1127,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<long?>("ExchangeId")
+                        .HasColumnType("bigint");
+
                     b.Property<long?>("FtpId")
                         .HasColumnType("bigint");
 
@@ -1134,6 +1216,9 @@ namespace RagnarokBotWeb.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ExchangeId")
+                        .IsUnique();
+
                     b.HasIndex("FtpId");
 
                     b.HasIndex("GuildId")
@@ -1200,6 +1285,111 @@ namespace RagnarokBotWeb.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Subscriptions");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Taxi", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("Deleted")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("DeliveryText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DiscordChannelId")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("DiscordMessageId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsBlockPurchaseRaidTime")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVipOnly")
+                        .HasColumnType("boolean");
+
+                    b.Property<long?>("MinPlayerOnline")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Price")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PurchaseCooldownSeconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ScumServerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("StockPerPlayer")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("StockPerVipPlayer")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TaxiType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<long>("VipPrice")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScumServerId");
+
+                    b.ToTable("Taxis");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.TaxiTeleport", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<long>("TaxiId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TeleportId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaxiId");
+
+                    b.HasIndex("TeleportId");
+
+                    b.ToTable("TaxiTeleports");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Teleport", b =>
@@ -1298,14 +1488,17 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<DateTime?>("Deleted")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("DeliveryText")
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<decimal?>("DiscordId")
-                        .HasColumnType("numeric(20,0)");
+                    b.Property<string>("DiscordChannelId")
+                        .HasColumnType("text");
 
                     b.Property<decimal?>("DiscordMessageId")
                         .HasColumnType("numeric(20,0)");
@@ -1322,6 +1515,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<bool>("IsVipOnly")
                         .HasColumnType("boolean");
 
+                    b.Property<long?>("MinPlayerOnline")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1330,6 +1526,9 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<long?>("PurchaseCooldownSeconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ScumServerId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("SendToUserDM")
@@ -1494,7 +1693,7 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<long?>("PurchaseCooldownSeconds")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("ScumServerId")
+                    b.Property<long?>("ScumServerId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("StartMessage")
@@ -1723,6 +1922,10 @@ namespace RagnarokBotWeb.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Taxi", "Taxi")
+                        .WithMany()
+                        .HasForeignKey("TaxiId");
+
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Warzone", "Warzone")
                         .WithMany()
                         .HasForeignKey("WarzoneId");
@@ -1733,6 +1936,8 @@ namespace RagnarokBotWeb.Migrations
 
                     b.Navigation("ScumServer");
 
+                    b.Navigation("Taxi");
+
                     b.Navigation("Warzone");
                 });
 
@@ -1740,9 +1945,7 @@ namespace RagnarokBotWeb.Migrations
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
                         .WithMany()
-                        .HasForeignKey("ScumServerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ScumServerId");
 
                     b.Navigation("ScumServer");
                 });
@@ -1831,6 +2034,10 @@ namespace RagnarokBotWeb.Migrations
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.ScumServer", b =>
                 {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Exchange", "Exchange")
+                        .WithOne("ScumServer")
+                        .HasForeignKey("RagnarokBotWeb.Domain.Entities.ScumServer", "ExchangeId");
+
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Ftp", "Ftp")
                         .WithMany()
                         .HasForeignKey("FtpId");
@@ -1849,6 +2056,8 @@ namespace RagnarokBotWeb.Migrations
                         .WithOne("ScumServer")
                         .HasForeignKey("RagnarokBotWeb.Domain.Entities.ScumServer", "UavId");
 
+                    b.Navigation("Exchange");
+
                     b.Navigation("Ftp");
 
                     b.Navigation("Guild");
@@ -1863,6 +2072,34 @@ namespace RagnarokBotWeb.Migrations
                     b.HasOne("RagnarokBotWeb.Domain.Entities.Player", null)
                         .WithMany("Silences")
                         .HasForeignKey("PlayerId");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Taxi", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
+                        .WithMany()
+                        .HasForeignKey("ScumServerId");
+
+                    b.Navigation("ScumServer");
+                });
+
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.TaxiTeleport", b =>
+                {
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Taxi", "Taxi")
+                        .WithMany("TaxiTeleports")
+                        .HasForeignKey("TaxiId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RagnarokBotWeb.Domain.Entities.Teleport", "Teleport")
+                        .WithMany()
+                        .HasForeignKey("TeleportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Taxi");
+
+                    b.Navigation("Teleport");
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Transaction", b =>
@@ -1898,9 +2135,7 @@ namespace RagnarokBotWeb.Migrations
                 {
                     b.HasOne("RagnarokBotWeb.Domain.Entities.ScumServer", "ScumServer")
                         .WithMany()
-                        .HasForeignKey("ScumServerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ScumServerId");
 
                     b.Navigation("ScumServer");
                 });
@@ -1972,6 +2207,12 @@ namespace RagnarokBotWeb.Migrations
                     b.Navigation("Buttons");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Exchange", b =>
+                {
+                    b.Navigation("ScumServer")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Guild", b =>
                 {
                     b.Navigation("Channels");
@@ -1996,6 +2237,11 @@ namespace RagnarokBotWeb.Migrations
                     b.Navigation("Vips");
                 });
 
+            modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Taxi", b =>
+                {
+                    b.Navigation("TaxiTeleports");
+                });
+
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Tenant", b =>
                 {
                     b.Navigation("Payments");
@@ -2005,7 +2251,8 @@ namespace RagnarokBotWeb.Migrations
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Uav", b =>
                 {
-                    b.Navigation("ScumServer");
+                    b.Navigation("ScumServer")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RagnarokBotWeb.Domain.Entities.Warzone", b =>

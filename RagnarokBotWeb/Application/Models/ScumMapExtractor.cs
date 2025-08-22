@@ -782,6 +782,17 @@ public struct ScumCoordinate
         Math.Pow(target.Y - Y, 2) +
         Math.Pow(target.Z - Z, 2));
 
+    /// <summary>
+    /// Calcula se a posição passada está dentro da area do cubo a partir do centro
+    /// </summary>
+    public bool IsInsideCube(ScumCoordinate target, float centerToVertex)
+    {
+        float halfSide = centerToVertex / (float)Math.Sqrt(3);
+
+        return Math.Abs(target.X - X) <= halfSide &&
+               Math.Abs(target.Y - Y) <= halfSide &&
+               Math.Abs(target.Z - Z) <= halfSide;
+    }
     public override readonly string ToString() => $"X={X} Y={Y} Z={Z}".Replace(",", ".");
 
     public static ScumCoordinate MidPoint((double x1, double y1) point1, (double x2, double y2) point2)

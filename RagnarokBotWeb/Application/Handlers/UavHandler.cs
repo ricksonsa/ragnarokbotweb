@@ -23,7 +23,7 @@ namespace RagnarokBotWeb.Application.Handlers
             {
                 Color = Color.DarkOrange,
                 GuildId = server.Guild!.DiscordId,
-                DiscordId = server.Uav.DiscordId!.Value,
+                DiscordId = ulong.Parse(server.Uav.DiscordChannelId!),
                 Title = $"SECTOR {sector} UAV SCAN",
                 ImageUrl = image,
                 TimeStamp = true

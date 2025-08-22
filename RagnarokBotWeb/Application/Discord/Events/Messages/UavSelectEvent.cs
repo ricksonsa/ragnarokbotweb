@@ -24,8 +24,10 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
             var scumRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
             var server = await scumRepository.FindByGuildId(component.GuildId!.Value);
             var selected = component.Data.Values.First();
-            DiscordEventService.UserSelections[(component.User.Id, component.GuildId.Value)] = selected;
-            await component.RespondAsync($"Zone selected, please confirm UAV Scan for sector {selected}.", ephemeral: true);
+            if (selected == "0") await component.DeferAsync(ephemeral: true);
+            DiscordEventService.UserUavSelections[(component.User.Id, component.GuildId.Value)] = selected;
+            //await component.RespondAsync($"Zone selected, please confirm UAV Scan for sector {selected}.", ephemeral: true);
+            await component.DeferAsync(ephemeral: true);
         }
     }
 }

@@ -92,12 +92,6 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
 
-            //var job = JobBuilder.Create<BotAliveJob>()
-            //    .WithIdentity(nameof(BotAliveJob), $"ServerJobs({server.Id})")
-            //    .UsingJobData("server_id", server.Id)
-            //    .Build();
-            //await scheduler.ScheduleJob(job, OneMinTrigger());
-
             var job = JobBuilder.Create<OrderResetJob>()
                 .WithIdentity(nameof(OrderResetJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
@@ -121,6 +115,12 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .Build();
             await scheduler.ScheduleJob(job, CronTrigger("0 0 0/2 * * ?"));
+
+            job = JobBuilder.Create<CommandQueueProcessorJob>()
+                .WithIdentity(nameof(CommandQueueProcessorJob), $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, ThirtySecondsTrigger());
 
             job = JobBuilder.Create<OrderCommandJob>()
                 .WithIdentity(nameof(OrderCommandJob), $"ServerJobs({server.Id})")

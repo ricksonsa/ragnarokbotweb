@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using RagnarokBotWeb.Domain.Entities.Base;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RagnarokBotWeb.Domain.Entities
 {
@@ -13,6 +14,8 @@ namespace RagnarokBotWeb.Domain.Entities
         public Ftp? Ftp { get; set; }
         public long? UavId { get; set; }
         public Uav Uav { get; set; }
+        public long? ExchangeId { get; set; }
+        public Exchange Exchange { get; set; }
         public string? RestartTimes { get; private set; }
         public string? TimeZoneId { get; set; }
 

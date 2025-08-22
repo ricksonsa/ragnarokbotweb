@@ -15,7 +15,8 @@ public class DiscordEventService(
 )
     : BackgroundService
 {
-    public static readonly Dictionary<(ulong, ulong), string> UserSelections = [];
+    public static readonly Dictionary<(ulong, ulong), string> UserUavSelections = [];
+    public static readonly Dictionary<(ulong, ulong), string> UserTaxiTeleportSelections = [];
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

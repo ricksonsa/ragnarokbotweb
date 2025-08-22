@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
-using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
@@ -22,7 +21,7 @@ public class GamePlayJob(
     IFileService fileService,
     IDiscordService discordService,
     ICacheService cache,
-    BotSocketServer socketServer
+    IBotService botService
 ) : AbstractJob(scumServerRepository), IJob
 {
 
@@ -35,7 +34,7 @@ public class GamePlayJob(
             var processor = new ScumFileProcessor(server, unitOfWork);
             await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), ftpService, context.CancellationToken))
             {
-                if (IsCompliant()) await HandleArmedTrap(socketServer, unitOfWork, cache, server, line, logger);
+                if (IsCompliant()) await HandleArmedTrap(botService, unitOfWork, cache, server, line, logger);
                 await HandleLockpick(unitOfWork, discordService, fileService, server, line, logger);
                 await HandleBunkerState(bunkerService, server, line);
             }
@@ -132,43 +131,41 @@ public class GamePlayJob(
         }
     }
 
-    private static async Task HandleArmedTrap(BotSocketServer socketServer, IUnitOfWork unitOfWork, ICacheService cache, ScumServer server, string line, ILogger<GamePlayJob> logger)
+    private static async Task HandleArmedTrap(IBotService botService, IUnitOfWork unitOfWork, ICacheService cache, ScumServer server, string line, ILogger<GamePlayJob> logger)
     {
         if (line.Contains("[LogTrap] Armed"))
         {
             var trapLog = TrapLogParser.Parse(line);
             if (trapLog is not null && IsMineTrap(trapLog))
             {
-                logger.LogInformation("HandleArmedTrap triggered for server {Server} player {Player} location {Location}", server.Id, trapLog.User, trapLog.ToString());
-
                 var trapCoordinate = new ScumCoordinate(trapLog.X, trapLog.Y, trapLog.Z);
                 if (!server.AllowMinesOutsideFlag)
                 {
-                    bool enforcePenality = false;
                     var squad = cache.GetSquads(server.Id).FirstOrDefault(squad => squad.Members.Any(member => member.SteamId == trapLog.SteamId));
-                    if (squad is null) enforcePenality = true;
-
                     var squadLeader = squad?.Members.FirstOrDefault(member => member.MemberRank == 4);
-                    if (squadLeader is null) enforcePenality = true;
+                    var flag = cache.GetFlags(server.Id).FirstOrDefault(flag =>
+                        (squadLeader != null && flag.SteamId == squadLeader.SteamId)
+                        || flag.SteamId == trapLog.SteamId);
 
-                    var flag = cache.GetFlags(server.Id).FirstOrDefault(flag => squadLeader != null && flag.SteamId == squadLeader.SteamId);
-                    if (flag is null) enforcePenality = true;
-
-                    if (enforcePenality || Math.Round(new ScumCoordinate(flag!.X, flag.Y, flag.Z).DistanceTo(trapCoordinate)) > 7020)
+                    if (flag is not null)
                     {
-                        var msg = $"{trapLog.User} armed a mine outside flag area!";
-                        var command = new Shared.Models.BotCommand()
-                            .Teleport(trapLog.SteamId, trapCoordinate.ToString(), checkTargetOnline: true);
-
-                        if (server.CoinReductionPerInvalidMineKill > 0)
+                        if (!new ScumCoordinate(flag!.X, flag.Y, flag.Z).IsInsideCube(trapCoordinate, 7050f))
                         {
-                            msg += " Coin penalty applied.";
-                            await new PlayerCoinManager(unitOfWork).RemoveCoinsBySteamIdAsync(trapLog.SteamId, server.Id, server.CoinReductionPerInvalidMineKill);
+                            logger.LogInformation("HandleArmedTrap triggered for server {Server} player {Player} TrapLocation {Location}", server.Id, trapLog.User, trapCoordinate);
+                            var msg = $"{trapLog.User} armed a mine outside flag area!";
+                            var command = new Shared.Models.BotCommand()
+                                .Teleport(trapLog.SteamId, trapCoordinate.ToString(), checkTargetOnline: true);
+
+                            if (server.CoinReductionPerInvalidMineKill > 0)
+                            {
+                                msg += " Coin penalty applied.";
+                                await new PlayerCoinManager(unitOfWork).RemoveCoinsBySteamIdAsync(trapLog.SteamId, server.Id, server.CoinReductionPerInvalidMineKill);
+                            }
+
+                            if (server.AnnounceMineOutsideFlag) command.Say(msg);
+
+                            await botService.SendCommand(server.Id, command);
                         }
-
-                        if (server.AnnounceMineOutsideFlag) command.Say(msg);
-
-                        await socketServer.SendCommandAsync(server.Id, command);
                     }
                 }
             }

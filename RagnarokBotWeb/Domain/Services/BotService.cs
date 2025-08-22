@@ -1,8 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
+using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Models;
 using Shared.Parser;
@@ -13,29 +15,32 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly ILogger<BotService> _logger;
         private readonly ICacheService _cacheService;
-        private readonly IPlayerService _playerService;
         private readonly IOrderService _orderService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly BotSocketServer _botSocket;
         private readonly IScumServerRepository _scumServerRepository;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IDiscordService _discordService;
 
         public BotService(
             IHttpContextAccessor httpContext,
             ICacheService cacheService,
-            IPlayerService playerService,
             IOrderService orderService,
             ILogger<BotService> logger,
             IScumServerRepository scumServerRepository,
             IUnitOfWork unitOfWork,
-            BotSocketServer botSocket) : base(httpContext)
+            BotSocketServer botSocket,
+            IServiceProvider serviceProvider,
+            IDiscordService discordService) : base(httpContext)
         {
             _cacheService = cacheService;
-            _playerService = playerService;
             _orderService = orderService;
             _logger = logger;
             _scumServerRepository = scumServerRepository;
             _unitOfWork = unitOfWork;
             _botSocket = botSocket;
+            _serviceProvider = serviceProvider;
+            _discordService = discordService;
         }
 
         public async Task UpdatePlayersOnline(UpdateFromStringRequest input)
@@ -43,7 +48,59 @@ namespace RagnarokBotWeb.Domain.Services
             var serverId = ServerId();
             var players = ListPlayersParser.Parse(input.Value);
             _cacheService.SetConnectedPlayers(serverId!.Value, players);
-            await _playerService.UpdateFromScumPlayers(serverId.Value, players);
+            await UpdateFromScumPlayers(serverId.Value, players);
+        }
+
+        public async Task UpdateFromScumPlayers(long serverId, List<ScumPlayer>? players)
+        {
+            if (players is null) players = _cacheService.GetConnectedPlayers(serverId);
+
+            using var scope = _serviceProvider.CreateScope(); // inject IServiceProvider
+            var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            foreach (var player in players)
+            {
+                try
+                {
+                    var user = await ctx.Players
+                                    .Include(p => p.ScumServer)
+                                    .Include(p => p.ScumServer.Guild)
+                                    .FirstOrDefaultAsync(p => p.SteamId64 == player.SteamID && p.ScumServerId == serverId);
+
+                    user ??= new();
+                    user.X = player.X;
+                    user.Y = player.Y;
+                    user.Z = player.Z;
+                    user.Name = player.Name;
+                    user.SteamId64 = player.SteamID;
+                    user.SteamName = player.SteamName;
+                    user.Gold = player.GoldBalance;
+                    user.Money = player.AccountBalance;
+                    user.Fame = player.Fame;
+                    user.LastLoggedIn = DateTime.UtcNow;
+                    user.ScumServer ??= (await ctx.ScumServers.Include(server => server.Guild).FirstOrDefaultAsync(server => server.Id == serverId))!;
+                    if (!string.IsNullOrEmpty(user.DiscordName) && user.DiscordId.HasValue && user.ScumServer.Guild is not null)
+                    {
+                        var discordUser = await _discordService.GetDiscordUser(user.ScumServer.Guild.DiscordId, user.DiscordId.Value);
+                        user.DiscordName = discordUser?.DisplayName;
+                    }
+
+                    if (user.Id == 0)
+                    {
+                        await ctx.Players.AddAsync(user);
+                    }
+                    else
+                    {
+                        ctx.Players.Update(user);
+                    }
+
+                    await ctx.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
         }
 
         public async Task UpdateFlags(UpdateFromStringRequest input)
@@ -72,6 +129,16 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task SendCommand(long serverId, BotCommand command)
         {
+            if (command.Values.Any(cmd => cmd.CheckTargetOnline))
+            {
+                var players = _cacheService.GetConnectedPlayers(serverId);
+                if (!players.Any(player => player.SteamID == command.Values.First(v => v.CheckTargetOnline).Target))
+                {
+                    _cacheService.EnqueueCommand(serverId, command);
+                    return;
+                }
+            }
+
             await _botSocket.SendCommandAsync(serverId, command);
         }
 
@@ -98,10 +165,15 @@ namespace RagnarokBotWeb.Domain.Services
             return _botSocket.GetBots(serverId).Where(bot => bot.LastPinged.HasValue).ToList();
         }
 
+        public List<BotUser> GetBots(long serverId)
+        {
+            return _botSocket.GetBots(serverId);
+        }
+
         public List<BotUser> GetBots()
         {
             var serverId = ServerId();
-            return _botSocket.GetBots(serverId!.Value);
+            return GetBots(serverId!.Value);
         }
 
         public List<BotUser> GetConnectedBots()
@@ -144,6 +216,11 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 return null;
             }
+        }
+
+        public void BotPingUpdate(long id, Guid guid, string steamId)
+        {
+            _botSocket.BotPingUpdate(id, guid, steamId);
         }
     }
 }

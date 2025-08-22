@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application.Pagination;
-using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Entities.Base;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using System.Linq.Expressions;

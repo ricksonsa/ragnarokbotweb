@@ -71,6 +71,10 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     {
                         await HandleUavOrder(server, isBotOnline, players, order, command);
                     }
+                    else if (order.OrderType == EOrderType.Taxi)
+                    {
+                        HandleTaxiOrder(isBotOnline, order, command);
+                    }
 
                     if (command != null) await _botService.SendCommand(order.ScumServer.Id, command);
 
@@ -109,6 +113,16 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             if (!isBotOnline) return;
             if (order.Warzone is null) return;
             var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
+            command.Data = "order_" + order.Id.ToString();
+            command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
+        }
+
+        private static void HandleTaxiOrder(bool isBotOnline, Order order, BotCommand command)
+        {
+            if (!isBotOnline) return;
+            if (order.Taxi is null) return;
+            var teleport = order.Taxi.TaxiTeleports.FirstOrDefault(t => t.Id.ToString() == order.TaxiTeleportId);
+            if (teleport is null) return;
             command.Data = "order_" + order.Id.ToString();
             command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
         }

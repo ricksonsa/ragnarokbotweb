@@ -1,5 +1,4 @@
 ﻿using Quartz;
-using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Entities;
@@ -20,7 +19,7 @@ public class KillLogJob(
     IFileService fileService,
     IFtpService ftpService,
     ICacheService cacheService,
-    BotSocketServer botSocketServer
+    IBotService botService
 ) : AbstractJob(scumServerRepository), IJob
 {
     public async Task Execute(IJobExecutionContext context)
@@ -89,7 +88,7 @@ public class KillLogJob(
                         logger.LogError(ex, "PlayerCoinManager Exception");
                     }
 
-                    await HandleAnnounceText(botSocketServer, server, kill); // Announce kill in game
+                    await HandleAnnounceText(botService, server, kill); // Announce kill in game
                 }
 
                 try
@@ -137,7 +136,7 @@ public class KillLogJob(
         return false;
     }
 
-    private static async Task HandleAnnounceText(BotSocketServer botSocketServer, ScumServer server, Kill kill)
+    private static async Task HandleAnnounceText(IBotService botService, ScumServer server, Kill kill)
     {
         if (!string.IsNullOrEmpty(server.KillAnnounceText))
         {
@@ -148,7 +147,7 @@ public class KillLogJob(
                 .Replace("{weapon}", kill.DisplayWeapon)
                 .Replace("{sector}", kill.Sector);
 
-            await botSocketServer.SendCommandAsync(server.Id, new Shared.Models.BotCommand().Say(msg));
+            await botService.SendCommand(server.Id, new Shared.Models.BotCommand().Say(msg));
         }
     }
 

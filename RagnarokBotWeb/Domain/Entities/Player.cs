@@ -1,4 +1,6 @@
-﻿namespace RagnarokBotWeb.Domain.Entities;
+﻿using RagnarokBotWeb.Domain.Entities.Base;
+
+namespace RagnarokBotWeb.Domain.Entities;
 public class Player : BaseEntity
 {
     public string? Name { get; set; }

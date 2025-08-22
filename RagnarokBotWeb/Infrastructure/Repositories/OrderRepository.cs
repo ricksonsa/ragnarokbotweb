@@ -32,6 +32,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
                 .Include(order => order.ScumServer.Uav)
+                .Include(order => order.Taxi)
+                    .ThenInclude(taxi => taxi.TaxiTeleports)
+                    .ThenInclude(tp => tp.Teleport)
                 .Include(order => order.Player)
                 .Include(order => order.Pack)
                 .ThenInclude(pack => pack.PackItems)
@@ -50,9 +53,12 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(order => order.ScumServer)
                 .Include(order => order.ScumServer.Uav)
                 .Include(order => order.Player)
+                .Include(order => order.Taxi)
+                    .ThenInclude(taxi => taxi.TaxiTeleports)
+                    .ThenInclude(tp => tp.Teleport)
                 .Include(order => order.Pack)
-                .ThenInclude(pack => pack.PackItems)
-                .ThenInclude(packItems => packItems.Item)
+                    .ThenInclude(pack => pack.PackItems)
+                    .ThenInclude(packItems => packItems.Item)
                 .Include(order => order.Warzone)
                     .ThenInclude(warzone => warzone.Teleports)
                     .ThenInclude(teleport => teleport.Teleport)
@@ -103,11 +109,26 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public Task<List<Order>> FindWithTaxi(long taxiId)
+        {
+            var now = DateTime.UtcNow;
+            return _appDbContext.Orders
+                .Include(order => order.ScumServer)
+                .Include(order => order.Player)
+                .Include(order => order.Taxi)
+                    .ThenInclude(taxi => taxi!.TaxiTeleports)
+                    .ThenInclude(teleport => teleport.Teleport)
+                .Where(order => order.Taxi != null && order.Taxi.Id == taxiId && order.CreateDate >= now.AddHours(-24) && order.CreateDate <= now)
+                .OrderByDescending(order => order.CreateDate)
+                .ToListAsync();
+        }
+
         public Task<Page<Order>> GetPageByFilter(long serverId, Paginator paginator, string? filter)
         {
             var query = _appDbContext.Orders
                .Include(order => order.Pack)
                .Include(order => order.Warzone)
+               .Include(order => order.Taxi)
                .Include(order => order.ScumServer)
                .Include(order => order.ScumServer.Uav)
                .Include(order => order.Player)

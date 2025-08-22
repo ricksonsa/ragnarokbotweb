@@ -267,7 +267,15 @@ namespace RagnarokBotWeb.Application.BotServer
             }
         }
 
-        // Send command to any available bot for the server
+        /// <summary>
+        /// Send the command to any available bot for the server. 
+        /// Prioritize bots with recent game ping, but fall back to any connected bot. 
+        /// Prefer recently pinged bots.
+        /// Then by least recently used.
+        /// </summary>
+        /// <param name="serverId">Server ID</param>
+        /// <param name="command">BotCommand</param>
+        /// <returns></returns>
         public async Task SendCommandAsync(long serverId, BotCommand command)
         {
             if (!_bots.TryGetValue(serverId, out var botsForServer))
@@ -276,11 +284,10 @@ namespace RagnarokBotWeb.Application.BotServer
                 return;
             }
 
-            // Prioritize bots with recent game ping, but fall back to any connected bot
             var bot = botsForServer.Values
                 .Where(b => b.TcpClient?.Connected == true)
-                .OrderByDescending(b => b.LastPinged ?? DateTime.MinValue) // Prefer recently pinged bots
-                .ThenBy(b => b.LastCommand ?? DateTime.MinValue) // Then by least recently used
+                .OrderByDescending(b => b.LastPinged ?? DateTime.MinValue)
+                .ThenBy(b => b.LastCommand ?? DateTime.MinValue)
                 .FirstOrDefault();
 
             if (bot != null)

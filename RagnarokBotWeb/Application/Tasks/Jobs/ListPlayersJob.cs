@@ -1,5 +1,4 @@
 ﻿using Quartz;
-using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -8,7 +7,6 @@ using Shared.Models;
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
     public class ListPlayersJob(
-        BotSocketServer botSocket,
         ILogger<ListPlayersJob> logger,
         IBotService botService,
         IScumServerRepository scumServerRepository) : AbstractJob(scumServerRepository), IJob
@@ -22,7 +20,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 long serverId = server.Id;
 
                 if (!botService.IsBotOnline(serverId)) return;
-                await botSocket.SendCommandAsync(serverId, new BotCommand().ListPlayers());
+                await botService.SendCommand(serverId, new BotCommand().ListPlayers());
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }

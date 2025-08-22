@@ -1,4 +1,5 @@
-﻿using Shared.Enums;
+﻿using RagnarokBotWeb.Domain.Entities.Base;
+using Shared.Enums;
 
 namespace RagnarokBotWeb.Domain.Entities
 {
@@ -11,6 +12,8 @@ namespace RagnarokBotWeb.Domain.Entities
         public Player? Player { get; set; }
         public ScumServer ScumServer { get; set; }
         public string? Uav { get; set; }
+        public string? TaxiTeleportId { get; set; }
+        public Taxi? Taxi { get; set; }
 
         public long ResolvedPrice
         {
@@ -66,29 +69,11 @@ namespace RagnarokBotWeb.Domain.Entities
             else return $"\nNext purchase will be available in {Math.Round(remainingSeconds)} seconds.";
         }
 
-        public string ResolveUavCooldownText()
+        public string ResolveCooldownText(BaseOrderEntity orderItem)
         {
-            if (ScumServer.Uav.PurchaseCooldownSeconds.HasValue && ScumServer.Uav.PurchaseCooldownSeconds.Value > 0)
+            if (orderItem.PurchaseCooldownSeconds.HasValue && orderItem.PurchaseCooldownSeconds.Value > 0)
             {
-                return ResolvePurchaseCooldownText(ScumServer.Uav.PurchaseCooldownSeconds.Value);
-            }
-            return string.Empty;
-        }
-
-        public string ResolveWarzoneCooldownText()
-        {
-            if (Warzone!.PurchaseCooldownSeconds.HasValue && Warzone.PurchaseCooldownSeconds.Value > 0)
-            {
-                return ResolvePurchaseCooldownText(Warzone.PurchaseCooldownSeconds.Value);
-            }
-            return string.Empty;
-        }
-
-        public string ResolvePackCooldownText()
-        {
-            if (Pack!.PurchaseCooldownSeconds.HasValue && Pack.PurchaseCooldownSeconds.Value > 0)
-            {
-                return ResolvePurchaseCooldownText(Pack.PurchaseCooldownSeconds.Value);
+                return ResolvePurchaseCooldownText(orderItem.PurchaseCooldownSeconds.Value);
             }
             return string.Empty;
         }
@@ -96,17 +81,8 @@ namespace RagnarokBotWeb.Domain.Entities
         public long GetPrice()
         {
             if (Player is null) throw new Exception("Invalid player");
-            switch (OrderType)
-            {
-                case EOrderType.Warzone:
-                    return Player.IsVip() ? Warzone!.VipPrice : Warzone!.Price;
-                case EOrderType.Pack:
-                    return Player.IsVip() ? Pack!.VipPrice : Pack!.Price;
-                case EOrderType.UAV:
-                    return Player.IsVip() ? ScumServer.Uav.VipPrice : ScumServer.Uav.Price;
-                default:
-                    throw new Exception("Invalid order");
-            }
+            var item = GetItem();
+            return Player.IsVip() ? item!.VipPrice : item!.Price;
         }
 
         public string? ResolvedDeliveryText()
@@ -132,6 +108,19 @@ namespace RagnarokBotWeb.Domain.Entities
                 return null;
             }
 
+        }
+
+        public BaseOrderEntity GetItem()
+        {
+            switch (OrderType)
+            {
+                case EOrderType.Warzone: return Warzone!;
+                case EOrderType.Pack: return Pack!;
+                case EOrderType.UAV: return ScumServer.Uav!;
+                case EOrderType.Exchange: return ScumServer.Exchange!;
+                case EOrderType.Taxi: return Taxi!;
+                default: throw new Exception("Invalid order");
+            }
         }
     }
 }

@@ -20,6 +20,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IPackRepository _packRepository;
         private readonly IPlayerRepository _playerRepository;
         private readonly IWarzoneRepository _warzoneRepository;
+        private readonly ITaxiRepository _taxiRepository;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
@@ -35,7 +36,8 @@ namespace RagnarokBotWeb.Domain.Services
             IWarzoneRepository warzoneRepository,
             IUnitOfWork unitOfWork,
             ICacheService cacheService,
-            IScumServerRepository scumServerRepository) : base(contextAccessor)
+            IScumServerRepository scumServerRepository,
+            ITaxiRepository taxiRepository) : base(contextAccessor)
         {
             _logger = logger;
             _orderRepository = orderRepository;
@@ -46,6 +48,7 @@ namespace RagnarokBotWeb.Domain.Services
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
             _scumServerRepository = scumServerRepository;
+            _taxiRepository = taxiRepository;
         }
 
         public async Task<OrderDto> ConfirmOrderDelivered(long orderId)
@@ -206,6 +209,35 @@ namespace RagnarokBotWeb.Domain.Services
             return order;
         }
 
+        public async Task<Order?> PlaceTaxiOrderFromDiscord(ulong guildId, ulong discordId, long taxiId)
+        {
+            var taxi = await _taxiRepository.FindByTeleportIdAsync(taxiId);
+            if (taxi is null) throw new DomainException("Taxi not found");
+
+            var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
+            if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
+
+            var order = new Order
+            {
+                Taxi = taxi,
+                TaxiTeleportId = taxiId.ToString(),
+                Player = player,
+                OrderType = EOrderType.Taxi,
+                ScumServer = player.ScumServer
+            };
+
+            var processor = new OrderPurchaseProcessor(_orderRepository, _cacheService);
+            await processor.ValidateAsync(order);
+            var price = order.ResolvedPrice;
+
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+            await new PlayerCoinManager(_unitOfWork).RemoveCoinsByPlayerId(player.Id, price);
+
+            return order;
+        }
+
+
         public async Task<List<GrapthDto>> GetBestSellingOrdersPacks()
         {
             var serverId = ServerId();
@@ -224,15 +256,15 @@ namespace RagnarokBotWeb.Domain.Services
                 .ToListAsync();
 
             var packs = orders
-            .Where(order => order.OrderType == EOrderType.Pack && !order.Pack!.IsWelcomePack)
-            .GroupBy(p => p.Pack!.Name)
-            .Select(g => new
-            {
-                Name = g.Key,
-                Count = g.Count(),
-                Color = ColorUtil.GetRandomColor()
-            })
-            .ToList();
+                .Where(order => order.OrderType == EOrderType.Pack && !order.Pack!.IsWelcomePack)
+                .GroupBy(p => p.Pack!.Name)
+                .Select(g => new
+                {
+                    Name = g.Key,
+                    Count = g.Count(),
+                    Color = ColorUtil.GetRandomColor()
+                })
+                .ToList();
 
             return packs.Select(a => new GrapthDto()
             {

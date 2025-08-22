@@ -15,6 +15,7 @@ export class ScumServer {
     showKillDistance: boolean;
     showKillSector: boolean;
     showKillWeapon: boolean;
+    timeZoneId: string;
     showKillerName: boolean;
     showMineKill: boolean;
     showSameSquadKill: boolean;
@@ -23,6 +24,7 @@ export class ScumServer {
     killAnnounceText: string;
     slots?: number;
     uav?: UavDto;
+    exchange?: any;
 }
 
 export class ScumServerResponse {

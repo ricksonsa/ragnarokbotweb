@@ -40,9 +40,13 @@
             <a routerLink="settings/kill-feed">Kill Feed</a>
           </li>
 
-          <!-- <li nz-menu-item nzMatchRouter>
-            <a routerLink="settings/rankings">Rankings (Coming Soon)</a>
-          </li> -->
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="settings/exchange">Exchange</a>
+          </li>
+
+          <li nz-menu-item nzMatchRouter>
+            <a routerLink="settings/rankings">Rankings</a>
+          </li>
         </ul>
       </li>
 
@@ -74,9 +78,9 @@
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="shop/uav">UAV</a>
           </li>
-          <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
-            <a>Taxi (Coming Soon)</a>
-          </li> -->
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="shop/taxis">Taxis</a>
+          </li>
         </ul>
       </li>
 

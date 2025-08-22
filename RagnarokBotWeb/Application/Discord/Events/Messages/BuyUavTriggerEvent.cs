@@ -29,8 +29,10 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
             var scumRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
             var server = await scumRepository.FindByGuildId(component.GuildId!.Value);
 
-            if (DiscordEventService.UserSelections.TryGetValue((component.User.Id, component.GuildId.Value), out var selectedZone))
+            if (DiscordEventService.UserUavSelections.TryGetValue((component.User.Id, component.GuildId.Value), out var selectedZone))
             {
+                if (selectedZone == "0") await component.DeferAsync(ephemeral: true);
+
                 if (!botService.IsBotOnline(server!.Id))
                 {
                     var embed = new EmbedBuilder()
@@ -46,7 +48,7 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
                     var order = await orderService.PlaceUavOrderFromDiscord(server, component.User.Id, selectedZone);
                     var embed = new EmbedBuilder()
                       .WithTitle("UAV Scan")
-                      .WithDescription($"Your order with number #{order!.Id} was registered. Executing UAV Scan on sector {selectedZone}.\nYour current coin balance: {order.BalancePreview}\n{order.ResolveUavCooldownText()}")
+                      .WithDescription($"Your order with number #{order!.Id} was registered. Executing UAV Scan on sector {selectedZone}.\nYour current coin balance: {order.BalancePreview}\n{order.ResolveCooldownText(order.GetItem())}")
                       .WithColor(Color.Green)
                       .Build();
 

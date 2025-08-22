@@ -395,10 +395,10 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateSubscription(server);
 
             var previousImage = server.Uav?.ImageUrl;
-            var previousDiscordChannel = server.Uav?.DiscordId;
+            var previousDiscordChannel = server.Uav?.DiscordChannelId;
             var previousDiscordMessage = server.Uav?.DiscordMessageId;
             server.Uav = _mapper.Map(dto, server.Uav ?? new Uav());
-            if (dto.DiscordId != null) server.Uav.DiscordId = ulong.Parse(dto.DiscordId);
+            if (dto.DiscordId != null) server.Uav.DiscordChannelId = dto.DiscordId;
 
             if (!string.IsNullOrEmpty(server.Uav.ImageUrl) && server.Uav.ImageUrl != previousImage)
             {
@@ -408,11 +408,11 @@ namespace RagnarokBotWeb.Domain.Services
 
             try
             {
-                if (previousDiscordChannel.HasValue && previousDiscordMessage.HasValue)
-                    await _discordService.RemoveMessage(previousDiscordChannel.Value, previousDiscordMessage.Value);
+                if (!string.IsNullOrEmpty(previousDiscordChannel) && previousDiscordMessage.HasValue)
+                    await _discordService.RemoveMessage(ulong.Parse(previousDiscordChannel), previousDiscordMessage.Value);
 
-                if (server.Uav.DiscordId.HasValue)
-                    server.Uav.DiscordMessageId = (await _discordService.CreateUavButtons(server, server.Uav.DiscordId.Value))?.Id;
+                if (!string.IsNullOrEmpty(server.Uav.DiscordChannelId))
+                    server.Uav.DiscordMessageId = (await _discordService.CreateUavButtons(server, ulong.Parse(server.Uav.DiscordChannelId)))?.Id;
             }
             catch (Exception)
             { }

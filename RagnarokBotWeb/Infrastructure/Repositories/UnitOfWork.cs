@@ -23,6 +23,8 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public DbSet<Ban> Bans { get; set; }
         public DbSet<Silence> Silences { get; set; }
         public DbSet<Warzone> Warzones { get; set; }
+        public DbSet<Taxi> Taxis { get; set; }
+        public DbSet<TaxiTeleport> TaxiTeleports { get; set; }
         public DbSet<WarzoneItem> WarzoneItems { get; set; }
         public DbSet<Teleport> Teleports { get; set; }
         public DbSet<WarzoneSpawn> WarzoneSpawns { get; set; }
@@ -52,6 +54,8 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             WarzoneSpawns = _context.WarzoneSpawns;
             Teleports = _context.Teleports;
             Warzones = _context.Warzones;
+            Taxis = _context.Taxis;
+            TaxiTeleports = _context.TaxiTeleports;
             DiscordRoles = _context.DiscordRoles;
             _dbContextFactory = dbContextFactory;
         }

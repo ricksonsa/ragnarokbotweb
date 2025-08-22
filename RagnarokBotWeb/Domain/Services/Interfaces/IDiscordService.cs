@@ -26,5 +26,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task SendTopDistanceKillsEmbed(ulong channelId, List<PlayerStatsDto> players, int topCount);
         Task SendLockpickRankEmbed(ulong channelId, List<LockpickStatsDto> stats, string lockType);
         Task<IUserMessage?> CreateUavButtons(ScumServer server, ulong channelId);
+        Task<IUserMessage?> CreateTeleportButtons(Taxi taxi);
     }
 }

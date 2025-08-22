@@ -17,5 +17,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<OrderDto> ConfirmOrderDelivered(long orderId);
         Task<List<GrapthDto>> GetBestSellingOrdersPacks();
         Task ResetCommandOrders(long serverId);
+        Task<Order?> PlaceTaxiOrderFromDiscord(ulong guildId, ulong discordId, long taxiId);
     }
 }

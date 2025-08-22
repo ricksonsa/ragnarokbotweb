@@ -15,8 +15,10 @@ public class MessageEventHandlerFactory : IMessageEventHandlerFactory
     {
         { "buy_package", (serviceProvider) => new BuyPackageEvent(serviceProvider) },
         { "buy_warzone", (serviceProvider) => new BuyWarzoneEvent(serviceProvider) },
+        { "buy_taxi", (serviceProvider) => new BuyTaxiEvent(serviceProvider) },
         { "uav_scan_trigger", (serviceProvider) => new BuyUavTriggerEvent(serviceProvider) },
         { "uav_zone_select", (serviceProvider) => new UavSelectEvent(serviceProvider) },
+        { "taxi_telport_select", (serviceProvider) => new TaxiTeleportSelectEvent(serviceProvider) },
         { "wallet_balance", (serviceProvider) => new WalletBalanceEvent(serviceProvider) }
     };
 

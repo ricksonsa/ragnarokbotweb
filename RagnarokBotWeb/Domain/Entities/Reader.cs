@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using RagnarokBotWeb.Domain.Entities.Base;
 
 namespace RagnarokBotWeb.Domain.Entities;
 

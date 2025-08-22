@@ -1,4 +1,5 @@
-﻿using RagnarokBotWeb.Domain.Enums;
+﻿using RagnarokBotWeb.Domain.Entities.Base;
+using RagnarokBotWeb.Domain.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RagnarokBotWeb.Domain.Entities

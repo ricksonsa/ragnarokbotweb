@@ -1,5 +1,4 @@
 using Quartz;
-using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
@@ -23,9 +22,8 @@ public class ChatJob(
     IPlayerRepository playerRespository,
     IOrderService orderService,
     IDiscordService discordService,
-    ICacheService cacheService,
-    BotSocketServer botSocket,
     IFtpService ftpService,
+    IBotService botService,
     DiscordChannelPublisher publisher
 ) : AbstractJob(scumServerRepository), IJob
 {
@@ -55,8 +53,7 @@ public class ChatJob(
                 {
                     var chatCommandHandler = new ExclamationCommandHandlerFactory(
                    server,
-                   botSocket,
-                   cacheService,
+                   botService,
                    scumServerRepository,
                    playerRespository,
                    playerRegisterRepository,
@@ -74,14 +71,14 @@ public class ChatJob(
                     if (match.Success)
                     {
                         var guid = new Guid(match.Value);
-                        botSocket.BotPingUpdate(server.Id, guid, parsed.SteamId);
+                        botService.BotPingUpdate(server.Id, guid, parsed.SteamId);
                     }
                 }
                 else
                 {
                     if (!IsCommand(parsed)
                         && IsServerAllowed(server, parsed)
-                        && !IsBotSteamId(botSocket, server, parsed)
+                        && !IsBotSteamId(botService, server, parsed)
                         && parsed.Post)
                     {
                         await publisher.Publish(server,
@@ -111,8 +108,8 @@ public class ChatJob(
             || parsed.ChatType == "Local" && server.SendLocalChatToDiscord;
     }
 
-    private static bool IsBotSteamId(BotSocketServer botSocket, ScumServer server, ChatTextParseResult parsed)
+    private static bool IsBotSteamId(IBotService botService, ScumServer server, ChatTextParseResult parsed)
     {
-        return botSocket.GetBots(server.Id).Any(bot => bot.SteamId == parsed.SteamId);
+        return botService.GetBots(server.Id).Any(bot => bot.SteamId == parsed.SteamId);
     }
 }

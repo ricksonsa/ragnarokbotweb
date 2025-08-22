@@ -278,10 +278,11 @@ namespace RagnarokBotWeb.Domain.Services
 
             Console.WriteLine($"Deleted {deletedCount} messages older than {date:u}.");
         }
+
         public async Task SendLockpickRankEmbed(
-             ulong channelId,
-             List<LockpickStatsDto> stats,
-             string lockType)
+            ulong channelId,
+            List<LockpickStatsDto> stats,
+            string lockType)
         {
             var channel = _client.GetChannel(channelId) as IMessageChannel;
             if (channel == null) return;
@@ -294,14 +295,14 @@ namespace RagnarokBotWeb.Domain.Services
 
             var sb = new StringBuilder();
             sb.AppendLine("```");
-            sb.AppendLine($"{"RANK",4} | {"Player",-20} | {"Success",7} | {"Attempts",8} | {"%",6}");
-            sb.AppendLine("-----|----------------------|---------|----------|--------");
+            sb.AppendLine($"{"#",2} | {"Player",-12} | {"Success",7} | {"Attempts",8} | {"%",5}");
+            sb.AppendLine("---|--------------|---------|----------|------");
 
             int rank = 1;
             foreach (var p in stats)
             {
                 sb.AppendLine(
-                    $"{rank,4} | {Truncate(p.PlayerName, 20),-20} | {p.SuccessCount,7} | {p.Attempts,8} | {p.SuccessRate,6:F2}%"
+                    $"{rank,2} | {Truncate(p.PlayerName, 12),-12} | {p.SuccessCount,7} | {p.Attempts,8} | {p.SuccessRate,5:F1}%"
                 );
                 rank++;
             }
@@ -312,6 +313,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             await channel.SendMessageAsync(embed: builder.Build());
         }
+
 
         public async Task SendTopDistanceKillsEmbed(
             ulong channelId,
@@ -486,6 +488,57 @@ namespace RagnarokBotWeb.Domain.Services
             _logger.LogInformation("Removed Discord Role Id[{Role}] to user[{User}]", roleId, userDiscordId);
         }
 
+        public async Task<IUserMessage?> CreateTeleportButtons(Taxi taxi)
+        {
+            if (taxi.ScumServer.Guild is null) return null;
+
+            var socketGuild = _client.GetGuild(taxi.ScumServer.Guild.DiscordId); // SocketGuild
+            IGuild guild = socketGuild; // Pode ser usado como IGuild
+
+            var channel = await _client.GetChannelAsync(ulong.Parse(taxi.DiscordChannelId!)) as IMessageChannel;
+            if (channel is null) return null;
+
+            var sectorOptions = taxi.TaxiTeleports.
+                Select(taxiTeleport =>
+                new SelectMenuOptionBuilder(taxiTeleport.Teleport.Name, taxiTeleport.Id.ToString()))
+                .Prepend(new SelectMenuOptionBuilder("None", "0"))
+                .ToList();
+
+            var sectorsSelectMenu = new SelectMenuBuilder()
+                .WithCustomId("taxi_telport_select")
+                .WithPlaceholder("Choose a destination")
+                .WithMinValues(1)
+                .WithMaxValues(1)
+                .WithOptions(sectorOptions);
+
+            var button = new ButtonBuilder()
+                .WithLabel($"Buy {taxi.Name}")
+                .WithStyle(ButtonStyle.Primary)
+                .WithCustomId("buy_taxi");
+
+            var component = new ComponentBuilder()
+                .WithSelectMenu(sectorsSelectMenu, row: 0)
+                .WithButton(button, row: 1);
+
+            var embedBuilder = new EmbedBuilder()
+                .WithTitle(taxi.Name)
+                .WithDescription(taxi.Description)
+                .WithColor(Color.DarkOrange)
+                .WithFooter(GetAuthor());
+
+            if (taxi.Price > 0)
+                embedBuilder.AddField(new EmbedFieldBuilder().WithName("Price").WithValue(taxi.Price).WithIsInline(true));
+
+            if (taxi.VipPrice > 0)
+                embedBuilder.AddField(new EmbedFieldBuilder().WithName("Vip Price").WithValue(taxi.VipPrice).WithIsInline(true));
+
+            if (taxi.ImageUrl != null)
+                embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{taxi.ImageUrl}");
+
+            _logger.LogDebug("Taxi Buttons created for guild[{Guild}] channel[{Channel}]", taxi.ScumServer.Guild.DiscordId, taxi.DiscordChannelId);
+            return await channel.SendMessageAsync(embed: embedBuilder.Build(), components: component.Build());
+        }
+
         public async Task<IUserMessage?> CreateUavButtons(ScumServer server, ulong channelId)
         {
             if (server.Guild is null) return null;
@@ -503,7 +556,10 @@ namespace RagnarokBotWeb.Domain.Services
                 for (int i = 0; i < SectorDefinitions.SECTOR_X_CENTERS.Values.Count; i++)
                     sectorValues.Add($"{sector}{i}");
 
-            var sectorOptions = sectorValues.Select(sector => new SelectMenuOptionBuilder(sector, sector)).ToList();
+            var sectorOptions = sectorValues
+                .Select(sector => new SelectMenuOptionBuilder(sector, sector))
+                .Prepend(new SelectMenuOptionBuilder("None", "0"))
+                .ToList();
 
             var sectorsSelectMenu = new SelectMenuBuilder()
                 .WithCustomId("uav_zone_select")

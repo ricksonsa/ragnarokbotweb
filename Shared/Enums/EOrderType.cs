@@ -4,6 +4,8 @@
     {
         Pack,
         Warzone,
-        UAV
+        UAV,
+        Taxi,
+        Exchange
     }
 }

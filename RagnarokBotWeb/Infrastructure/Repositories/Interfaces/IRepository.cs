@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Entities.Base;
 using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces

@@ -82,7 +82,20 @@ export class OrdersComponent implements OnInit {
       case 0: return 'Shop Pack';
       case 1: return 'Warzone Teleport';
       case 2: return 'UAV';
+      case 3: return 'Taxi';
+      case 4: return 'Exchange';
       default: return type.toString();
+    }
+  }
+
+  getName(data: OrderDto) {
+    switch (data.orderType) {
+      case 0: return data.pack?.name ?? '{error}';
+      case 1: return data.warzone?.name ?? '{error}';
+      case 2: return data.scumServer.uav?.name ?? '{error}';
+      case 3: return data.taxi?.name ?? '{error}';
+      case 4: return data.scumServer?.exchange ?? '{error}';
+      default: return 'Unknown';
     }
   }
 

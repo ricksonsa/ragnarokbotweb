@@ -2,7 +2,6 @@
 using Discord;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
-using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Application.Tasks.Jobs;
@@ -22,7 +21,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IFileService _fileService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDiscordService _discordService;
-        private readonly BotSocketServer _socketServer;
+        private readonly IBotService _botService;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly ISchedulerFactory _schedulerFactory;
         private readonly IMapper _mapper;
@@ -41,7 +40,7 @@ namespace RagnarokBotWeb.Domain.Services
             ICacheService cacheService,
             ISchedulerFactory schedulerFactory,
             IFileService fileService,
-            BotSocketServer socketServer) : base(httpContextAccessor)
+            IBotService botService) : base(httpContextAccessor)
         {
             _logger = logger;
             _warzoneRepository = warzoneRepository;
@@ -53,7 +52,7 @@ namespace RagnarokBotWeb.Domain.Services
             _cacheService = cacheService;
             _schedulerFactory = schedulerFactory;
             _fileService = fileService;
-            _socketServer = socketServer;
+            _botService = botService;
         }
 
         public async Task<WarzoneDto> CreateWarzoneAsync(WarzoneDto createWarzone)
@@ -120,7 +119,6 @@ namespace RagnarokBotWeb.Domain.Services
             if (warzone == null)
                 throw new NotFoundException("Warzone not found");
 
-
             ValidateServerOwner(warzone.ScumServer);
             ValidateSubscription(warzone.ScumServer);
 
@@ -138,7 +136,7 @@ namespace RagnarokBotWeb.Domain.Services
             RemoveWarzoneTeleports(warzoneDto, warzone);
 
             var scheduler = await _schedulerFactory.GetScheduler();
-            if (await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({serverId.Value})")) && !warzoneDto.Enabled)
+            if (await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({serverId!.Value})")) && !warzoneDto.Enabled)
             {
                 await CloseWarzone(warzone.ScumServer);
             }
@@ -158,7 +156,7 @@ namespace RagnarokBotWeb.Domain.Services
                     _logger.LogError(ex, "Warzone update discord exception");
                 }
             }
-            else if (!string.IsNullOrEmpty(warzoneDto.DiscordChannelId) && warzoneDto.DiscordChannelId != previousDiscordId)
+            else if (!string.IsNullOrEmpty(warzoneDto.DiscordChannelId) && warzoneDto.DiscordChannelId != previousDiscordId?.ToString())
             {
                 try
                 {
@@ -278,10 +276,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 try
                 {
-                    await _discordService.RemoveMessage(
-                        ulong.Parse(warzone.DiscordChannelId),
-                        warzone.DiscordMessageId.Value
-                    );
+                    await _discordService.RemoveMessage(ulong.Parse(warzone.DiscordChannelId), warzone.DiscordMessageId.Value);
                 }
                 catch (Exception ex)
                 {
@@ -379,7 +374,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (!string.IsNullOrEmpty(warzone.StartMessage))
             {
-                await _socketServer.SendCommandAsync(server.Id, new Shared.Models.BotCommand().Announce(warzone.StartMessage));
+                await _botService.SendCommand(server.Id, new Shared.Models.BotCommand().Announce(warzone.StartMessage));
             }
 
             if (warzone.DiscordChannelId != null)
@@ -449,7 +444,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 try
                 {
-                    await _discordService.RemoveMessage(ulong.Parse(warzone.DiscordChannelId!), warzone.DiscordMessageId!.Value);
+                    await _discordService.RemoveMessage(ulong.Parse(warzone.DiscordChannelId), warzone.DiscordMessageId!.Value);
                 }
                 catch (Exception) { }
             }

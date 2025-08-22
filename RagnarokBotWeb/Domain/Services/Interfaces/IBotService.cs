@@ -17,6 +17,8 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task UpdateFlags(UpdateFromStringRequest input);
         Task UpdateSquads(UpdateFromStringRequest input);
         List<BotUser> GetBots();
+        List<BotUser> GetBots(long serverId);
         List<BotUser> GetConnectedBots();
+        void BotPingUpdate(long id, Guid guid, string steamId);
     }
 }

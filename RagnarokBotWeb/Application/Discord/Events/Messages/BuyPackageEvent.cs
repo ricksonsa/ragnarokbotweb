@@ -44,7 +44,7 @@ public class BuyPackageEvent : IMessageEventHandler
 
             var embed = new EmbedBuilder()
               .WithTitle(order!.Pack!.Name)
-              .WithDescription($"Your order with number #{order!.Id} was registered. Please stay put until it is delivered.\nYour current coin balance: {order.BalancePreview}\n{order.ResolvePackCooldownText()}")
+              .WithDescription($"Your order with number #{order!.Id} was registered. Please stay put until it is delivered.\nYour current coin balance: {order.BalancePreview}\n{order.ResolveCooldownText(order.GetItem())}")
               .WithColor(Color.Green)
               .Build();
 

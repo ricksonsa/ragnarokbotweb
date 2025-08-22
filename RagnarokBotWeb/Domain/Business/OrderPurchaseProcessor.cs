@@ -1,4 +1,5 @@
 ﻿using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Entities.Base;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -9,7 +10,9 @@ namespace RagnarokBotWeb.Domain.Business
     {
         private readonly IOrderRepository _orderRepository;
         private readonly ICacheService _cacheService;
+
         private Player _player;
+        private Player Player { get => _player; set => _player = value; }
 
         public OrderPurchaseProcessor(IOrderRepository orderRepository, ICacheService cacheService)
         {
@@ -17,111 +20,51 @@ namespace RagnarokBotWeb.Domain.Business
             _cacheService = cacheService;
         }
 
-        private bool WasPurchasedWithinPurchaseCooldownSeconds(Order order)
+        private bool WasPurchasedWithinPurchaseCooldownSeconds(BaseOrderEntity item)
         {
-            if (order.OrderType == Shared.Enums.EOrderType.Warzone)
-                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Warzone!.PurchaseCooldownSeconds && order.Player!.Id == _player.Id;
-            else if (order.OrderType == Shared.Enums.EOrderType.Pack)
-                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.Pack!.PurchaseCooldownSeconds && order.Player!.Id == _player.Id;
-            else if (order.OrderType == Shared.Enums.EOrderType.UAV)
-                return (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.ScumServer.Uav!.PurchaseCooldownSeconds;
-
-            return false;
+            return (DateTime.UtcNow - item.CreateDate).TotalSeconds <= item.PurchaseCooldownSeconds;
         }
 
-        private async Task ValidatePack(Order order)
+        private async Task ValidateOrderItem(Order order)
         {
-            if (!order.Pack!.Enabled || order.Pack.Deleted.HasValue)
-                throw new DomainException("This pack is not available at the moment.");
+            var price = order.GetPrice();
+            if (Player.Coin < price) throw new DomainException($"You don't have enough coins.\nYour current balance: {Player.Coin}\nPrice: {price}");
 
-            if (order.Pack.IsVipOnly && !order.Player!.IsVip())
-                throw new DomainException("This pack is only available for Vip Players.");
+            var item = order.GetItem();
 
-            if (order.Pack.IsWelcomePack)
-                throw new DomainException("This pack is only available at registration.");
+            if (!item.Enabled)
+                throw new DomainException("This shop item is not available at the moment.");
 
-            var previousSamePackOrders = await _orderRepository.FindWithPack(order.Pack!.Id);
-            if (order.Pack.PurchaseCooldownSeconds.HasValue)
-            {
-                var previousOrder = previousSamePackOrders.FirstOrDefault(WasPurchasedWithinPurchaseCooldownSeconds);
-                if (previousOrder != null)
-                    throw new DomainException($"This pack is under cooldown time. {previousOrder.ResolvePackCooldownText()}");
-            }
+            if (item.IsVipOnly && Player.IsVip())
+                throw new DomainException("This shop item is only available for Vip Players.");
 
-            if (order.Player!.IsVip() && previousSamePackOrders.Where(WasPurchasedWithinLast24Hours).Count() >= order.Pack.StockPerVipPlayer)
-                throw new DomainException("This pack is out of stock, try again later.");
-
-            if (!order.Player!.IsVip() && previousSamePackOrders.Where(WasPurchasedWithinLast24Hours).Count() >= order.Pack.StockPerPlayer)
-                throw new DomainException("This pack is out of stock, try again later.");
-
-            if (order.Pack.IsBlockPurchaseRaidTime)
+            if (item.IsBlockPurchaseRaidTime)
             {
                 var raidTimes = _cacheService.GetRaidTimes(order.ScumServer.Id);
                 if (raidTimes is not null && raidTimes.IsInRaidTime(order.ScumServer))
-                    throw new DomainException("This Pack cannot be purchased during Raid Period.");
+                    throw new DomainException("This shop item cannot be purchased during Raid Period.");
             }
-        }
 
-        private async Task ValidateWarzone(Order order)
-        {
-            if (order.Warzone.IsVipOnly && !order.Player!.IsVip())
-                throw new DomainException("This Warzone Teleport is only available for Vip Players.");
+            var previousSameOrders = await _orderRepository.FindAsync(o => o.OrderType == order.OrderType);
 
-            var previousSameWarzoneOrders = await _orderRepository.FindWithWarzone(order.Warzone!.Id);
-            if (order.Warzone.PurchaseCooldownSeconds.HasValue)
+            if (item.PurchaseCooldownSeconds.HasValue)
             {
-                var previousOrder = previousSameWarzoneOrders.FirstOrDefault(WasPurchasedWithinPurchaseCooldownSeconds);
+                var previousOrder = previousSameOrders.FirstOrDefault(order => WasPurchasedWithinPurchaseCooldownSeconds(order.GetItem()));
                 if (previousOrder != null)
-                    throw new DomainException($"This Warzone Teleport is under cooldown time. {previousOrder.ResolveWarzoneCooldownText()}");
+                    throw new DomainException($"This shop item is under cooldown time. {previousOrder.ResolveCooldownText(item)}");
             }
 
-            if (order.Player!.IsVip() && previousSameWarzoneOrders.Where(WasPurchasedWithinLast24Hours).Count() >= order.Warzone.StockPerVipPlayer)
-                throw new DomainException("This Warzone Teleport is out of stock, try again later.");
+            if (order.Player!.IsVip() && previousSameOrders.Where(WasPurchasedWithinLast24Hours).Count() >= item.StockPerVipPlayer)
+                throw new DomainException("This shop item is out of stock, try again later.");
 
-            if (!order.Player!.IsVip() && previousSameWarzoneOrders.Where(WasPurchasedWithinLast24Hours).Count() >= order.Warzone.StockPerPlayer)
-                throw new DomainException("This Warzone Teleport is out of stock, try again later.");
-
-            if (order.Warzone.IsBlockPurchaseRaidTime)
-            {
-                var raidTimes = _cacheService.GetRaidTimes(order.ScumServer.Id);
-                if (raidTimes is not null && raidTimes.IsInRaidTime(order.ScumServer))
-                    throw new DomainException("This Warzone Teleport cannot be purchased during Raid Period.");
-            }
+            if (!order.Player!.IsVip() && previousSameOrders.Where(WasPurchasedWithinLast24Hours).Count() >= item.StockPerPlayer)
+                throw new DomainException("This shop item is out of stock, try again later.");
         }
 
-        private async Task ValidateUav(Order order)
+        private bool WasPurchasedWithinLast24Hours(Order order)
         {
-            if (!order.ScumServer.Uav.Enabled)
-                throw new DomainException("UAV is not available at the moment.");
-
-            if (order.ScumServer.Uav.IsVipOnly && !order.Player!.IsVip())
-                throw new DomainException("UAV Teleport is only available for Vip Players.");
-
-            var now = DateTime.Now;
-            var previousSameWarzoneOrders = await _orderRepository.FindAsync(order => order.OrderType == Shared.Enums.EOrderType.UAV
-            && order.CreateDate >= now.AddHours(-24) && order.CreateDate <= now);
-
-            if (order.ScumServer.Uav.PurchaseCooldownSeconds.HasValue)
-            {
-                var previousOrder = previousSameWarzoneOrders.FirstOrDefault(WasPurchasedWithinPurchaseCooldownSeconds);
-                if (previousOrder != null)
-                    throw new DomainException($"This UAV is under cooldown time. {previousOrder.ResolveUavCooldownText()}");
-            }
-
-            if (order.Player!.IsVip() && previousSameWarzoneOrders.Where(WasPurchasedWithinLast24Hours).Count() >= order.ScumServer.Uav.StockPerVipPlayer)
-                throw new DomainException("This Warzone Teleport is out of stock, try again later.");
-
-            if (!order.Player!.IsVip() && previousSameWarzoneOrders.Where(WasPurchasedWithinLast24Hours).Count() >= order.ScumServer.Uav.StockPerPlayer)
-                throw new DomainException("This Warzone Teleport is out of stock, try again later.");
-
-            if (order.ScumServer.Uav.IsBlockPurchaseRaidTime)
-            {
-                var raidTimes = _cacheService.GetRaidTimes(order.ScumServer.Id);
-                if (raidTimes is not null && raidTimes.IsInRaidTime(order.ScumServer))
-                    throw new DomainException("This Warzone Teleport cannot be purchased during Raid Period.");
-            }
+            return (DateTime.UtcNow - order.CreateDate).TotalHours <= 24;
         }
-
 
         public async Task ValidateAsync(Order order)
         {
@@ -130,26 +73,12 @@ namespace RagnarokBotWeb.Domain.Business
             if (order.Player is null)
                 throw new DomainException("Player not yet registered, please register using the Welcome Pack.");
 
-            _player = order.Player;
+            Player = order.Player;
 
             if (!order.ScumServer.ShopEnabled)
                 throw new DomainException("Shop is disabled at the moment.");
 
-            var price = order.GetPrice();
-            if (order.Player.Coin < price) throw new DomainException($"You don't have enough bot coins.\nYour current balance: {order.Player.Coin}\nPrice: {price}");
-
-            if (order.OrderType == Shared.Enums.EOrderType.Pack)
-                await ValidatePack(order);
-            else if (order.OrderType == Shared.Enums.EOrderType.Warzone)
-                await ValidateWarzone(order);
-            else if (order.OrderType == Shared.Enums.EOrderType.UAV)
-                await ValidateUav(order);
-        }
-
-
-        public bool WasPurchasedWithinLast24Hours(Order order)
-        {
-            return (DateTime.UtcNow - order.CreateDate).TotalHours <= 24;
+            await ValidateOrderItem(order);
         }
     }
 }

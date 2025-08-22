@@ -25,7 +25,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task AddPlayerAsync(Player user);
         Task UpdatePlayerAsync(Player user);
         Task UpdatePlayerNameAsync(Entities.ScumServer server, string steamId64, string scumId, string name);
-        Task UpdateFromScumPlayers(long serverId, List<ScumPlayer>? players);
 
         Task<Page<PlayerDto>> GetPlayers(Paginator paginator, string? filter);
         Task<PlayerDto> GetPlayer(long id);

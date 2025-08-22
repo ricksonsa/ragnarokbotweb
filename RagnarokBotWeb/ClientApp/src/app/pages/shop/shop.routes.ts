@@ -11,6 +11,9 @@ import { AdminGuard } from '../../core/guards/admin.guard';
 import { WelcomePackComponent } from './welcome-pack/welcome-pack.component';
 import { WelcomePackResolver } from './packages/resolvers/welcome-pack.resolver';
 import { UavComponent } from './uav/uav.component';
+import { TaxisComponent } from './taxis/taxis.component';
+import { TaxiComponent } from './taxis/taxi/taxi.component';
+import { TaxiResolver } from './taxis/resolvers/taxi.resolver';
 
 export const SHOP_ROUTES: Routes = [
   { path: 'bank', component: BankComponent },
@@ -18,6 +21,8 @@ export const SHOP_ROUTES: Routes = [
   { path: 'items/:id', component: ItemComponent, resolve: { item: ItemResolver }, canActivate: [AdminGuard] },
   { path: 'packages', component: PackagesComponent, pathMatch: 'full' },
   { path: 'packages/:id', component: PackageComponent, resolve: { package: PackageResolver } },
+  { path: 'taxis', component: TaxisComponent, pathMatch: 'full' },
+  { path: 'taxis/:id', component: TaxiComponent, resolve: { taxi: TaxiResolver } },
   { path: 'orders', component: OrdersComponent },
   { path: 'uav', component: UavComponent },
   { path: 'welcome-pack', component: WelcomePackComponent, resolve: { package: WelcomePackResolver } },
