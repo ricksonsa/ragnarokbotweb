@@ -19,28 +19,12 @@ namespace RagnarokBotWeb.Domain.Entities
         {
             get
             {
-                long price = 0;
-                long vipPrice = 0;
-                switch (OrderType)
-                {
-                    case EOrderType.Pack:
-                        price = Pack!.Price;
-                        vipPrice = Pack!.VipPrice;
-                        break;
-                    case EOrderType.Warzone:
-                        price = Warzone!.Price;
-                        vipPrice = Warzone!.VipPrice;
-                        break;
-                    case EOrderType.UAV:
-                        price = ScumServer.Uav!.Price;
-                        vipPrice = ScumServer.Uav!.VipPrice;
-                        break;
-                    default: break;
-                }
+                var item = GetItem();
+                long price = item.Price;
+                long vipPrice = item.VipPrice;
                 if (Player is null) return price;
                 return Player.IsVip() ? vipPrice : price;
             }
-
         }
 
         public long BalancePreview

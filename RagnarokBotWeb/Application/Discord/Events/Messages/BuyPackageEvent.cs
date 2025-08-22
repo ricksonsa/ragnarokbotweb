@@ -24,6 +24,7 @@ public class BuyPackageEvent : IMessageEventHandler
         var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
         var botService = scope.ServiceProvider.GetRequiredService<IBotService>();
         var scumRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<BuyPackageEvent>>();
         var server = await scumRepository.FindByGuildId(component.GuildId!.Value);
 
         if (!botService.IsBotOnline(server!.Id))
@@ -55,7 +56,7 @@ public class BuyPackageEvent : IMessageEventHandler
         {
             var embed = new EmbedBuilder()
             .WithTitle("Error")
-            .WithDescription("User not registered. Please register using #wecolmepack.")
+            .WithDescription("User not registered. Please register using the Welcome Pack.")
             .WithColor(Color.Red)
             .Build();
 
@@ -63,6 +64,7 @@ public class BuyPackageEvent : IMessageEventHandler
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "BuyPackageEvent Exception");
             var embed = new EmbedBuilder()
             .WithTitle("Error")
             .WithDescription(ex.Message)

@@ -558,7 +558,6 @@ namespace RagnarokBotWeb.Domain.Services
 
             var sectorOptions = sectorValues
                 .Select(sector => new SelectMenuOptionBuilder(sector, sector))
-                .Prepend(new SelectMenuOptionBuilder("None", "0"))
                 .ToList();
 
             var sectorsSelectMenu = new SelectMenuBuilder()

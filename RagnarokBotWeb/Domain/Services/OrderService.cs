@@ -138,7 +138,6 @@ namespace RagnarokBotWeb.Domain.Services
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Guild != null && u.ScumServer.Guild.DiscordId == guildId && u.DiscordId == discordId);
             if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
 
-
             var order = new Order
             {
                 Pack = pack,

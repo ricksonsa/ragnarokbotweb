@@ -19,8 +19,8 @@ public class CommandQueueProcessorJob(
 
         try
         {
-            if (!botService.IsBotOnline()) return;
             var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+            if (!botService.IsBotOnline(server.Id)) return;
             if (cacheService.TryDequeueCommand(server.Id, out var command))
             {
                 if (command is null) throw new ArgumentNullException("command");

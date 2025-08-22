@@ -13,6 +13,8 @@ namespace RagnarokBotWeb.Domain.Business
 
         private Player _player;
         private Player Player { get => _player; set => _player = value; }
+        private BaseOrderEntity _item;
+        private BaseOrderEntity Item { get => _item; set => _item = value; }
 
         public OrderPurchaseProcessor(IOrderRepository orderRepository, ICacheService cacheService)
         {
@@ -20,9 +22,10 @@ namespace RagnarokBotWeb.Domain.Business
             _cacheService = cacheService;
         }
 
-        private bool WasPurchasedWithinPurchaseCooldownSeconds(BaseOrderEntity item)
+        private bool WasPurchasedWithinPurchaseCooldownSeconds(Order order)
         {
-            return (DateTime.UtcNow - item.CreateDate).TotalSeconds <= item.PurchaseCooldownSeconds;
+            var item = order.GetItem();
+            return Item.Id == item.Id && (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.GetItem().PurchaseCooldownSeconds;
         }
 
         private async Task ValidateOrderItem(Order order)
@@ -35,7 +38,7 @@ namespace RagnarokBotWeb.Domain.Business
             if (!item.Enabled)
                 throw new DomainException("This shop item is not available at the moment.");
 
-            if (item.IsVipOnly && Player.IsVip())
+            if (item.IsVipOnly && !Player.IsVip())
                 throw new DomainException("This shop item is only available for Vip Players.");
 
             if (item.IsBlockPurchaseRaidTime)
@@ -45,11 +48,15 @@ namespace RagnarokBotWeb.Domain.Business
                     throw new DomainException("This shop item cannot be purchased during Raid Period.");
             }
 
-            var previousSameOrders = await _orderRepository.FindAsync(o => o.OrderType == order.OrderType);
+            var previousSameOrders = await _orderRepository.FindManyForProcessor(o =>
+                o.ScumServer.Id == order.ScumServer.Id
+                && o.OrderType == order.OrderType
+                && order.Player != null
+                && order.Player.Id == _player.Id);
 
             if (item.PurchaseCooldownSeconds.HasValue)
             {
-                var previousOrder = previousSameOrders.FirstOrDefault(order => WasPurchasedWithinPurchaseCooldownSeconds(order.GetItem()));
+                var previousOrder = previousSameOrders.FirstOrDefault(WasPurchasedWithinPurchaseCooldownSeconds);
                 if (previousOrder != null)
                     throw new DomainException($"This shop item is under cooldown time. {previousOrder.ResolveCooldownText(item)}");
             }
@@ -74,6 +81,7 @@ namespace RagnarokBotWeb.Domain.Business
                 throw new DomainException("Player not yet registered, please register using the Welcome Pack.");
 
             Player = order.Player;
+            Item = order.GetItem();
 
             if (!order.ScumServer.ShopEnabled)
                 throw new DomainException("Shop is disabled at the moment.");

@@ -1,5 +1,6 @@
 ﻿using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
+using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
 {
@@ -12,5 +13,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         Task<Page<Order>> GetPageByFilter(long serverId, Paginator paginator, string? filter);
         Task<List<Order>> FindManyByServer(long serverId);
         Task<List<Order>> FindManyCommandByServer(long serverId);
+        Task<List<Order>> FindManyForProcessor(Expression<Func<Order, bool>> predicate);
     }
 }

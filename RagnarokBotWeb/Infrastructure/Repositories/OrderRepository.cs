@@ -4,6 +4,7 @@ using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Enums;
+using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories
 {
@@ -16,6 +17,25 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             if (entity.Pack is not null) _appDbContext.Packs.Attach(entity.Pack);
             return base.AddAsync(entity);
+        }
+
+        public Task<List<Order>> FindManyForProcessor(Expression<Func<Order, bool>> predicate)
+        {
+            return DbSet()
+               .Include(order => order.ScumServer)
+               .Include(order => order.ScumServer.Uav)
+               .Include(order => order.Taxi)
+                   .ThenInclude(taxi => taxi.TaxiTeleports)
+                   .ThenInclude(tp => tp.Teleport)
+               .Include(order => order.Player)
+               .Include(order => order.Pack)
+               .ThenInclude(pack => pack.PackItems)
+               .ThenInclude(packItems => packItems.Item)
+               .Include(order => order.Warzone)
+                   .ThenInclude(warzone => warzone.Teleports)
+                   .ThenInclude(teleport => teleport.Teleport)
+               .Where(predicate)
+               .ToListAsync();
         }
 
         public override Task CreateOrUpdateAsync(Order entity)
