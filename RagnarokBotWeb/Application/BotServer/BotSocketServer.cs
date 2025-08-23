@@ -15,6 +15,7 @@ namespace RagnarokBotWeb.Application.BotServer
         private readonly TcpListener _listener;
         private readonly ILogger<BotSocketServer> _logger;
         private readonly ConcurrentDictionary<long, ConcurrentDictionary<string, BotUser>> _bots = new();
+        private readonly object _connectionLock = new object();
 
         public BotSocketServer(ILogger<BotSocketServer> logger, IOptions<AppSettings> options)
         {
@@ -36,71 +37,91 @@ namespace RagnarokBotWeb.Application.BotServer
                     {
                         var bot = botPair.Value;
 
+                        // Check if TCP connection is actually alive
+                        bool isTcpAlive = IsTcpConnectionAlive(bot);
+
                         // If TCP is disconnected and no recent ping, disconnect bot
-                        if (bot.TcpClient?.Connected != true)
+                        if (!isTcpAlive)
                         {
                             if (!bot.LastPinged.HasValue || (now - bot.LastPinged.Value).TotalMinutes >= 10)
                             {
                                 _logger.LogInformation("Bot {Guid} TCP disconnected and no recent game ping - disconnecting", bot.Guid);
                                 DisconnectBot(bot);
-                                await SendLengthedMessage(new BotCommand().Reconnect(), bot);
-                                bot.LastReconnectSent = now;
+                                continue;
                             }
-                            continue;
                         }
 
                         // Bot is TCP connected - check if it needs a game reconnect
-                        if (bot.LastPinged.HasValue)
+                        if (isTcpAlive)
                         {
-                            var minutesSinceLastPing = (now - bot.LastPinged.Value).TotalMinutes;
-
-                            // If bot hasn't pinged in game for 3+ minutes, send reconnect command
-                            if (minutesSinceLastPing >= 3)
+                            if (bot.LastPinged.HasValue)
                             {
-                                // Don't spam reconnect commands - only send if we haven't sent one recently
-                                if (!bot.LastReconnectSent.HasValue || (now - bot.LastReconnectSent.Value).TotalMinutes >= 2)
-                                {
-                                    _logger.LogInformation("Bot {Guid} hasn't pinged in {Minutes} minutes - sending reconnect command",
-                                        bot.Guid, Math.Round(minutesSinceLastPing, 1));
+                                var minutesSinceLastPing = (now - bot.LastPinged.Value).TotalMinutes;
 
-                                    try
+                                // If bot hasn't pinged in game for 3+ minutes, send reconnect command
+                                if (minutesSinceLastPing >= 3)
+                                {
+                                    // Don't spam reconnect commands - only send if we haven't sent one recently
+                                    if (!bot.LastReconnectSent.HasValue || (now - bot.LastReconnectSent.Value).TotalMinutes >= 2)
                                     {
-                                        await SendLengthedMessage(new BotCommand().Reconnect(), bot);
-                                        bot.LastReconnectSent = now;
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogWarning(ex, "Failed to send reconnect to bot {Guid}", bot.Guid);
-                                        DisconnectBot(bot);
+                                        _logger.LogInformation("Bot {Guid} hasn't pinged in {Minutes} minutes - sending reconnect command",
+                                            bot.Guid, Math.Round(minutesSinceLastPing, 1));
+
+                                        try
+                                        {
+                                            await SendLengthedMessage(new BotCommand().Reconnect(), bot);
+                                            bot.LastReconnectSent = now;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogWarning(ex, "Failed to send reconnect to bot {Guid}", bot.Guid);
+                                            DisconnectBot(bot);
+                                        }
                                     }
                                 }
                             }
-                        }
-                        else
-                        {
-                            // Bot connected but never pinged - send initial reconnect after 2 minutes
-                            var minutesSinceConnection = (now - bot.LastInteracted).TotalMinutes;
-                            if (minutesSinceConnection >= 2)
+                            else
                             {
-                                if (!bot.LastReconnectSent.HasValue || (now - bot.LastReconnectSent.Value).TotalMinutes >= 2)
+                                // Bot connected but never pinged - send initial reconnect after 2 minutes
+                                var minutesSinceConnection = (now - bot.LastInteracted).TotalMinutes;
+                                if (minutesSinceConnection >= 2)
                                 {
-                                    _logger.LogInformation("Bot {Guid} connected but never pinged - sending initial reconnect", bot.Guid);
+                                    if (!bot.LastReconnectSent.HasValue || (now - bot.LastReconnectSent.Value).TotalMinutes >= 2)
+                                    {
+                                        _logger.LogInformation("Bot {Guid} connected but never pinged - sending initial reconnect", bot.Guid);
 
-                                    try
-                                    {
-                                        await SendLengthedMessage(new BotCommand().Reconnect(), bot);
-                                        bot.LastReconnectSent = now;
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogWarning(ex, "Failed to send initial reconnect to bot {Guid}", bot.Guid);
-                                        DisconnectBot(bot);
+                                        try
+                                        {
+                                            await SendLengthedMessage(new BotCommand().Reconnect(), bot);
+                                            bot.LastReconnectSent = now;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogWarning(ex, "Failed to send initial reconnect to bot {Guid}", bot.Guid);
+                                            DisconnectBot(bot);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
+        }
+
+        private bool IsTcpConnectionAlive(BotUser bot)
+        {
+            if (bot.TcpClient?.Connected != true) return false;
+
+            try
+            {
+                // Use Socket.Poll to check if connection is still alive
+                var socket = bot.TcpClient.Client;
+                return !(socket.Poll(1000, SelectMode.SelectRead) && socket.Available == 0);
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -114,21 +135,31 @@ namespace RagnarokBotWeb.Application.BotServer
 
             try
             {
+                bot.TcpClient?.Close();
                 bot.TcpClient?.Dispose();
             }
-            catch (Exception)
-            { }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Error disposing bot TCP client {Guid}", bot.Guid);
+            }
         }
 
         private static async Task SendLengthedMessage(BotCommand command, BotUser bot)
         {
+            if (bot.TcpClient?.Connected != true)
+                throw new InvalidOperationException("Bot TCP client is not connected");
+
             var body = MessagePackSerializer.Serialize(command);
             var lengthPrefix = BitConverter.GetBytes(body.Length);
 
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(lengthPrefix);
 
-            var stream = bot.TcpClient!.GetStream();
+            var stream = bot.TcpClient.GetStream();
+
+            // Add timeouts for network operations
+            stream.WriteTimeout = 30000; // 30 seconds
+
             await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
             await stream.WriteAsync(body, 0, body.Length);
             await stream.FlushAsync();
@@ -136,59 +167,137 @@ namespace RagnarokBotWeb.Application.BotServer
 
         private async Task HandleClientAsync(TcpClient client, CancellationToken token)
         {
-            using var stream = client.GetStream();
             BotUser? bot = null;
+            NetworkStream? stream = null;
 
             try
             {
+                // Configure client socket settings
+                client.ReceiveTimeout = 60000; // 1 minute
+                client.SendTimeout = 30000;    // 30 seconds
+                client.NoDelay = true;         // Disable Nagle's algorithm
+
+                // Configure socket-level keepalive
+                client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+                client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
+                client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 10);
+                client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
+
+                stream = client.GetStream();
+                stream.ReadTimeout = 60000; // 1 minute read timeout
+
                 // --- Handshake ---
                 var handshake = await ReceiveStringAsync(stream, token);
-                if (string.IsNullOrWhiteSpace(handshake)) return;
+                if (string.IsNullOrWhiteSpace(handshake))
+                {
+                    _logger.LogWarning("Empty handshake received from {RemoteEndpoint}", client.Client.RemoteEndPoint);
+                    return;
+                }
 
                 var parts = handshake.Split(':', 2);
-                if (parts.Length < 2) return;
-                if (!long.TryParse(parts[0], out var serverId)) return;
-                if (!Guid.TryParse(parts[1], out var guid)) return;
-
-                bot = new BotUser(guid)
+                if (parts.Length < 2)
                 {
-                    TcpClient = client,
-                    ServerId = serverId,
-                    LastInteracted = DateTime.UtcNow
-                };
-
-                var serverBots = _bots.GetOrAdd(serverId, _ => new ConcurrentDictionary<string, BotUser>());
-                serverBots[guid.ToString()] = bot;
-
-                _logger.LogInformation("Bot {Guid} connected to server {ServerId}", guid, serverId);
-
-                // --- Simplified Message loop - no ACK required ---
-                while (!token.IsCancellationRequested && client.Connected)
+                    _logger.LogWarning("Invalid handshake format from {RemoteEndpoint}: {Handshake}", client.Client.RemoteEndPoint, handshake);
+                    return;
+                }
+                if (!long.TryParse(parts[0], out var serverId))
                 {
-                    // Just keep connection alive by reading any incoming data
-                    var line = await ReceiveStringAsync(stream, token);
-                    if (string.IsNullOrEmpty(line))
+                    _logger.LogWarning("Invalid server ID in handshake from {RemoteEndpoint}: {ServerId}", client.Client.RemoteEndPoint, parts[0]);
+                    return;
+                }
+                if (!Guid.TryParse(parts[1], out var guid))
+                {
+                    _logger.LogWarning("Invalid GUID in handshake from {RemoteEndpoint}: {Guid}", client.Client.RemoteEndPoint, parts[1]);
+                    return;
+                }
+
+                lock (_connectionLock)
+                {
+                    bot = new BotUser(guid)
                     {
-                        _logger.LogDebug("Bot {Guid} connection closed", guid);
-                        break;
+                        TcpClient = client,
+                        ServerId = serverId,
+                        LastInteracted = DateTime.UtcNow
+                    };
+
+                    var serverBots = _bots.GetOrAdd(serverId, _ => new ConcurrentDictionary<string, BotUser>());
+
+                    // Remove any existing bot with same GUID (handles reconnects)
+                    if (serverBots.TryGetValue(guid.ToString(), out var existingBot))
+                    {
+                        _logger.LogInformation("Replacing existing bot connection for {Guid}", guid);
+                        try
+                        {
+                            existingBot.TcpClient?.Close();
+                            existingBot.TcpClient?.Dispose();
+                        }
+                        catch { }
                     }
 
-                    // Update last interaction time for any message received
-                    bot.LastInteracted = DateTime.UtcNow;
-
-                    // Log any messages for debugging but don't require specific format
-                    _logger.LogDebug("Received from bot {Guid}: {Message}", guid, line);
+                    serverBots[guid.ToString()] = bot;
                 }
+
+                _logger.LogInformation("Bot {Guid} connected to server {ServerId} from {RemoteEndpoint}", guid, serverId, client.Client.RemoteEndPoint);
+
+                // --- Message loop ---
+                while (!token.IsCancellationRequested && client.Connected && IsTcpConnectionAlive(bot))
+                {
+                    try
+                    {
+                        // Just keep connection alive by reading any incoming data
+                        var line = await ReceiveStringAsync(stream, token);
+                        if (string.IsNullOrEmpty(line))
+                        {
+                            _logger.LogDebug("Bot {Guid} connection closed gracefully", guid);
+                            break;
+                        }
+
+                        // Update last interaction time for any message received
+                        bot.LastInteracted = DateTime.UtcNow;
+
+                        // Handle keepalive messages
+                        if (line.StartsWith("KEEPALIVE:"))
+                        {
+                            _logger.LogDebug("Keepalive received from bot {Guid}", guid);
+                            continue;
+                        }
+
+                        _logger.LogDebug("Received from bot {Guid}: {Message}", guid, line);
+                    }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    catch (IOException ioEx) when (ioEx.InnerException is SocketException)
+                    {
+                        _logger.LogDebug("Socket exception for bot {Guid}: {Message}", guid, ioEx.Message);
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error reading from bot {Guid}", guid);
+                        break;
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                _logger.LogDebug("Client handling cancelled for bot {Guid}", bot?.Guid);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Client error for bot {Guid}", bot?.Guid);
-
             }
             finally
             {
-                if (bot != null) DisconnectBot(bot);
-                client.Dispose();
+                if (bot != null)
+                {
+                    DisconnectBot(bot);
+                }
+
+                try { stream?.Dispose(); } catch { }
+                try { client.Close(); } catch { }
+                try { client.Dispose(); } catch { }
             }
         }
 
@@ -197,26 +306,50 @@ namespace RagnarokBotWeb.Application.BotServer
             try
             {
                 var lengthBuffer = new byte[4];
-                int read = await stream.ReadAsync(lengthBuffer, 0, 4, token);
-                if (read == 0) return null;
+                int totalRead = 0;
+
+                // Read length prefix with proper error handling
+                while (totalRead < 4)
+                {
+                    int read = await stream.ReadAsync(lengthBuffer, totalRead, 4 - totalRead, token);
+                    if (read == 0) return null; // Connection closed
+                    totalRead += read;
+                }
 
                 if (BitConverter.IsLittleEndian)
                     Array.Reverse(lengthBuffer);
 
                 int length = BitConverter.ToInt32(lengthBuffer, 0);
                 if (length <= 0 || length > 1024 * 1024) // Reasonable size limit
+                {
+                    _logger.LogWarning("Invalid message length received: {Length}", length);
                     return null;
+                }
 
                 var buffer = new byte[length];
                 int offset = 0;
                 while (offset < length)
                 {
                     int chunk = await stream.ReadAsync(buffer, offset, length - offset, token);
-                    if (chunk == 0) return null;
+                    if (chunk == 0) return null; // Connection closed
                     offset += chunk;
                 }
 
                 return Encoding.UTF8.GetString(buffer);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                return null;
+            }
+            catch (IOException ioEx)
+            {
+                _logger.LogDebug(ioEx, "IO error receiving string message");
+                return null;
+            }
+            catch (SocketException sockEx)
+            {
+                _logger.LogDebug(sockEx, "Socket error receiving string message");
+                return null;
             }
             catch (Exception ex)
             {
@@ -255,7 +388,7 @@ namespace RagnarokBotWeb.Application.BotServer
                         }
 
                         _logger.LogInformation("New client connected from {RemoteEndpoint}", client.Client.RemoteEndPoint);
-                        _ = HandleClientAsync(client, token);
+                        _ = Task.Run(() => HandleClientAsync(client, token), token);
                     }
                 }
                 catch (Exception ex) when (!token.IsCancellationRequested)
@@ -288,7 +421,7 @@ namespace RagnarokBotWeb.Application.BotServer
             }
 
             var bot = botsForServer.Values
-                .Where(b => b.TcpClient?.Connected == true)
+                .Where(b => IsTcpConnectionAlive(b))
                 .OrderByDescending(b => b.LastPinged ?? DateTime.MinValue)
                 .ThenBy(b => b.LastCommand ?? DateTime.MinValue)
                 .FirstOrDefault();
@@ -318,7 +451,7 @@ namespace RagnarokBotWeb.Application.BotServer
         {
             if (_bots.TryGetValue(serverId, out var botsForServer) &&
                 botsForServer.TryGetValue(guid, out var bot) &&
-                bot.TcpClient?.Connected == true)
+                IsTcpConnectionAlive(bot))
             {
                 try
                 {
@@ -346,7 +479,7 @@ namespace RagnarokBotWeb.Application.BotServer
         public bool IsBotConnected(long serverId) =>
             _bots.TryGetValue(serverId, out var botsForServer) &&
             botsForServer.Values.Any(b =>
-                b.TcpClient?.Connected == true ||
+                IsTcpConnectionAlive(b) ||
                 (b.LastPinged.HasValue && (DateTime.UtcNow - b.LastPinged.Value).TotalMinutes < 5));
 
         // This is called by your FTP service when it finds a bot GUID in chat logs
@@ -373,7 +506,7 @@ namespace RagnarokBotWeb.Application.BotServer
                 return;
             }
 
-            var bots = botsForServer.Values.Where(b => b.TcpClient?.Connected == true).ToList();
+            var bots = botsForServer.Values.Where(b => IsTcpConnectionAlive(b)).ToList();
 
             foreach (var bot in bots)
             {

@@ -142,8 +142,10 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 await _discordService.RemoveMessage(ulong.Parse(previousDiscordId!), dicordMessageId!.Value);
             }
-            catch (Exception)
-            { }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Taxi remove discord message exception");
+            }
 
             if (taxi.Enabled)
             {
@@ -153,7 +155,7 @@ namespace RagnarokBotWeb.Domain.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Taxi remove discord message exception");
+                    _logger.LogError(ex, "Taxi update discord message exception");
                 }
             }
 

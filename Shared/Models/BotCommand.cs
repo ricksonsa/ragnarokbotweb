@@ -12,7 +12,6 @@ namespace Shared.Models
         [Key(3)] public int Amount { get; set; } = 1;
         [Key(4)] public ECommandType Type { get; set; }
         [Key(5)] public bool CheckTargetOnline { get; set; }
-
         public BotCommandValue() { }
         public BotCommandValue(bool checkTargetOnline) => CheckTargetOnline = checkTargetOnline;
     }
@@ -21,8 +20,7 @@ namespace Shared.Models
     public class BotCommand
     {
         [Key(0)] public List<BotCommandValue> Values { get; set; } = [];
-        [Key(1)] public BotCommand Extra { get; set; }
-        [Key(2)] public string Data { get; set; }
+        [Key(1)] public string Data { get; set; }
 
         public BotCommand() { }
 
