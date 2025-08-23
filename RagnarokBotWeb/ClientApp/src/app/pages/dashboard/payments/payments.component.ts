@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -34,7 +34,7 @@ import { NzBadgeModule } from 'ng-zorro-antd/badge';
     NzBadgeModule
   ]
 })
-export class PaymentsComponent implements OnInit {
+export class PaymentsComponent implements OnInit, OnDestroy {
 
   dataSource: PaymentDto[] = [];
   total = 0;
@@ -44,11 +44,17 @@ export class PaymentsComponent implements OnInit {
   suggestions$: Observable<PaymentDto[]> = of([]);
   isLoading = true;
   loading = false;
+  timer: any;
 
   constructor(private readonly paymentService: PaymentService, private readonly eventManager: EventManager) { }
 
+  ngOnDestroy(): void {
+    clearInterval(this.timer);
+  }
+
   ngOnInit() {
     this.setUpFilter();
+    this.timer = setInterval(() => this.setUpFilter(), 20000);
   }
 
   loadPage() {
@@ -71,7 +77,8 @@ export class PaymentsComponent implements OnInit {
     this.paymentService.addPayment()
       .subscribe({
         next: (response) => {
-          window.open("https://www.paypal.com/ncp/payment/ZJ2UNRCF4W2EL");
+          // window.open("https://www.paypal.com/ncp/payment/ZJ2UNRCF4W2EL");
+          window.open(response.url);
           this.loading = false;
           this.loadPage();
         },
@@ -83,10 +90,12 @@ export class PaymentsComponent implements OnInit {
   }
 
   pay(link: string) {
-    window.open("https://www.paypal.com/ncp/payment/ZJ2UNRCF4W2EL");
+    // window.open("https://www.paypal.com/ncp/payment/ZJ2UNRCF4W2EL");
+    window.open(link);
   }
 
   setUpFilter() {
+    this.loading = true;
     this.suggestions$ = this.searchControl.valueChanges
       .pipe(
         startWith(''), // Triggers API call on page load with an empty value
@@ -105,6 +114,7 @@ export class PaymentsComponent implements OnInit {
           this.isLoading = false
         }),
         switchMap((page) => {
+          this.loading = false;
           return of(page.content);
         })
       ); // Hide loading indicator

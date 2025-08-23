@@ -15,6 +15,13 @@
         </nz-form-control>
       </nz-form-item>
 
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="lastName">Last Name</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the last name!">
+          <input formControlName="lastName" nz-input name="lastName" type="text" id="lastName" />
+        </nz-form-control>
+      </nz-form-item>
+
       <nz-form-item nzRequired>
         <nz-form-label [nzSpan]="0" nzFor="name">Email</nz-form-label>
         <nz-form-control [nzSpan]="24" nzErrorTip="Please input the email!">

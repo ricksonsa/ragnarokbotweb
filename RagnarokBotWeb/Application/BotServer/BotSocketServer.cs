@@ -43,6 +43,8 @@ namespace RagnarokBotWeb.Application.BotServer
                             {
                                 _logger.LogInformation("Bot {Guid} TCP disconnected and no recent game ping - disconnecting", bot.Guid);
                                 DisconnectBot(bot);
+                                await SendLengthedMessage(new BotCommand().Reconnect(), bot);
+                                bot.LastReconnectSent = now;
                             }
                             continue;
                         }
@@ -181,6 +183,7 @@ namespace RagnarokBotWeb.Application.BotServer
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Client error for bot {Guid}", bot?.Guid);
+
             }
             finally
             {

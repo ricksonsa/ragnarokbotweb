@@ -15,6 +15,11 @@ public class BotSocketClient
 
     private System.Windows.Forms.Timer _keepAliveTimer;
 
+    private DateTime _lastMessageReceived = DateTime.UtcNow;
+    private readonly System.Windows.Forms.Timer _inactivityTimer;
+    private readonly TimeSpan _inactivityTimeout = TimeSpan.FromMinutes(5);
+
+
     public string BotId => _botId;
 
     public event EventHandler<BotCommand>? OnMessageReceived;
@@ -24,9 +29,32 @@ public class BotSocketClient
         _host = host;
         _port = port;
         _serverId = serverId;
+
         _keepAliveTimer = new();
-        _keepAliveTimer.Interval = 30000; // Send keepalive every 30 seconds
+        _keepAliveTimer.Interval = 30000; // 30s keepalive
         _keepAliveTimer.Tick += KeepAliveTimer_Tick;
+
+        _inactivityTimer = new();
+        _inactivityTimer.Interval = 60000; // check every 1 min
+        _inactivityTimer.Tick += InactivityTimer_Tick;
+    }
+
+    private async void InactivityTimer_Tick(object? sender, EventArgs e)
+    {
+        if (_client?.Connected == true)
+        {
+            var idleTime = DateTime.UtcNow - _lastMessageReceived;
+            if (idleTime > _inactivityTimeout)
+            {
+                Logger.LogWrite(
+                    $"No commands from server for {idleTime.TotalMinutes:F1} minutes. Forcing reconnect...");
+
+                try { _client?.Close(); } catch { }
+                _client = null;
+
+                await ReconnectLoopAsync(CancellationToken.None);
+            }
+        }
     }
 
     private async void KeepAliveTimer_Tick(object? sender, EventArgs e)
@@ -57,6 +85,7 @@ public class BotSocketClient
                     _botId = Guid.NewGuid().ToString();
                 }
 
+                if (_client != null) _client.Dispose();
                 _client = new TcpClient();
                 await _client.ConnectAsync(_host, _port, token);
 
@@ -81,6 +110,7 @@ public class BotSocketClient
         if (_client == null) return;
 
         _keepAliveTimer.Start();
+        _inactivityTimer.Start();
 
         try
         {
@@ -93,8 +123,11 @@ public class BotSocketClient
                 if (command == null)
                 {
                     Logger.LogWrite("Connection lost or received invalid command.");
-                    break; // trigger reconnect
+                    break;
                 }
+
+                _lastMessageReceived = DateTime.UtcNow; // 👈 reset idle timer
+
 
                 Logger.LogWrite($"Command received: {command.Values?.Count ?? 0} command(s)");
 
@@ -120,6 +153,7 @@ public class BotSocketClient
         finally
         {
             _keepAliveTimer.Stop();
+            _inactivityTimer.Stop();
 
             try { _client?.Close(); } catch { }
             _client = null;

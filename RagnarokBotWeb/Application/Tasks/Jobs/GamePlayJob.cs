@@ -176,6 +176,7 @@ public class GamePlayJob(
     {
         return trapLog.TrapName.Contains("Anti-personnel mine")
             || trapLog.TrapName.Contains("PROM-1 Mine")
+            || trapLog.TrapName.Contains("Improvised Mine")
             || trapLog.TrapName.Contains("Small anti-personnel mine");
     }
 }

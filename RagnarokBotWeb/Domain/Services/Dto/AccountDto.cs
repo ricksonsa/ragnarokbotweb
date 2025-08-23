@@ -6,6 +6,7 @@ namespace RagnarokBotWeb.Domain.Services.Dto
     {
         public string Name { get; set; }
         public string Email { get; set; }
+        public string LastName { get; set; }
         public long ServerId { get; set; }
         public string? Country { get; set; }
         public IEnumerable<ScumServerDto> Servers { get; set; }

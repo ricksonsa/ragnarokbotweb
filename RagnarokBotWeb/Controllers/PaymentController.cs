@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
-using System.Text.Json;
 
 namespace RagnarokBotWeb.Controllers
 {
@@ -31,6 +31,13 @@ namespace RagnarokBotWeb.Controllers
             return Ok(await _paymentService.GetPayments(paginator));
         }
 
+        [HttpGet("token/{token}")]
+        public async Task<IActionResult> GetById(string token)
+        {
+            _logger.LogDebug("GET Request to fetch a payment by token {Token}", token);
+            return Ok(await _paymentService.GetPayment(token));
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(long id)
         {
@@ -45,20 +52,20 @@ namespace RagnarokBotWeb.Controllers
             return Ok(await _paymentService.AddPayment());
         }
 
-        [HttpGet("success")]
-        public async Task<IActionResult> PaymentSuccess([FromQuery] string token, [FromQuery] string payerID)
-        {
-            try
-            {
-                // Capturar o pagamento
-                //var captureResult = await _payPalService.CaptureOrderAsync(token);
-                return Ok(await _paymentService.ConfirmPayment());
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
-        }
+        //[HttpPost("webhook")]
+        //public async Task<IActionResult> PaymentSuccess([FromQuery] string token, [FromQuery] string payerID)
+        //{
+        //    try
+        //    {
+        //        // Capturar o pagamento
+        //        //var captureResult = await _payPalService.CaptureOrderAsync(token);
+        //        return Ok(await _paymentService.ConfirmPayment());
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { error = ex.Message });
+        //    }
+        //}
 
         [HttpGet("cancel")]
         public IActionResult PaymentCancel(string token)
@@ -73,17 +80,19 @@ namespace RagnarokBotWeb.Controllers
             return Ok(_paymentService.CancelPayment(id));
         }
 
+        [AllowAnonymous]
         [HttpPost("webhook")]
-        public async Task<IActionResult> PayPalWebhook()
+        public async Task<IActionResult> PayPalWebhook([FromBody] FastSpringWebhookCompleted data)
         {
             try
             {
-                using var reader = new StreamReader(Request.Body);
-                var webhookPayload = await reader.ReadToEndAsync();
+                if (data.Events.Any(e => e.Type == "order.completed"))
+                {
+                    var eventData = data.Events.First(e => e.Type == "order.completed").Data;
+                    await _paymentService.ConfirmPayment(eventData!.Order, eventData.Account);
+                }
 
-                var webhookEvent = JsonSerializer.Deserialize<dynamic>(webhookPayload);
-
-                // Processar diferentes tipos de eventos
+                //Processar diferentes tipos de eventos
                 // PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.DENIED, etc.
 
                 return Ok();

@@ -220,7 +220,7 @@
 <div class="login" *ngIf="!logged && register">
   <nz-card class="login-container">
     <div class="logo-holder">
-      <img style="position: absolute; bottom: 560px;" width="200" height="200" src="assets/images/thescumbot.png"
+      <img style="position: absolute; bottom: 680px;" width="200" height="200" src="assets/images/thescumbot.png"
         alt="">
       <br>
       <br>
@@ -232,6 +232,13 @@
       <nz-form-item>
         <nz-form-control [nzSpan]="24" nzErrorTip="Name is required!">
           <input formControlName="name" nz-input name="name" type="text" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <p style="margin: 0; text-align: start;" nz-typography>Last Name</p>
+      <nz-form-item>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Last name is required!">
+          <input formControlName="lastName" nz-input name="lastName" type="text" id="lastName" />
         </nz-form-control>
       </nz-form-item>
 

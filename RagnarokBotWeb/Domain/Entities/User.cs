@@ -8,11 +8,13 @@ namespace RagnarokBotWeb.Domain.Entities
     {
         public Tenant Tenant { get; set; }
         public string Name { get; set; }
+        public string? LastName { get; set; }
         public string Email { get; set; }
         public string PasswordHash { get; private set; }
         public byte[] PasswordSalt { get; private set; }
         public bool Active { get; set; }
         public string? Country { get; set; }
+        public string? FastspringAccountId { get; set; }
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Default;
 
         public User() { }

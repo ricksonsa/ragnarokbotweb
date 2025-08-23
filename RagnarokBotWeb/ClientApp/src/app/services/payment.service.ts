@@ -8,6 +8,7 @@ import { PaymentDto } from '../models/payment.dto';
     providedIn: 'root'
 })
 export class PaymentService {
+
     constructor(private readonly http: HttpClient) { }
 
     getPayments(pageSize: number, pageNumber: number) {
@@ -17,6 +18,11 @@ export class PaymentService {
 
     getPayment(id: number) {
         var url = `${environment.apiUrl}/api/payments/${id}`;
+        return this.http.get<PaymentDto>(url);
+    }
+
+    getPaymentByToken(token: string) {
+        var url = `${environment.apiUrl}/api/payments/token/${token}`;
         return this.http.get<PaymentDto>(url);
     }
 

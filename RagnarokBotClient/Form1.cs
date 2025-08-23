@@ -17,6 +17,7 @@ namespace RagnarokBotClient
         private Process? _gameProcess;
         private bool _setup = false;
 
+        ConcurrentQueue<BotCommand> _priorityCommandQueue = [];
         ConcurrentQueue<BotCommand> _commandQueue = [];
         private CancellationTokenSource _cancellationTokenSource;
         private string _token;
@@ -136,11 +137,11 @@ namespace RagnarokBotClient
                         var command = new BotCommand();
                         command.Values = [
                         new BotCommandValue
-                    {
-                        Type = Shared.Enums.ECommandType.SayLocal,
-                        Value = $"!check-state-{_client.BotId}"
-                    }];
-                        _commandQueue.Enqueue(command);
+                        {
+                            Type = Shared.Enums.ECommandType.SayLocal,
+                            Value = $"!check-state-{_client.BotId}"
+                        }];
+                        _priorityCommandQueue.Enqueue(command);
                     }
 
                 }
@@ -395,6 +396,19 @@ namespace RagnarokBotClient
             {
                 try
                 {
+                    if (_priorityCommandQueue.TryDequeue(out BotCommand? priorityCommand) && priorityCommand is not null)
+                    {
+                        var tasks = new CommandHandler(_scumManager, _remote).Handle(priorityCommand);
+                        if (tasks != null && tasks.Count > 0)
+                        {
+                            foreach (var task in tasks)
+                            {
+                                UpdateStatus("Processing command.");
+                                await task();
+                            }
+                        }
+                    }
+
                     if (_commandQueue.TryDequeue(out BotCommand? command) && command is not null)
                     {
                         if (command.Values.Any(cmd => cmd.Type == Shared.Enums.ECommandType.Reconnect))
@@ -402,6 +416,15 @@ namespace RagnarokBotClient
                             UpdateStatus("Bot flagged for reconnect.");
                             await _scumManager.ReconnectToServer();
                             await Task.Delay(TimeSpan.FromSeconds(Math.Max(_timeToLoadWorld, 1)));
+                            _priorityCommandQueue.Enqueue(new BotCommand
+                            {
+                                Values = [
+                                new BotCommandValue
+                                {
+                                    Type = Shared.Enums.ECommandType.SayLocal,
+                                    Value = $"!check-state-{_client.BotId}"
+                                }]
+                            });
                         }
                         else
                         {
@@ -419,7 +442,7 @@ namespace RagnarokBotClient
                     }
                 }
                 catch (Exception) { }
-                await Task.Delay(2000);
+                await Task.Delay(1000);
             }
         }
 

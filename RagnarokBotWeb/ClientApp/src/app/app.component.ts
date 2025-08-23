@@ -95,6 +95,7 @@ export class AppComponent implements OnInit {
 
     this.registerForm = fb.group({
       name: [null, Validators.required],
+      lastName: [null, Validators.required],
       email: [null, Validators.required],
       password: [null, Validators.required],
       confirmPassword: [null, Validators.required],

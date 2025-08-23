@@ -18,9 +18,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             try
             {
                 var server = await GetServerAsync(context);
-                if (server.Uav?.DiscordMessageId != null)
+                if (server.Uav?.DiscordChannelId != null)
                 {
-                    await discordService.DeleteAllMessagesInChannelByDate(server.Uav.DiscordMessageId.Value, DateTime.UtcNow.AddMinutes(-15));
+                    await discordService.DeleteAllMessagesInChannelByDate(ulong.Parse(server.Uav.DiscordChannelId), DateTime.UtcNow.AddMinutes(-15));
                 }
             }
             catch (ServerUncompliantException) { }

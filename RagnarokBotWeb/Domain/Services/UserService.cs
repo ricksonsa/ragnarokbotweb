@@ -12,31 +12,31 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly ILogger<UserService> _logger;
         private readonly IUserRepository _userRepository;
+        private readonly FastspringService _fastspringService;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly ITenantRepository _tenantRepository;
         private readonly ITokenIssuer _tokenIssuer;
-        private readonly IUnitOfWork _unitOfWork;
         private readonly ITaskService _taskService;
         private readonly IMapper _mapper;
 
         public UserService(IHttpContextAccessor contextAccessor,
             ILogger<UserService> logger,
             IUserRepository userRepository,
-            IUnitOfWork unitOfWork,
             IScumServerRepository scumServerRepository,
             ITenantRepository tenantRepository,
             ITokenIssuer tokenIssuer,
             IMapper mapper,
-            ITaskService taskService) : base(contextAccessor)
+            ITaskService taskService,
+            FastspringService fastspringService) : base(contextAccessor)
         {
             _logger = logger;
             _userRepository = userRepository;
-            _unitOfWork = unitOfWork;
             _scumServerRepository = scumServerRepository;
             _tenantRepository = tenantRepository;
             _tokenIssuer = tokenIssuer;
             _mapper = mapper;
             _taskService = taskService;
+            _fastspringService = fastspringService;
         }
 
         public async Task<AuthResponse?> PreAuthenticate(AuthenticateDto authenticateDto)
@@ -75,6 +75,7 @@ namespace RagnarokBotWeb.Domain.Services
             var user = new User
             {
                 Name = register.Name,
+                LastName = register.LastName,
                 Email = register.Email,
                 Country = register.Country,
                 Active = true
@@ -84,8 +85,22 @@ namespace RagnarokBotWeb.Domain.Services
             user.Tenant = await CreateTenant(user.Email);
             await CreateServer(user.Tenant);
 
-            await _userRepository.AddAsync(user);
+            await _userRepository.CreateOrUpdateAsync(user);
             await _userRepository.SaveAsync();
+
+            try
+            {
+                var account = await _fastspringService.CreateAccount(user);
+
+                user.FastspringAccountId = account!.Account;
+
+                await _userRepository.CreateOrUpdateAsync(user);
+                await _userRepository.SaveAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Register User Exception");
+            }
 
             return new UserDto()
             {
@@ -103,11 +118,31 @@ namespace RagnarokBotWeb.Domain.Services
                 user.SetPassword(userDto.Password);
 
             user.Email = userDto.Email;
+            user.LastName = userDto.LastName;
             user.Name = userDto.Name;
             user.Country = userDto.Country;
 
-            _userRepository.Update(user);
+            await _userRepository.CreateOrUpdateAsync(user);
             await _userRepository.SaveAsync();
+
+            try
+            {
+                if (user.FastspringAccountId != null)
+                {
+                    var account = await _fastspringService.UpdateAccount(user);
+                }
+                else
+                {
+                    var account = await _fastspringService.CreateAccount(user);
+                    user.FastspringAccountId = account!.Account;
+                    await _userRepository.CreateOrUpdateAsync(user);
+                    await _userRepository.SaveAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Update User Exception");
+            }
 
             return _mapper.Map<AccountDto>(user);
         }
@@ -146,6 +181,7 @@ namespace RagnarokBotWeb.Domain.Services
             return new AccountDto
             {
                 Name = user.Name,
+                LastName = user.LastName,
                 Email = UserLogin()!,
                 Country = user.Country,
                 ServerId = serverId,

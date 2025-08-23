@@ -8,7 +8,7 @@ using System.Text;
 
 namespace RagnarokBotWeb.Domain.Services;
 
-public class FtpService(FtpConnectionPool pool) : IFtpService
+public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFtpService
 {
     private static readonly SemaphoreSlim _ftpLock = new(1, 1);
 
@@ -53,6 +53,7 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
 
             if (results.Any(result => result.IsFailed))
             {
+                results.ForEach(result => logger.LogError(result.Exception, "CopyFilesAsync"));
                 throw new DomainException("Error while copying files from FTP after multiple retries");
             }
         }
@@ -185,6 +186,28 @@ public class FtpService(FtpConnectionPool pool) : IFtpService
         {
             client = await GetClientAsync(ftp, cancellationToken);
             return await operation(client);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Clear pool and try once more
+            await pool.ClearPoolAsync(ftp);
+
+            if (client != null)
+            {
+                // Don't return this client to the pool since it's likely bad
+                await pool.ReleaseClientAsync(client);
+                client = null;
+            }
+
+            try
+            {
+                client = await GetClientAsync(ftp, cancellationToken);
+                return await operation(client);
+            }
+            catch (Exception retryEx)
+            {
+                throw new DomainException($"FTP operation failed after retry: {retryEx.Message}", retryEx);
+            }
         }
         catch (Exception ex) when (IsNetworkError(ex))
         {

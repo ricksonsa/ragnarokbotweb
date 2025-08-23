@@ -205,6 +205,13 @@ namespace RagnarokBotWeb
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<ITaxiService, TaxiService>();
             builder.Services.AddScoped<PayPalService>();
+            builder.Services.AddSingleton(provider =>
+                new FastspringService(
+                    provider.GetRequiredService<HttpClient>(),
+                    Environment.GetEnvironmentVariable("FASTSPRING_USERNAME") ?? Environment.GetEnvironmentVariable("FASTSPRING_USERNAME", EnvironmentVariableTarget.User),
+                    Environment.GetEnvironmentVariable("FASTSPRING_PASSWORD") ?? Environment.GetEnvironmentVariable("FASTSPRING_PASSWORD", EnvironmentVariableTarget.User)
+                )
+            );
 
             builder.Services.AddScoped<StartupDiscordTemplate>();
 

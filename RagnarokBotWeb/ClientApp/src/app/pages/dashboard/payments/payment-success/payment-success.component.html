@@ -1,5 +1,13 @@
 <nz-card>
-  <nz-result nzStatus="success" nzTitle="Successfully Purchased Cloud Server ECS!"
+  <nz-result *ngIf="!confirmed" nzIcon="smile-twotone" nzTitle="Please wait while we confirm the payment!">
+    <div nz-result-extra>
+      <button nz-button nzType="primary">Go Back</button>
+    </div>
+  </nz-result>
+  <nz-result *ngIf="confirmed" nzStatus="success" nzTitle="Successfully Purchased The SCUM Bot 30-days!"
     nzSubTitle="Order number: {{token}} Server configuration takes 1-5 minutes, please wait.">
+    <div nz-result-extra>
+      <button nz-button nzType="primary">Go Back</button>
+    </div>
   </nz-result>
 </nz-card>
