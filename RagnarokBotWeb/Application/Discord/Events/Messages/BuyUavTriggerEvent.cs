@@ -89,5 +89,10 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
                 await component.RespondAsync("No zone selected yet. Please choose from the dropdown first.", ephemeral: true);
             }
         }
+
+        public Task HandleAsync(SocketModal message)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

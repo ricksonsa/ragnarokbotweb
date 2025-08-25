@@ -93,4 +93,9 @@ public class BuyTaxiEvent : IMessageEventHandler
         }
 
     }
+
+    public Task HandleAsync(SocketModal message)
+    {
+        throw new NotImplementedException();
+    }
 }

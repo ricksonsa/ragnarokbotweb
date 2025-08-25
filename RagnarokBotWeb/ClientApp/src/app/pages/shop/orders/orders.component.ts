@@ -94,7 +94,16 @@ export class OrdersComponent implements OnInit {
       case 1: return data.warzone?.name ?? '{error}';
       case 2: return data.scumServer.uav?.name ?? '{error}';
       case 3: return data.taxi?.name ?? '{error}';
-      case 4: return data.scumServer?.exchange ?? '{error}';
+      case 4: return this.getExchangeTypeName(data) ?? '{error}';
+      default: return 'Unknown';
+    }
+  }
+
+  getExchangeTypeName(data: OrderDto) {
+    switch (data.exchangeType) {
+      case 0: return `Transfer[${data.exchangeAmount}]`;
+      case 1: return `Withdraw[${data.exchangeAmount}]`;
+      case 2: return `Deposit[${data.exchangeAmount}]`;
       default: return 'Unknown';
     }
   }

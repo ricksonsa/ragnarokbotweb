@@ -2,19 +2,19 @@
   <ng-template #saveBtn>
     <button nz-button nzType="primary" (click)="save()" [nzLoading]="loading">Save</button>
   </ng-template>
-  <nz-card nzSize="small" nzTitle="UAV" [nzExtra]="saveBtn">
+  <nz-card nzSize="small" nzTitle="Exchange" [nzExtra]="saveBtn">
     <div class="blocker"></div>
     <form nz-form [formGroup]="packageForm">
       <nz-form-item>
         <nz-form-label nzRequired [nzSpan]="0" nzFor="name">Name</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the UAV name!">
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the Exchange name!">
           <input formControlName="name" nz-input name="name" type="text" id="name" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="description">Description</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the UAV description!">
+        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the Exchange description!">
           <textarea formControlName="description" nz-input name="description" type="text" id="description"></textarea>
         </nz-form-control>
       </nz-form-item>
@@ -24,12 +24,60 @@
         <nz-form-control [nzSpan]="2">
           <label nz-checkbox formControlName="enabled"></label>
         </nz-form-control>
-        <p nz-typography nzType="secondary" style="margin: 0;">Determine whether the UAV will be available for
+        <p nz-typography nzType="secondary" style="margin: 0;">Determine whether the Exchange will be available for
           purchase.</p>
       </nz-form-item>
 
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="allowTransfer">Allow Transfers</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="allowTransfer"></label>
+        </nz-form-control>
+        <p nz-typography nzType="secondary" style="margin: 0;">Allow Coin transfer between players.</p>
+      </nz-form-item>
+
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="packageImage">UAV Thumbnail</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="transferRate">Transfer Exchange Rate</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Min amount is 0"
+          nzExtra="Tax applied when transfering Player to Player. The tax should be in a range bewteen 0 to 1. Ex: 0.5">
+          <input formControlName="transferRate" nz-input name="transferRate" type="number" id="transferRate" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="allowWithdraw">Allow Withdraw</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="allowWithdraw"></label>
+        </nz-form-control>
+        <p nz-typography nzType="secondary" style="margin: 0;">Allow Coin to Game Money exchange.</p>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="withdrawRate">Withdraw Exchange Rate</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Min amount is 0"
+          nzExtra="Tax applied when converting coins → in-game money.">
+          <input formControlName="withdrawRate" nz-input name="withdrawRate" type="number" id="withdrawRate" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="allowDeposit">Allow Deposit</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="allowDeposit"></label>
+        </nz-form-control>
+        <p nz-typography nzType="secondary" style="margin: 0;">Allow Game Money to Coin exchange.</p>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="depositRate">Deposit Exchange Rate</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzErrorTip="Min amount is 0"
+          nzExtra="Tax applied when converting in-game money → coins.">
+          <input formControlName="depositRate" nz-input name="depositRate" type="number" id="depositRate" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="packageImage">Exchange Thumbnail</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="uploadBtn">
           <img *ngIf="avatarUrl" nz-image width="200px" height="200px"
             [nzSrc]="!isUploaded ? avatarUrl : (apiUrl + '/' + avatarUrl)" alt="" />
@@ -56,15 +104,14 @@
         <nz-form-label [nzSpan]="0" nzFor="discordChannelId">Discord Channel</nz-form-label>
         <nz-form-control [nzSpan]="24" [nzExtra]="discordChannelExtra">
           <nz-select nzShowSearch formControlName="discordChannelId" id="discordChannelId"
-            nzPlaceHolder="Select the discord channel in which the UAV will be displayed for purchase">
+            nzPlaceHolder="Select the discord channel in which the Exchange Buttons will be displayed">
             <nz-option *ngFor="let ch of channels" [nzValue]="ch.discordId" [nzLabel]="ch.name"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
       <ng-template #discordChannelExtra>
-        <p *ngIf="account?.server?.discord">The discord channel in which this UAV will be displayed for
-          purchase.</p>
+        <p *ngIf="account?.server?.discord">The discord channel in which this Exchange will be displayed.</p>
         <span *ngIf="!account?.server?.discord">
           <nz-alert nzType="warning" [nzMessage]="discordInstalledMessage"></nz-alert>
           <ng-template #discordInstalledMessage>
@@ -80,49 +127,26 @@
         </span>
       </ng-template>
 
-      <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="price">Price</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the UAV price!">
-          <input formControlName="price" nz-input name="price" type="number" id="price" />
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="vipPrice">VIP Price</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzErrorTip="Please input the UAV VIP price!">
-          <input formControlName="vipPrice" nz-input name="vipPrice" type="number" id="vipPrice" />
-        </nz-form-control>
-      </nz-form-item>
-
       <nz-form-item nzAlign="middle">
         <nz-form-label [nzSpan]="0" nzFor="isVipOnly">VIP Only</nz-form-label>
         <nz-form-control [nzSpan]="2">
           <label nz-checkbox formControlName="isVipOnly"></label>
         </nz-form-control>
-        <p nz-typography style="margin: 0;" nzType="secondary">Determine whether this UAV will only be available for
+        <p nz-typography style="margin: 0;" nzType="secondary">Determine whether the Exchange will only be available for
           VIP Players.</p>
       </nz-form-item>
 
       <nz-form-item nzAlign="middle">
-        <nz-form-label [nzSpan]="0" nzFor="sendToUserDM">Send Scan To User DM</nz-form-label>
-        <nz-form-control [nzSpan]="2">
-          <label nz-checkbox formControlName="sendToUserDM"></label>
-        </nz-form-control>
-        <p nz-typography nzType="secondary" style="margin: 0;">Determine whether the UAV scan result will be sent to
-          user Discord DM or to the selected UAV Discord channel.</p>
-      </nz-form-item>
-
-      <nz-form-item nzAlign="middle">
-        <nz-form-label [nzSpan]="0" nzFor="isBlockPurchaseRaidTime">Block Purchase During Raid Times</nz-form-label>
+        <nz-form-label [nzSpan]="0" nzFor="isBlockPurchaseRaidTime">Block Exchange During Raid Times</nz-form-label>
         <nz-form-control [nzSpan]="2">
           <label nz-checkbox formControlName="isBlockPurchaseRaidTime"></label>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="purchaseCooldownSeconds">Purchase Cooldown (seconds)</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzExtra="Set a time in seconds to block UAV after a purchase by the player. The player will be able to buy
-          the UAV again once this time passes. Leave it blank if not needed.">
+        <nz-form-label [nzSpan]="0" nzFor="purchaseCooldownSeconds">Exchange Cooldown (seconds)</nz-form-label>
+        <nz-form-control [nzSpan]="24"
+          nzExtra="Set a time in seconds to block Exchanges. The player will be able to use the Exchange buttons again once this time passes. Leave it blank if not needed.">
           <input formControlName="purchaseCooldownSeconds" nz-input name="purchaseCooldownSeconds" type="number"
             id="purchaseCooldownSeconds" />
         </nz-form-control>
@@ -130,31 +154,20 @@
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="stockPerPlayer">Stock Per Player</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzExtra="You can set how many times a player can buy the UAV per day.">
+        <nz-form-control [nzSpan]="24"
+          nzExtra="You can set how many times a player can use the Exchange feature per day.">
           <input formControlName="stockPerPlayer" nz-input name="stockPerPlayer" type="number" id="stockPerPlayer" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="stockPerVipPlayer">Stock Per Vip Player</nz-form-label>
-        <nz-form-control [nzSpan]="24" nzExtra="You can set how many times a vip player can buy the UAV per day.">
+        <nz-form-control [nzSpan]="24"
+          nzExtra="You can set how many times a vip player can use the Exchange feature per day.">
           <input formControlName="stockPerVipPlayer" nz-input name="stockPerVipPlayer" type="number"
             id="stockPerVipPlayer" />
         </nz-form-control>
       </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="0" nzFor="deliveryText">UAV Executed Message</nz-form-label>
-        <nz-form-control [nzSpan]="24" [nzExtra]="packageDeliveryExtra">
-          <input formControlName="deliveryText" nz-input name="deliveryText" type="text" id="deliveryText" />
-        </nz-form-control>
-      </nz-form-item>
-      <ng-template #packageDeliveryExtra>
-        <p style="margin: 0">Text that the bot will send in global chat after the UAV scan is executed. Leave it blank
-          for no text.</p>
-        <p>Available template variables: {{'{sector}'}}.
-        </p>
-      </ng-template>
 
       <!-- <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="commands">Commands</nz-form-label>

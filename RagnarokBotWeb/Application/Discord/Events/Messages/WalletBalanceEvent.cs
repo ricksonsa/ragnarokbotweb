@@ -67,5 +67,10 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
             }
 
         }
+
+        public Task HandleAsync(SocketModal message)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

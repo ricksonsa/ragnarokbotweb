@@ -6,6 +6,7 @@ namespace RagnarokBotWeb.Application.Discord.Handlers;
 public class MessageEventHandlerFactory : IMessageEventHandlerFactory
 {
     private readonly IServiceProvider _serviceProvider;
+
     public MessageEventHandlerFactory(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
@@ -19,7 +20,13 @@ public class MessageEventHandlerFactory : IMessageEventHandlerFactory
         { "uav_scan_trigger", (serviceProvider) => new BuyUavTriggerEvent(serviceProvider) },
         { "uav_zone_select", (serviceProvider) => new UavSelectEvent(serviceProvider) },
         { "taxi_telport_select", (serviceProvider) => new TaxiTeleportSelectEvent(serviceProvider) },
-        { "wallet_balance", (serviceProvider) => new WalletBalanceEvent(serviceProvider) }
+        { "wallet_balance", (serviceProvider) => new WalletBalanceEvent(serviceProvider) },
+        { "transfer_trigger", (serviceProvider) => new ExchangePlayerTransferEventTrigger(serviceProvider) },
+        { "withdraw_trigger", (serviceProvider) => new ExchangeWithdrawEventTrigger(serviceProvider) },
+        { "deposit_trigger", (serviceProvider) => new ExchangeDepositEventTrigger(serviceProvider) },
+        { "transfer_modal", (serviceProvider) => new ExchangeTransferEvent(serviceProvider) },
+        { "withdraw_modal", (serviceProvider) => new ExchangeWithdrawEvent(serviceProvider) },
+        { "deposit_modal", (serviceProvider) => new ExchangeDepositEvent(serviceProvider) }
     };
 
     public IMessageEventHandler? GetHandler(SocketMessage message)
@@ -28,6 +35,12 @@ public class MessageEventHandlerFactory : IMessageEventHandlerFactory
     }
 
     public IMessageEventHandler? GetHandler(SocketMessageComponent component)
+    {
+        var message = component.Data.CustomId.Contains(':') ? component.Data.CustomId.Split(":")[0] : component.Data.CustomId;
+        return _handlers.TryGetValue(message, out var factory) ? factory(_serviceProvider) : null;
+    }
+
+    public IMessageEventHandler? GetHandler(SocketModal component)
     {
         var message = component.Data.CustomId.Contains(':') ? component.Data.CustomId.Split(":")[0] : component.Data.CustomId;
         return _handlers.TryGetValue(message, out var factory) ? factory(_serviceProvider) : null;

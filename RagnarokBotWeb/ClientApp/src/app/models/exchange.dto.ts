@@ -1,10 +1,7 @@
-export class UavDto {
+export class ExchangeDto {
     id!: number;
     name?: string;
     description?: string;
-    price?: number;
-    vipPrice?: number;
-    commands?: string;
     imageUrl?: string;
     discordChannelId?: string;
     discordChannelName?: string;
@@ -14,4 +11,10 @@ export class UavDto {
     isBlockPurchaseRaidTime!: boolean;
     isVipOnly!: boolean;
     createDate!: Date;
+    allowWithdraw: boolean;
+    allowDeposit: boolean;
+    allowTransfer: boolean;
+    transferRate: number;
+    withdrawRate: number;
+    depositRate: number;
 }

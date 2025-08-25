@@ -361,9 +361,19 @@ public class BotSocketClient
                 offset += chunk;
             }
 
-            var command = MessagePackSerializer.Deserialize<BotCommand>(data);
-            Logger.LogWrite($"Successfully received and deserialized command with {command?.Values?.Count ?? 0} values");
-            return command;
+            try
+            {
+                var command = MessagePackSerializer.Deserialize<BotCommand>(data);
+                Logger.LogWrite($"Successfully received and deserialized command with {command?.Values?.Count ?? 0} values");
+                return command;
+            }
+            catch
+            {
+                // Fallback: treat as UTF-8 string
+                string text = Encoding.UTF8.GetString(data);
+                Logger.LogWrite($"Received non-command message: {text}");
+                return null;
+            }
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {

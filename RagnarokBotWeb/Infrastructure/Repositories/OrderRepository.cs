@@ -72,6 +72,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
                 .Include(order => order.ScumServer.Uav)
+                .Include(order => order.ScumServer.Exchange)
                 .Include(order => order.Player)
                 .Include(order => order.Taxi)
                     .ThenInclude(taxi => taxi.TaxiTeleports)

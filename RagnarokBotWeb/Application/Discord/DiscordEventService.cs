@@ -26,6 +26,7 @@ public class DiscordEventService(
         client.InteractionCreated += InteractionCreatedAsync;
         client.JoinedGuild += OnJoinedGuildAsync;
         client.ButtonExecuted += OnButtonExecuted;
+        client.ModalSubmitted += ModalSubmitted;
         client.SelectMenuExecuted += OnButtonExecuted;
 
         try
@@ -33,6 +34,27 @@ public class DiscordEventService(
             await Task.Delay(-1, stoppingToken);
         }
         catch (TaskCanceledException) { }
+    }
+
+    private async Task ModalSubmitted(SocketModal component)
+    {
+        try
+        {
+            await ValidateGuildIsActiveAsync(component.GuildId ?? 0L);
+
+            var handler = messageHandlerFactory.GetHandler(component);
+            handler?.HandleAsync(component);
+
+            logger.LogTrace("Handler for message with content '{Content}' was not found", component.Message.Content);
+
+            return;
+        }
+        catch (Exception e)
+        {
+            logger.LogWarning(e,
+                "Error when try process MessageReceived Action. Discord guild id = '{GuildId}', SocketMessage = '{Message}', ChannelType = '{Type}'",
+            component.GuildId, component.Message.GetType().FullName, component.Message.Channel.GetType().FullName);
+        }
     }
 
     private async Task OnButtonExecuted(SocketMessageComponent component)

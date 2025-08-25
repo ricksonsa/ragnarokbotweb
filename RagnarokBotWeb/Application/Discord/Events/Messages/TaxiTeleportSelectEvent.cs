@@ -29,5 +29,10 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
             //await component.RespondAsync($"Taxi destination selected, please confirm and enjoy the ride", ephemeral: true);
             await component.DeferAsync(ephemeral: true);
         }
+
+        public Task HandleAsync(SocketModal message)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

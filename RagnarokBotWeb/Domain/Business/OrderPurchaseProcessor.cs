@@ -28,10 +28,13 @@ namespace RagnarokBotWeb.Domain.Business
             return Item.Id == item.Id && (DateTime.UtcNow - order.CreateDate).TotalSeconds <= order.GetItem().PurchaseCooldownSeconds;
         }
 
-        private async Task ValidateOrderItem(Order order)
+        private async Task ValidateOrderItem(Order order, bool validatePrice = true)
         {
-            var price = order.GetPrice();
-            if (Player.Coin < price) throw new DomainException($"You don't have enough coins.\nYour current balance: {Player.Coin}\nPrice: {price}");
+            if (validatePrice)
+            {
+                var price = order.GetPrice();
+                if (Player.Coin < price) throw new DomainException($"You don't have enough coins.\nYour current balance: {Player.Coin}\nPrice: {price}");
+            }
 
             var item = order.GetItem();
 

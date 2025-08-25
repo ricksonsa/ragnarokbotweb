@@ -14,6 +14,8 @@ export class OrderDto {
     player?: PlayerDto;
     scumServer!: ScumServer;
     createDate: Date;
+    exchangeType: number;
+    exchangeAmount: number;
 }
 
 export interface GraphDto {

@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { AuthenticationService } from './authentication.service';
 import { GuildDto } from '../models/guild';
 import { UavDto } from '../models/uav.dto';
+import { ExchangeDto } from '../models/exchange.dto';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +28,10 @@ export class ServerService {
 
   updateUav(uav: UavDto) {
     return this.http.put<UavDto>(`${environment.apiUrl}/api/servers/uav`, uav);
+  }
+
+  updateExchange(exchange: ExchangeDto) {
+    return this.http.put<ExchangeDto>(`${environment.apiUrl}/api/servers/exchange`, exchange);
   }
 
   getDiscordServer() {

@@ -283,5 +283,79 @@ namespace RagnarokBotWeb.Domain.Services
                 await _orderRepository.SaveAsync();
             }
         }
+
+        public async Task<Order> ExchangeDepositOrder(long serverId, ulong discordId, long amount)
+        {
+            var player = await _playerRepository.FindOneWithServerAsync(u =>
+                u.ScumServer.Guild != null
+                && u.ScumServer.Id == serverId
+                && u.DiscordId == discordId);
+
+            if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
+
+            if (player.ScumServer?.Exchange is null)
+            {
+                throw new DomainException("Invalid server");
+            }
+
+            if (player.Coin < amount)
+            {
+                throw new DomainException("You don't have enough ingame money.");
+            }
+
+            var order = new Order
+            {
+                ExchangeAmount = amount,
+                ExchangeType = EExchangeType.Deposit,
+                Player = player,
+                OrderType = EOrderType.Exchange,
+                ScumServer = player.ScumServer
+            };
+
+            var processor = new OrderPurchaseProcessor(_orderRepository, _cacheService);
+            await processor.ValidateAsync(order);
+
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+
+            return order;
+        }
+
+        public async Task<Order> ExchangeWithdrawOrder(long serverId, ulong discordId, long amount)
+        {
+            var player = await _playerRepository.FindOneWithServerAsync(u =>
+                u.ScumServer.Guild != null
+                && u.ScumServer.Id == serverId
+                && u.DiscordId == discordId);
+
+            if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
+
+            if (player.ScumServer?.Exchange is null)
+            {
+                throw new DomainException("Invalid server");
+            }
+
+            if (player.Coin < amount)
+            {
+                throw new DomainException("You don't have enough ingame money.");
+            }
+
+            var order = new Order
+            {
+                ExchangeAmount = amount,
+                ExchangeType = EExchangeType.Withdraw,
+                Player = player,
+                OrderType = EOrderType.Exchange,
+                ScumServer = player.ScumServer
+            };
+
+            var processor = new OrderPurchaseProcessor(_orderRepository, _cacheService);
+            await processor.ValidateAsync(order);
+
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+
+            return order;
+        }
     }
 }

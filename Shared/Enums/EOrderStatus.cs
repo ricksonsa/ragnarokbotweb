@@ -4,6 +4,7 @@
     {
         Created,
         Command,
-        Done
+        Done,
+        Canceled
     }
 }

@@ -18,22 +18,22 @@ import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzUploadFile, NzUploadModule } from 'ng-zorro-antd/upload';
-import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { Observable, of, take } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { arrayBufferToBase64, toBase64 } from '../../../core/functions/file.functions';
 import { AccountDto } from '../../../models/account.dto';
 import { Alert } from '../../../models/alert';
 import { ChannelDto } from '../../../models/channel.dto';
 import { ItemDto } from '../../../models/item.dto';
 import { AuthenticationService } from '../../../services/authentication.service';
+import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { ServerService } from '../../../services/server.service';
-import { UavDto } from '../../../models/uav.dto';
-import { environment } from '../../../../environments/environment';
+import { ExchangeDto } from '../../../models/exchange.dto';
 
 @Component({
-  selector: 'app-uav',
-  templateUrl: './uav.component.html',
-  styleUrls: ['./uav.component.scss'],
+  selector: 'app-exchange',
+  templateUrl: './exchange.component.html',
+  styleUrls: ['./exchange.component.scss'],
   imports: [
     CommonModule,
     FormsModule,
@@ -57,7 +57,7 @@ import { environment } from '../../../../environments/environment';
     NzImageModule
   ]
 })
-export class UavComponent implements OnInit {
+export class ExchangeComponent implements OnInit {
   account?: AccountDto;
   packageForm!: FormGroup;
   private fb = inject(NonNullableFormBuilder);
@@ -78,10 +78,8 @@ export class UavComponent implements OnInit {
     private readonly eventManager: EventManager) {
     this.packageForm = this.fb.group({
       id: [0],
-      name: ["🛰️ UAV Scan Report", [Validators.required]],
-      description: ["Real-time reconnaissance data from an unmanned aerial vehicle. Use this intelligence to track movement, locate targets, or prepare for engagement."],
-      price: [0, [Validators.min(0)]],
-      vipPrice: [0, [Validators.min(0)]],
+      name: ["Exchange", [Validators.required]],
+      description: [null],
       isVipOnly: [false],
       discordChannelId: [null],
       imageUrl: [null],
@@ -89,9 +87,13 @@ export class UavComponent implements OnInit {
       stockPerPlayer: [null],
       enabled: [true],
       isBlockPurchaseRaidTime: [false],
-      deliveryText: ["UAV is now scanning sector {sector}"],
       stockPerVipPlayer: [null],
-      sendToUserDM: [false]
+      allowDeposit: [true],
+      allowWithdraw: [true],
+      allowTransfer: [true],
+      depositRate: [0, [Validators.required, Validators.min(0)]],
+      transferRate: [0, [Validators.required, Validators.min(0)]],
+      withdrawRate: [0, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -121,7 +123,7 @@ export class UavComponent implements OnInit {
         next: (account) => {
           this.account = account;
           if (!account.server.discord) this.packageForm.controls['discordId'].disable();
-          if (account.server.uav) this.packageForm.patchValue(account.server.uav);
+          if (account.server.exchange) this.packageForm.patchValue(account.server.exchange);
           this.isUploaded = true;
           this.avatarUrl = this.packageForm.value.imageUrl;
         }
@@ -149,12 +151,12 @@ export class UavComponent implements OnInit {
     }
 
     this.loading = true;
-    var uav = this.packageForm.value as UavDto;
+    var uav = this.packageForm.value as ExchangeDto;
 
-    this.serverService.updateUav(uav)
+    this.serverService.updateExchange(uav)
       .subscribe({
         next: (value) => {
-          const message = `UAV updated.`;
+          const message = `Exchange updated.`;
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', message, 'success')));
           this.loading = false;
         },

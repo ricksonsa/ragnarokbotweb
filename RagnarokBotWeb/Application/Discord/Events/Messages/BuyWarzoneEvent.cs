@@ -35,6 +35,7 @@ public class BuyWarzoneEvent : IMessageEventHandler
                  .Build();
 
             await component.RespondAsync(embed: embed, ephemeral: true);
+            return;
         }
 
         try
@@ -49,6 +50,7 @@ public class BuyWarzoneEvent : IMessageEventHandler
               .Build();
 
             await component.RespondAsync(embed: embed, ephemeral: true);
+            return;
         }
         catch (NotFoundException)
         {
@@ -69,5 +71,10 @@ public class BuyWarzoneEvent : IMessageEventHandler
             .Build();
             await component.RespondAsync(embed: embed, ephemeral: true);
         }
+    }
+
+    public Task HandleAsync(SocketModal message)
+    {
+        throw new NotImplementedException();
     }
 }

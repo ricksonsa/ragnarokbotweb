@@ -18,6 +18,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         private readonly IDiscordService _discordService;
         private readonly IFileService _fileService;
         private readonly IBotService _botService;
+        private readonly IUnitOfWork _unitOfWork;
 
         public OrderCommandJob(
             ICacheService cacheService,
@@ -26,7 +27,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             IOrderRepository orderRepository,
             ILogger<OrderCommandJob> logger,
             IDiscordService discordService,
-            IFileService fileService) : base(scumServerRepository)
+            IFileService fileService,
+            IUnitOfWork unitOfWork) : base(scumServerRepository)
         {
             _cacheService = cacheService;
             _botService = botService;
@@ -34,6 +36,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             _logger = logger;
             _discordService = discordService;
             _fileService = fileService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task Execute(IJobExecutionContext context)
@@ -74,6 +77,10 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     else if (order.OrderType == EOrderType.Taxi)
                     {
                         HandleTaxiOrder(isBotOnline, order, command);
+                    }
+                    else if (order.OrderType == EOrderType.Exchange)
+                    {
+                        await HandleExchangeOrder(isBotOnline, _unitOfWork, order, command);
                     }
 
                     if (command != null) await _botService.SendCommand(order.ScumServer.Id, command);
@@ -125,6 +132,40 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             if (teleport is null) return;
             command.Data = "order_" + order.Id.ToString();
             command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
+        }
+
+        private static async Task HandleExchangeOrder(bool isBotOnline, IUnitOfWork uow, Order order, BotCommand command)
+        {
+            if (!isBotOnline) return;
+            if (order.Player is null) return;
+            if (order.Player.ScumServer.Exchange is null) return;
+            command.Data = "order_" + order.Id.ToString();
+
+            var converter = new CoinConverterManager(order.ScumServer);
+            var coinManager = new PlayerCoinManager(uow);
+            switch (order.ExchangeType)
+            {
+                case EExchangeType.Withdraw:
+                    var withdraw = converter.ToInGameMoney(order.ExchangeAmount);
+                    if (order.Player.Coin < withdraw)
+                    {
+                        order.Status = EOrderStatus.Canceled;
+                        return;
+                    }
+                    await coinManager.RemoveCoinsByPlayerId(order.Player.Id, order.ExchangeAmount);
+                    command.ChangeMoney(order.Player!.SteamId64!, withdraw);
+                    break;
+                case EExchangeType.Deposit:
+                    var deposit = converter.ToDiscordCoins(order.ExchangeAmount);
+                    if (order.Player.Money < deposit)
+                    {
+                        order.Status = EOrderStatus.Canceled;
+                        return;
+                    }
+                    await coinManager.AddCoinsByPlayerId(order.Player.Id, deposit);
+                    command.ChangeMoney(order.Player!.SteamId64!, -deposit);
+                    break;
+            }
         }
 
         private static void HandlePackOrder(bool isBotOnline, Order order, BotCommand command)

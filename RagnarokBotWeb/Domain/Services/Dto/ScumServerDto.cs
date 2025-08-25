@@ -8,7 +8,8 @@
         public FtpDto Ftp { get; set; }
         public List<string> RestartTimes { get; set; }
         public DiscordDto? Discord { get; set; }
-        public UavDto Uav { get; set; }
+        public UavDto? Uav { get; set; }
+        public ExchangeDto? Exchange { get; set; }
         public bool IsCompliant { get; set; }
         public int Slots { get; set; }
         public string? TimeZoneId { get; set; }

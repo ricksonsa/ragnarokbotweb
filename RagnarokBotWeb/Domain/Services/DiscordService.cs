@@ -595,6 +595,57 @@ namespace RagnarokBotWeb.Domain.Services
             return await channel.SendMessageAsync(embed: embedBuilder.Build(), components: component.Build());
         }
 
+        public async Task<IUserMessage?> CreateExchangeButtons(ScumServer server)
+        {
+            if (server.Guild is null) return null;
+            if (server.Exchange is null) return null;
+            if (!server.Exchange.Enabled) return null;
+
+            //var socketGuild = _client.GetGuild(server.Guild.DiscordId); // SocketGuild
+            //IGuild guild = socketGuild; // Pode ser usado como IGuild
+
+            var channel = await _client.GetChannelAsync(ulong.Parse(server.Exchange.DiscordChannelId!)) as IMessageChannel;
+            if (channel is null) return null;
+
+            var embedBuilder = new EmbedBuilder()
+                .WithTitle(server.Exchange.Name)
+                .WithFooter(GetAuthor())
+                .WithDescription(server.Exchange.Description)
+                .WithColor(Color.DarkOrange);
+
+            var componentBuilder = new ComponentBuilder();
+
+            if (server.Exchange.AllowTransfer)
+            {
+                componentBuilder.WithButton(
+                  label: "Transfer",
+                  customId: "transfer_trigger",
+                  style: ButtonStyle.Primary);
+            }
+
+            if (server.Exchange.AllowWithdraw)
+            {
+                componentBuilder.WithButton(
+                  label: "Withdraw",
+                  customId: "withdraw_trigger",
+                  style: ButtonStyle.Primary);
+            }
+
+            if (server.Exchange.AllowDeposit)
+            {
+                componentBuilder.WithButton(
+                  label: "Deposit",
+                  customId: "deposit_trigger",
+                  style: ButtonStyle.Primary);
+            }
+
+            if (server.Exchange.ImageUrl != null)
+                embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{server.Exchange.ImageUrl}");
+
+            _logger.LogDebug("Exchange Buttons created for guild[{Guild}] channel[{Channel}]", server.Guild.DiscordId, server.Exchange.DiscordChannelId);
+            return await channel.SendMessageAsync(embed: embedBuilder.Build(), components: componentBuilder.Build());
+        }
+
         public async Task SendKillFeedEmbed(ScumServer server, Kill kill)
         {
             var killFeedChannel = await _channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.KillFeed);

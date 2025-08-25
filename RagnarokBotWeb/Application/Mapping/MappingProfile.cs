@@ -38,6 +38,7 @@ namespace RagnarokBotWeb.Application.Mapping
             CreateMap<CustomTask, CustomTaskDto>().ReverseMap();
 
             CreateMap<Uav, UavDto>().ReverseMap();
+            CreateMap<Exchange, ExchangeDto>().ReverseMap();
 
             CreateMap<Subscription, SubscriptionDto>().ReverseMap();
             CreateMap<Payment, PaymentDto>()

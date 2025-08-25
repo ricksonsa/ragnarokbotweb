@@ -14,6 +14,7 @@ import { UavComponent } from './uav/uav.component';
 import { TaxisComponent } from './taxis/taxis.component';
 import { TaxiComponent } from './taxis/taxi/taxi.component';
 import { TaxiResolver } from './taxis/resolvers/taxi.resolver';
+import { ExchangeComponent } from './exchange/exchange.component';
 
 export const SHOP_ROUTES: Routes = [
   { path: 'bank', component: BankComponent },
@@ -25,5 +26,6 @@ export const SHOP_ROUTES: Routes = [
   { path: 'taxis/:id', component: TaxiComponent, resolve: { taxi: TaxiResolver } },
   { path: 'orders', component: OrdersComponent },
   { path: 'uav', component: UavComponent },
+  { path: 'exchange', component: ExchangeComponent },
   { path: 'welcome-pack', component: WelcomePackComponent, resolve: { package: WelcomePackResolver } },
 ];

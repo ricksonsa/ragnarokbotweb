@@ -27,5 +27,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task SendLockpickRankEmbed(ulong channelId, List<LockpickStatsDto> stats, string lockType);
         Task<IUserMessage?> CreateUavButtons(ScumServer server, ulong channelId);
         Task<IUserMessage?> CreateTeleportButtons(Taxi taxi);
+        Task<IUserMessage?> CreateExchangeButtons(ScumServer server);
     }
 }

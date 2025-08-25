@@ -60,15 +60,41 @@ namespace RagnarokBotWeb.Domain.Entities
         public long CoinReductionPerInvalidMineKill { get; set; }
         #endregion
 
+        #region Ranks
+        public long? KillRankMonthlyTop1Award { get; set; }
+        public long? KillRankMonthlyTop2Award { get; set; }
+        public long? KillRankMonthlyTop3Award { get; set; }
+        public long? KillRankMonthlyTop4Award { get; set; }
+        public long? KillRankMonthlyTop5Award { get; set; }
+
+        public long? KillRankWeeklyTop1Award { get; set; }
+        public long? KillRankWeeklyTop2Award { get; set; }
+        public long? KillRankWeeklyTop3Award { get; set; }
+        public long? KillRankWeeklyTop4Award { get; set; }
+        public long? KillRankWeeklyTop5Award { get; set; }
+
+        public long? KillRankDailyTop1Award { get; set; }
+        public long? KillRankDailyTop2Award { get; set; }
+        public long? KillRankDailyTop3Award { get; set; }
+        public long? KillRankDailyTop4Award { get; set; }
+        public long? KillRankDailyTop5Award { get; set; }
+
+        public long? LockpickRankDailyTop1Award { get; set; }
+        public long? LockpickRankDailyTop2Award { get; set; }
+        public long? LockpickRankDailyTop3Award { get; set; }
+        public long? LockpickRankDailyTop4Award { get; set; }
+        public long? LockpickRankDailyTop5Award { get; set; }
+        #endregion
+
         public ScumServer(Tenant tenant)
         {
             Tenant = tenant;
-            KillAnnounceText = "{killer_name} killed {victim_name} with {weapon} at a distance of {distance} sector {sector}";
+            KillAnnounceText = "{killer_name} killed {victim_name} with {weapon} from a distance of {distance} at sector {sector}";
         }
 
         public ScumServer()
         {
-            KillAnnounceText = "{killer_name} killed {victim_name} with {weapon} at a distance of {distance} sector {sector}";
+            KillAnnounceText = "{killer_name} killed {victim_name} with {weapon} from a distance of {distance} at sector {sector}";
         }
 
         public void SetRestartTimes(List<string> restartTimes)

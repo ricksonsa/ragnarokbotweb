@@ -4,8 +4,8 @@ namespace RagnarokBotWeb.Application.Models
 {
     public class CreateEmbed
     {
-        public required ulong DiscordId { get; set; }
-        public required ulong GuildId { get; set; }
+        public ulong DiscordId { get; set; }
+        public ulong GuildId { get; set; }
         public string Title { get; set; }
         public string Text { get; set; }
         public string ImageUrl { get; set; }
@@ -15,6 +15,13 @@ namespace RagnarokBotWeb.Application.Models
 
         public List<CreateEmbedButton> Buttons { get; set; }
         public List<CreateEmbedField> Fields { get; set; }
+
+        public CreateEmbed(ulong discordId)
+        {
+            DiscordId = discordId;
+            Buttons = new List<CreateEmbedButton>();
+            Fields = new List<CreateEmbedField>();
+        }
 
         public CreateEmbed()
         {

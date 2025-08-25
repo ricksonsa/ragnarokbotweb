@@ -9,7 +9,7 @@ using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
     public class LockpickRankJob(
-        ILogger<KillRankJob> logger,
+        ILogger<LockpickRankJob> logger,
         IScumServerRepository scumServerRepository,
         IDiscordService discordService,
         IUnitOfWork unitOfWork,
@@ -53,9 +53,9 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         }
 
         private static async Task<List<LockpickStatsDto>> GetLockpickRank(
-          IUnitOfWork unitOfWork,
-          ScumServer server,
-          string lockType)
+            IUnitOfWork unitOfWork,
+            ScumServer server,
+            string lockType)
         {
             var lockpicks = unitOfWork.Lockpicks
                 .Include(kill => kill.ScumServer)
@@ -64,10 +64,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                          && l.AttemptDate.Date == DateTime.UtcNow.Date);
 
             var stats = await lockpicks
-                .GroupBy(l => l.Name)
+                .GroupBy(l => new { l.Name, l.SteamId64, l.LockType })
                 .Select(g => new LockpickStatsDto
                 {
-                    PlayerName = g.Key,
+                    PlayerName = g.Key.Name,
+                    SteamId = g.Key.SteamId64,
+                    LockType = g.Key.LockType,
                     SuccessCount = g.Count(l => l.Success),
                     FailCount = g.Count(l => !l.Success),
                     Attempts = g.Sum(l => l.Attempts),
@@ -75,9 +77,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         ? (double)g.Count(l => l.Success) / g.Count() * 100
                         : 0
                 })
-                .OrderByDescending(p => p.SuccessCount)
+                .OrderBy(p => p.LockType.ToLower() == "advanced" ? 0
+                             : p.LockType.ToLower() == "medium" ? 1
+                             : 2)
+                .ThenByDescending(p => p.SuccessCount)
                 .ThenByDescending(p => p.SuccessRate)
-                .Take(10)
+                .Take(5)
                 .ToListAsync();
 
             return stats;
@@ -91,6 +96,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             public int FailCount { get; set; }
             public int Attempts { get; set; }
             public double SuccessRate { get; set; } // As a percentage
+            public string SteamId { get; set; }
         }
 
     }

@@ -40,10 +40,6 @@
             <a routerLink="settings/kill-feed">Kill Feed</a>
           </li>
 
-          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
-            <a routerLink="settings/exchange">Exchange</a>
-          </li>
-
           <li nz-menu-item nzMatchRouter>
             <a routerLink="settings/rankings">Rankings</a>
           </li>
@@ -80,6 +76,9 @@
           </li>
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="shop/taxis">Taxis</a>
+          </li>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="shop/exchange">Exchange</a>
           </li>
         </ul>
       </li>

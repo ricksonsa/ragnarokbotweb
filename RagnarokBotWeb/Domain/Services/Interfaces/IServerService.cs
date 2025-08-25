@@ -21,5 +21,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<List<PlayerDto>> GetOnlinePlayers();
         Task<List<Shared.Models.ScumPlayer>> GetOnlineScumPlayers();
         Task<UavDto> UpdateUav(UavDto dto);
+        Task<ExchangeDto> UpdateExchange(ExchangeDto dto);
     }
 }

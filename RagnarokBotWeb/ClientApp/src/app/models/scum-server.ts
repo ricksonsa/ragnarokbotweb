@@ -1,4 +1,5 @@
 import { DiscordDto } from "./discord.dto";
+import { ExchangeDto } from "./exchange.dto";
 import { Ftp } from "./ftp";
 import { UavDto } from "./uav.dto";
 
@@ -24,7 +25,7 @@ export class ScumServer {
     killAnnounceText: string;
     slots?: number;
     uav?: UavDto;
-    exchange?: any;
+    exchange?: ExchangeDto;
 }
 
 export class ScumServerResponse {

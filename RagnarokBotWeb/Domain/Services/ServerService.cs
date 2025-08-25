@@ -398,7 +398,7 @@ namespace RagnarokBotWeb.Domain.Services
             var previousDiscordChannel = server.Uav?.DiscordChannelId;
             var previousDiscordMessage = server.Uav?.DiscordMessageId;
             server.Uav = _mapper.Map(dto, server.Uav ?? new Uav());
-            if (dto.DiscordId != null) server.Uav.DiscordChannelId = dto.DiscordId;
+            if (dto.DiscordChannelId != null) server.Uav.DiscordChannelId = dto.DiscordChannelId;
 
             if (!string.IsNullOrEmpty(server.Uav.ImageUrl) && server.Uav.ImageUrl != previousImage)
             {
@@ -420,6 +420,42 @@ namespace RagnarokBotWeb.Domain.Services
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();
             return _mapper.Map<UavDto>(server.Uav);
+        }
+
+        public async Task<ExchangeDto> UpdateExchange(ExchangeDto dto)
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            ValidateSubscription(server);
+
+            var previousImage = server.Exchange?.ImageUrl;
+            var previousDiscordChannel = server.Exchange?.DiscordChannelId;
+            var previousDiscordMessage = server.Exchange?.DiscordMessageId;
+            server.Exchange = _mapper.Map(dto, server.Exchange ?? new Exchange());
+            if (dto.DiscordChannelId != null) server.Exchange.DiscordChannelId = dto.DiscordChannelId;
+
+            if (!string.IsNullOrEmpty(server.Exchange.ImageUrl) && server.Exchange.ImageUrl != previousImage)
+            {
+                if (!string.IsNullOrEmpty(previousImage)) _fileService.DeleteFile(previousImage);
+                server.Exchange.ImageUrl = await _fileService.SaveCompressedBase64ImageAsync(server.Exchange.ImageUrl);
+            }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(previousDiscordChannel) && previousDiscordMessage.HasValue)
+                    await _discordService.RemoveMessage(ulong.Parse(previousDiscordChannel), previousDiscordMessage.Value);
+
+                if (!string.IsNullOrEmpty(server.Exchange.DiscordChannelId))
+                    server.Exchange.DiscordMessageId = (await _discordService.CreateExchangeButtons(server))?.Id;
+            }
+            catch (Exception)
+            { }
+
+            await _scumServerRepository.CreateOrUpdateAsync(server);
+            await _scumServerRepository.SaveAsync();
+            return _mapper.Map<ExchangeDto>(server.Exchange);
         }
 
         public async Task<List<SaveChannelDto>> GetServerDiscordChannels()

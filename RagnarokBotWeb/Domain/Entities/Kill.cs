@@ -35,6 +35,7 @@ namespace RagnarokBotWeb.Domain.Entities
         public string? ImageUrl { get; set; }
         public string? KillHash { get; set; }
         public bool IsSameSquad { get; set; }
+        public bool Rankable { get; set; } = true;
 
 
         public void SetHash()

@@ -14,4 +14,9 @@ public class DailyPackEvent : IMessageEventHandler
     {
         return message.Channel.SendMessageAsync("Daily Pack Event");
     }
+
+    public Task HandleAsync(SocketModal message)
+    {
+        throw new NotImplementedException();
+    }
 }

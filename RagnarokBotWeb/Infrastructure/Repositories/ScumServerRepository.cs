@@ -30,6 +30,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                    .Include(server => server.Tenant.Payments)
                     .ThenInclude(payment => payment.Subscription)
                 .Include(server => server.Uav)
+                .Include(server => server.Exchange)
                 .Include(server => server.Ftp)
                 .Where(server => server.Tenant.Id == id && server.Tenant.Enabled)
                 .ToListAsync();
@@ -74,6 +75,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(server => server.Tenant.Payments)
                     .ThenInclude(payment => payment.Subscription)
                 .Include(server => server.Uav)
+                .Include(server => server.Exchange)
                 .Include(server => server.Ftp)
                 .FirstOrDefaultAsync(server => server.Id == id);
         }
@@ -86,6 +88,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(server => server.Tenant.Payments)
                     .ThenInclude(payment => payment.Subscription)
                 .Include(server => server.Uav)
+                .Include(server => server.Exchange)
                 .Include(server => server.Ftp)
               .FirstOrDefaultAsync(server => server.Id == id && server.Tenant.Enabled);
         }
@@ -108,6 +111,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(server => server.Tenant.Payments)
                     .ThenInclude(payment => payment.Subscription)
                 .Include(server => server.Uav)
+                .Include(server => server.Exchange)
                 .Include(server => server.Ftp)
                 .FirstOrDefaultAsync(server => server.Guild != null && server.Guild.DiscordId == value && server.Tenant.Enabled);
         }

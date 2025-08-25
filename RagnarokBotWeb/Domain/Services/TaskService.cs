@@ -144,19 +144,44 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity(nameof(BunkerStateJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: false));
 
             job = JobBuilder.Create<KillRankJob>()
                 .WithIdentity(nameof(KillRankJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: false));
 
             job = JobBuilder.Create<LockpickRankJob>()
                 .WithIdentity(nameof(LockpickRankJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: true));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: false));
+
+            job = JobBuilder.Create<LockpickRankDailyAwardJob>()
+                .WithIdentity(nameof(LockpickRankDailyAwardJob), $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 55 23 * * ? *", startNow: false));
+
+
+            job = JobBuilder.Create<KillRankDailyAwardJob>()
+                .WithIdentity(nameof(KillRankDailyAwardJob), $"ServerJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 55 23 * * ? *", startNow: false));
+
+            job = JobBuilder.Create<KillRankWeeklyAwardJob>()
+              .WithIdentity(nameof(KillRankWeeklyAwardJob), $"ServerJobs({server.Id})")
+              .UsingJobData("server_id", server.Id)
+              .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 0 ? * SUN *", startNow: false));
+
+            job = JobBuilder.Create<KillRankMonthlyAwardJob>()
+              .WithIdentity(nameof(KillRankMonthlyAwardJob), $"ServerJobs({server.Id})")
+              .UsingJobData("server_id", server.Id)
+              .Build();
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 0 L * ? *", startNow: false));
 
             await AddPaydayJob(server);
 

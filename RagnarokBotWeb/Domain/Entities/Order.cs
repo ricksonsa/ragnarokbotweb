@@ -13,6 +13,8 @@ namespace RagnarokBotWeb.Domain.Entities
         public ScumServer ScumServer { get; set; }
         public string? Uav { get; set; }
         public string? TaxiTeleportId { get; set; }
+        public long ExchangeAmount { get; set; }
+        public EExchangeType? ExchangeType { get; set; }
         public Taxi? Taxi { get; set; }
 
         public long ResolvedPrice
