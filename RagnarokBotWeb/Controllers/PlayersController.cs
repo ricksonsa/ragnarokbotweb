@@ -39,6 +39,43 @@ namespace RagnarokBotWeb.Controllers
             return Ok(players);
         }
 
+        [HttpGet("vip-count")]
+        public async Task<IActionResult> GetVipCount()
+        {
+            var count = await _playerService.GetVipCount();
+            return Ok(new
+            {
+                Count = count
+            });
+        }
+
+        [HttpGet("count")]
+        public async Task<IActionResult> GetCount()
+        {
+            var count = await _playerService.GetCount();
+            return Ok(new
+            {
+                Count = count
+            });
+        }
+
+        [HttpGet("whitelist-count")]
+        public async Task<IActionResult> GetWhitelistCount()
+        {
+            var count = await _playerService.GetWhitelistCount();
+            return Ok(new
+            {
+                Count = count
+            });
+        }
+
+        [HttpGet("vip")]
+        public async Task<IActionResult> GetVipPlayers([FromQuery] Paginator paginator, string? filter)
+        {
+            var players = await _playerService.GetVipPlayers(paginator, filter);
+            return Ok(players);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPlayer(long id)
         {

@@ -45,6 +45,22 @@
       </nz-descriptions-item>
     </nz-descriptions>
   </nz-card>
+
+  <nz-card nzSize="small" class="statistics-card">
+    <nz-spin *ngIf="!totalPlayers" [nzTip]="'Loading...'" [nzSpinning]="false"></nz-spin>
+
+    <nz-statistic *ngIf="totalPlayers" [nzValue]="totalPlayers" nzTitle="Total Players"></nz-statistic>
+  </nz-card>
+
+  <nz-card nzSize="small" class="statistics-card">
+    <nz-spin *ngIf="!totalVips" [nzTip]="'Loading...'" [nzSpinning]="false"></nz-spin>
+    <nz-statistic *ngIf="totalVips" [nzValue]="totalVips" nzTitle="Vip Players"></nz-statistic>
+  </nz-card>
+
+  <nz-card nzSize="small" class="statistics-card">
+    <nz-spin *ngIf="!totalWhitelisted" [nzTip]="'Loading...'" [nzSpinning]="false"></nz-spin>
+    <nz-statistic *ngIf="totalWhitelisted" [nzValue]="totalWhitelisted" nzTitle="Whitelisted Players"></nz-statistic>
+  </nz-card>
 </div>
 
 <br>

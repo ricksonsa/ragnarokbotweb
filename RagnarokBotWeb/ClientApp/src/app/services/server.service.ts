@@ -61,4 +61,8 @@ export class ServerService {
   updateKillFeed(settings: any) {
     return this.http.put<ScumServer>(`${environment.apiUrl}/api/servers/kill-feed`, settings);
   }
+
+  updateRankAwards(awards: any) {
+    return this.http.put<ScumServer>(`${environment.apiUrl}/api/servers/awards`, awards);
+  }
 }

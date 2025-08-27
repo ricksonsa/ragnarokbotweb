@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 
 namespace RagnarokBotWeb.Application.BotServer
 {
@@ -15,12 +16,171 @@ namespace RagnarokBotWeb.Application.BotServer
         private readonly TcpListener _listener;
         private readonly ILogger<BotSocketServer> _logger;
         private readonly ConcurrentDictionary<long, ConcurrentDictionary<string, BotUser>> _bots = new();
+        private readonly string _stateFilePath;
+        private readonly object _stateFileLock = new object();
+        private readonly System.Timers.Timer _stateSaveTimer;
 
         public BotSocketServer(ILogger<BotSocketServer> logger, IOptions<AppSettings> options)
         {
             _listener = new TcpListener(IPAddress.Any, options.Value.SocketServerPort);
             _logger = logger;
+
+            // Create state file path in application directory
+            _stateFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "bot_state.json");
+
+            // Auto-save state every 5 minutes
+            _stateSaveTimer = new System.Timers.Timer(TimeSpan.FromMinutes(5).TotalMilliseconds);
+            _stateSaveTimer.Elapsed += (s, e) => SaveBotState();
+            _stateSaveTimer.AutoReset = true;
+            _stateSaveTimer.Enabled = true;
+
+            // Load existing state on startup
+            LoadBotState();
         }
+
+        #region State Persistence
+
+        private void SaveBotState()
+        {
+            try
+            {
+                lock (_stateFileLock)
+                {
+                    var stateData = new BotServerState
+                    {
+                        SavedAt = DateTime.UtcNow,
+                        Servers = _bots.ToDictionary(
+                            serverPair => serverPair.Key,
+                            serverPair => serverPair.Value.Values.Select(bot => new PersistedBotUser
+                            {
+                                Guid = bot.Guid,
+                                ServerId = bot.ServerId,
+                                SteamId = bot.SteamId,
+                                LastPinged = bot.LastPinged,
+                                LastInteracted = bot.LastInteracted,
+                                LastCommand = bot.LastCommand,
+                                LastReconnectSent = bot.LastReconnectSent,
+                            }).ToList()
+                        )
+                    };
+
+                    var jsonOptions = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    };
+
+                    var json = JsonSerializer.Serialize(stateData, jsonOptions);
+
+                    // Write to temp file first, then atomic rename
+                    var tempFile = _stateFilePath + ".tmp";
+                    File.WriteAllText(tempFile, json);
+
+                    if (File.Exists(_stateFilePath))
+                        File.Delete(_stateFilePath);
+
+                    File.Move(tempFile, _stateFilePath);
+
+                    var totalBots = stateData.Servers.Sum(s => s.Value.Count);
+                    _logger.LogDebug("Bot state saved to {FilePath} - {TotalBots} bots across {ServerCount} servers",
+                        _stateFilePath, totalBots, stateData.Servers.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save bot state to {FilePath}", _stateFilePath);
+            }
+        }
+
+        private void LoadBotState()
+        {
+            try
+            {
+                lock (_stateFileLock)
+                {
+                    if (!File.Exists(_stateFilePath))
+                    {
+                        _logger.LogInformation("No bot state file found at {FilePath} - starting with empty state", _stateFilePath);
+                        return;
+                    }
+
+                    var json = File.ReadAllText(_stateFilePath);
+                    var stateData = JsonSerializer.Deserialize<BotServerState>(json, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+
+                    if (stateData?.Servers == null)
+                    {
+                        _logger.LogWarning("Invalid bot state file format - starting with empty state");
+                        return;
+                    }
+
+                    var totalBotsLoaded = 0;
+                    var now = DateTime.UtcNow;
+
+                    foreach (var serverPair in stateData.Servers)
+                    {
+                        var serverId = serverPair.Key;
+                        var serverBots = _bots.GetOrAdd(serverId, _ => new ConcurrentDictionary<string, BotUser>());
+
+                        foreach (var persistedBot in serverPair.Value)
+                        {
+                            // Only restore bots that were recently active (within last 2 hours)
+                            var timeSinceLastInteraction = now - persistedBot.LastInteracted;
+                            if (timeSinceLastInteraction.TotalHours <= 2)
+                            {
+                                var restoredBot = new BotUser(persistedBot.Guid)
+                                {
+                                    ServerId = persistedBot.ServerId,
+                                    SteamId = persistedBot.SteamId,
+                                    LastPinged = persistedBot.LastPinged,
+                                    LastInteracted = persistedBot.LastInteracted,
+                                    LastCommand = persistedBot.LastCommand,
+                                    LastReconnectSent = persistedBot.LastReconnectSent,
+                                    // TcpClient will be null until bot reconnects
+                                    TcpClient = null
+                                };
+
+                                serverBots[persistedBot.Guid.ToString()] = restoredBot;
+                                totalBotsLoaded++;
+
+                                _logger.LogDebug("Restored bot {Guid} for server {ServerId} (SteamId: {SteamId}, LastInteracted: {LastInteracted})",
+                                    persistedBot.Guid, serverId, persistedBot.SteamId ?? "Unknown", persistedBot.LastInteracted);
+                            }
+                            else
+                            {
+                                _logger.LogDebug("Skipped restoring old bot {Guid} (last interaction: {LastInteraction})",
+                                    persistedBot.Guid, persistedBot.LastInteracted);
+                            }
+                        }
+                    }
+
+                    _logger.LogInformation("Loaded bot state from {FilePath} - restored {TotalBots} bots across {ServerCount} servers (saved at: {SavedAt})",
+                        _stateFilePath, totalBotsLoaded, stateData.Servers.Count, stateData.SavedAt);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to load bot state from {FilePath} - starting with empty state", _stateFilePath);
+            }
+        }
+
+        public void SaveBotStateOnShutdown()
+        {
+            try
+            {
+                _stateSaveTimer?.Stop();
+                SaveBotState();
+                _logger.LogInformation("Bot state saved on shutdown");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving bot state on shutdown");
+            }
+        }
+
+        #endregion
 
         private async Task GameMonitorLoop(CancellationToken token)
         {
@@ -32,17 +192,37 @@ namespace RagnarokBotWeb.Application.BotServer
 
                 foreach (var serverPair in _bots.ToList())
                 {
-                    foreach (var botPair in serverPair.Value.ToList())
+                    var serverId = serverPair.Key;
+                    var serverBots = serverPair.Value;
+
+                    foreach (var botPair in serverBots.ToList())
                     {
                         var bot = botPair.Value;
 
-                        // If TCP is disconnected and no recent ping, disconnect bot
+                        // Only remove bot if TCP disconnected AND no recent game activity for a LONG time
                         if (bot.TcpClient?.Connected != true)
                         {
-                            if (!bot.LastPinged.HasValue || (now - bot.LastPinged.Value).TotalMinutes >= 10)
+                            // Only remove if bot has been offline for more than 2 hours (very long threshold)
+                            if (!bot.LastPinged.HasValue || (now - bot.LastPinged.Value).TotalHours >= 2)
                             {
-                                _logger.LogInformation("Bot {Guid} TCP disconnected and no recent game ping - disconnecting", bot.Guid);
-                                DisconnectBot(bot);
+                                // Additional check: also verify no recent TCP interaction for over 1 hour
+                                if ((now - bot.LastInteracted).TotalHours >= 1)
+                                {
+                                    _logger.LogWarning("Bot {Guid} has been offline for too long - removing from server {ServerId} (LastPing: {LastPing}, LastInteraction: {LastInteraction})",
+                                        bot.Guid, serverId,
+                                        bot.LastPinged?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Never",
+                                        bot.LastInteracted.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                                    RemoveBotFromCollection(serverId, bot.Guid.ToString());
+                                }
+                                else
+                                {
+                                    _logger.LogDebug("Bot {Guid} TCP disconnected but recent interaction - keeping in collection", bot.Guid);
+                                }
+                            }
+                            else
+                            {
+                                _logger.LogDebug("Bot {Guid} TCP disconnected but recent game activity - keeping in collection", bot.Guid);
                             }
                             continue;
                         }
@@ -69,7 +249,7 @@ namespace RagnarokBotWeb.Application.BotServer
                                     catch (Exception ex)
                                     {
                                         _logger.LogWarning(ex, "Failed to send reconnect to bot {Guid}", bot.Guid);
-                                        DisconnectBot(bot);
+                                        try { bot.TcpClient?.Close(); } catch { }
                                     }
                                 }
                             }
@@ -92,7 +272,7 @@ namespace RagnarokBotWeb.Application.BotServer
                                     catch (Exception ex)
                                     {
                                         _logger.LogWarning(ex, "Failed to send initial reconnect to bot {Guid}", bot.Guid);
-                                        DisconnectBot(bot);
+                                        try { bot.TcpClient?.Close(); } catch { }
                                     }
                                 }
                             }
@@ -102,20 +282,24 @@ namespace RagnarokBotWeb.Application.BotServer
             }
         }
 
-        private void DisconnectBot(BotUser bot)
+        // Separate method for safe bot removal - also triggers state save
+        private void RemoveBotFromCollection(long serverId, string botGuid)
         {
-            if (_bots.TryGetValue(bot.ServerId, out var botsForServer))
+            if (_bots.TryGetValue(serverId, out var botsForServer))
             {
-                botsForServer.TryRemove(bot.Guid.ToString(), out _);
-                _logger.LogInformation("Disconnecting Bot {Guid} from server {ServerId}", bot.Guid, bot.ServerId);
-            }
+                if (botsForServer.TryRemove(botGuid, out var removedBot))
+                {
+                    _logger.LogInformation("Removed Bot {Guid} from server {ServerId} collection", removedBot.Guid, serverId);
+                    try
+                    {
+                        removedBot.TcpClient?.Dispose();
+                    }
+                    catch { }
 
-            try
-            {
-                bot.TcpClient?.Dispose();
+                    // Save state after removal
+                    _ = Task.Run(() => SaveBotState());
+                }
             }
-            catch (Exception)
-            { }
         }
 
         private static async Task SendLengthedMessage(BotCommand command, BotUser bot)
@@ -136,34 +320,85 @@ namespace RagnarokBotWeb.Application.BotServer
         {
             using var stream = client.GetStream();
             BotUser? bot = null;
+            var remoteEndpoint = client.Client.RemoteEndPoint?.ToString() ?? "unknown";
+            var isNewConnection = false;
 
             try
             {
-                // --- Handshake ---
+                // --- Enhanced Handshake ---
                 var handshake = await ReceiveStringAsync(stream, token);
-                if (string.IsNullOrWhiteSpace(handshake)) return;
+                if (string.IsNullOrWhiteSpace(handshake))
+                {
+                    _logger.LogWarning("Empty handshake received from {RemoteEndpoint}", remoteEndpoint);
+                    return;
+                }
 
                 var parts = handshake.Split(':', 2);
-                if (parts.Length < 2) return;
-                if (!long.TryParse(parts[0], out var serverId)) return;
-                if (!Guid.TryParse(parts[1], out var guid)) return;
-
-                bot = new BotUser(guid)
+                if (parts.Length < 2)
                 {
-                    TcpClient = client,
-                    ServerId = serverId,
-                    LastInteracted = DateTime.UtcNow
-                };
+                    _logger.LogWarning("Invalid handshake format from {RemoteEndpoint}: {Handshake}", remoteEndpoint, handshake);
+                    return;
+                }
+
+                if (!long.TryParse(parts[0], out var serverId))
+                {
+                    _logger.LogWarning("Invalid server ID in handshake from {RemoteEndpoint}: {ServerId}", remoteEndpoint, parts[0]);
+                    return;
+                }
+
+                if (!Guid.TryParse(parts[1], out var guid))
+                {
+                    _logger.LogWarning("Invalid GUID in handshake from {RemoteEndpoint}: {Guid}", remoteEndpoint, parts[1]);
+                    return;
+                }
 
                 var serverBots = _bots.GetOrAdd(serverId, _ => new ConcurrentDictionary<string, BotUser>());
-                serverBots[guid.ToString()] = bot;
 
-                _logger.LogInformation("Bot {Guid} connected to server {ServerId}", guid, serverId);
+                // Check if this is a reconnection of an existing bot
+                if (serverBots.TryGetValue(guid.ToString(), out var existingBot))
+                {
+                    _logger.LogInformation("Bot {Guid} reconnecting to server {ServerId} - updating TCP connection (was connected: {WasConnected}, restored from state: {RestoredFromState})",
+                        guid, serverId, existingBot.TcpClient?.Connected == true, existingBot.TcpClient == null);
 
-                // --- Simplified Message loop - no ACK required ---
+                    // Close old connection if it exists
+                    try
+                    {
+                        existingBot.TcpClient?.Close();
+                        existingBot.TcpClient?.Dispose();
+                    }
+                    catch { }
+
+                    // Update with new TCP connection but keep all other data
+                    existingBot.TcpClient = client;
+                    existingBot.LastInteracted = DateTime.UtcNow;
+                    // Keep LastPinged, SteamId, and other data from previous connection or restored state
+                    bot = existingBot;
+                }
+                else
+                {
+                    // New bot connection
+                    bot = new BotUser(guid)
+                    {
+                        TcpClient = client,
+                        ServerId = serverId,
+                        LastInteracted = DateTime.UtcNow
+                    };
+
+                    serverBots[guid.ToString()] = bot;
+                    isNewConnection = true;
+                    _logger.LogInformation("New Bot {Guid} connected to server {ServerId} (Total bots: {Count})",
+                        guid, serverId, serverBots.Count);
+                }
+
+                // Save state when new connection is established
+                if (isNewConnection || bot.TcpClient != null)
+                {
+                    _ = Task.Run(() => SaveBotState());
+                }
+
+                // --- Message loop ---
                 while (!token.IsCancellationRequested && client.Connected)
                 {
-                    // Just keep connection alive by reading any incoming data
                     var line = await ReceiveStringAsync(stream, token);
                     if (string.IsNullOrEmpty(line))
                     {
@@ -171,21 +406,38 @@ namespace RagnarokBotWeb.Application.BotServer
                         break;
                     }
 
-                    // Update last interaction time for any message received
                     bot.LastInteracted = DateTime.UtcNow;
 
-                    // Log any messages for debugging but don't require specific format
+                    // Handle keepalive messages
+                    if (line.StartsWith("KEEPALIVE:"))
+                    {
+                        _logger.LogDebug("Received keepalive from bot {Guid}", guid);
+                        continue;
+                    }
+
                     _logger.LogDebug("Received from bot {Guid}: {Message}", guid, line);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Client error for bot {Guid}", bot?.Guid);
+                _logger.LogWarning(ex, "Client error for bot {Guid} from {RemoteEndpoint}", bot?.Guid, remoteEndpoint);
             }
             finally
             {
-                if (bot != null) DisconnectBot(bot);
-                client.Dispose();
+                // Don't remove the bot from collection - just close TCP and save state
+                try
+                {
+                    client.Close();
+                    client.Dispose();
+                }
+                catch { }
+
+                if (bot != null)
+                {
+                    _logger.LogInformation("TCP connection closed for Bot {Guid} - bot remains in collection for potential reconnection", bot.Guid);
+                    // Save state after connection closes
+                    _ = Task.Run(() => SaveBotState());
+                }
             }
         }
 
@@ -276,7 +528,7 @@ namespace RagnarokBotWeb.Application.BotServer
                 return;
             }
 
-            // Prioritize bots with recent game ping, but fall back to any connected bot
+            // Prioritize bots with recent game ping and active TCP connection
             var bot = botsForServer.Values
                 .Where(b => b.TcpClient?.Connected == true)
                 .OrderByDescending(b => b.LastPinged ?? DateTime.MinValue) // Prefer recently pinged bots
@@ -294,12 +546,22 @@ namespace RagnarokBotWeb.Application.BotServer
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to send command to bot {Guid}", bot.Guid);
-                    DisconnectBot(bot);
+                    try { bot.TcpClient?.Close(); } catch { }
                 }
             }
             else
             {
-                _logger.LogWarning("No connected bots available for server {ServerId}", serverId);
+                _logger.LogWarning("No connected bots available for server {ServerId} (Total bots: {TotalCount})",
+                    serverId, botsForServer.Count);
+
+                // Log details about why no bots are available
+                foreach (var botStatus in botsForServer.Values)
+                {
+                    _logger.LogDebug("Bot {Guid}: TCP Connected = {Connected}, Last Interaction = {LastInteraction}",
+                        botStatus.Guid,
+                        botStatus.TcpClient?.Connected == true,
+                        botStatus.LastInteracted.ToString("HH:mm:ss"));
+                }
             }
         }
 
@@ -314,11 +576,12 @@ namespace RagnarokBotWeb.Application.BotServer
                 {
                     await SendLengthedMessage(command, bot);
                     bot.LastCommand = DateTime.UtcNow;
+                    _logger.LogDebug("Command sent to specific bot {Guid} on server {ServerId}", bot.Guid, serverId);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to send command to bot {Guid}", bot.Guid);
-                    DisconnectBot(bot);
+                    try { bot.TcpClient?.Close(); } catch { }
                 }
             }
             else
@@ -339,19 +602,47 @@ namespace RagnarokBotWeb.Application.BotServer
                 b.TcpClient?.Connected == true ||
                 (b.LastPinged.HasValue && (DateTime.UtcNow - b.LastPinged.Value).TotalMinutes < 5));
 
-        // This is called by your FTP service when it finds a bot GUID in chat logs
+        // Enhanced BotPingUpdate to handle persistent bot IDs and trigger state save
         public void BotPingUpdate(long serverId, Guid guid, string steamId)
         {
+            var stateChanged = false;
+
             if (_bots.TryGetValue(serverId, out var botsForServer) &&
                 botsForServer.TryGetValue(guid.ToString(), out var bot))
             {
-                bot.SteamId = steamId;
+                // Check if SteamId changed
+                if (bot.SteamId != steamId)
+                {
+                    bot.SteamId = steamId;
+                    stateChanged = true;
+                }
+
                 bot.LastPinged = DateTime.UtcNow;
-                _logger.LogDebug("Bot {Guid} ping updated via game chat on server {ServerId}", guid, serverId);
+                stateChanged = true; // LastPinged always triggers state save
+
+                _logger.LogDebug("Bot {Guid} ping updated via game chat on server {ServerId} (SteamID: {SteamId}, TCP Connected: {TcpConnected})",
+                    guid, serverId, steamId, bot.TcpClient?.Connected == true);
+
+                if (stateChanged)
+                {
+                    _ = Task.Run(() => SaveBotState());
+                }
             }
             else
             {
-                _logger.LogDebug("Received ping for unknown bot {Guid} on server {ServerId}", guid, serverId);
+                _logger.LogWarning("Received ping for unknown bot {Guid} on server {ServerId} (SteamID: {SteamId})",
+                    guid, serverId, steamId);
+
+                // Log what bots we DO have for debugging
+                if (_bots.TryGetValue(serverId, out var serverBots) && serverBots.Any())
+                {
+                    var knownBots = string.Join(", ", serverBots.Select(kvp => $"{kvp.Key}({kvp.Value.SteamId ?? "NoSteam"})"));
+                    _logger.LogWarning("Known bots for server {ServerId}: [{KnownBots}]", serverId, knownBots);
+                }
+                else
+                {
+                    _logger.LogWarning("No bots registered for server {ServerId}", serverId);
+                }
             }
         }
 
@@ -365,21 +656,123 @@ namespace RagnarokBotWeb.Application.BotServer
 
             var bots = botsForServer.Values.Where(b => b.TcpClient?.Connected == true).ToList();
 
+            if (!bots.Any())
+            {
+                _logger.LogWarning("No connected bots available for server {ServerId} (Total registered: {TotalCount})",
+                    serverId, botsForServer.Count);
+                return;
+            }
+
+            var successCount = 0;
             foreach (var bot in bots)
             {
                 try
                 {
                     await SendLengthedMessage(command, bot);
                     bot.LastCommand = DateTime.UtcNow;
+                    successCount++;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to send command to bot {Guid}", bot.Guid);
-                    DisconnectBot(bot);
+                    try { bot.TcpClient?.Close(); } catch { }
                 }
             }
 
-            _logger.LogInformation("Command sent to {Count} bots on server {ServerId}", bots.Count, serverId);
+            _logger.LogInformation("Command sent to {SuccessCount}/{TotalCount} bots on server {ServerId}",
+                successCount, bots.Count, serverId);
         }
+
+        // Enhanced method to get detailed bot statistics
+        public BotServerStats GetBotStats(long serverId)
+        {
+            if (!_bots.TryGetValue(serverId, out var botsForServer))
+            {
+                return new BotServerStats
+                {
+                    ServerId = serverId,
+                    ConnectedBots = 0,
+                    TotalBots = 0,
+                    ActiveBots = 0,
+                    Bots = new List<BotStatus>()
+                };
+            }
+
+            var allBots = botsForServer.Values.ToList();
+            var now = DateTime.UtcNow;
+
+            var botStatuses = allBots.Select(b => new BotStatus
+            {
+                Guid = b.Guid,
+                SteamId = b.SteamId ?? "Unknown",
+                IsConnected = b.TcpClient?.Connected == true,
+                LastPinged = b.LastPinged,
+                LastInteracted = b.LastInteracted,
+                LastCommand = b.LastCommand,
+                LastReconnectSent = b.LastReconnectSent,
+                IsActive = b.LastPinged.HasValue && (now - b.LastPinged.Value).TotalMinutes < 5,
+                MinutesSinceLastPing = b.LastPinged.HasValue ? (now - b.LastPinged.Value).TotalMinutes : null,
+                MinutesSinceLastInteraction = (now - b.LastInteracted).TotalMinutes,
+                RestoredFromState = b.TcpClient == null && b.LastInteracted < now.AddMinutes(-10) // Indicates restored from file
+            }).ToList();
+
+            return new BotServerStats
+            {
+                ServerId = serverId,
+                TotalBots = allBots.Count,
+                ConnectedBots = allBots.Count(b => b.TcpClient?.Connected == true),
+                ActiveBots = allBots.Count(b => b.LastPinged.HasValue && (now - b.LastPinged.Value).TotalMinutes < 5),
+                Bots = botStatuses
+            };
+        }
+
+        // Get stats for all servers
+        public List<BotServerStats> GetAllServersStats()
+        {
+            return _bots.Keys.Select(serverId => GetBotStats(serverId)).ToList();
+        }
+    }
+
+    // Supporting classes for state persistence
+    public class BotServerState
+    {
+        public DateTime SavedAt { get; set; }
+        public Dictionary<long, List<PersistedBotUser>> Servers { get; set; } = new();
+    }
+
+    public class PersistedBotUser
+    {
+        public Guid Guid { get; set; }
+        public long ServerId { get; set; }
+        public string? SteamId { get; set; }
+        public DateTime? LastPinged { get; set; }
+        public DateTime LastInteracted { get; set; }
+        public DateTime? LastCommand { get; set; }
+        public DateTime? LastReconnectSent { get; set; }
+    }
+
+    // Supporting classes for enhanced bot statistics
+    public class BotServerStats
+    {
+        public long ServerId { get; set; }
+        public int TotalBots { get; set; }
+        public int ConnectedBots { get; set; }
+        public int ActiveBots { get; set; }
+        public List<BotStatus> Bots { get; set; } = new();
+    }
+
+    public class BotStatus
+    {
+        public Guid Guid { get; set; }
+        public string SteamId { get; set; } = string.Empty;
+        public bool IsConnected { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime? LastPinged { get; set; }
+        public DateTime LastInteracted { get; set; }
+        public DateTime? LastCommand { get; set; }
+        public DateTime? LastReconnectSent { get; set; }
+        public double? MinutesSinceLastPing { get; set; }
+        public double MinutesSinceLastInteraction { get; set; }
+        public bool RestoredFromState { get; set; }
     }
 }

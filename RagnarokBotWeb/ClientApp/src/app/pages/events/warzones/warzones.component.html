@@ -1,4 +1,7 @@
 <div class="main">
+  <ng-template #totalTemplate>
+    <p nz-typography style="margin: 0">{{total}} total warzones</p>
+  </ng-template>
   <ng-template #newWarzone>
     <nz-space>
       <nz-input-group *nzSpaceItem [nzSuffix]="suffixIconSearch">
@@ -15,7 +18,7 @@
     </nz-space>
   </ng-template>
   <nz-card nzTitle="Warzones" [nzExtra]="newWarzone">
-    <nz-table nzSize="small" #basicTable [nzData]="suggestions$ | async" [nzFrontPagination]="false" nzShowSizeChanger
+    <nz-table nzSize="small" #basicTable [nzData]="suggestions$ | async" [nzFrontPagination]="false" nzShowSizeChanger [nzShowTotal]="totalTemplate"
       [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)"
       [nzLoading]="isLoading" (nzPageSizeChange)="pageSizeChange($event)">
       <thead>

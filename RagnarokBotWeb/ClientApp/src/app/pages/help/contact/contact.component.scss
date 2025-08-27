@@ -1,0 +1,19 @@
+.contact-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 24px;
+}
+
+.contact-card {
+  max-width: 400px;
+  text-align: center;
+}
+
+.contact-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}

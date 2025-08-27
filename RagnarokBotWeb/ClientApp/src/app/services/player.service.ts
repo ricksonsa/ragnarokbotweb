@@ -21,8 +21,28 @@ export class PlayerService {
     return this.http.get<Page<PlayerDto>>(url);
   }
 
+  getVipPlayers(pageSize: number, pageNumber: number, filter: string = null) {
+    var url = `${environment.apiUrl}/api/players/vip?pageSize=${pageSize}&pageNumber=${pageNumber}`;
+    if (filter) {
+      url += `&filter=${filter}`;
+    }
+    return this.http.get<Page<PlayerDto>>(url);
+  }
+
   getPlayerById(id: number) {
     return this.http.get<PlayerDto>(`${environment.apiUrl}/api/players/${id}`);
+  }
+
+  getPlayerCount() {
+    return this.http.get<{ count: number }>(`${environment.apiUrl}/api/players/count`);
+  }
+
+  getVipCount() {
+    return this.http.get<{ count: number }>(`${environment.apiUrl}/api/players/vip-count`);
+  }
+
+  getWhitelistCount() {
+    return this.http.get<{ count: number }>(`${environment.apiUrl}/api/players/whitelist-count`);
   }
 
   getNewPlayerStatistics() {

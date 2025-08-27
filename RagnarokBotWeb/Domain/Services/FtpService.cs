@@ -26,6 +26,24 @@ public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFt
         }
     }
 
+    public async Task GetServerConfigLineValue(AsyncFtpClient client, string remoteFilePath, Dictionary<string, string> data)
+    {
+        try
+        {
+            using (var stream = await client.OpenRead(remoteFilePath))
+            using (var reader = new StreamReader(stream, encoding: Encoding.UTF8))
+                while (await reader.ReadLineAsync() is { } line)
+                    foreach (var item in data)
+                        if (line.Contains($"scum.{item.Key}="))
+                            data[item.Key] = line.Split("=")[1];
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex.Message, "GetServerConfigLineValue Exception");
+            throw;
+        }
+    }
+
     public async Task CopyFilesAsync(AsyncFtpClient client, string targetFolder, IList<string> remoteFilePaths, CancellationToken token = default)
     {
         int retryCount = 0;

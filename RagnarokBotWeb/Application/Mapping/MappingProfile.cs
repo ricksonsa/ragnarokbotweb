@@ -35,6 +35,8 @@ namespace RagnarokBotWeb.Application.Mapping
             CreateMap<Order, OrderDto>();
             CreateMap<User, AccountDto>().ReverseMap();
 
+            CreateMap<UpdateRankAwardsDto, ScumServer>();
+
             CreateMap<CustomTask, CustomTaskDto>().ReverseMap();
 
             CreateMap<Uav, UavDto>().ReverseMap();

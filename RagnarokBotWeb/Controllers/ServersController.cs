@@ -121,8 +121,17 @@ namespace RagnarokBotWeb.Controllers
         public async Task<IActionResult> UpdateServerUav(ExchangeDto dto)
         {
             _logger.LogDebug("Put request to update server exchange");
-            var uav = await _serverService.UpdateExchange(dto);
-            return Ok(uav);
+            var exchange = await _serverService.UpdateExchange(dto);
+            return Ok(exchange);
+        }
+
+
+        [HttpPut("awards")]
+        public async Task<IActionResult> UpdateServerRankAwards(UpdateRankAwardsDto dto)
+        {
+            _logger.LogDebug("Put request to update server exchange");
+            var server = await _serverService.UpdateRankAwards(dto);
+            return Ok(server);
         }
 
         [HttpPut("kill-feed")]

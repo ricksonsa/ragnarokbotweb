@@ -512,5 +512,18 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<ScumServerDto>(server);
         }
 
+        public async Task<ScumServerDto> UpdateRankAwards(UpdateRankAwardsDto dto)
+        {
+            var serverId = ServerId()!;
+            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            if (server is null) throw new NotFoundException("Server not found");
+
+            server = _mapper.Map(dto, server);
+
+            await _scumServerRepository.CreateOrUpdateAsync(server);
+            await _scumServerRepository.SaveAsync();
+
+            return _mapper.Map<ScumServerDto>(server);
+        }
     }
 }

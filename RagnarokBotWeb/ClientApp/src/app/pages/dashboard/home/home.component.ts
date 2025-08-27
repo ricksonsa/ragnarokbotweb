@@ -25,6 +25,7 @@ import { PlayerStatsDto, LockpickStatsDto } from '../../../models/player-stats.d
 import { EventManager, EventWithContent } from '../../../services/event-manager.service';
 import { Alert } from '../../../models/alert';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { RouterModule } from '@angular/router';
 Chart.register(...registerables);
 
@@ -45,6 +46,7 @@ Chart.register(...registerables);
     NzTableModule,
     NzListModule,
     NzDescriptionsModule,
+    NzSpinModule,
     NzEmptyModule
   ]
 })
@@ -56,6 +58,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   botsOnline = 0;
   loadInterval: any;
   maxSlots = 0;
+
   playerCount = 0;
   maxSlotsBattleMetrics = 0;
   playerCountBattleMetrics = 0;
@@ -66,6 +69,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   kills: PlayerStatsDto[];
   lockpicks: LockpickStatsDto[];
   playerStatistics: GraphDto[] = [];
+
+  totalPlayers: number;
+  totalVips: number;
+  totalWhitelisted: number;
 
   constructor(
     private readonly serverService: ServerService,
@@ -130,6 +137,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadPlayersKills();
     this.loadPlayersLockpicks();
     this.loadBattlemetricsData();
+    this.loadVipCount();
+    this.loadPlayerCount();
+    this.loadWhitelistCount();
   }
 
   isRunningWarzone() {
@@ -138,6 +148,27 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   getRunningWarzone() {
     return this.warzones.filter(w => w.isRunning)[0];
+  }
+
+  loadPlayerCount() {
+    this.playerService.getPlayerCount()
+      .subscribe({
+        next: (result) => this.totalPlayers = result.count
+      });
+  }
+
+  loadVipCount() {
+    this.playerService.getVipCount()
+      .subscribe({
+        next: (result) => this.totalVips = result.count
+      });
+  }
+
+  loadWhitelistCount() {
+    this.playerService.getWhitelistCount()
+      .subscribe({
+        next: (result) => this.totalWhitelisted = result.count
+      });
   }
 
   loadPlayersKills() {

@@ -1,3 +1,60 @@
-<p>
-  vips works!
-</p>
+<div class="main">
+  <ng-template #totalTemplate>
+    <p nz-typography style="margin: 0">{{total}} total vips</p>
+  </ng-template>
+  <ng-template #newItem>
+    <nz-space>
+      <nz-input-group *nzSpaceItem [nzSuffix]="suffixIconSearch">
+        <input type="text" nz-input placeholder="input search text" [formControl]="searchControl" />
+      </nz-input-group>
+      <ng-template #suffixIconSearch>
+        <nz-icon nzType="search" />
+      </ng-template>
+    </nz-space>
+  </ng-template>
+  <nz-card nzTitle="Vips" [nzExtra]="newItem">
+    <nz-table #basicTable nzSize="small" [nzData]="suggestions$ | async" [nzFrontPagination]="false" nzShowSizeChanger
+      [nzShowTotal]="totalTemplate" [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex"
+      (nzPageIndexChange)="pageIndexChange($event)" [nzLoading]="isLoading" (nzPageSizeChange)="pageSizeChange($event)">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Scum Name</th>
+          <th>Steam Name</th>
+          <th>Steam ID</th>
+          <th>Registered Discord</th>
+          <th>Discord Name</th>
+          <th>Banned</th>
+          <th>Bot Coin</th>
+          <th>Last Login</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of basicTable.data">
+          <td>{{data.id}}</td>
+          <td>{{data.name}}</td>
+          <td>{{data.steamName}}</td>
+          <td>{{data.steamId64}}</td>
+          <td nzAlign="center">
+            <nz-icon nz-popover [nzPopoverContent]="data.discordId ? 'Yes' : 'No'" style="font-size: 18px;"
+              [nzType]="data.discordId ? 'check' : 'close'"
+              [ngClass]="{ 'success': data.discordId, 'danger': !data.discordId}">
+            </nz-icon>
+          </td>
+          <td>{{data.discordName}}</td>
+          <td>No</td>
+          <td>{{data.coin}}</td>
+          <td>{{data.lastLoggedIn | date: 'mediumDate'}}</td>
+          <td>
+            <button nz-button nzType="link" [routerLink]="['/management', 'players', data.id]">
+              <nz-icon nzType="edit"></nz-icon>
+              Edit
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+
+  </nz-card>
+</div>

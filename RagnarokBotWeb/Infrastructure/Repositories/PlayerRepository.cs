@@ -18,7 +18,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
 
     public override Task<Player?> FindByIdAsync(long id)
     {
-        return _appDbContext.Players
+        return DbSet()
             .Include(player => player.Vips)
             .Include(player => player.Bans)
             .Include(player => player.Silences)
@@ -32,7 +32,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
 
     public async Task<Player?> FindOneWithServerAsync(Expression<Func<Player, bool>> predicate)
     {
-        return await _appDbContext.Players
+        return await DbSet()
             .Include(player => player.Vips)
             .Include(player => player.Bans)
             .Include(player => player.Silences)
@@ -46,7 +46,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
 
     public async Task<Player?> FindOneWithServerBySteamIdAsync(long serverId, string steamId64)
     {
-        return await _appDbContext.Players
+        return await DbSet()
             .Include(player => player.Vips)
             .Include(player => player.Bans)
             .Include(player => player.Silences)
@@ -59,7 +59,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
 
     public Task<List<Player>> GetAllByServerId(long serverId)
     {
-        return _appDbContext.Players
+        return DbSet()
             .Include(player => player.Vips)
             .Include(player => player.Bans)
             .Include(player => player.Silences)
@@ -70,7 +70,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
 
     public Task<Page<Player>> GetPageByServerId(Paginator paginator, long serverId, string? filter)
     {
-        var query = _appDbContext.Players
+        var query = DbSet()
             .Include(player => player.Vips)
             .Include(player => player.Bans)
             .Include(player => player.Silences)
@@ -88,6 +88,50 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
         }
 
         return base.GetPageAsync(paginator, query);
+    }
+
+    public Task<Page<Player>> GetVipPageByServerId(Paginator paginator, long serverId, string? filter)
+    {
+        var query = DbSet()
+            .Include(player => player.Vips)
+            .Include(player => player.Bans)
+            .Include(player => player.Silences)
+            .Include(player => player.ScumServer)
+            .OrderByDescending(player => player.Id)
+            .Where(player => player.ScumServer.Id == serverId
+                && player.Vips.Any(vip => vip.Indefinitely || vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !vip.Processed));
+
+        if (!string.IsNullOrEmpty(filter))
+        {
+            query = query.Where(player =>
+               player.Name!.ToLower().Contains(filter.ToLower())
+               || (player.DiscordName != null && player.DiscordName.ToLower().Contains(filter.ToLower()))
+               || (player.SteamId64 != null && player.SteamId64.ToLower().Contains(filter.ToLower()))
+               || (player.SteamName != null && player.SteamName.ToLower().Contains(filter.ToLower())));
+        }
+
+        return base.GetPageAsync(paginator, query);
+    }
+
+    public Task<int> GetCount(long serverId)
+    {
+        var query = DbSet()
+            .Include(player => player.Vips)
+            .Include(player => player.ScumServer)
+            .Where(player => player.ScumServer.Id == serverId);
+
+        return query.CountAsync();
+    }
+
+    public Task<int> GetVipCount(long serverId)
+    {
+        var query = DbSet()
+            .Include(player => player.Vips)
+            .Include(player => player.ScumServer)
+            .Where(player => player.ScumServer.Id == serverId
+                && player.Vips.Any(vip => vip.Indefinitely || vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !vip.Processed));
+
+        return query.CountAsync();
     }
 
     public override Task CreateOrUpdateAsync(Player entity)

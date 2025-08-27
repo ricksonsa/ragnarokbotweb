@@ -1,0 +1,45 @@
+<ng-template #coverTemplate>
+  <img alt="example" height="400px" width="120px" src="assets/images/thescumbot.png" />
+</ng-template>
+
+<div class="main single">
+  <nz-card nzTitle="Contact Us" [nzCover]="coverTemplate" [nzBordered]="true" class="contact-card">
+
+    <p>If you need support, reach us via email or join our Discord community.</p>
+    <p>contact&#64;thescumbot.com</p>
+
+    <div class="contact-actions">
+      <a nz-button nzType="primary" nzShape="round" href="mailto:contact@thescumbot.com">
+        <i nz-icon nzType="mail" nzTheme="outline"></i>
+        Email
+      </a>
+
+      <a nz-button nzType="default" nzShape="round" href="https://discord.gg/bqT7QGfUWb" target="_blank">
+        <i nz-icon nzType="customer-service" nzTheme="outline"></i>
+        Discord
+      </a>
+    </div>
+  </nz-card>
+</div>
+<!-- 
+  <nz-card style="width:300px;" [nzCover]="coverTemplate" [nzActions]="[actionSetting, actionEdit, actionEllipsis]">
+    <nz-card-meta nzTitle="Card title" nzDescription="This is the description"
+      [nzAvatar]="avatarTemplate"></nz-card-meta>
+
+  </nz-card>
+  <ng-template #avatarTemplate>
+    <nz-avatar nzSrc="assets/images/thescumbot.png"></nz-avatar>
+  </ng-template>
+  <ng-template #coverTemplate>
+    <img alt="example" src="assets/images/thescumbot.png" />
+  </ng-template>
+  <ng-template #actionSetting>
+    <nz-icon nzType="setting" />
+  </ng-template>
+  <ng-template #actionEdit>
+    <nz-icon nzType="edit" />
+  </ng-template>
+  <ng-template #actionEllipsis>
+    <nz-icon nzType="ellipsis" />
+  </ng-template>
+</div> -->

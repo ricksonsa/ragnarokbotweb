@@ -9,5 +9,6 @@ export const routes: Routes = [
   { path: 'management', loadChildren: () => import('./pages/management/management.routes').then(m => m.MANAGEMENT_ROUTES) },
   { path: 'shop', loadChildren: () => import('./pages/shop/shop.routes').then(m => m.SHOP_ROUTES) },
   { path: 'events', loadChildren: () => import('./pages/events/events.routes').then(m => m.EVENTS_ROUTES) },
+  { path: 'help', loadChildren: () => import('./pages/help/help.routes').then(m => m.EVENTS_ROUTES) },
   { path: 'scheduled-tasks', loadChildren: () => import('./pages/scheduled-tasks/scheduled-tasks.routes').then(m => m.SCHEDULEDTASKS_ROUTES) },
 ];

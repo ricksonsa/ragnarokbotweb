@@ -9,6 +9,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Models;
 using System.Globalization;
+using System.Text;
 using static RagnarokBotWeb.Application.Tasks.Jobs.KillRankJob;
 using static RagnarokBotWeb.Application.Tasks.Jobs.LockpickRankJob;
 
@@ -22,8 +23,8 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IPlayerRepository _playerRepository;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly IDiscordService _discordService;
+        private readonly IFtpService _ftpService;
         private readonly IMapper _mapper;
-        private readonly IServiceProvider _serviceProvider;
         private readonly IUnitOfWork _unitOfWork;
 
         public PlayerService(
@@ -33,20 +34,20 @@ namespace RagnarokBotWeb.Domain.Services
             IPlayerRepository playerRepository,
             IMapper mapper,
             IScumServerRepository scumServerRepository,
-            IServiceProvider serviceProvider,
             IUnitOfWork unitOfWork,
             IDiscordService discordService,
-            IBotService botService) : base(contextAccessor)
+            IBotService botService,
+            IFtpService ftpService) : base(contextAccessor)
         {
             _logger = logger;
             _cacheService = cacheService;
             _playerRepository = playerRepository;
             _mapper = mapper;
             _scumServerRepository = scumServerRepository;
-            _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
             _discordService = discordService;
             _botService = botService;
+            _ftpService = ftpService;
         }
 
         public async Task<PlayerDto> GetPlayer(long id)
@@ -65,6 +66,19 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var serverId = ServerId();
             var page = await _playerRepository.GetPageByServerId(paginator, serverId!.Value, filter);
+            var content = page.Content.Select(_mapper.Map<PlayerDto>);
+            foreach (var player in content)
+            {
+                player.Online = _cacheService.GetConnectedPlayers(serverId.Value)
+                    .Any(connectedPlayer => connectedPlayer.SteamID == player.SteamId64);
+            }
+            return new Page<PlayerDto>(content, page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
+        }
+
+        public async Task<Page<PlayerDto>> GetVipPlayers(Paginator paginator, string? filter)
+        {
+            var serverId = ServerId();
+            var page = await _playerRepository.GetVipPageByServerId(paginator, serverId!.Value, filter);
             var content = page.Content.Select(_mapper.Map<PlayerDto>);
             foreach (var player in content)
             {
@@ -307,7 +321,6 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 try
                 {
-
                     await _discordService.RemoveUserRoleAsync(player.ScumServer.Guild!.DiscordId, player.DiscordId!.Value, vip.DiscordRoleId.Value);
                 }
                 catch (Exception)
@@ -526,7 +539,6 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<List<LockpickStatsDto>> LockpickRank()
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
             var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Invalid server");
@@ -556,7 +568,6 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<List<LockpickStatsDto>> LockpickRank(string steamId)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
             var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Invalid server");
@@ -587,7 +598,6 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<List<PlayerStatsDto>> KillRank()
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
             var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Invalid server");
@@ -613,7 +623,6 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<List<PlayerStatsDto>> KillRank(string steamId)
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
             var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Invalid server");
@@ -638,7 +647,6 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<List<GrapthDto>> NewPlayersPerMonth()
         {
             var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedException("Invalid token");
 
             var server = await _scumServerRepository.FindActiveById(serverId.Value);
             if (server is null) throw new NotFoundException("Invalid server");
@@ -665,6 +673,40 @@ namespace RagnarokBotWeb.Domain.Services
                     Name = new DateTime(x.Year, x.Month, 1).ToString("MMMM", CultureInfo.InvariantCulture)
                 })
                 .ToList();
+        }
+
+        public Task<int> GetCount() => _playerRepository.GetCount(ServerId()!.Value);
+        public Task<int> GetVipCount() => _playerRepository.GetVipCount(ServerId()!.Value);
+
+        public async Task<List<string>> GetServerWhitelistValue(Ftp ftp)
+        {
+            List<string> steamIds = [];
+            if (ftp is null) throw new DomainException("Invalid ftp server");
+            try
+            {
+                var client = await _ftpService.GetClientAsync(ftp);
+                using (var stream = await client.OpenRead($@"{ftp.RootFolder}/Saved/Config/WindowsServer/WhitelistedUsers.ini"))
+                using (var reader = new StreamReader(stream, encoding: Encoding.UTF8))
+                    while (await reader.ReadLineAsync() is { } line)
+                        if (!string.IsNullOrEmpty(line)) steamIds.Add(line);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw new DomainException("Invalid FTP server");
+            }
+            return steamIds;
+        }
+
+        public async Task<int> GetWhitelistCount()
+        {
+            var serverId = ServerId();
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
+            if (server is null) throw new NotFoundException("Invalid server");
+
+            var steamIds = await GetServerWhitelistValue(server.Ftp!);
+            return steamIds.Count();
         }
     }
 }

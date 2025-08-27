@@ -14,6 +14,7 @@ import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { getDaysBetweenDates } from '../../../core/functions/date.functions';
+import { NzTypographyModule } from 'ng-zorro-antd/typography';
 
 @Component({
   selector: 'app-players',
@@ -32,6 +33,8 @@ import { getDaysBetweenDates } from '../../../core/functions/date.functions';
     NzCardModule,
     NzDividerModule,
     NzTableModule,
+    NzTypographyModule,
+    NzDividerModule,
     NzPopoverModule
   ]
 })
@@ -44,7 +47,9 @@ export class PlayersComponent implements OnInit {
   pageIndex = 1;
   pageSize = 10;
 
-  constructor(private readonly playerService: PlayerService) { }
+  constructor(private readonly playerService: PlayerService) {
+    this.searchControl.patchValue('');
+  }
 
   pageIndex$ = new BehaviorSubject<number>(1);
   pageSize$ = new BehaviorSubject<number>(10);
@@ -62,14 +67,15 @@ export class PlayersComponent implements OnInit {
         this.playerService.getPlayers(pageSize, pageIndex, query)
       ),
       tap(page => {
-        if (this.pageIndex > page.totalPages) {
+        if (page.totalPages > 0 && this.pageIndex > page.totalPages && this.pageIndex !== 1) {
           this.pageIndex = 1;
           this.pageIndex$.next(1);
+        } else {
+          this.dataSource = page.content;
+          this.total = page.totalElements;
+          this.pageIndex = page.number;
+          this.pageSize = page.size;
         }
-        this.dataSource = page.content;
-        this.total = page.totalElements;
-        this.pageIndex = page.number;
-        this.pageSize = page.size;
         this.isLoading = false;
       }),
       switchMap(page => of(page.content))

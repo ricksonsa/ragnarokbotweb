@@ -1,4 +1,7 @@
 <div class="main">
+  <ng-template #totalTemplate>
+    <p nz-typography style="margin: 0">{{total}} total players</p>
+  </ng-template>
   <ng-template #newItem>
     <nz-space>
       <nz-input-group *nzSpaceItem [nzSuffix]="suffixIconSearch">
@@ -11,8 +14,8 @@
   </ng-template>
   <nz-card nzTitle="Players" [nzExtra]="newItem">
     <nz-table #basicTable nzSize="small" [nzData]="suggestions$ | async" [nzFrontPagination]="false" nzShowSizeChanger
-      [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" (nzPageIndexChange)="pageIndexChange($event)"
-      [nzLoading]="isLoading" (nzPageSizeChange)="pageSizeChange($event)">
+      [nzShowTotal]="totalTemplate" [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex"
+      (nzPageIndexChange)="pageIndexChange($event)" [nzLoading]="isLoading" (nzPageSizeChange)="pageSizeChange($event)">
       <thead>
         <tr>
           <th>Id</th>

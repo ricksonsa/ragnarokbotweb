@@ -8,12 +8,11 @@ public class BotSocketClient
 {
     private readonly string _host;
     private readonly int _port;
-    private TcpClient? _client;
     private string _botId = string.Empty;
     private readonly long _serverId;
-    private readonly object _botIdLock = new object();
     private readonly object _clientLock = new object();
 
+    private TcpClient? _client;
     private System.Windows.Forms.Timer _keepAliveTimer;
     private System.Windows.Forms.Timer _connectionHealthTimer;
 
@@ -35,6 +34,9 @@ public class BotSocketClient
         _port = port;
         _serverId = serverId;
 
+        // Generate persistent bot ID only once
+        _botId = GeneratePersistentBotId();
+
         _keepAliveTimer = new();
         _keepAliveTimer.Interval = 30000; // 30s keepalive
         _keepAliveTimer.Tick += KeepAliveTimer_Tick;
@@ -46,6 +48,45 @@ public class BotSocketClient
         _inactivityTimer = new();
         _inactivityTimer.Interval = 60000; // check every 1 min
         _inactivityTimer.Tick += InactivityTimer_Tick;
+    }
+
+    private string GeneratePersistentBotId()
+    {
+        var botIdFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"botid_server_{_serverId}.txt");
+
+        // Try to load existing bot ID
+        if (File.Exists(botIdFile))
+        {
+            try
+            {
+                var existingId = File.ReadAllText(botIdFile).Trim();
+                if (!string.IsNullOrEmpty(existingId) && Guid.TryParse(existingId, out _))
+                {
+                    Logger.LogWrite($"Using existing Bot ID: {existingId}");
+                    return existingId;
+                }
+                Logger.LogWrite("Invalid Bot ID in file, generating new one");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWrite($"Failed to read Bot ID file: {ex.Message}. Generating new one.");
+            }
+        }
+
+        // Generate new persistent bot ID
+        var newBotId = Guid.NewGuid().ToString();
+
+        try
+        {
+            File.WriteAllText(botIdFile, newBotId);
+            Logger.LogWrite($"Generated and saved new persistent Bot ID: {newBotId}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWrite($"Failed to save Bot ID to file: {ex.Message}. Using in-memory ID.");
+        }
+
+        return newBotId;
     }
 
     private async void ConnectionHealthTimer_Tick(object? sender, EventArgs e)
@@ -62,7 +103,7 @@ public class BotSocketClient
                     byte[] buff = new byte[1];
                     if (_client.Client.Receive(buff, SocketFlags.Peek) == 0)
                     {
-                        Logger.LogWrite("Connection health check failed - connection appears dead");
+                        Logger.LogWrite($"Connection health check failed for Bot ID {_botId} - connection appears dead");
                         ForceReconnect();
                         return;
                     }
@@ -70,7 +111,7 @@ public class BotSocketClient
             }
             catch (Exception ex)
             {
-                Logger.LogWrite($"Connection health check exception: {ex.Message}");
+                Logger.LogWrite($"Connection health check exception for Bot ID {_botId}: {ex.Message}");
                 ForceReconnect();
                 return;
             }
@@ -81,7 +122,7 @@ public class BotSocketClient
     {
         if (_isDisconnecting) return;
 
-        Logger.LogWrite("Forcing reconnection due to health check failure - will generate new Bot ID");
+        Logger.LogWrite($"Forcing reconnection for Bot ID {_botId} due to health check failure");
 
         try
         {
@@ -100,7 +141,7 @@ public class BotSocketClient
         if (idleTime > _inactivityTimeout)
         {
             Logger.LogWrite(
-                $"No commands from server for {idleTime.TotalMinutes:F1} minutes. Forcing reconnect with new Bot ID...");
+                $"Bot ID {_botId}: No commands from server for {idleTime.TotalMinutes:F1} minutes. Forcing reconnect...");
 
             ForceReconnect();
         }
@@ -115,7 +156,7 @@ public class BotSocketClient
 
         try
         {
-            // Send simple keepalive message with current bot ID
+            // Send simple keepalive message with persistent bot ID
             await SendStringMessageAsync(_client!.GetStream(), $"KEEPALIVE:{_serverId}:{_botId}");
         }
         catch (Exception ex)
@@ -137,13 +178,8 @@ public class BotSocketClient
         {
             try
             {
-                // Generate new bot ID for every connection attempt
-                var newBotId = Guid.NewGuid().ToString();
-
-                lock (_botIdLock)
-                {
-                    _botId = newBotId;
-                }
+                // Use persistent bot ID - no need to generate new one
+                Logger.LogWrite($"Attempting to connect with persistent Bot ID: {_botId}");
 
                 lock (_clientLock)
                 {
@@ -162,15 +198,14 @@ public class BotSocketClient
                     _client.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, 3);
                 }
 
-                Logger.LogWrite($"Attempting to connect with new Bot ID: {_botId}");
                 await _client.ConnectAsync(_host, _port, localToken);
 
-                Logger.LogWrite($"TCP connected successfully with Bot ID: {_botId}");
+                Logger.LogWrite($"TCP connected successfully with persistent Bot ID: {_botId}");
 
-                // Send handshake with new bot ID
+                // Send handshake with persistent bot ID
                 await SendStringMessageAsync(_client.GetStream(), $"{_serverId}:{_botId}", localToken);
 
-                Logger.LogWrite($"Handshake sent for Bot ID: {_botId}");
+                Logger.LogWrite($"Handshake sent for persistent Bot ID: {_botId}");
 
                 _ = Task.Run(() => ListenAsync(localToken), localToken); // fire-and-forget listen loop
                 return; // exit connect loop on success
@@ -181,7 +216,7 @@ public class BotSocketClient
             }
             catch (Exception ex) when (!localToken.IsCancellationRequested && !_isDisconnecting)
             {
-                Logger.LogWrite($"Connection failed with Bot ID {_botId}: {ex.Message}. Retrying with new ID in 10s...");
+                Logger.LogWrite($"Connection failed with persistent Bot ID {_botId}: {ex.Message}. Retrying in 10s...");
                 try
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10), localToken);
@@ -217,7 +252,7 @@ public class BotSocketClient
 
                 if (currentClient?.Connected != true)
                 {
-                    Logger.LogWrite("TCP connection lost during listen loop");
+                    Logger.LogWrite($"Bot ID {_botId}: TCP connection lost during listen loop");
                     break;
                 }
 
@@ -225,20 +260,20 @@ public class BotSocketClient
                 var command = await ReceiveMessagePackAsync(stream, token);
                 if (command == null)
                 {
-                    Logger.LogWrite("Connection lost or received invalid command.");
+                    Logger.LogWrite($"Bot ID {_botId}: Connection lost or received invalid command.");
                     break;
                 }
 
                 _lastMessageReceived = DateTime.UtcNow; // reset idle timer
 
-                Logger.LogWrite($"Command received: {command.Values?.Count ?? 0} command(s)");
+                Logger.LogWrite($"Bot ID {_botId}: Command received: {command.Values?.Count ?? 0} command(s)");
 
                 // Handle reconnect command specially - don't break connection
                 bool hasReconnectCommand = command.Values?.Any(cmd => cmd.Type == Shared.Enums.ECommandType.Reconnect) == true;
 
                 if (hasReconnectCommand)
                 {
-                    Logger.LogWrite("Received reconnect command - will rejoin game server");
+                    Logger.LogWrite($"Bot ID {_botId}: Received reconnect command - will rejoin game server");
                 }
 
                 // Always invoke the event for command processing
@@ -248,7 +283,7 @@ public class BotSocketClient
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWrite($"Error in message handler: {ex.Message}");
+                    Logger.LogWrite($"Bot ID {_botId}: Error in message handler: {ex.Message}");
                 }
 
                 // For reconnect commands, we DON'T break the TCP connection
@@ -257,11 +292,11 @@ public class BotSocketClient
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
-            Logger.LogWrite("Listen loop cancelled");
+            Logger.LogWrite($"Bot ID {_botId}: Listen loop cancelled");
         }
         catch (Exception ex) when (!token.IsCancellationRequested && !_isDisconnecting)
         {
-            Logger.LogWrite($"Listen error: {ex.Message}");
+            Logger.LogWrite($"Bot ID {_botId}: Listen error: {ex.Message}");
         }
         finally
         {
@@ -292,19 +327,19 @@ public class BotSocketClient
     {
         if (_isDisconnecting) return;
 
-        Logger.LogWrite("TCP connection lost - attempting to reconnect with new Bot ID...");
+        Logger.LogWrite($"Bot ID {_botId}: TCP connection lost - attempting to reconnect...");
 
         while (!token.IsCancellationRequested && !_isDisconnecting)
         {
             try
             {
                 await ConnectAsync(token);
-                Logger.LogWrite($"TCP reconnected successfully with new Bot ID: {_botId}");
+                Logger.LogWrite($"Bot ID {_botId}: TCP reconnected successfully");
                 return;
             }
             catch (Exception ex) when (!token.IsCancellationRequested && !_isDisconnecting)
             {
-                Logger.LogWrite($"TCP reconnect failed: {ex.Message}. Retrying with new Bot ID in 10s...");
+                Logger.LogWrite($"Bot ID {_botId}: TCP reconnect failed: {ex.Message}. Retrying in 10s...");
                 try
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10), token);
@@ -330,7 +365,7 @@ public class BotSocketClient
                 int read = await stream.ReadAsync(lengthBuffer, totalRead, 4 - totalRead, token);
                 if (read == 0)
                 {
-                    Logger.LogWrite("Connection closed while reading length header");
+                    Logger.LogWrite($"Bot ID {_botId}: Connection closed while reading length header");
                     return null; // Connection closed
                 }
                 totalRead += read;
@@ -343,7 +378,7 @@ public class BotSocketClient
             int length = BitConverter.ToInt32(lengthBuffer, 0);
             if (length <= 0 || length > 10 * 1024 * 1024) // 10MB limit
             {
-                Logger.LogWrite($"Invalid message length: {length}");
+                Logger.LogWrite($"Bot ID {_botId}: Invalid message length: {length}");
                 return null;
             }
 
@@ -355,7 +390,7 @@ public class BotSocketClient
                 int chunk = await stream.ReadAsync(data, offset, length - offset, token);
                 if (chunk == 0)
                 {
-                    Logger.LogWrite("Connection closed while reading message body");
+                    Logger.LogWrite($"Bot ID {_botId}: Connection closed while reading message body");
                     return null; // Connection closed
                 }
                 offset += chunk;
@@ -364,14 +399,14 @@ public class BotSocketClient
             try
             {
                 var command = MessagePackSerializer.Deserialize<BotCommand>(data);
-                Logger.LogWrite($"Successfully received and deserialized command with {command?.Values?.Count ?? 0} values");
+                Logger.LogWrite($"Bot ID {_botId}: Successfully received and deserialized command with {command?.Values?.Count ?? 0} values");
                 return command;
             }
             catch
             {
                 // Fallback: treat as UTF-8 string
                 string text = Encoding.UTF8.GetString(data);
-                Logger.LogWrite($"Received non-command message: {text}");
+                Logger.LogWrite($"Bot ID {_botId}: Received non-command message: {text}");
                 return null;
             }
         }
@@ -381,17 +416,17 @@ public class BotSocketClient
         }
         catch (IOException ioEx)
         {
-            Logger.LogWrite($"IO error during receive: {ioEx.Message}");
+            Logger.LogWrite($"Bot ID {_botId}: IO error during receive: {ioEx.Message}");
             return null;
         }
         catch (SocketException sockEx)
         {
-            Logger.LogWrite($"Socket error during receive: {sockEx.Message}");
+            Logger.LogWrite($"Bot ID {_botId}: Socket error during receive: {sockEx.Message}");
             return null;
         }
         catch (Exception ex)
         {
-            Logger.LogWrite($"Unexpected receive error: {ex.Message} | {ex.InnerException?.Message} | {ex.StackTrace}");
+            Logger.LogWrite($"Bot ID {_botId}: Unexpected receive error: {ex.Message} | {ex.InnerException?.Message} | {ex.StackTrace}");
             return null;
         }
     }
@@ -413,7 +448,7 @@ public class BotSocketClient
         }
         catch (Exception ex)
         {
-            Logger.LogWrite($"Send error: {ex.Message}");
+            Logger.LogWrite($"Bot ID {_botId}: Send error: {ex.Message}");
             throw;
         }
     }
@@ -436,5 +471,7 @@ public class BotSocketClient
 
             _client = null;
         }
+
+        Logger.LogWrite($"Bot ID {_botId}: Disconnected");
     }
 }

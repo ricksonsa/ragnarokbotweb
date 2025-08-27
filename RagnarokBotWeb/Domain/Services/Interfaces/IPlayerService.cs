@@ -27,6 +27,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task UpdatePlayerNameAsync(Entities.ScumServer server, string steamId64, string scumId, string name);
 
         Task<Page<PlayerDto>> GetPlayers(Paginator paginator, string? filter);
+        Task<Page<PlayerDto>> GetVipPlayers(Paginator paginator, string? filter);
         Task<PlayerDto> GetPlayer(long id);
         Task<PlayerDto> RemoveVip(long id);
         Task<PlayerDto> RemoveDiscordRole(long id, ulong discordId);
@@ -41,5 +42,9 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<PlayerDto> UpdateFame(long id, ChangeAmountDto dto);
         Task<PlayerDto> UpdateGold(long id, ChangeAmountDto dto);
         Task<PlayerDto> UpdateMoney(long id, ChangeAmountDto dto);
+
+        Task<int> GetCount();
+        Task<int> GetVipCount();
+        Task<int> GetWhitelistCount();
     }
 }

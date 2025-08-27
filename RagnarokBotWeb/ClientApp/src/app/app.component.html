@@ -51,6 +51,12 @@
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="management/players">Players</a>
           </li>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="management/vips">Vips</a>
+          </li>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="management/bots">Bots</a>
+          </li>
           <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="management/tickets">Tickets (Coming Soon)</a>
           </li> -->
@@ -104,6 +110,17 @@
           </li> -->
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="scheduled-tasks/custom-tasks">Tasks</a>
+          </li>
+        </ul>
+      </li>
+
+      <li nz-submenu nzOpen nzTitle="Help" nzIcon="question-circle">
+        <ul>
+          <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="scheduled-tasks/default">Default (Coming Soon)</a>
+          </li> -->
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="help/contact">Contact</a>
           </li>
         </ul>
       </li>

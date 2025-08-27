@@ -1,0 +1,43 @@
+<div class="main">
+  <ng-template #totalTemplate>
+    <p nz-typography style="margin: 0">{{total}} total bots</p>
+  </ng-template>
+  <nz-card nzTitle="Bots">
+    <nz-table nzSize="small" #basicTable [nzData]="data$ | async" [nzFrontPagination]="true"
+      [nzShowTotal]="totalTemplate" [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex"
+      [nzLoading]="isLoading">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Steam ID</th>
+          <th>Connected</th>
+          <th>Game Active</th>
+          <th>Minutes Since Last Seen</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of basicTable.data">
+          <td>{{data.botId}}</td>
+          <td>{{data.steamId}}</td>
+          <td><nz-icon [nzType]="data.connected ? 'check' : 'close'" nz-popover
+              [nzPopoverContent]="data.connected ? 'Yes' : 'No'"
+              [ngClass]="{ 'success': data.connected, 'danger': !data.connected}"></nz-icon>
+          </td>
+
+          <td><nz-icon [nzType]="data.gameActive ? 'check' : 'close'" nz-popover
+              [nzPopoverContent]="data.gameActive ? 'Yes' : 'No'"
+              [ngClass]="{ 'success': data.gameActive, 'danger': !data.gameActive}"></nz-icon>
+          </td>
+          <td>{{data.minutesSinceLastSeen}}</td>
+
+          <td>
+            <button nz-button nzType="link" (click)="sendReconnect(data.botId)">
+              Send Reconnect Signal
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>
