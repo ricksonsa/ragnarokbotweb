@@ -150,6 +150,37 @@ namespace RagnarokBotWeb.Controllers
             }
         }
 
+        [HttpGet("{botId}")]
+        public IActionResult GetBot(string botId)
+        {
+            var serverId = HttpContext?.User?.FindFirst(ClaimConstants.ServerId)?.Value;
+            if (serverId == null) throw new UnauthorizedAccessException();
+
+            try
+            {
+                var bots = _botSocketServer.GetBots(long.Parse(serverId));
+                var now = DateTime.UtcNow;
+
+                return Ok(bots.Select(bot => new
+                {
+                    BotId = bot.Guid.ToString(),
+                    SteamId = bot.SteamId ?? "Unknown",
+                    Connected = bot.TcpClient?.Connected == true,
+                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value).TotalMinutes < 5,
+                    LastSeen = (bot.LastPinged ?? bot.LastInteracted).ToString("yyyy-MM-dd HH:mm:ss UTC"),
+                    MinutesSinceLastSeen = bot.LastPinged.HasValue
+                        ? Math.Round((now - bot.LastPinged.Value).TotalMinutes, 1)
+                        : Math.Round((now - bot.LastInteracted).TotalMinutes, 1)
+                }).FirstOrDefault(bot => bot.BotId == botId));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending reconnect command to bot {BotId} on server {ServerId}", botId, serverId);
+                return StatusCode(500, new { Error = "Failed to send reconnect command", Details = ex.Message });
+            }
+        }
+
+
         // Simple endpoint for quick checks
         [HttpGet("table")]
         public IActionResult GetSimpleBotList()

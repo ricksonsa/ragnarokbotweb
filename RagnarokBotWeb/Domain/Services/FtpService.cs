@@ -3,81 +3,168 @@ using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.FTP;
-using System.Net.Sockets;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace RagnarokBotWeb.Domain.Services;
 
-public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFtpService
+public class FtpService : IFtpService, IAsyncDisposable
 {
-    private static readonly SemaphoreSlim _ftpLock = new(1, 1);
+    private readonly ILogger<FtpService> _logger;
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _serverSemaphores = new();
+    private readonly ConcurrentDictionary<string, int> _activeConnections = new();
+    private const int MaxConnectionsPerServer = 3;
 
-    public async Task<AsyncFtpClient> GetClientAsync(Ftp ftp, CancellationToken cancellationToken = default)
+    public FtpService(ILogger<FtpService> logger)
     {
+        _logger = logger;
+    }
+
+    public async Task<T> ExecuteAsync<T>(Ftp ftp, Func<AsyncFtpClient, Task<T>> operation, CancellationToken cancellationToken = default)
+    {
+        var serverKey = GetServerKey(ftp);
+        var semaphore = _serverSemaphores.GetOrAdd(serverKey, _ => new SemaphoreSlim(MaxConnectionsPerServer, MaxConnectionsPerServer));
+
+        await semaphore.WaitAsync(cancellationToken);
+
         try
         {
-            return await pool.GetClientAsync(ftp, cancellationToken: cancellationToken);
+            _activeConnections.AddOrUpdate(serverKey, 1, (key, count) => count + 1);
+            _logger.LogDebug("Acquired FTP connection for {ServerKey}, active connections: {Count}",
+                serverKey, _activeConnections[serverKey]);
+
+            using var client = await CreateAndConnectClientAsync(ftp, cancellationToken);
+            return await operation(client);
+        }
+        finally
+        {
+            _activeConnections.AddOrUpdate(serverKey, 0, (key, count) => Math.Max(0, count - 1));
+            semaphore.Release();
+            _logger.LogDebug("Released FTP connection for {ServerKey}, active connections: {Count}",
+                serverKey, _activeConnections.GetValueOrDefault(serverKey, 0));
+        }
+    }
+
+    private async Task<AsyncFtpClient> CreateAndConnectClientAsync(Ftp ftp, CancellationToken cancellationToken)
+    {
+        var client = FtpClientFactory.CreateClient(ftp, cancellationToken: cancellationToken);
+
+        try
+        {
+            await client.Connect(cancellationToken);
+            _logger.LogDebug("Created and connected new FTP client for {ServerKey}", GetServerKey(ftp));
+            return client;
+        }
+        catch
+        {
+            await DisposeClientSafelyAsync(client);
+            throw;
+        }
+    }
+
+    private async Task DisposeClientSafelyAsync(AsyncFtpClient client)
+    {
+        if (client == null) return;
+
+        try
+        {
+            if (client.IsConnected && !client.IsDisposed)
+            {
+                await client.Disconnect();
+            }
         }
         catch (Exception ex)
         {
-            // If we can't get a client, clear the pool for this FTP server and try once more
-            await pool.ClearPoolAsync(ftp);
-            throw new DomainException($"Unable to connect to FTP server: {ex.Message}", ex);
+            _logger.LogDebug(ex, "Error disconnecting FTP client during disposal");
         }
+        finally
+        {
+            try
+            {
+                if (!client.IsDisposed)
+                {
+                    client.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Error disposing FTP client");
+            }
+        }
+    }
+
+    public async Task<AsyncFtpClient> GetClientAsync(Ftp ftp, CancellationToken cancellationToken = default)
+    {
+        return await CreateAndConnectClientAsync(ftp, cancellationToken);
+    }
+
+    public async Task ReleaseClientAsync(AsyncFtpClient client)
+    {
+        await DisposeClientSafelyAsync(client);
+    }
+
+    public async Task ClearPoolForServerAsync(Ftp ftp)
+    {
+        var serverKey = GetServerKey(ftp);
+        _logger.LogDebug("ClearPoolForServerAsync called for {ServerKey} (no-op in non-pooled implementation)", serverKey);
+        await Task.CompletedTask;
     }
 
     public async Task GetServerConfigLineValue(AsyncFtpClient client, string remoteFilePath, Dictionary<string, string> data)
     {
         try
         {
-            using (var stream = await client.OpenRead(remoteFilePath))
-            using (var reader = new StreamReader(stream, encoding: Encoding.UTF8))
-                while (await reader.ReadLineAsync() is { } line)
-                    foreach (var item in data)
-                        if (line.Contains($"scum.{item.Key}="))
-                            data[item.Key] = line.Split("=")[1];
+            if (client.IsDisposed)
+                throw new ObjectDisposedException("FTP client was disposed");
+
+            using var stream = await client.OpenRead(remoteFilePath);
+            using var reader = new StreamReader(stream, encoding: Encoding.UTF8);
+
+            while (await reader.ReadLineAsync() is { } line)
+            {
+                foreach (var item in data)
+                {
+                    if (line.Contains($"scum.{item.Key}="))
+                    {
+                        data[item.Key] = line.Split("=")[1];
+                    }
+                }
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            _logger.LogError("FTP client was disposed during GetServerConfigLineValue");
+            throw;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex.Message, "GetServerConfigLineValue Exception");
+            _logger.LogError(ex, "GetServerConfigLineValue Exception");
             throw;
         }
     }
 
     public async Task CopyFilesAsync(AsyncFtpClient client, string targetFolder, IList<string> remoteFilePaths, CancellationToken token = default)
     {
-        int retryCount = 0;
-        const int maxRetries = 3;
+        if (client.IsDisposed)
+            throw new ObjectDisposedException("FTP client was disposed");
 
-        await _ftpLock.WaitAsync(token);
         try
         {
-            List<FtpResult> results;
-
-            do
-            {
-                results = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
-
-                if (results.Any(result => result.IsFailed))
-                {
-                    retryCount++;
-                    if (retryCount < maxRetries)
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), token); // Exponential backoff
-                    }
-                }
-            }
-            while (results.Any(result => result.IsFailed) && retryCount < maxRetries);
+            var results = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
 
             if (results.Any(result => result.IsFailed))
             {
-                results.ForEach(result => logger.LogError(result.Exception, "CopyFilesAsync"));
-                throw new DomainException("Error while copying files from FTP after multiple retries");
+                foreach (var result in results.Where(r => r.IsFailed))
+                {
+                    _logger.LogError(result.Exception, "CopyFilesAsync failed for {RemotePath}", result.RemotePath);
+                }
+                throw new DomainException("Error while copying files from FTP");
             }
         }
-        finally
+        catch (ObjectDisposedException)
         {
-            _ftpLock.Release();
+            _logger.LogError("FTP client was disposed during CopyFilesAsync");
+            throw;
         }
     }
 
@@ -85,6 +172,9 @@ public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFt
     {
         try
         {
+            if (client.IsDisposed)
+                throw new ObjectDisposedException("FTP client was disposed");
+
             using var stream = new MemoryStream();
             await client.DownloadStream(stream, remoteFilePath);
             stream.Position = 0;
@@ -102,6 +192,11 @@ public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFt
                 await client.UploadStream(updatedStream, remoteFilePath);
             }
         }
+        catch (ObjectDisposedException)
+        {
+            _logger.LogError("FTP client was disposed during UpdateINILine");
+            throw;
+        }
         catch (Exception ex)
         {
             throw new DomainException($"Failed to update INI file: {ex.Message}", ex);
@@ -112,6 +207,9 @@ public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFt
     {
         try
         {
+            if (client.IsDisposed)
+                throw new ObjectDisposedException("FTP client was disposed");
+
             var stream = new MemoryStream();
             if (await client.DownloadStream(stream, remoteFilePath))
             {
@@ -119,6 +217,11 @@ public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFt
                 return stream;
             }
             return null;
+        }
+        catch (ObjectDisposedException)
+        {
+            _logger.LogError("FTP client was disposed during DownloadFile");
+            throw;
         }
         catch (Exception ex)
         {
@@ -130,23 +233,38 @@ public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFt
     {
         try
         {
+            if (client.IsDisposed)
+                throw new ObjectDisposedException("FTP client was disposed");
+
             using var downloadStream = new MemoryStream();
-            if (await client.DownloadStream(downloadStream, remotePath))
+            if (!await client.DownloadStream(downloadStream, remotePath))
+                throw new DomainException($"File not found: {remotePath}");
+
+            downloadStream.Position = 0;
+
+            var newLines = new List<string>();
+            using (var reader = new StreamReader(downloadStream, Encoding.UTF8, true, 1024, leaveOpen: true))
             {
-                downloadStream.Position = 0;
-                using var reader = new StreamReader(downloadStream, Encoding.UTF8);
-                string content = await reader.ReadToEndAsync();
-
-                var newLines = content
-                    .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
-                    .Where(line => !line.Contains(lineToRemove));
-
-                string modifiedContent = string.Join("\n", newLines);
-
-                using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(modifiedContent));
-                uploadStream.Position = 0;
-                await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
+                string? line;
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    if (!string.Equals(line.Trim(), lineToRemove, StringComparison.Ordinal))
+                    {
+                        newLines.Add(line);
+                    }
+                }
             }
+
+            string modifiedContent = string.Join(Environment.NewLine, newLines);
+
+            using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(modifiedContent));
+            uploadStream.Position = 0;
+            await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
+        }
+        catch (ObjectDisposedException)
+        {
+            _logger.LogError("FTP client was disposed during RemoveLine");
+            throw;
         }
         catch (Exception ex)
         {
@@ -158,6 +276,9 @@ public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFt
     {
         try
         {
+            if (client.IsDisposed)
+                throw new ObjectDisposedException("FTP client was disposed");
+
             using var downloadStream = new MemoryStream();
             if (await client.DownloadStream(downloadStream, remotePath))
             {
@@ -175,95 +296,26 @@ public class FtpService(FtpConnectionPool pool, ILogger<FtpServer> logger) : IFt
                 await client.UploadStream(uploadStream, remotePath, FtpRemoteExists.Overwrite);
             }
         }
+        catch (ObjectDisposedException)
+        {
+            _logger.LogError("FTP client was disposed during AddLine");
+            throw;
+        }
         catch (Exception ex)
         {
             throw new DomainException($"Failed to add line to file: {ex.Message}", ex);
         }
     }
 
-    public async Task ReleaseClientAsync(AsyncFtpClient client)
+    private static string GetServerKey(Ftp ftp) => $"{ftp.UserName}@{ftp.Address}:{ftp.Port}";
+
+    public async ValueTask DisposeAsync()
     {
-        await pool.ReleaseClientAsync(client);
-    }
-
-    /// <summary>
-    /// Clears the connection pool for a specific FTP server (useful when server connectivity issues are detected)
-    /// </summary>
-    public async Task ClearPoolForServerAsync(Ftp ftp)
-    {
-        await pool.ClearPoolAsync(ftp);
-    }
-
-    /// <summary>
-    /// Handles FTP operation with automatic retry and pool clearing on failure
-    /// </summary>
-    public async Task<T> ExecuteWithRetryAsync<T>(Ftp ftp, Func<AsyncFtpClient, Task<T>> operation, CancellationToken cancellationToken = default)
-    {
-        AsyncFtpClient? client = null;
-        try
+        foreach (var semaphore in _serverSemaphores.Values)
         {
-            client = await GetClientAsync(ftp, cancellationToken);
-            return await operation(client);
+            semaphore.Dispose();
         }
-        catch (ObjectDisposedException)
-        {
-            // Clear pool and try once more
-            await pool.ClearPoolAsync(ftp);
-
-            if (client != null)
-            {
-                // Don't return this client to the pool since it's likely bad
-                await pool.ReleaseClientAsync(client);
-                client = null;
-            }
-
-            try
-            {
-                client = await GetClientAsync(ftp, cancellationToken);
-                return await operation(client);
-            }
-            catch (Exception retryEx)
-            {
-                throw new DomainException($"FTP operation failed after retry: {retryEx.Message}", retryEx);
-            }
-        }
-        catch (Exception ex) when (IsNetworkError(ex))
-        {
-            // Clear pool and try once more
-            await pool.ClearPoolAsync(ftp);
-
-            if (client != null)
-            {
-                // Don't return this client to the pool since it's likely bad
-                await pool.ReleaseClientAsync(client);
-                client = null;
-            }
-
-            try
-            {
-                client = await GetClientAsync(ftp, cancellationToken);
-                return await operation(client);
-            }
-            catch (Exception retryEx)
-            {
-                throw new DomainException($"FTP operation failed after retry: {retryEx.Message}", retryEx);
-            }
-        }
-        finally
-        {
-            if (client != null)
-            {
-                await pool.ReleaseClientAsync(client);
-            }
-        }
-    }
-
-    private static bool IsNetworkError(Exception ex)
-    {
-        return ex is TimeoutException ||
-               ex is SocketException ||
-               ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
-               ex.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
-               ex.Message.Contains("network", StringComparison.OrdinalIgnoreCase);
+        _serverSemaphores.Clear();
+        _activeConnections.Clear();
     }
 }

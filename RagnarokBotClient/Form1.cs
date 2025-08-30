@@ -47,7 +47,6 @@ namespace RagnarokBotClient
             _remote = new WebApi(new Settings(BASE_API_URL));
             Text += $" - {GetVersion()}";
             Task.Run(CheckVersion);
-
         }
 
         private string GetVersion()
@@ -534,7 +533,10 @@ namespace RagnarokBotClient
 
         private void InitializeSocketClient()
         {
-            _client = new(BOT_SERVER_ENDPOINT, BOT_SERVER_PORT, _serverId);
+            _client = new(BOT_SERVER_ENDPOINT, BOT_SERVER_PORT, _serverId)
+            {
+                Remote = _remote
+            };
             _client.OnMessageReceived += Client_OnMessageReceived;
         }
 

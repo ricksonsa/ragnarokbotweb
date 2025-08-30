@@ -69,7 +69,7 @@ public class ScumFileProcessor
             throw new InvalidOperationException($"Root folder is null or empty for server {_scumServer.Id}");
         }
 
-        return await ftpService.ExecuteWithRetryAsync(_ftp, async client =>
+        return await ftpService.ExecuteAsync(_ftp, async client =>
         {
             var today = DateTime.UtcNow;
             var logPath = $"{rootFolder}/Saved/SaveFiles/Logs/";
@@ -111,6 +111,12 @@ public class ScumFileProcessor
                     filteredFiles.Count, fileType, _scumServer.Id);
 
                 return filteredFiles;
+            }
+            catch (ObjectDisposedException ex)
+            {
+                _logger.LogError(ex, "Error getting log files of type {FileType} from path {LogPath} for server {ServerId}",
+                    fileType, logPath, _scumServer.Id);
+                throw new InvalidOperationException("FTP client was disposed");
             }
             catch (Exception ex)
             {
@@ -157,7 +163,7 @@ public class ScumFileProcessor
             throw new InvalidOperationException($"Root folder is null or empty for server {_scumServer.Id}");
         }
 
-        return await ftpService.ExecuteWithRetryAsync(_ftp, async client =>
+        return await ftpService.ExecuteAsync(_ftp, async client =>
         {
             var logPath = $"{rootFolder}/Saved/SaveFiles/Logs/";
 
@@ -280,7 +286,7 @@ public class ScumFileProcessor
 
             string localFilePath = Path.Combine(localPath, file.Name);
 
-            await ftpService.ExecuteWithRetryAsync(_ftp, async client =>
+            await ftpService.ExecuteAsync(_ftp, async client =>
             {
                 await ftpService.CopyFilesAsync(client, localPath, [file.FullName], cancellationToken);
                 return true;
@@ -608,7 +614,7 @@ public class ScumFileProcessor
         // Download only if needed
         if (!localFile.Exists || file.Size != localFile.Length)
         {
-            await ftpService.ExecuteWithRetryAsync(_ftp, async client =>
+            await ftpService.ExecuteAsync(_ftp, async client =>
             {
                 await ftpService.CopyFilesAsync(client, localPath, [file.FullName], cancellationToken);
                 return true;
@@ -631,7 +637,7 @@ public class ScumFileProcessor
 
         try
         {
-            await ftpService.ExecuteWithRetryAsync(_ftp, async client =>
+            await ftpService.ExecuteAsync(_ftp, async client =>
             {
                 await ftpService.CopyFilesAsync(client, localPath, [remotePath]);
                 return true; // dummy return

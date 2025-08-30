@@ -19,6 +19,7 @@ public class BotSocketClient
     private DateTime _lastMessageReceived = DateTime.UtcNow;
     private readonly System.Windows.Forms.Timer _inactivityTimer;
     private readonly TimeSpan _inactivityTimeout = TimeSpan.FromMinutes(5);
+    private readonly System.Windows.Forms.Timer _pingTimer;
 
     private volatile bool _isDisconnecting = false;
     private CancellationTokenSource? _currentConnectionCts;
@@ -27,6 +28,8 @@ public class BotSocketClient
     public bool IsConnected => _client?.Connected == true;
 
     public event EventHandler<BotCommand>? OnMessageReceived;
+
+    public WebApi Remote { get; set; }
 
     public BotSocketClient(string host, int port, long serverId)
     {
@@ -38,7 +41,7 @@ public class BotSocketClient
         _botId = GeneratePersistentBotId();
 
         _keepAliveTimer = new();
-        _keepAliveTimer.Interval = 30000; // 30s keepalive
+        _keepAliveTimer.Interval = 60000;
         _keepAliveTimer.Tick += KeepAliveTimer_Tick;
 
         _connectionHealthTimer = new();
@@ -48,6 +51,50 @@ public class BotSocketClient
         _inactivityTimer = new();
         _inactivityTimer.Interval = 60000; // check every 1 min
         _inactivityTimer.Tick += InactivityTimer_Tick;
+
+        _pingTimer = new();
+        _pingTimer.Interval = 60000; // check every 1 min
+        _pingTimer.Tick += PingTimer_Tick;
+    }
+
+    private async void PingTimer_Tick(object? sender, EventArgs e)
+    {
+        try
+        {
+            var result = await Remote.GetAsync<BotState>($"api/bots/{_botId}");
+
+            lock (_clientLock)
+            {
+                if (_client == null || _isDisconnecting) return;
+
+                // Check if the connection is truly dead
+                try
+                {
+                    if (result == null || !result.Connected)
+                    {
+                        Logger.LogWrite($"Connection health check failed for Bot ID {_botId} - connection appears dead");
+                        ForceReconnect();
+                        return;
+                    }
+
+                    if (!result.GameActive)
+                    {
+                        OnMessageReceived?.Invoke(sender, new BotCommand().Reconnect());
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWrite($"Connection health check exception for Bot ID {_botId}: {ex.Message}");
+                    ForceReconnect();
+                    return;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            return;
+        }
     }
 
     private string GeneratePersistentBotId()
@@ -144,6 +191,7 @@ public class BotSocketClient
                 $"Bot ID {_botId}: No commands from server for {idleTime.TotalMinutes:F1} minutes. Forcing reconnect...");
 
             ForceReconnect();
+            return;
         }
     }
 
@@ -233,22 +281,15 @@ public class BotSocketClient
     {
         if (_client == null || _isDisconnecting) return;
 
-        _keepAliveTimer.Start();
-        _inactivityTimer.Start();
-        _connectionHealthTimer.Start();
-
         try
         {
             using var stream = _client.GetStream();
-            stream.ReadTimeout = 60000; // 1 minute read timeout
+            stream.ReadTimeout = 60000;
 
             while (!token.IsCancellationRequested && !_isDisconnecting)
             {
                 TcpClient? currentClient;
-                lock (_clientLock)
-                {
-                    currentClient = _client;
-                }
+                lock (_clientLock) currentClient = _client;
 
                 if (currentClient?.Connected != true)
                 {
@@ -256,7 +297,6 @@ public class BotSocketClient
                     break;
                 }
 
-                // Receive MessagePack commands from server
                 var command = await ReceiveMessagePackAsync(stream, token);
                 if (command == null)
                 {
@@ -264,30 +304,12 @@ public class BotSocketClient
                     break;
                 }
 
-                _lastMessageReceived = DateTime.UtcNow; // reset idle timer
+                _lastMessageReceived = DateTime.UtcNow;
 
                 Logger.LogWrite($"Bot ID {_botId}: Command received: {command.Values?.Count ?? 0} command(s)");
 
-                // Handle reconnect command specially - don't break connection
-                bool hasReconnectCommand = command.Values?.Any(cmd => cmd.Type == Shared.Enums.ECommandType.Reconnect) == true;
-
-                if (hasReconnectCommand)
-                {
-                    Logger.LogWrite($"Bot ID {_botId}: Received reconnect command - will rejoin game server");
-                }
-
-                // Always invoke the event for command processing
-                try
-                {
-                    OnMessageReceived?.Invoke(this, command);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWrite($"Bot ID {_botId}: Error in message handler: {ex.Message}");
-                }
-
-                // For reconnect commands, we DON'T break the TCP connection
-                // The bot will handle rejoining the game server while keeping TCP alive
+                try { OnMessageReceived?.Invoke(this, command); }
+                catch (Exception ex) { Logger.LogWrite($"Bot ID {_botId}: Error in message handler: {ex.Message}"); }
             }
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -308,7 +330,6 @@ public class BotSocketClient
                 _client = null;
             }
 
-            // Only reconnect if we haven't been cancelled and not disconnecting
             if (!token.IsCancellationRequested && !_isDisconnecting)
             {
                 _ = Task.Run(() => ReconnectLoopAsync(token));
@@ -471,6 +492,9 @@ public class BotSocketClient
 
             _client = null;
         }
+
+        if (!_client?.Connected ?? true)
+            _isDisconnecting = false;
 
         Logger.LogWrite($"Bot ID {_botId}: Disconnected");
     }

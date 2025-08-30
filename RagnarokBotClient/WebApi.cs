@@ -81,7 +81,7 @@ namespace RagnarokBotClient
             return response;
         }
 
-        public async Task<T> GetAsync<T>(string url)
+        public async Task<T?> GetAsync<T>(string url)
         {
             var response = await _httpClient.GetAsync(url);
             Debug.WriteLine($"Http Request [{url}] responded with status [{response.StatusCode}]");
@@ -90,7 +90,7 @@ namespace RagnarokBotClient
                 return JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync())!;
             }
 
-            return default!;
+            return default;
         }
 
         public async Task<string> GetAsync(string url)
