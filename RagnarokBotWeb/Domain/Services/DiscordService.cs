@@ -689,18 +689,24 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{kill.ImageUrl}");
                 }
-                catch (Exception)
-                { }
+                catch { }
             }
 
             try
             {
                 embedBuilder.WithThumbnailUrl($"{_appSettings.BaseUrl}/images/scum_images/{kill.Weapon!.Substring(0, kill.Weapon.LastIndexOf("_C"))}.webp");
             }
-            catch (Exception)
-            { }
+            catch { }
 
-            await channel.SendMessageAsync(embed: embedBuilder.Build());
+            try
+            {
+                await channel.SendMessageAsync(embed: embedBuilder.Build());
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SendKillFeedEmbed Exception");
+            }
         }
     }
 }

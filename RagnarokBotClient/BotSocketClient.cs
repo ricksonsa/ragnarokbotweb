@@ -63,33 +63,28 @@ public class BotSocketClient
         {
             var result = await Remote.GetAsync<BotState>($"api/bots/{_botId}");
 
-            lock (_clientLock)
+            try
             {
-                if (_client == null || _isDisconnecting) return;
-
-                // Check if the connection is truly dead
-                try
+                if (result == null || !result.Connected)
                 {
-                    if (result == null || !result.Connected)
-                    {
-                        Logger.LogWrite($"Connection health check failed for Bot ID {_botId} - connection appears dead");
-                        ForceReconnect();
-                        return;
-                    }
-
-                    if (!result.GameActive)
-                    {
-                        OnMessageReceived?.Invoke(sender, new BotCommand().Reconnect());
-                        return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWrite($"Connection health check exception for Bot ID {_botId}: {ex.Message}");
+                    //Logger.LogWrite($"Connection health check failed for Bot ID {_botId} - connection appears dead");
                     ForceReconnect();
                     return;
                 }
+
+                //if (!result.GameActive)
+                //{
+                //    OnMessageReceived?.Invoke(sender, new BotCommand().Reconnect());
+                //    return;
+                //}
             }
+            catch (Exception ex)
+            {
+                Logger.LogWrite($"Connection health check exception for Bot ID {_botId}: {ex.Message}");
+                ForceReconnect();
+                return;
+            }
+
         }
         catch (Exception)
         {
@@ -281,6 +276,8 @@ public class BotSocketClient
     {
         if (_client == null || _isDisconnecting) return;
 
+        _pingTimer.Start();
+
         try
         {
             using var stream = _client.GetStream();
@@ -342,6 +339,7 @@ public class BotSocketClient
         try { _keepAliveTimer.Stop(); } catch { }
         try { _inactivityTimer.Stop(); } catch { }
         try { _connectionHealthTimer.Stop(); } catch { }
+        try { _pingTimer.Stop(); } catch { }
     }
 
     private async Task ReconnectLoopAsync(CancellationToken token)

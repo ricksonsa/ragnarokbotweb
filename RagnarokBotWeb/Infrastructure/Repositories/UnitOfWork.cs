@@ -8,7 +8,6 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
     public class UnitOfWork : IUnitOfWork
     {
         private AppDbContext _context;
-
         public AppDbContext AppDbContext { get => _context; }
         public DbSet<Player> Players { get; }
         public DbSet<Lockpick> Lockpicks { get; }

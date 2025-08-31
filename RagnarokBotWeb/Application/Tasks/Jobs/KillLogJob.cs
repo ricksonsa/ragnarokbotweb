@@ -49,7 +49,7 @@ public class KillLogJob(
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError("Error parsing kill -> {Ex}", ex.Message);
+                    logger.LogError(ex, "Error parsing kill");
                     continue;
                 }
 
@@ -58,37 +58,9 @@ public class KillLogJob(
 
                 if (IsCompliant())
                 {
-                    if (server.UseKillFeed)
-                    {
-                        bool postKillFeed = true;
-
-                        if (!server.ShowSameSquadKill && kill.IsSameSquad) postKillFeed = false;
-
-                        if (Kill.IsMine(kill.Weapon) && !server.ShowMineKill)
-                            postKillFeed = false;
-
-                        if (postKillFeed)
-                        {
-                            if (server.ShowKillOnMap) await HandleShowMap(logger, fileService, kill);
-                            await discordService.SendKillFeedEmbed(server, kill);
-                        }
-                    }
-
-                    try
-                    {
-                        var coinHandler = new PlayerCoinManager(unitOfWork);
-                        if (server.CoinKillAwardAmount > 0 && !kill.IsSameSquad)
-                            await coinHandler.AddCoinsBySteamIdAsync(kill.KillerSteamId64!, server.Id, server.CoinKillAwardAmount);
-
-                        if (server.CoinDeathPenaltyAmount > 0 && !kill.IsSameSquad)
-                            await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "PlayerCoinManager Exception");
-                    }
-
-                    await HandleAnnounceText(botService, server, kill); // Announce kill in game
+                    _ = Task.Run(async () => await HandleKillFeed(logger, discordService, fileService, server, kill));
+                    _ = Task.Run(async () => await HandleCoinManager(logger, unitOfWork, server, kill));
+                    _ = Task.Run(async () => await HandleAnnounceText(botService, server, kill));
                 }
 
                 try
@@ -109,8 +81,53 @@ public class KillLogJob(
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError("{Job} Exception -> {Ex} {Stack}", context.JobDetail.Key.Name, ex.Message, ex.StackTrace);
+            logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
             throw;
+        }
+    }
+
+    private static async Task HandleCoinManager(ILogger<KillLogJob> logger, IUnitOfWork unitOfWork, ScumServer server, Kill kill)
+    {
+        try
+        {
+            unitOfWork.CreateDbContext();
+            var coinHandler = new PlayerCoinManager(unitOfWork);
+
+            if (server.CoinKillAwardAmount > 0 && !kill.IsSameSquad)
+                await coinHandler.AddCoinsBySteamIdAsync(kill.KillerSteamId64!, server.Id, server.CoinKillAwardAmount);
+
+            if (server.CoinDeathPenaltyAmount > 0 && !kill.IsSameSquad)
+                await coinHandler.RemoveCoinsBySteamIdAsync(kill.TargetSteamId64!, server.Id, server.CoinDeathPenaltyAmount);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "PlayerCoinManager Exception");
+        }
+    }
+
+    private static async Task HandleKillFeed(ILogger<KillLogJob> logger, IDiscordService discordService, IFileService fileService, ScumServer server, Kill kill)
+    {
+        try
+        {
+            if (server.UseKillFeed)
+            {
+                bool postKillFeed = true;
+
+                if (!server.ShowSameSquadKill && kill.IsSameSquad) postKillFeed = false;
+
+                if (Kill.IsMine(kill.Weapon) && !server.ShowMineKill)
+                    postKillFeed = false;
+
+                if (postKillFeed)
+                {
+                    if (server.ShowKillOnMap) await HandleShowMap(logger, fileService, kill);
+                    _ = discordService.SendKillFeedEmbed(server, kill);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "HandleKillFeed Exception");
         }
     }
 

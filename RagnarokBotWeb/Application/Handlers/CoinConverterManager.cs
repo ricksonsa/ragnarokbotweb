@@ -12,39 +12,44 @@ namespace RagnarokBotWeb.Application.Handlers
         }
 
         /// <summary>
-        /// Converts in-game money to Discord coins.
+        /// Converts in-game money to Discord coins, reducing by the deposit rate.
+        /// e.g., if DepositRate = 0.10, 1000 in-game money -> 900 coins
         /// </summary>
-        /// <param name="inGameMoney">The amount of in-game money.</param>
-        /// <param name="exchangeRate">
-        /// The exchange rate (how many Discord coins you get for 1 in-game money).
-        /// </param>
-        /// <returns>The equivalent amount of Discord coins.</returns>
         public long ToDiscordCoins(long inGameMoney)
         {
-            var exchangeRate = Server.Exchange.DepositRate;
-            if (exchangeRate <= 0)
+            var rate = Server.Exchange.DepositRate;
+
+            if (rate <= 0)
                 return inGameMoney;
 
-            double result = inGameMoney * (1 - exchangeRate);
+            double result = inGameMoney * (1 - rate);
             return (long)Math.Floor(result);
         }
 
         /// <summary>
-        /// Converts Discord coins back to in-game money.
+        /// Converts Discord coins back to in-game money, increasing by the withdraw rate.
+        /// e.g., if WithdrawRate = 0.10, 1000 coins -> 1100 in-game money
         /// </summary>
-        /// <param name="discordCoins">The amount of Discord coins.</param>
-        /// <param name="exchangeRate">
-        /// The exchange rate (how many Discord coins you get for 1 in-game money).
-        /// </param>
-        /// <returns>The equivalent amount of in-game money.</returns>
         public long ToInGameMoney(long discordCoins)
         {
-            var exchangeRate = Server.Exchange.WithdrawRate;
+            var rate = Server.Exchange.WithdrawRate;
 
-            if (exchangeRate <= 0)
+            if (rate <= 0)
                 return discordCoins;
 
-            return (long)Math.Floor(discordCoins / (1 - exchangeRate));
+            double result = discordCoins * (1 + rate);
+            return (long)Math.Floor(result);
+        }
+
+        public long Transfer(long coins)
+        {
+            var rate = Server.Exchange.TransferRate;
+
+            if (rate <= 0)
+                return coins;
+
+            double result = coins * (1 - rate);
+            return (long)Math.Floor(result);
         }
     }
 }

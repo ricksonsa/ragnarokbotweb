@@ -224,7 +224,6 @@ namespace RagnarokBotWeb
 
             builder.Services.AddHealthChecks();
 
-
             builder.Services.AddCors(options =>
             {
                 if (builder.Environment.IsDevelopment())
@@ -249,6 +248,14 @@ namespace RagnarokBotWeb
                     });
                 }
             });
+
+            if (!builder.Environment.IsDevelopment())
+            {
+                builder.Services.AddHttpsRedirection(options =>
+                {
+                    options.HttpsPort = 443;
+                });
+            }
 
             builder.Services.AddHttpClient();
             builder.Services.AddMvc();

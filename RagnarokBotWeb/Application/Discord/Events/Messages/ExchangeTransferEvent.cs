@@ -108,7 +108,7 @@ public class ExchangeTransferEvent : IMessageEventHandler
                 }
 
                 await manager.RemoveCoinsBySteamIdAsync(player.SteamId64!, player.ScumServerId, value);
-                await manager.AddCoinsBySteamIdAsync(targetPlayer.SteamId64!, targetPlayer.ScumServerId, value);
+                await manager.AddCoinsBySteamIdAsync(targetPlayer.SteamId64!, targetPlayer.ScumServerId, new CoinConverterManager(server).Transfer(value));
 
                 embedBuilder.WithColor(Color.Green);
                 embedBuilder.WithDescription($"You have successfully transfered {value} coins to {targetPlayer.Name}");
