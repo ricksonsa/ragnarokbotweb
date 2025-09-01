@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -32,12 +33,13 @@ namespace RagnarokBotWeb.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        private GenericLogValue ParseGenericLog(string line)
+        private GenericLogValue ParseGenericLog(ScumServer server, string line)
         {
-            var dateString = line.Substring(0, line.IndexOf(":"));
+            var dateString = line.Substring(0, line.IndexOf(':'));
             string format = "yyyy.MM.dd-HH.mm.ss";
             var date = DateTime.ParseExact(dateString, format, CultureInfo.InvariantCulture);
-            return new GenericLogValue { Date = date, Line = line };
+
+            return new GenericLogValue { Date = TimeZoneInfo.ConvertTimeFromUtc(date, server.GetTimeZoneOrDefault()), Line = line };
         }
 
         [HttpGet("kills")]
@@ -49,6 +51,7 @@ namespace RagnarokBotWeb.Controllers
 
             var lastLine = string.Empty;
             List<PreParseKill> preKills = [];
+            var parser = new KillLogParser(server);
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Kill, _ftpService, from, to))
             {
                 if (!line.Contains('{'))
@@ -57,7 +60,7 @@ namespace RagnarokBotWeb.Controllers
                     continue;
                 }
 
-                PreParseKill? kill = KillLogParser.KillParse(lastLine, line);
+                PreParseKill? kill = parser.KillParse(lastLine, line);
                 if (kill is null) continue;
                 preKills.Add(kill);
             }
@@ -73,13 +76,14 @@ namespace RagnarokBotWeb.Controllers
             var processor = new ScumFileProcessor(server, _unitOfWork);
 
             List<LockpickLog> lockpicks = [];
+            var parser = new LockpickLogParser(server);
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Gameplay, _ftpService, from, to))
             {
                 if (line.Contains("[LogMinigame] [LockpickingMinigame_C]") ||
                     line.Contains("[LogMinigame] [BP_DialLockMinigame_C]"))
                 {
 
-                    LockpickLog? lockpick = LockpickLogParser.Parse(line);
+                    LockpickLog? lockpick = parser.Parse(line);
                     if (lockpick is null) continue;
                     lockpicks.Add(lockpick);
                 }
@@ -99,7 +103,7 @@ namespace RagnarokBotWeb.Controllers
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Economy, _ftpService, from, to))
             {
-                log.Add(ParseGenericLog(line));
+                log.Add(ParseGenericLog(server, line));
             }
 
             return Ok(log);
@@ -115,7 +119,7 @@ namespace RagnarokBotWeb.Controllers
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Vehicle_Destruction, _ftpService, from, to))
             {
-                log.Add(ParseGenericLog(line));
+                log.Add(ParseGenericLog(server, line));
             }
 
             return Ok(log);
@@ -131,7 +135,7 @@ namespace RagnarokBotWeb.Controllers
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Login, _ftpService, from, to))
             {
-                log.Add(ParseGenericLog(line));
+                log.Add(ParseGenericLog(server, line));
             }
 
             return Ok(log);
@@ -149,7 +153,7 @@ namespace RagnarokBotWeb.Controllers
             {
                 if (line.Contains("[LogChest]"))
                 {
-                    log.Add(ParseGenericLog(line));
+                    log.Add(ParseGenericLog(server, line));
                 }
             }
 
@@ -166,7 +170,7 @@ namespace RagnarokBotWeb.Controllers
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Violations, _ftpService, from, to))
             {
-                log.Add(ParseGenericLog(line));
+                log.Add(ParseGenericLog(server, line));
             }
 
             return Ok(log);
@@ -182,7 +186,7 @@ namespace RagnarokBotWeb.Controllers
             List<GenericLogValue> log = [];
             await foreach (var line in processor.FileLinesAsync(Domain.Enums.EFileType.Chat, _ftpService, from, to))
             {
-                log.Add(ParseGenericLog(line));
+                log.Add(ParseGenericLog(server, line));
             }
 
             return Ok(log);
@@ -200,7 +204,7 @@ namespace RagnarokBotWeb.Controllers
             {
                 if (line.Contains("[LogTrap]"))
                 {
-                    log.Add(ParseGenericLog(line));
+                    log.Add(ParseGenericLog(server, line));
                 }
             }
 

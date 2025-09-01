@@ -37,7 +37,6 @@ namespace RagnarokBotWeb.Domain.Entities
         public bool IsSameSquad { get; set; }
         public bool Rankable { get; set; } = true;
 
-
         public void SetHash()
         {
             KillHash = Math.Abs($"{KillerSteamId64}{TargetSteamId64}{Weapon}{KillerX}{KillerY}{KillerZ}{VictimX}{VictimY}{VictimZ}".GetHashCode()).ToString();

@@ -9,12 +9,13 @@ namespace RagnarokBotWeb.Application.LogParser
     public class KillLogParser
     {
         private readonly ScumServer _server;
+
         public KillLogParser(ScumServer server)
         {
             _server = server;
         }
 
-        public static PreParseKill? KillParse(string line1, string line2)
+        public PreParseKill? KillParse(string line1, string line2)
         {
             string pattern = @"Distance: ([0-9]*\.?[0-9]+) m";
             var match = Regex.Match(line1, pattern);
@@ -34,7 +35,7 @@ namespace RagnarokBotWeb.Application.LogParser
             if (preParseKill.Killer.IsInGameEvent || preParseKill.Victim.IsInGameEvent) return null;
 
             preParseKill.Distance = distance;
-            preParseKill.Date = date;
+            preParseKill.Date = TimeZoneInfo.ConvertTimeFromUtc(date, _server.GetTimeZoneOrDefault());
             preParseKill.Line = line2;
             return preParseKill;
         }

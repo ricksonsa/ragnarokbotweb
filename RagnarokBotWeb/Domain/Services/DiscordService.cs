@@ -656,7 +656,7 @@ namespace RagnarokBotWeb.Domain.Services
             var embedBuilder = new EmbedBuilder()
                 .WithColor(Color.DarkOrange)
                 .WithFooter(GetAuthor())
-                .WithCurrentTimestamp();
+                .WithTimestamp(new DateTimeOffset(kill.CreateDate, TimeSpan.Zero));
 
             if (server.ShowKillerName)
             {

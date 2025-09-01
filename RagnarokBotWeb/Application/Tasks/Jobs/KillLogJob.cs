@@ -14,7 +14,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs;
 public class KillLogJob(
     ILogger<KillLogJob> logger,
     IScumServerRepository scumServerRepository,
-    IUnitOfWork unitOfWork,
+    IServiceProvider serviceProvider,
     IDiscordService discordService,
     IFileService fileService,
     IFtpService ftpService,
@@ -29,7 +29,8 @@ public class KillLogJob(
         try
         {
             var server = await GetServerAsync(context);
-            var processor = new ScumFileProcessor(server, unitOfWork);
+            var uow = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var processor = new ScumFileProcessor(server, uow);
 
             string lastLine = string.Empty;
 
@@ -59,16 +60,16 @@ public class KillLogJob(
                 if (IsCompliant())
                 {
                     _ = Task.Run(async () => await HandleKillFeed(logger, discordService, fileService, server, kill));
-                    _ = Task.Run(async () => await HandleCoinManager(logger, unitOfWork, server, kill));
+                    _ = Task.Run(async () => await HandleCoinManager(logger, serviceProvider, server, kill));
                     _ = Task.Run(async () => await HandleAnnounceText(botService, server, kill));
                 }
 
                 try
                 {
-                    var dbContext = unitOfWork.CreateDbContext();
+                    var dbContext = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IUnitOfWork>();
                     dbContext.ScumServers.Attach(server);
                     await dbContext.Kills.AddAsync(kill);
-                    await dbContext.SaveChangesAsync();
+                    await dbContext.SaveAsync();
                 }
                 catch (Exception ex)
                 {
@@ -86,10 +87,11 @@ public class KillLogJob(
         }
     }
 
-    private static async Task HandleCoinManager(ILogger<KillLogJob> logger, IUnitOfWork unitOfWork, ScumServer server, Kill kill)
+    private static async Task HandleCoinManager(ILogger<KillLogJob> logger, IServiceProvider serviceProvider, ScumServer server, Kill kill)
     {
         try
         {
+            var unitOfWork = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IUnitOfWork>();
             unitOfWork.CreateDbContext();
             var coinHandler = new PlayerCoinManager(unitOfWork);
 

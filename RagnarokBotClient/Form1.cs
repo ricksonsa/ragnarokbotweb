@@ -10,6 +10,7 @@ namespace RagnarokBotClient
     public partial class Form1 : Form
     {
         public static bool Loading = false;
+        public static bool IsStopped = true;
 
         private readonly WebApi _remote;
         private readonly ScumManager _scumManager;
@@ -35,6 +36,9 @@ namespace RagnarokBotClient
         private static bool connected = false;
         private BotSocketClient _client;
 
+        private readonly System.Windows.Forms.Timer _pingTimer;
+
+
         public Form1()
         {
             InitializeComponent();
@@ -47,6 +51,30 @@ namespace RagnarokBotClient
             _remote = new WebApi(new Settings(BASE_API_URL));
             Text += $" - {GetVersion()}";
             Task.Run(CheckVersion);
+
+            _pingTimer = new();
+            _pingTimer.Interval = 180000;
+            _pingTimer.Tick += PingTimer_Tick;
+            _pingTimer.Start();
+        }
+
+        private async void PingTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_client == null || IsStopped) return;
+
+            try
+            {
+                var result = await _remote.GetAsync<BotState>($"api/bots/{_client.BotId}");
+
+                if (result == null || !result.Connected)
+                {
+                    Stop();
+                    await Task.Delay(1000);
+                    Start();
+                    return;
+                }
+            }
+            catch { return; }
         }
 
         private string GetVersion()
@@ -298,6 +326,7 @@ namespace RagnarokBotClient
                             await Task.Delay(TimeSpan.FromSeconds(Math.Max(_timeToLoadWorld, 1)), token);
 
                             await _client.ConnectAsync(token);
+                            IsStopped = false;
                             _ = SendCheckState(token);
                             UpdateStatusSafe("Started...");
                         }
@@ -332,6 +361,7 @@ namespace RagnarokBotClient
             {
                 StartButton.Text = "Start";
             }
+            IsStopped = true;
             UpdateStatus("Stopped.");
         }
 

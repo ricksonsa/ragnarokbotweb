@@ -15,8 +15,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs;
 public class GamePlayJob(
     ILogger<GamePlayJob> logger,
     IScumServerRepository scumServerRepository,
-    IBunkerService bunkerService,
-    IUnitOfWork unitOfWork,
+    IServiceProvider services,
     IFtpService ftpService,
     IFileService fileService,
     IDiscordService discordService,
@@ -31,35 +30,36 @@ public class GamePlayJob(
         try
         {
             var server = await GetServerAsync(context);
-            var processor = new ScumFileProcessor(server, unitOfWork);
+            var uow = services.CreateScope().ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var processor = new ScumFileProcessor(server, uow);
             await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), ftpService, context.CancellationToken))
             {
-                if (IsCompliant()) _ = Task.Run(async () => await HandleArmedTrap(botService, unitOfWork, cache, server, line, logger));
-                _ = Task.Run(async () => await HandleLockpick(unitOfWork, discordService, fileService, server, line, logger));
-                _ = Task.Run(async () => await HandleBunkerState(bunkerService, server, line, logger));
+                if (IsCompliant()) _ = Task.Run(async () => await HandleArmedTrap(botService, services, cache, server, line, logger));
+                _ = Task.Run(async () => await HandleLockpick(services, discordService, fileService, server, line, logger));
+                _ = Task.Run(async () => await HandleBunkerState(services, server, line, logger));
             }
         }
         catch (ServerUncompliantException) { }
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError("{Job} Exception -> {Ex} {Stack}", context.JobDetail.Key.Name, ex.Message, ex.StackTrace);
+            logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
         }
     }
 
-    private static async Task HandleLockpick(IUnitOfWork uow, IDiscordService discordService, IFileService fileService, ScumServer server, string line, ILogger<GamePlayJob> logger)
+    private static async Task HandleLockpick(IServiceProvider services, IDiscordService discordService, IFileService fileService, ScumServer server, string line, ILogger<GamePlayJob> logger)
     {
         if (line.Contains("[LogMinigame] [LockpickingMinigame_C]") ||
             line.Contains("[LogMinigame] [BP_DialLockMinigame_C]"))
         {
-            var lockpick = LockpickLogParser.Parse(line);
+            var uow = services.CreateScope().ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var lockpick = new LockpickLogParser(server).Parse(line);
             if (lockpick is null || IsDiscardLockpickType(lockpick)) return;
 
             try
             {
-                var dbContext = uow.CreateDbContext();
-                dbContext.ScumServers.Attach(server);
-                await dbContext.Lockpicks.AddAsync(new Lockpick
+                uow.ScumServers.Attach(server);
+                await uow.Lockpicks.AddAsync(new Lockpick
                 {
                     LockType = lockpick.LockType,
                     TargetObject = lockpick.TargetObject,
@@ -71,7 +71,7 @@ public class GamePlayJob(
                     ScumServer = server,
                     Success = lockpick.Success
                 });
-                await dbContext.SaveChangesAsync();
+                await uow.SaveAsync();
             }
             catch (Exception ex)
             {
@@ -121,14 +121,22 @@ public class GamePlayJob(
             || lockpick.TargetObject.Contains("BPLockpick_Hazmat_Suit_Locker");
     }
 
-    private static async Task HandleBunkerState(IBunkerService bunkerService, ScumServer server, string line, ILogger<GamePlayJob> logger)
+    private static async Task HandleBunkerState(IServiceProvider services, ScumServer server, string line, ILogger<GamePlayJob> logger)
     {
         try
         {
             if (line.Contains("[LogBunkerLock]") && line.Contains(" is "))
             {
                 var (sector, state, time) = new BunkerLogParser().Parse(line);
-                await bunkerService.UpdateBunkerState(server, sector, state, time);
+
+                var bunkerRepository = services.CreateScope().ServiceProvider.GetRequiredService<IBunkerRepository>();
+                var bunker = await bunkerRepository.FindOneWithServerAsync(b => b.Sector == sector && b.ScumServer.Id == server.Id);
+                bunker ??= new(sector);
+                bunker.Locked = state;
+                bunker.Available = DateTime.UtcNow.Add(time);
+                bunker.ScumServer ??= server;
+                await bunkerRepository.CreateOrUpdateAsync(bunker);
+                await bunkerRepository.SaveAsync();
             }
         }
         catch (Exception ex)
@@ -137,7 +145,7 @@ public class GamePlayJob(
         }
     }
 
-    private static async Task HandleArmedTrap(IBotService botService, IUnitOfWork unitOfWork, ICacheService cache, ScumServer server, string line, ILogger<GamePlayJob> logger)
+    private static async Task HandleArmedTrap(IBotService botService, IServiceProvider services, ICacheService cache, ScumServer server, string line, ILogger<GamePlayJob> logger)
     {
         try
         {
@@ -167,8 +175,8 @@ public class GamePlayJob(
                                 if (server.CoinReductionPerInvalidMineKill > 0)
                                 {
                                     msg += " Coin penalty applied.";
-                                    unitOfWork.CreateDbContext();
-                                    await new PlayerCoinManager(unitOfWork).RemoveCoinsBySteamIdAsync(trapLog.SteamId, server.Id, server.CoinReductionPerInvalidMineKill);
+                                    var uow = services.CreateScope().ServiceProvider.GetRequiredService<IUnitOfWork>();
+                                    await new PlayerCoinManager(uow).RemoveCoinsBySteamIdAsync(trapLog.SteamId, server.Id, server.CoinReductionPerInvalidMineKill);
                                 }
 
                                 if (server.AnnounceMineOutsideFlag) command.Say(msg);

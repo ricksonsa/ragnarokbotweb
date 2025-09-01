@@ -33,7 +33,7 @@ public class ScumFileProcessor
         loggerFactory.AddSerilog();
         _logger = loggerFactory.CreateLogger<ScumFileProcessor>();
         _scumServer = server ?? throw new ArgumentNullException(nameof(server));
-        _ftp = server.Ftp; // Remove the ! operator to allow null
+        _ftp = server.Ftp;
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         ClearOldSemaphores();
     }

@@ -15,7 +15,7 @@ namespace RagnarokBotWeb.Application.LogParser
             _scumServer = scumServer;
         }
 
-        public static LockpickLog? Parse(string logLine)
+        public LockpickLog? Parse(string logLine)
         {
             string pattern = @"^(?<timestamp>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2}): \[LogMinigame\] \[LockpickingMinigame_C\] User: (?<username>.*?) \((?<id>\d+), (?<steamid>\d+)\)\. Success: (?<success>Yes|No)\. Elapsed time: (?<elapsedTime>\d+\.\d+)\. Failed attempts: (?<failedAttempts>\d+)\. Target object: (?<targetObject>.*?)\(ID: (?<targetId>.*?)\)\. Lock type: (?<lockType>.*?)\. User owner: (?<ownerId>\d+)\(\[(?<ownerSteamId>\d+)\] (?<ownerName>.*?)\)\. Location: X=(?<x>[\d\.-]+) Y=(?<y>[\d\.-]+) Z=(?<z>[\d\.-]+)$";
             string pattern2 = @"^(?<timestamp>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2}): \[LogMinigame\] \[LockpickingMinigame_C\] User: (?<username>.*?) \((?<id>\d+), (?<steamid>\d+)\)\. Success: (?<success>Yes|No)\. Elapsed time: (?<elapsedTime>\d+\.\d+)\. Failed attempts: (?<failedAttempts>\d+)\. Target object: (?<targetObject>.*?)\(ID: (?<targetId>.*?)\)\. Lock type: (?<lockType>.*?)\. User owner: (?<userOwner>.*?)\. Location: X=(?<x>[\d\.-]+) Y=(?<y>[\d\.-]+) Z=(?<z>[\d\.-]+)$";
@@ -46,7 +46,7 @@ namespace RagnarokBotWeb.Application.LogParser
                         OwnerSteamId = match.Groups["ownerSteamId"].Value,
                         OwnerName = match.Groups["ownerName"].Value,
                         Line = logLine,
-                        Date = DateTime.ParseExact(match.Groups["timestamp"].Value, format, CultureInfo.InvariantCulture)
+                        Date = TimeZoneInfo.ConvertTimeFromUtc(DateTime.ParseExact(match.Groups["timestamp"].Value, format, CultureInfo.InvariantCulture), _scumServer.GetTimeZoneOrDefault())
                     };
                     return lockpick;
 
@@ -75,7 +75,7 @@ namespace RagnarokBotWeb.Application.LogParser
                         Y = float.Parse(match2.Groups["y"].Value, CultureInfo.InvariantCulture),
                         Z = float.Parse(match2.Groups["z"].Value, CultureInfo.InvariantCulture),
                         Line = logLine,
-                        Date = DateTime.ParseExact(match2.Groups["timestamp"].Value, format, CultureInfo.InvariantCulture)
+                        Date = TimeZoneInfo.ConvertTimeFromUtc(DateTime.ParseExact(match2.Groups["timestamp"].Value, format, CultureInfo.InvariantCulture), _scumServer.GetTimeZoneOrDefault())
                     };
                     return lockpick;
                 }

@@ -19,7 +19,6 @@ public class BotSocketClient
     private DateTime _lastMessageReceived = DateTime.UtcNow;
     private readonly System.Windows.Forms.Timer _inactivityTimer;
     private readonly TimeSpan _inactivityTimeout = TimeSpan.FromMinutes(5);
-    private readonly System.Windows.Forms.Timer _pingTimer;
 
     private volatile bool _isDisconnecting = false;
     private CancellationTokenSource? _currentConnectionCts;
@@ -51,45 +50,6 @@ public class BotSocketClient
         _inactivityTimer = new();
         _inactivityTimer.Interval = 60000; // check every 1 min
         _inactivityTimer.Tick += InactivityTimer_Tick;
-
-        _pingTimer = new();
-        _pingTimer.Interval = 60000; // check every 1 min
-        _pingTimer.Tick += PingTimer_Tick;
-    }
-
-    private async void PingTimer_Tick(object? sender, EventArgs e)
-    {
-        try
-        {
-            var result = await Remote.GetAsync<BotState>($"api/bots/{_botId}");
-
-            try
-            {
-                if (result == null || !result.Connected)
-                {
-                    //Logger.LogWrite($"Connection health check failed for Bot ID {_botId} - connection appears dead");
-                    ForceReconnect();
-                    return;
-                }
-
-                //if (!result.GameActive)
-                //{
-                //    OnMessageReceived?.Invoke(sender, new BotCommand().Reconnect());
-                //    return;
-                //}
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWrite($"Connection health check exception for Bot ID {_botId}: {ex.Message}");
-                ForceReconnect();
-                return;
-            }
-
-        }
-        catch (Exception)
-        {
-            return;
-        }
     }
 
     private string GeneratePersistentBotId()
@@ -276,8 +236,6 @@ public class BotSocketClient
     {
         if (_client == null || _isDisconnecting) return;
 
-        _pingTimer.Start();
-
         try
         {
             using var stream = _client.GetStream();
@@ -339,7 +297,6 @@ public class BotSocketClient
         try { _keepAliveTimer.Stop(); } catch { }
         try { _inactivityTimer.Stop(); } catch { }
         try { _connectionHealthTimer.Stop(); } catch { }
-        try { _pingTimer.Stop(); } catch { }
     }
 
     private async Task ReconnectLoopAsync(CancellationToken token)
