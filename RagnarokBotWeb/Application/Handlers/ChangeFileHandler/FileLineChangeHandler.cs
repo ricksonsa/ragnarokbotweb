@@ -5,12 +5,12 @@ using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Handlers.ChangeFileHandler
 {
-    public class AddRemoveLineHandler : IChangeFileHandler
+    public class FileLineChangeHandler : IChangeFileHandler
     {
         private readonly IFtpService _ftpService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly string _file;
-        public AddRemoveLineHandler(string file, IFtpService ftpService, IUnitOfWork unitOfWork)
+        public FileLineChangeHandler(string file, IFtpService ftpService, IUnitOfWork unitOfWork)
         {
             _ftpService = ftpService;
             _unitOfWork = unitOfWork;
@@ -34,6 +34,10 @@ namespace RagnarokBotWeb.Application.Handlers.ChangeFileHandler
 
                 case Domain.Enums.EFileChangeMethod.RemoveLine:
                     await _ftpService.RemoveLine(client, remotePath, command.Value);
+                    break;
+
+                case Domain.Enums.EFileChangeMethod.UpdateLine:
+                    await _ftpService.UpdateIniValueAsync(client, remotePath, command.Key, command.Value);
                     break;
             }
 

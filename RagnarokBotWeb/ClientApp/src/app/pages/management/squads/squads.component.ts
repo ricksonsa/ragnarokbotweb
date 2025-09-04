@@ -11,17 +11,16 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { BotService } from '../../../services/bot.service';
-import { EventManager, EventWithContent } from '../../../services/event-manager.service';
-import { Observable, of, BehaviorSubject, combineLatest, startWith, debounceTime, distinctUntilChanged, tap, switchMap, firstValueFrom, pipe } from 'rxjs';
-import { Alert } from '../../../models/alert';
+import { EventManager } from '../../../services/event-manager.service';
+import { Observable, of, BehaviorSubject, tap, switchMap } from 'rxjs';
 import { WarzoneDto } from '../../../models/warzone.dto';
-import { BotState } from '../../../models/bot-state.dto';
+import { ServerService } from '../../../services/server.service';
+import { Squad } from '../../../models/squad.dto';
 
 @Component({
-  selector: 'app-bots',
-  templateUrl: './bots.component.html',
-  styleUrls: ['./bots.component.scss'],
+  selector: 'app-squads',
+  templateUrl: './squads.component.html',
+  styleUrls: ['./squads.component.scss'],
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -38,17 +37,17 @@ import { BotState } from '../../../models/bot-state.dto';
     NzDividerModule
   ]
 })
-export class BotsComponent implements OnInit {
+export class SquadsComponent implements OnInit {
   dataSource: WarzoneDto[] = [];
   total = 0;
   pageIndex = 1;
   pageSize = 10;
   searchControl = new FormControl();
-  data$: Observable<BotState[]> = of([]);
+  data$: Observable<Squad[]> = of([]);
   isLoading = true;
 
   constructor(
-    private readonly botService: BotService,
+    private readonly serverService: ServerService,
     private readonly eventManager: EventManager,
     private readonly router: Router) { }
 
@@ -56,13 +55,12 @@ export class BotsComponent implements OnInit {
   pageSize$ = new BehaviorSubject<number>(10);
 
   ngOnInit() {
-    this.data$ = this.botService.getBotTable()
-    .pipe(
-      tap((bots) => {
+    this.data$ = this.serverService.getSquads()
+      .pipe(tap((squads) => {
         this.isLoading = false;
-        this.total = bots.length;
-      }), 
-      switchMap(page => of(page)));
+        this.total = squads.length;
+      }),
+        switchMap(page => of(page)));
   }
 
   pageIndexChange(index: number) {
@@ -72,22 +70,5 @@ export class BotsComponent implements OnInit {
   pageSizeChange(size: number) {
     this.pageSize$.next(size);
   }
-
-  sendReconnect(botId: string) {
-    this.botService.reconnect(botId)
-      .subscribe({
-        next: (value) => {
-          var message = `Reconnect signal sent to bot ${botId}`;
-          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', message, 'success')));
-        },
-        error: (err) => {
-          var msg = err.error?.details ?? 'One or more validation errors ocurred.';
-          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', msg, 'error')));
-        }
-      });
-  }
-
-
-  cancelDelete() { }
 
 }

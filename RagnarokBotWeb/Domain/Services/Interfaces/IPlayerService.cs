@@ -10,7 +10,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     public interface IPlayerService
     {
         bool IsPlayerConnected(string steamId64, long? serverId = null);
-        Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name);
+        Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, float x, float y, float z, string ipAddress);
         List<ScumPlayer> OnlinePlayers(long serverId);
         Task<List<ScumPlayer>> OfflinePlayers(long serverId);
         void ResetPlayersConnection(long? serverId = null);
@@ -29,6 +29,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<Page<PlayerDto>> GetPlayers(Paginator paginator, string? filter);
         Task<Page<PlayerDto>> GetVipPlayers(Paginator paginator, string? filter);
         Task<PlayerDto> GetPlayer(long id);
+        Task<PlayerDto> GetPlayerBySteamId(string id);
         Task<PlayerDto> RemoveVip(long id);
         Task<PlayerDto> RemoveDiscordRole(long id, ulong discordId);
         Task<PlayerDto> RemoveSilence(long id);

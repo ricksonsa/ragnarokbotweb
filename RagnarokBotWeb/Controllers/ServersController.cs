@@ -61,6 +61,22 @@ namespace RagnarokBotWeb.Controllers
             return Ok(players);
         }
 
+        [HttpGet("squads")]
+        public IActionResult GetSquads()
+        {
+            _logger.LogDebug("Get request to fetch scum squads");
+            var squads = _serverService.GetSquads();
+            return Ok(squads);
+        }
+
+        [HttpGet("squads/{id}")]
+        public IActionResult GetSquads(int id)
+        {
+            _logger.LogDebug("Get request to fetch scum squad by id");
+            var squad = _serverService.GetSquad(id);
+            return Ok(squad);
+        }
+
         [HttpGet("discord")]
         public async Task<IActionResult> GetDiscord()
         {

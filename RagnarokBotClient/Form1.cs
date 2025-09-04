@@ -38,7 +38,6 @@ namespace RagnarokBotClient
 
         private readonly System.Windows.Forms.Timer _pingTimer;
 
-
         public Form1()
         {
             InitializeComponent();

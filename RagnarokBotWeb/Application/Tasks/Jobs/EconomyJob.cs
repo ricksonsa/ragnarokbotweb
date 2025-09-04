@@ -1,8 +1,6 @@
 ﻿using Quartz;
-using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
-using RagnarokBotWeb.HostedServices.Base;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs;
@@ -25,16 +23,16 @@ public class EconomyJob(
             var server = await GetServerAsync(context);
             var fileType = GetFileTypeFromContext(context);
 
-            var processor = new ScumFileProcessor(server, uow);
+            //var processor = new ScumFileProcessor(server, uow);
 
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService, context.CancellationToken))
-            {
-                if (line.Contains("changed their name"))
-                {
-                    var (steamId64, scumId, changedName) = new ChangeNameLogParser().Parse(line);
-                    await playerService.PlayerConnected(server, steamId64, scumId, changedName);
-                }
-            }
+            //await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService, context.CancellationToken))
+            //{
+            //    if (line.Contains("changed their name"))
+            //    {
+            //        var (steamId64, scumId, changedName) = new ChangeNameLogParser().Parse(line);
+            //        await playerService.PlayerConnected(server, steamId64, scumId, changedName);
+            //    }
+            //}
         }
         catch (ServerUncompliantException) { }
         catch (FtpNotSetException) { }

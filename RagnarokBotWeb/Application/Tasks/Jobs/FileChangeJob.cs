@@ -29,7 +29,7 @@ public class FileChangeJob(
                 try
                 {
                     if (command is null) throw new ArgumentNullException("command");
-                    var handler = new ChangeFileHandlerFactory(ftpService, unitOfWork).CreateAddRemoveLineHandler(command.FileChangeType);
+                    var handler = new ChangeFileHandlerFactory(ftpService, unitOfWork).CreateFileLineHandler(command.FileChangeType);
                     await handler.Handle(command);
                     if (command.BotCommand is not null) await botService.SendCommand(command.ServerId, command.BotCommand);
                 }

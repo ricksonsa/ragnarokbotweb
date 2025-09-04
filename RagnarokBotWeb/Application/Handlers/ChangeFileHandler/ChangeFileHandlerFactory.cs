@@ -13,6 +13,7 @@ namespace RagnarokBotWeb.Application.Handlers.ChangeFileHandler
             { EFileChangeType.BannedUsers, "BannedUsers.ini" },
             { EFileChangeType.Whitelist, "WhitelistedUsers.ini" },
             { EFileChangeType.SilencedUsers, "SilencedUsers.ini" },
+            { EFileChangeType.ServerSettings, "ServerSettings.ini" },
         };
 
         public ChangeFileHandlerFactory(IFtpService ftpService, IUnitOfWork unitOfWork)
@@ -21,9 +22,9 @@ namespace RagnarokBotWeb.Application.Handlers.ChangeFileHandler
             _unitOfWork = unitOfWork;
         }
 
-        public IChangeFileHandler CreateAddRemoveLineHandler(EFileChangeType changeType)
+        public IChangeFileHandler CreateFileLineHandler(EFileChangeType changeType)
         {
-            return new AddRemoveLineHandler(_files[changeType], _ftpService, _unitOfWork);
+            return new FileLineChangeHandler(_files[changeType], _ftpService, _unitOfWork);
         }
     }
 }

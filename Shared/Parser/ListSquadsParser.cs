@@ -5,38 +5,48 @@ namespace Shared.Parser
 {
     public static class ListSquadsParser
     {
+        private static readonly Regex SquadRegex =
+       new(@"\[SquadId:\s*(\d+)\s*SquadName:\s*(.+?)\]", RegexOptions.Compiled);
+
+        private static readonly Regex MemberRegex =
+            new(@"SteamId:\s*(\d+)\s*SteamName:\s*(.+?)\s*CharacterName:\s*(.+?)\s*MemberRank:\s*(\d+)", RegexOptions.Compiled);
+
         public static List<ScumSquad> Parse(string input)
         {
             var squads = new List<ScumSquad>();
-            string[] values = Regex.Split(input.TrimStart().TrimEnd(), $"\r\n\r\n");
+            ScumSquad? currentSquad = null;
 
-            foreach (string value in values)
+            foreach (var rawLine in input.Split('\n'))
             {
-                // Match squad header
-                var squadHeaderMatch = Regex.Match(value, @"\[SquadId:\s*(\d+)\s+SquadName:\s*(.+?)\]");
-                if (squadHeaderMatch.Success)
+                var line = rawLine.Trim();
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                // Check if this line defines a squad
+                var squadMatch = SquadRegex.Match(line);
+                if (squadMatch.Success)
                 {
-                    var squad = new ScumSquad
+                    currentSquad = new ScumSquad
                     {
-                        SquadId = int.Parse(squadHeaderMatch.Groups[1].Value),
-                        SquadName = squadHeaderMatch.Groups[2].Value
+                        SquadId = int.Parse(squadMatch.Groups[1].Value),
+                        SquadName = squadMatch.Groups[2].Value.Trim()
                     };
+                    squads.Add(currentSquad);
+                    continue;
+                }
 
-                    // Match members
-                    var memberMatches = Regex.Matches(value, @"SteamId:\s*(\d+)\s+SteamName:\s*(.+?)\s+CharacterName:\s*(.+?)\s+MemberRank:\s*(\d+)");
-
-                    foreach (Match match in memberMatches)
+                // Check if this line defines a member
+                var memberMatch = MemberRegex.Match(line);
+                if (memberMatch.Success && currentSquad != null)
+                {
+                    var member = new SquadMember
                     {
-                        squad.Members.Add(new SquadMember
-                        {
-                            SteamId = match.Groups[1].Value,
-                            SteamName = match.Groups[2].Value,
-                            CharacterName = match.Groups[3].Value,
-                            MemberRank = int.Parse(match.Groups[4].Value)
-                        });
-                    }
-
-                    squads.Add(squad);
+                        SteamId = memberMatch.Groups[1].Value,
+                        SteamName = memberMatch.Groups[2].Value.Trim(),
+                        CharacterName = memberMatch.Groups[3].Value.Trim(),
+                        MemberRank = int.Parse(memberMatch.Groups[4].Value)
+                    };
+                    currentSquad.Members.Add(member);
                 }
             }
 

@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, FormControl, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import cronstrue from 'cronstrue';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
@@ -46,6 +45,7 @@ import { CustomTaskDto } from '../../../../models/custom-task.dto';
 export class CustomTaskComponent implements OnInit {
   taskForm!: FormGroup;
   commandsForm!: FormGroup;
+  serverSettingsForm!: FormGroup;
   private fb = inject(NonNullableFormBuilder);
   cronEditor = false;
   cron: any;
@@ -92,6 +92,11 @@ export class CustomTaskComponent implements OnInit {
       commands: [null, Validators.required]
     });
 
+    this.serverSettingsForm = this.fb.group({
+      key: [null, [Validators.required]],
+      value: [null, [Validators.required]],
+    });
+
   }
 
   ngOnInit() {
@@ -102,6 +107,15 @@ export class CustomTaskComponent implements OnInit {
         this.cron = task.cron;
         this.commands = task.commands;
         this.taskForm.patchValue(task);
+
+        if (task.taskType === 2) {
+          const key = task.commands.split('=')[0];
+          const value = task.commands.split('=')[1];
+          this.serverSettingsForm.patchValue({
+            key,
+            value
+          });
+        }
       }
     });
   }
@@ -137,8 +151,23 @@ export class CustomTaskComponent implements OnInit {
       });
       return;
     }
+
+    const task = this.taskForm.value;
+    if (task.taskType === 2) {
+      if (this.serverSettingsForm.invalid) {
+        Object.values(this.serverSettingsForm.controls).forEach(control => {
+          if (control.invalid) {
+            control.markAsDirty();
+            control.updateValueAndValidity({ onlySelf: true });
+          }
+        });
+        return;
+      }
+      task.commands = `${this.serverSettingsForm.value.key}=${this.serverSettingsForm.value.value}`;
+    }
     this.loading = true;
-    this.taskService.save(this.taskForm.value)
+
+    this.taskService.save(task)
       .subscribe({
         next: (value) => {
           this.loading = false;

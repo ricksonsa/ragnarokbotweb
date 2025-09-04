@@ -83,6 +83,13 @@ namespace RagnarokBotWeb.Controllers
             return Ok(player);
         }
 
+        [HttpGet("steam/{id}")]
+        public async Task<IActionResult> GetPlayerBySteam(string id)
+        {
+            var player = await _playerService.GetPlayerBySteamId(id);
+            return Ok(player);
+        }
+
         [HttpGet("statistics/monthly-registers")]
         public async Task<IActionResult> GetPlayerMonthly()
         {

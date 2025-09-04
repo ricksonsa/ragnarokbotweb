@@ -48,7 +48,7 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
             }
 
             var modal = new ModalBuilder()
-                .WithTitle($"Transfer - Transfer Tax(%{(int)(server.Exchange.TransferRate * 100)})")
+                .WithTitle($"Transfer - Transfer Tax({(int)(server.Exchange.TransferRate * 100)}%)")
                 .WithCustomId("transfer_modal")
                 .AddTextInput("Steam ID", "transfer_steam_id", TextInputStyle.Paragraph, placeholder: "Enter the steam id of the receiver", required: true)
                 .AddTextInput("Amount", "transfer_amount", TextInputStyle.Paragraph, placeholder: "Enter the amount to transfer", required: true);

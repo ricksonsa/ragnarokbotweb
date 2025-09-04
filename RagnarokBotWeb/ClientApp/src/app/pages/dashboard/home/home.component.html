@@ -133,15 +133,13 @@
             <th>Name</th>
             <th>Money</th>
             <th>Gold</th>
-            <th>Coins</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let data of playersTable.data">
-            <td><a [routerLink]="['/management', 'players', data.id]">{{data.name}}</a></td>
+            <td><a [routerLink]="['/management', 'players', data.steamId64]">{{data.name}}</a></td>
             <td>{{data.money}}</td>
             <td>{{data.gold}}</td>
-            <td>{{data.coin}}</td>
           </tr>
         </tbody>
       </nz-table>

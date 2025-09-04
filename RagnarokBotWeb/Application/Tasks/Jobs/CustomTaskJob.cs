@@ -1,4 +1,5 @@
 ﻿using Quartz;
+using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -62,12 +63,17 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         commands.Add(new BotCommand().SayOrCommand(lines.ElementAt(index)));
                         break;
 
-                        //case Domain.Enums.ECustomTaskType.ServerSettings:
-                        // var command = new BotCommand();
-                        //    foreach (var line in customTask.Commands.ToLines())
-                        //        command = command.SayOrCommand(line);
-                        //    cache.EnqueueCommand(server.Id, command);
-                        //    break;
+                    case Domain.Enums.ECustomTaskType.ServerSettings:
+                        var fileChangeCommand = new FileChangeCommand()
+                        {
+                            ServerId = server.Id,
+                            FileChangeMethod = Domain.Enums.EFileChangeMethod.UpdateLine,
+                            FileChangeType = Domain.Enums.EFileChangeType.ServerSettings,
+                            Key = customTask.Commands.Split('=')[0],
+                            Value = customTask.Commands.Split('=')[1]
+                        };
+                        cache.EnqueueFileChangeCommand(server.Id, fileChangeCommand);
+                        break;
                 }
 
                 foreach (var command in commands)

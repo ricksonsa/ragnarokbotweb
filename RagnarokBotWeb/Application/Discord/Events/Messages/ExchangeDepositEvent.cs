@@ -80,7 +80,7 @@ public class ExchangeDepositEvent : IMessageEventHandler
 
             if (long.TryParse(amount, out var value))
             {
-                if (player.Money < new CoinConverterManager(player.ScumServer).ToDiscordCoins(value))
+                if (player.Money < value)
                 {
                     embedBuilder.WithColor(Color.Red);
                     embedBuilder.WithDescription("You don't have the amount of in-game money you are trying to deposit");
@@ -88,7 +88,7 @@ public class ExchangeDepositEvent : IMessageEventHandler
                     return;
                 }
 
-                await orderService.ExchangeWithdrawOrder(player.ScumServer.Id, player.DiscordId.Value, value);
+                await orderService.ExchangeDepositOrder(player.ScumServer.Id, player.DiscordId.Value, new CoinConverterManager(player.ScumServer).ToDiscordCoins(value));
                 embedBuilder.WithColor(Color.Green);
                 embedBuilder.WithDescription($"Your deposit of {value} in-game money to coins will be processed soon");
                 await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);

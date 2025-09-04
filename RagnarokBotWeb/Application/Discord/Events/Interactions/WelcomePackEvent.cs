@@ -46,7 +46,7 @@ public class WelcomePackEvent : IInteractionEventHandler
             {
                 var dmWarningMessage = GetDmWarningMessage(playerRegister);
                 await dmChannel.SendMessageAsync(dmWarningMessage);
-                await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} Você já solicitou seu Welcome Pack!",
+                await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} You have already requested your Welcome Pack!",
                     ephemeral: true);
                 return;
             }
@@ -63,16 +63,16 @@ public class WelcomePackEvent : IInteractionEventHandler
             await playerRegisterService.SaveAsync(newPlayerRegister);
 
             await dmChannel.SendMessageAsync(
-                $"{DiscordEmoji.Gift} Para receber seu Welcome Pack copie e cole o código {BuildWelcomePackCommand(registerId)} no chat do jogo!");
+$"{DiscordEmoji.Gift} To receive your Welcome Pack, copy and paste the code bellow into the game chat!\n{BuildWelcomePackCommand(registerId)}");
 
-            await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} Seu Welcome Pack foi enviado na sua DM!",
+            await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} Your Welcome Pack has been sent to your DM!",
                 ephemeral: true);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "An error occurred while handling Welcome Pack event.");
             await component.RespondAsync(
-                $"{DiscordEmoji.Warning} Não consegui enviar sua DM. Certifique-se de que suas mensagens diretas estão ativadas!",
+                $"{DiscordEmoji.Warning} I couldn't send your DM. Make sure your direct messages are turned on!",
                 ephemeral: true
             );
         }
@@ -84,10 +84,10 @@ public class WelcomePackEvent : IInteractionEventHandler
         return status switch
         {
             EPlayerRegisterStatus.Registering =>
-                "Vi que você já pediu o Welcome Pack e ainda não colou o código no chat do jogo. " +
-                $"Copie e cole o código {BuildWelcomePackCommand(playerRegister.WelcomePackId)} no chat do jogo!",
+                "I saw that you already requested the Welcome Pack and haven't yet pasted the code into the game chat. " +
+                $"Copy and paste the code bellow into the game chat!\n{BuildWelcomePackCommand(playerRegister.WelcomePackId)}",
             EPlayerRegisterStatus.Registered =>
-                $"Vi que você pediu um novo Welcome Pack, infelizmente não posso te ajudar {DiscordEmoji.Pensive}.",
+                $"I saw that you requested a new Welcome Pack, unfortunately I can't help you {DiscordEmoji.Pensive}.",
             _ => throw new ArgumentOutOfRangeException(nameof(status), $"Unexpected player register status: {status}.")
         };
     }

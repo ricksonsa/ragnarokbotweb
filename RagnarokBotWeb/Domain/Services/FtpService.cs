@@ -5,6 +5,7 @@ using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.FTP;
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace RagnarokBotWeb.Domain.Services;
 
@@ -164,6 +165,57 @@ public class FtpService : IFtpService, IAsyncDisposable
         catch (ObjectDisposedException)
         {
             _logger.LogError("FTP client was disposed during CopyFilesAsync");
+            throw;
+        }
+    }
+
+
+    public async Task UpdateIniValueAsync(
+      AsyncFtpClient client,
+      string remoteFilePath,
+      string key,
+      string newValue)
+    {
+        try
+        {
+            if (client.IsDisposed)
+                throw new ObjectDisposedException(nameof(client));
+
+            // 1. Download file
+            using var downloadStream = new MemoryStream();
+            if (!await client.DownloadStream(downloadStream, remoteFilePath))
+                throw new IOException($"Failed to download {remoteFilePath}");
+
+            downloadStream.Position = 0;
+            var content = await new StreamReader(downloadStream, Encoding.UTF8).ReadToEndAsync();
+            var lines = content.Split(Environment.NewLine).ToList();
+
+            if (!key.StartsWith("scum.", StringComparison.OrdinalIgnoreCase))
+                key = "scum." + key;
+
+            // 2. Find & replace key
+            bool updated = false;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (Regex.IsMatch(lines[i], $"^{Regex.Escape(key)}\\s*=", RegexOptions.IgnoreCase))
+                {
+                    lines[i] = $"{key}={newValue}";
+                    updated = true;
+                    break;
+                }
+            }
+
+            if (!updated)
+                throw new KeyNotFoundException($"Key '{key}' not found in INI file.");
+
+            // 3. Upload back
+            var updatedContent = string.Join(Environment.NewLine, lines);
+            using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(updatedContent));
+            await client.UploadStream(uploadStream, remoteFilePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update INI file at {Path}", remoteFilePath);
             throw;
         }
     }

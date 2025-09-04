@@ -1,0 +1,30 @@
+<div class="main">
+  <ng-template #totalTemplate>
+    <p nz-typography style="margin: 0">{{total}} total squads</p>
+  </ng-template>
+  <nz-card nzTitle="Squads">
+    <nz-table nzSize="small" #basicTable [nzData]="data$ | async" [nzFrontPagination]="true"
+      [nzShowTotal]="totalTemplate" [nzTotal]="total" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex"
+      [nzLoading]="isLoading">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Squad Name</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of basicTable.data">
+          <td>{{data.squadId}}</td>
+          <td>{{data.squadName}}</td>
+          <td>
+            <button nz-button nzType="link" [routerLink]="[data.squadId]">
+              <nz-icon nzType="edit"></nz-icon>
+              Edit
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>

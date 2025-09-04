@@ -53,6 +53,14 @@
       </nz-form-item>
 
       <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Squad</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <p style="margin: 0;"><a
+              [routerLink]="['/management', 'squads', playerForm.value.squadId]">{{playerForm.value.squadName}}</a></p>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="name">Last Logged In</nz-form-label>
         <nz-form-control [nzSpan]="24">
           <p style="margin: 0;"><b>{{ playerForm.value.lastLoggedIn | date: 'fullDate' }}</b></p>
@@ -81,6 +89,13 @@
         <nz-form-label [nzSpan]="0" nzFor="name">Discord Name</nz-form-label>
         <nz-form-control [nzSpan]="24">
           <p style="margin: 0;"><b>{{ playerForm.value.discordName }}</b></p>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="name">Ip Address</nz-form-label>
+        <nz-form-control [nzSpan]="24">
+          <p style="margin: 0;"><b>{{ playerForm.value.ipAddress }}</b></p>
         </nz-form-control>
       </nz-form-item>
 

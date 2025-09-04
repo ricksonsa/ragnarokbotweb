@@ -140,12 +140,23 @@ namespace RagnarokBotWeb.Domain.Services
             var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server is null) return [];
 
-            var onlinePlayers = _cacheService.GetConnectedPlayers(serverId.Value).ToList();
-            var players = (await _unitOfWork.Players.Include(player => player.ScumServer)
-                .Where(player => player.ScumServerId == serverId.Value)
-                .ToListAsync()).Where(player => onlinePlayers.Any(op => op.SteamID == player.SteamId64));
+            var onlinePlayers = _cacheService.GetConnectedPlayers(serverId.Value).Select(p => new PlayerDto
+            {
+                Online = true,
+                SteamId64 = p.SteamID,
+                Name = p.Name,
+                SteamName = p.SteamName,
+                Fame = p.Fame,
+                Money = p.AccountBalance,
+                Gold = p.GoldBalance
+            });
 
-            return players.Select(_mapper.Map<PlayerDto>).ToList();
+            foreach (var player in onlinePlayers)
+            {
+                player.SetSquad(_cacheService.GetSquads(server.Id).FirstOrDefault(squads => squads.Members.Any(m => m.SteamId == player.SteamId64)));
+            }
+
+            return onlinePlayers.ToList();
         }
 
         public async Task<List<Shared.Models.ScumPlayer>> GetOnlineScumPlayers()
@@ -524,6 +535,18 @@ namespace RagnarokBotWeb.Domain.Services
             await _scumServerRepository.SaveAsync();
 
             return _mapper.Map<ScumServerDto>(server);
+        }
+
+        public List<Shared.Models.ScumSquad> GetSquads()
+        {
+            var server = ServerId();
+            return _cacheService.GetSquads(server!.Value).ToList();
+        }
+
+        public Shared.Models.ScumSquad? GetSquad(int squadId)
+        {
+            var server = ServerId();
+            return _cacheService.GetSquads(server!.Value).FirstOrDefault(s => s.SquadId == squadId);
         }
     }
 }

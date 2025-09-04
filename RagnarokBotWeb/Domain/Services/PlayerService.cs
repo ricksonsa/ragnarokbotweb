@@ -55,9 +55,33 @@ namespace RagnarokBotWeb.Domain.Services
             var player = await _playerRepository.FindByIdAsync(id);
             if (player is null) throw new NotFoundException("Player not found");
 
+            ValidateServerOwner(player.ScumServer);
+
             var playerDto = _mapper.Map<PlayerDto>(player);
             playerDto.Online = _cacheService.GetConnectedPlayers(player.ScumServerId)
                 .Any(p => p.SteamID == playerDto.SteamId64);
+
+            playerDto.SetSquad(_cacheService
+                .GetSquads(player.ScumServerId)
+                .FirstOrDefault(squads => squads.Members.Any(m => m.SteamId == player.SteamId64)));
+
+            return playerDto;
+        }
+
+        public async Task<PlayerDto> GetPlayerBySteamId(string id)
+        {
+            var serverId = ServerId();
+            var player = await _playerRepository.FindOneWithServerBySteamIdAsync(serverId!.Value, id);
+            if (player is null) throw new NotFoundException("Player not found");
+            ValidateServerOwner(player.ScumServer);
+
+            var playerDto = _mapper.Map<PlayerDto>(player);
+            playerDto.Online = _cacheService.GetConnectedPlayers(player.ScumServerId)
+                .Any(p => p.SteamID == playerDto.SteamId64);
+
+            playerDto.SetSquad(_cacheService
+                .GetSquads(player.ScumServerId)
+                .FirstOrDefault(squads => squads.Members.Any(m => m.SteamId == player.SteamId64)));
 
             return playerDto;
         }
@@ -71,6 +95,10 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 player.Online = _cacheService.GetConnectedPlayers(serverId.Value)
                     .Any(connectedPlayer => connectedPlayer.SteamID == player.SteamId64);
+
+                player.SetSquad(_cacheService
+                    .GetSquads(serverId.Value)
+                    .FirstOrDefault(squads => squads.Members.Any(m => m.SteamId == player.SteamId64)));
             }
             return new Page<PlayerDto>(content, page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
@@ -84,6 +112,10 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 player.Online = _cacheService.GetConnectedPlayers(serverId.Value)
                     .Any(connectedPlayer => connectedPlayer.SteamID == player.SteamId64);
+
+                player.SetSquad(_cacheService
+                    .GetSquads(serverId.Value)
+                    .FirstOrDefault(squads => squads.Members.Any(m => m.SteamId == player.SteamId64)));
             }
             return new Page<PlayerDto>(content, page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
@@ -131,7 +163,7 @@ namespace RagnarokBotWeb.Domain.Services
             }
         }
 
-        public async Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name)
+        public async Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, float x, float y, float z, string ipAddress)
         {
             var player = await _playerRepository.FindOneWithServerAsync(p => p.SteamId64 == steamId64 && p.ScumServer.Id == server.Id);
 
@@ -139,17 +171,15 @@ namespace RagnarokBotWeb.Domain.Services
             player.SteamId64 = steamId64;
             player.ScumId = scumId;
             player.Name = name;
-            player.LastLoggedIn = DateTime.Now;
+            player.LastLoggedIn = DateTime.UtcNow;
             player.ScumServer = (await _scumServerRepository.FindByIdAsync(server.Id))!;
+            player.X = x;
+            player.Y = y;
+            player.Z = z;
+            player.IpAddress = ipAddress;
 
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
-
-
-            var command = new BotCommand();
-            command.ListPlayers();
-            await _botService.SendCommand(server.Id, command);
-
         }
 
         public ScumPlayer? PlayerDisconnected(long serverId, string steamId64)

@@ -48,7 +48,7 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
             }
 
             var modal = new ModalBuilder()
-                .WithTitle($"Withdraw - Conversion Bonus(%{(int)(server.Exchange.WithdrawRate * 100)})")
+                .WithTitle($"Withdraw - Conversion Bonus({(int)(server.Exchange.WithdrawRate * 100)}%)")
                 .WithCustomId("withdraw_modal")
                 .AddTextInput("Amount", "withdraw_amount", TextInputStyle.Paragraph, placeholder: "Enter the amount to transfer from coins to in-game money", required: true);
 

@@ -48,7 +48,7 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
             }
 
             var modal = new ModalBuilder()
-                .WithTitle($"Deposit - Deposit Tax(%{(int)(server.Exchange.DepositRate * 100)})")
+                .WithTitle($"Deposit - Deposit Tax({(int)(server.Exchange.DepositRate * 100)}%)")
                 .WithCustomId("deposit_modal")
                 .AddTextInput("Amount", "deposit_amount", TextInputStyle.Paragraph, placeholder: "Enter the amount to transfer from in-game money to coins", required: true);
 

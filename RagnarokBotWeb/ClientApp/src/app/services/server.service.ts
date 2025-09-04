@@ -6,6 +6,7 @@ import { AuthenticationService } from './authentication.service';
 import { GuildDto } from '../models/guild';
 import { UavDto } from '../models/uav.dto';
 import { ExchangeDto } from '../models/exchange.dto';
+import { Squad } from '../models/squad.dto';
 
 @Injectable({
   providedIn: 'root'
@@ -48,6 +49,14 @@ export class ServerService {
 
   getDiscordRoles() {
     return this.http.get<{ discordId: string, name: string }[]>(`${environment.apiUrl}/api/servers/discord/roles`);
+  }
+
+  getSquads() {
+    return this.http.get<Squad[]>(`${environment.apiUrl}/api/servers/squads`);
+  }
+
+  getSquad(squadId: number) {
+    return this.http.get<Squad>(`${environment.apiUrl}/api/servers/squads/${squadId}`);
   }
 
   createDefaultChannels() {

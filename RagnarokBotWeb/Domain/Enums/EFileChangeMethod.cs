@@ -4,6 +4,7 @@
     {
         None = 0,
         AddLine = 1,
-        RemoveLine = 2
+        RemoveLine = 2,
+        UpdateLine = 3
     }
 }

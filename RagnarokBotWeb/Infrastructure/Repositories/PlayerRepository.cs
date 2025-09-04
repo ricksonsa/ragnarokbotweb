@@ -23,6 +23,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Exchange)
             .Include(player => player.ScumServer.Tenant)
             .Include(player => player.ScumServer.Tenant.Payments)
                 .ThenInclude(payment => payment.Subscription)
@@ -37,6 +38,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Exchange)
             .Include(warzone => warzone.ScumServer.Tenant)
             .Include(warzone => warzone.ScumServer.Tenant.Payments)
                 .ThenInclude(payment => payment.Subscription)
@@ -51,6 +53,8 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Exchange)
+            .Include(player => player.ScumServer.Guild)
             .Include(warzone => warzone.ScumServer.Tenant)
             .Include(warzone => warzone.ScumServer.Tenant.Payments)
                 .ThenInclude(payment => payment.Subscription)
@@ -64,6 +68,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Exchange)
             .Where(player => player.ScumServer.Id == serverId)
             .ToListAsync();
     }
@@ -75,6 +80,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Exchange)
             .OrderByDescending(player => player.Id)
             .Where(player => player.ScumServer.Id == serverId);
 
@@ -97,6 +103,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Bans)
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
+            .Include(player => player.ScumServer.Exchange)
             .OrderByDescending(player => player.Id)
             .Where(player => player.ScumServer.Id == serverId
                 && player.Vips.Any(vip => vip.Indefinitely || vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !vip.Processed));

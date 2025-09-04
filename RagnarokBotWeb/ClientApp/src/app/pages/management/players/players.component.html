@@ -26,7 +26,6 @@
           <th>Discord Name</th>
           <th>VIP</th>
           <th>Banned</th>
-          <th>Bot Coin</th>
           <th>Last Login</th>
           <th></th>
         </tr>
@@ -51,10 +50,9 @@
             </nz-icon>
           </td>
           <td>No</td>
-          <td>{{data.coin}}</td>
           <td>{{data.lastLoggedIn | date: 'mediumDate'}}</td>
           <td>
-            <button nz-button nzType="link" [routerLink]="[data.id]">
+            <button nz-button nzType="link" [routerLink]="[data.steamId64]">
               <nz-icon nzType="edit"></nz-icon>
               Edit
             </button>

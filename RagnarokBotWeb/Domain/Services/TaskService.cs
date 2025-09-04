@@ -45,10 +45,11 @@ namespace RagnarokBotWeb.Domain.Services
             _mapper = mapper;
         }
 
-        private static ITrigger CronTrigger(string cron, bool startNow = false)
+        private static ITrigger CronTrigger(string cron, ScumServer server, bool startNow = false)
         {
             var trigger = TriggerBuilder.Create()
-                        .WithCronSchedule(cron);
+                        .WithCronSchedule(cron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()));
 
             if (startNow)
                 trigger.StartNow();
@@ -56,36 +57,44 @@ namespace RagnarokBotWeb.Domain.Services
             return trigger.Build();
         }
 
-        private static ITrigger OneMinTrigger() => TriggerBuilder.Create()
-                         .WithCronSchedule(AppSettingsStatic.OneMinCron)
+        private static ITrigger OneMinTrigger(ScumServer server) => TriggerBuilder.Create()
+                         .WithCronSchedule(AppSettingsStatic.OneMinCron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
                          .Build();
 
-        private static ITrigger TwoMinTrigger() => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.TwoMinCron)
+        private static ITrigger TwoMinTrigger(ScumServer server) => TriggerBuilder.Create()
+                            .WithCronSchedule(AppSettingsStatic.TwoMinCron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
                             .Build();
 
-        private static ITrigger DefaultTrigger() => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.DefaultCron)
+        private static ITrigger DefaultTrigger(ScumServer server) => TriggerBuilder.Create()
+                            .WithCronSchedule(AppSettingsStatic.DefaultCron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
                             .Build();
 
-        private static ITrigger FiveMinTrigger() => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.FiveMinCron)
+        private static ITrigger FiveMinTrigger(ScumServer server) => TriggerBuilder.Create()
+                            .WithCronSchedule(AppSettingsStatic.FiveMinCron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
                             .Build();
 
-        private static ITrigger TenMinTrigger() => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.TenMinCron)
+        private static ITrigger TenMinTrigger(ScumServer server) => TriggerBuilder.Create()
+                            .WithCronSchedule(AppSettingsStatic.TenMinCron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
                             .Build();
 
-        private static ITrigger TenSecondsTrigger() => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.TenSecondsCron)
+        private static ITrigger TenSecondsTrigger(ScumServer server) => TriggerBuilder.Create()
+                            .WithCronSchedule(AppSettingsStatic.TenSecondsCron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
                             .Build();
 
-        private static ITrigger ThirtySecondsTrigger() => TriggerBuilder.Create()
-                          .WithCronSchedule(AppSettingsStatic.ThirtySecondsCron)
+        private static ITrigger ThirtySecondsTrigger(ScumServer server) => TriggerBuilder.Create()
+                          .WithCronSchedule(AppSettingsStatic.ThirtySecondsCron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
                           .Build();
 
-        private static ITrigger EveryDayTrigger() => TriggerBuilder.Create()
-                          .WithCronSchedule(AppSettingsStatic.EveryDayCron)
+        private static ITrigger EveryDayTrigger(ScumServer server) => TriggerBuilder.Create()
+                          .WithCronSchedule(AppSettingsStatic.EveryDayCron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
                           .Build();
 
         private async Task ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken = default)
@@ -96,92 +105,91 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity(nameof(OrderResetJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            await scheduler.ScheduleJob(job, FiveMinTrigger(server));
 
             job = JobBuilder.Create<ListPlayersJob>()
                 .WithIdentity(nameof(ListPlayersJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, OneMinTrigger());
+            await scheduler.ScheduleJob(job, OneMinTrigger(server));
 
             job = JobBuilder.Create<ListSquadsJob>()
                 .WithIdentity(nameof(ListSquadsJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?"));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?", server));
 
             job = JobBuilder.Create<ListFlagsJob>()
                 .WithIdentity(nameof(ListFlagsJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 0/2 * * ?"));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 0/2 * * ?", server));
 
             job = JobBuilder.Create<CommandQueueProcessorJob>()
                 .WithIdentity(nameof(CommandQueueProcessorJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, ThirtySecondsTrigger());
+            await scheduler.ScheduleJob(job, ThirtySecondsTrigger(server));
 
             job = JobBuilder.Create<OrderCommandJob>()
                 .WithIdentity(nameof(OrderCommandJob), $"ServerJobs({server.Id})")
                  .UsingJobData("server_id", server.Id)
                  .Build();
-            await scheduler.ScheduleJob(job, TenSecondsTrigger());
+            await scheduler.ScheduleJob(job, TenSecondsTrigger(server));
 
             job = JobBuilder.Create<UavClearJob>()
                 .WithIdentity(nameof(UavClearJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, OneMinTrigger());
+            await scheduler.ScheduleJob(job, OneMinTrigger(server));
 
             job = JobBuilder.Create<WarzoneBootstartJob>()
                 .WithIdentity(nameof(WarzoneBootstartJob), $"WarzoneJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0/10 * * * ?", startNow: true));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0/10 * * * ?", server, startNow: true));
 
             job = JobBuilder.Create<BunkerStateJob>()
                 .WithIdentity(nameof(BunkerStateJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: false));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", server, startNow: false));
 
             job = JobBuilder.Create<KillRankJob>()
                 .WithIdentity(nameof(KillRankJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: false));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", server, startNow: false));
 
             job = JobBuilder.Create<LockpickRankJob>()
                 .WithIdentity(nameof(LockpickRankJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", startNow: false));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", server, startNow: false));
 
             job = JobBuilder.Create<LockpickRankDailyAwardJob>()
                 .WithIdentity(nameof(LockpickRankDailyAwardJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 55 23 * * ? *", startNow: false));
-
+            await scheduler.ScheduleJob(job, CronTrigger("0 55 23 * * ? *", server, startNow: false));
 
             job = JobBuilder.Create<KillRankDailyAwardJob>()
                 .WithIdentity(nameof(KillRankDailyAwardJob), $"ServerJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 55 23 * * ? *", startNow: false));
+            await scheduler.ScheduleJob(job, CronTrigger("0 55 23 * * ? *", server, startNow: false));
 
             job = JobBuilder.Create<KillRankWeeklyAwardJob>()
               .WithIdentity(nameof(KillRankWeeklyAwardJob), $"ServerJobs({server.Id})")
               .UsingJobData("server_id", server.Id)
               .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 0 ? * SUN *", startNow: false));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 0 ? * SUN *", server, startNow: false));
 
             job = JobBuilder.Create<KillRankMonthlyAwardJob>()
               .WithIdentity(nameof(KillRankMonthlyAwardJob), $"ServerJobs({server.Id})")
               .UsingJobData("server_id", server.Id)
               .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 0 L * ? *", startNow: false));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 0 L * ? *", server, startNow: false));
 
             await AddPaydayJob(server);
 
@@ -197,70 +205,77 @@ namespace RagnarokBotWeb.Domain.Services
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Chat.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0/10 * * * * ?"));
+            await scheduler.ScheduleJob(job, CronTrigger("0/10 * * * * ?", server));
 
             job = JobBuilder.Create<KillLogJob>()
                    .WithIdentity(nameof(KillLogJob), $"FtpJobs({server.Id})")
                    .UsingJobData("server_id", server.Id)
                    .UsingJobData("file_type", EFileType.Kill.ToString())
                    .Build();
-            await scheduler.ScheduleJob(job, ThirtySecondsTrigger());
+            await scheduler.ScheduleJob(job, ThirtySecondsTrigger(server));
 
             job = JobBuilder.Create<EconomyJob>()
                 .WithIdentity(nameof(EconomyJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Economy.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger());
+            await scheduler.ScheduleJob(job, FiveMinTrigger(server));
+
+            job = JobBuilder.Create<LoginJob>()
+                .WithIdentity(nameof(LoginJob), $"FtpJobs({server.Id})")
+                .UsingJobData("server_id", server.Id)
+                .UsingJobData("file_type", EFileType.Login.ToString())
+                .Build();
+            await scheduler.ScheduleJob(job, OneMinTrigger(server));
 
             job = JobBuilder.Create<GamePlayJob>()
                 .WithIdentity(nameof(GamePlayJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .UsingJobData("file_type", EFileType.Gameplay.ToString())
                 .Build();
-            await scheduler.ScheduleJob(job, ThirtySecondsTrigger());
+            await scheduler.ScheduleJob(job, ThirtySecondsTrigger(server));
 
             job = JobBuilder.Create<VipExpireJob>()
                 .WithIdentity(nameof(VipExpireJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger());
+            await scheduler.ScheduleJob(job, TenMinTrigger(server));
 
             job = JobBuilder.Create<BanExpireJob>()
                 .WithIdentity(nameof(BanExpireJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger());
+            await scheduler.ScheduleJob(job, TenMinTrigger(server));
 
             job = JobBuilder.Create<SilenceExpireJob>()
                 .WithIdentity(nameof(SilenceExpireJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger());
+            await scheduler.ScheduleJob(job, TenMinTrigger(server));
 
             job = JobBuilder.Create<DiscordRoleExpireJob>()
                 .WithIdentity(nameof(DiscordRoleExpireJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger());
+            await scheduler.ScheduleJob(job, TenMinTrigger(server));
 
             job = JobBuilder.Create<UpdateServerDataJob>()
                 .WithIdentity(nameof(UpdateServerDataJob), $"FtpJobs({server.Id})")
                .UsingJobData("server_id", server.Id)
                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 */6 * * ?"));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 */6 * * ?", server));
 
             job = JobBuilder.Create<RaidTimesJob>()
                 .WithIdentity(nameof(RaidTimesJob), $"FtpJobs({server.Id})")
                .UsingJobData("server_id", server.Id)
                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * * * ?", startNow: true));
+            await scheduler.ScheduleJob(job, CronTrigger("0 0 * * * ?", server, startNow: true));
 
             job = JobBuilder.Create<FileChangeJob>()
                 .WithIdentity(nameof(FileChangeJob), $"FtpJobs({server.Id})")
                 .UsingJobData("server_id", server.Id)
                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0/30 * * * * ?"));
+            await scheduler.ScheduleJob(job, CronTrigger("0/30 * * * * ?", server));
 
             _logger.LogInformation("Loaded ftp tasks for server id {Id}", server.Id);
         }
@@ -610,7 +625,9 @@ namespace RagnarokBotWeb.Domain.Services
             }
             catch (Exception) { }
 
-            var trigger = TriggerBuilder.Create().WithCronSchedule(customTask.Cron);
+            var trigger = TriggerBuilder.Create().WithCronSchedule(customTask.Cron, cronScheduleBuilder =>
+                                cronScheduleBuilder.InTimeZone(customTask.ScumServer.GetTimeZoneOrDefault()));
+
             await scheduler.ScheduleJob(customTaskJob, trigger.Build(), cancellationToken);
         }
     }

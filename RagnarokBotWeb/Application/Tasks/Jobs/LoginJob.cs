@@ -29,13 +29,13 @@ public class LoginJob(
             {
                 if (string.IsNullOrEmpty(line)) continue;
 
-                var (steamId64, scumId, name, loggedIn) = new LoginLogParser().Parse(line);
-                if (string.IsNullOrWhiteSpace(steamId64)) continue;
+                var (Date, IpAddress, SteamId, PlayerName, ScumId, IsLoggedIn, X, Y, Z) = new LoginLogParser().Parse(line);
+                if (string.IsNullOrWhiteSpace(SteamId)) continue;
 
-                if (loggedIn)
-                    await playerService.PlayerConnected(server, steamId64, scumId, name);
+                if (IsLoggedIn)
+                    await playerService.PlayerConnected(server, SteamId, ScumId, PlayerName, X, Y, Z, IpAddress);
                 else
-                    playerService.PlayerDisconnected(server.Id, steamId64);
+                    playerService.PlayerDisconnected(server.Id, SteamId);
             }
         }
         catch (ServerUncompliantException) { }

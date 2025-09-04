@@ -6,6 +6,8 @@ export class PlayerDto {
     scumId?: string;
     steamId64?: string;
     steamName?: string;
+    squadName?: string;
+    squadId?: number;
     discordId?: string;
     discordName?: string;
     scumServer?: ScumServer;
@@ -21,4 +23,5 @@ export class PlayerDto {
     banExpiresAt?: Date;
     silenceExpiresAt?: Date;
     lastLoggedIn?: Date;
+    ipAddress?: string;
 }

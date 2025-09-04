@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
@@ -33,6 +33,7 @@ import { OrderService } from '../../../../services/order.service';
   imports: [
     CommonModule,
     FormsModule,
+    RouterModule,
     ReactiveFormsModule,
     NzCardModule,
     NzFormModule,
@@ -96,7 +97,10 @@ export class PlayerComponent implements OnInit {
       isSilenced: [false],
       silenceExpiresAt: [null],
       lastLoggedIn: [null],
-      createDate: [null]
+      createDate: [null],
+      squadName: [null],
+      squadId: [null],
+      ipAddress: [null]
     });
   }
 

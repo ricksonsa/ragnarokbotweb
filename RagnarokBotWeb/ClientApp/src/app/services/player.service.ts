@@ -33,6 +33,10 @@ export class PlayerService {
     return this.http.get<PlayerDto>(`${environment.apiUrl}/api/players/${id}`);
   }
 
+  getPlayerBySteamId(id: string) {
+    return this.http.get<PlayerDto>(`${environment.apiUrl}/api/players/steam/${id}`);
+  }
+
   getPlayerCount() {
     return this.http.get<{ count: number }>(`${environment.apiUrl}/api/players/count`);
   }

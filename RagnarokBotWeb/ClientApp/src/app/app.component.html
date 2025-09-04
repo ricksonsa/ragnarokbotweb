@@ -55,6 +55,9 @@
             <a routerLink="management/vips">Vips</a>
           </li>
           <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
+            <a routerLink="management/squads">Squads</a>
+          </li>
+          <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">
             <a routerLink="management/bots">Bots</a>
           </li>
           <!-- <li nz-menu-item nzMatchRouter [nzDisabled]="account.server?.discord == null">

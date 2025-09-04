@@ -19,6 +19,7 @@ public class ExchangeWithdrawEvent : IMessageEventHandler
 
     public async Task HandleAsync(SocketModal message)
     {
+
         var scope = _serviceProvider.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var manager = new PlayerCoinManager(uow);
@@ -26,86 +27,95 @@ public class ExchangeWithdrawEvent : IMessageEventHandler
         var server = await scumRepository.FindByGuildId(message.GuildId!.Value);
         var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
         var botService = scope.ServiceProvider.GetRequiredService<IBotService>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<ExchangeWithdrawEvent>>();
 
-        var player = await uow.Players
-            .Include(player => player.ScumServer)
-            .Include(player => player.ScumServer.Exchange)
-            .Include(player => player.ScumServer.Guild)
-            .FirstOrDefaultAsync(
-                player => player.ScumServer != null
-                && player.ScumServer.Guild != null
-                && player.ScumServer.Guild.DiscordId == message.GuildId!.Value
-                && player.DiscordId == message.User.Id);
-
-
-        EmbedBuilder embedBuilder = new EmbedBuilder();
-        embedBuilder.WithTitle("Withdraw");
-
-        if (server?.Exchange is null)
+        try
         {
-            embedBuilder.WithColor(Color.Red);
-            embedBuilder.WithDescription("Invalid server");
-            await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
-            return;
-        }
+            var player = await uow.Players
+                .Include(player => player.ScumServer)
+                .Include(player => player.ScumServer.Exchange)
+                .Include(player => player.ScumServer.Guild)
+                .FirstOrDefaultAsync(
+                    player => player.ScumServer != null
+                    && player.ScumServer.Guild != null
+                    && player.ScumServer.Guild.DiscordId == message.GuildId!.Value
+                    && player.DiscordId == message.User.Id);
 
-        if (player is null || !player.DiscordId.HasValue)
-        {
-            embedBuilder.WithColor(Color.Red);
-            embedBuilder.WithDescription("You are not yet registered, please register using the Welcome Pack");
-            await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
-            return;
-        }
 
-        if (!botService.IsBotOnline(player.ScumServerId))
-        {
-            embedBuilder.WithColor(Color.Red);
-            embedBuilder.WithDescription("There is no active bots at the moment");
-            await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
-            return;
-        }
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.WithTitle("Withdraw");
 
-        if (!server.Exchange.AllowWithdraw)
-        {
-            embedBuilder.WithColor(Color.Red);
-            embedBuilder.WithDescription("Coin withdraw is disabled");
-            await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
-            return;
-        }
-
-        if (message.Data.CustomId == "withdraw_modal")
-        {
-            var amount = message.Data.Components
-                .First(x => x.CustomId == "withdraw_amount").Value;
-
-            if (long.TryParse(amount, out var value))
+            if (server?.Exchange is null)
             {
-                if (player.Coin < new CoinConverterManager(player.ScumServer).ToInGameMoney(value))
+                embedBuilder.WithColor(Color.Red);
+                embedBuilder.WithDescription("Invalid server");
+                await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+            if (player is null || !player.DiscordId.HasValue)
+            {
+                embedBuilder.WithColor(Color.Red);
+                embedBuilder.WithDescription("You are not yet registered, please register using the Welcome Pack");
+                await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+            if (!botService.IsBotOnline(player.ScumServerId))
+            {
+                embedBuilder.WithColor(Color.Red);
+                embedBuilder.WithDescription("There is no active bots at the moment");
+                await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+            if (!server.Exchange.AllowWithdraw)
+            {
+                embedBuilder.WithColor(Color.Red);
+                embedBuilder.WithDescription("Coin withdraw is disabled");
+                await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+            if (message.Data.CustomId == "withdraw_modal")
+            {
+                var amount = message.Data.Components
+                    .First(x => x.CustomId == "withdraw_amount").Value;
+
+                if (long.TryParse(amount, out var value))
                 {
-                    embedBuilder.WithColor(Color.Red);
-                    embedBuilder.WithDescription("You don't have the amount of coins you are trying to withdraw");
+                    if (player.Coin < value)
+                    {
+                        embedBuilder.WithColor(Color.Red);
+                        embedBuilder.WithDescription("You don't have the amount of coins you are trying to withdraw");
+                        await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                        return;
+                    }
+
+                    await orderService.ExchangeWithdrawOrder(player.ScumServer.Id, player.DiscordId.Value, new CoinConverterManager(player.ScumServer).ToInGameMoney(value));
+                    embedBuilder.WithColor(Color.Green);
+                    embedBuilder.WithDescription($"Your withdraw of {value} coins to in-game money will be processed soon");
                     await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
                     return;
                 }
+                else
+                {
+                    embedBuilder.WithColor(Color.Red);
+                    embedBuilder.WithDescription("Please input a valid amount to withdraw");
+                    await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                    return;
+                }
+            }
 
-                await orderService.ExchangeWithdrawOrder(player.ScumServer.Id, player.DiscordId.Value, value);
-                embedBuilder.WithColor(Color.Green);
-                embedBuilder.WithDescription($"Your withdraw of {value} coins to in-game money will be processed soon");
-                await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
-                return;
-            }
-            else
-            {
-                embedBuilder.WithColor(Color.Red);
-                embedBuilder.WithDescription("Please input a valid amount to withdraw");
-                await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
-                return;
-            }
+            embedBuilder.WithColor(Color.Red);
+            embedBuilder.WithDescription("Something went wrong, please try again later.");
+            await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
         }
-
-        embedBuilder.WithColor(Color.Red);
-        embedBuilder.WithDescription("Something went wrong, please try again later.");
-        await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "ExchangeWithdrawEvent Exception");
+            throw;
+        }
     }
 
     public Task HandleAsync(SocketMessage message)

@@ -1,4 +1,6 @@
-﻿namespace RagnarokBotWeb.Domain.Services.Dto
+﻿using Shared.Models;
+
+namespace RagnarokBotWeb.Domain.Services.Dto
 {
     public class PlayerDto
     {
@@ -23,5 +25,15 @@
         public DateTime? BanExpiresAt { get; set; }
         public DateTime? SilenceExpiresAt { get; set; }
         public DateTime? LastLoggedIn { get; set; }
+        public string? SquadName { get; set; }
+        public int? SquadId { get; set; }
+        public string? IpAddress { get; set; }
+
+        public void SetSquad(ScumSquad? squad)
+        {
+            if (squad is null) return;
+            SquadId = squad.SquadId;
+            SquadName = squad.SquadName;
+        }
     }
 }

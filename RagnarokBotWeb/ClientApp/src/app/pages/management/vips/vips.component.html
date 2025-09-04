@@ -25,7 +25,7 @@
           <th>Registered Discord</th>
           <th>Discord Name</th>
           <th>Banned</th>
-          <th>Bot Coin</th>
+          <th>Vip Until</th>
           <th>Last Login</th>
           <th></th>
         </tr>
@@ -44,10 +44,10 @@
           </td>
           <td>{{data.discordName}}</td>
           <td>No</td>
-          <td>{{data.coin}}</td>
+          <td>{{data.vipExpiresAt ? (data.vipExpiresAt | date: 'mediumDate') : 'Forever'}}</td>
           <td>{{data.lastLoggedIn | date: 'mediumDate'}}</td>
           <td>
-            <button nz-button nzType="link" [routerLink]="['/management', 'players', data.id]">
+            <button nz-button nzType="link" [routerLink]="['/management', 'players', data.steamId64]">
               <nz-icon nzType="edit"></nz-icon>
               Edit
             </button>

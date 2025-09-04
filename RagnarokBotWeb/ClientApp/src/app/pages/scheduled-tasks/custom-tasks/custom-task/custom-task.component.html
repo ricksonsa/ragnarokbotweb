@@ -77,7 +77,7 @@
     </form>
   </nz-card>
 
-  <nz-card *ngIf="GetCommandValuesTitle()" [nzTitle]="GetCommandValuesTitle()" nzSize="small">
+  <nz-card *ngIf="this.taskForm.value.taskType !== 2" [nzTitle]="GetCommandValuesTitle()" nzSize="small">
     <form nz-form>
       <nz-form-item>
         <nz-form-label nzFor="" nzSpan="24">
@@ -88,6 +88,26 @@
           <textarea [(ngModel)]="commands" (ngModelChange)="onCommandsChange($event)"
             [ngModelOptions]="{standalone: true}" style="min-height: 450px;" nzAutosize nzSize="large" nz-input
             name="commands" type="text" id="commands"></textarea>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </nz-card>
+
+  <nz-card *ngIf="this.taskForm.value.taskType === 2" [nzTitle]="GetCommandValuesTitle()" nzSize="small">
+    <form nz-form [formGroup]="serverSettingsForm">
+      <nz-form-item>
+        <nz-form-label nzFor="key" nzSpan="24">Server Settings Field Key</nz-form-label>
+        <nz-form-control nzErrorTip="Key is Required" [nzSpan]="24"
+          nzExtra="The ServerSettings.ini value key identifier. Ex: ServerName">
+          <input formControlName="key" nz-input name="key" type="text" id="key" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzFor="value" nzSpan="24">Server Settings Field Value</nz-form-label>
+        <nz-form-control nzErrorTip="Value is Required" [nzSpan]="24"
+          nzExtra="The ServerSettings.ini field value to replace">
+          <input formControlName="value" nz-input name="value" type="text" id="value" />
         </nz-form-control>
       </nz-form-item>
     </form>
