@@ -1,5 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Options;
+using RagnarokBotWeb.Configuration.Data;
 
 namespace RagnarokBotWeb.Application.Discord;
 
@@ -13,12 +15,13 @@ public class DiscordBotService : BackgroundService
     // private readonly string? _token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
     private readonly string? _token = "MTQwMTY5Mzk0MjgyMjQ3Mzc5OQ.GKZ-4Q.1qmkfDUR6YJTEgpnFatvet8addAAQwO96LnMQI";
 
-    public DiscordBotService(ILogger<DiscordBotService> logger, DiscordSocketClient client)
+    public DiscordBotService(ILogger<DiscordBotService> logger, DiscordSocketClient client, IOptions<AppSettings> options)
     {
         _logger = logger;
         _client = client;
 
         Instance = this;
+        _token = options.Value.DiscordToken ?? _token;
     }
 
     public bool IsReady { get; private set; }

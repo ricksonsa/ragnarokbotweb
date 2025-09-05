@@ -135,7 +135,7 @@ namespace RagnarokBotWeb.Domain.Services
                 .WithIdentity(nameof(OrderCommandJob), $"ServerJobs({server.Id})")
                  .UsingJobData("server_id", server.Id)
                  .Build();
-            await scheduler.ScheduleJob(job, TenSecondsTrigger(server));
+            await scheduler.ScheduleJob(job, CronTrigger("0/5 * * * * ?", server));
 
             job = JobBuilder.Create<UavClearJob>()
                 .WithIdentity(nameof(UavClearJob), $"ServerJobs({server.Id})")

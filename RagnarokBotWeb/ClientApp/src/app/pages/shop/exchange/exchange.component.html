@@ -44,6 +44,17 @@
         </nz-form-control>
       </nz-form-item>
 
+      <nz-form-item>
+        <nz-form-label [nzSpan]="0" nzFor="currencyType">Game Currency Type</nz-form-label>
+        <nz-form-control [nzSpan]="24" nzExtra="Select which game currency will be exchanged">
+          <nz-select nzShowSearch formControlName="currencyType" id="currencyType"
+            nzPlaceHolder="Select which game currency will be exchanged">
+            <nz-option [nzValue]="0" nzLabel="Money"></nz-option>
+            <nz-option [nzValue]="1" nzLabel="Gold"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
       <nz-form-item nzAlign="middle">
         <nz-form-label [nzSpan]="0" nzFor="allowWithdraw">Allow Withdraw</nz-form-label>
         <nz-form-control [nzSpan]="2">
@@ -55,7 +66,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="withdrawRate">Withdraw Exchange Rate</nz-form-label>
         <nz-form-control [nzSpan]="24" nzErrorTip="Min amount is 0"
-          nzExtra="Tax applied when converting coins → in-game money.">
+          nzExtra="Bonus applied when converting coins to in-game currency. Ex: if WithdrawRate = 0.10, 1000 coins -> 1100 in-game currency">
           <input formControlName="withdrawRate" nz-input name="withdrawRate" type="number" id="withdrawRate" />
         </nz-form-control>
       </nz-form-item>
@@ -65,13 +76,13 @@
         <nz-form-control [nzSpan]="2">
           <label nz-checkbox formControlName="allowDeposit"></label>
         </nz-form-control>
-        <p nz-typography nzType="secondary" style="margin: 0;">Allow Game Money to Coin exchange.</p>
+        <p nz-typography nzType="secondary" style="margin: 0;">Allow Game Currency to Coin exchange.</p>
       </nz-form-item>
 
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="depositRate">Deposit Exchange Rate</nz-form-label>
         <nz-form-control [nzSpan]="24" nzErrorTip="Min amount is 0"
-          nzExtra="Tax applied when converting in-game money → coins.">
+          nzExtra="Tax applied when converting in-game currency to coins. Ex: if DepositRate = 0.10, 1000 in-game currency -> 900 coins">
           <input formControlName="depositRate" nz-input name="depositRate" type="number" id="depositRate" />
         </nz-form-control>
       </nz-form-item>

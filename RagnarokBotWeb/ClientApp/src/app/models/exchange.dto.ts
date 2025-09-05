@@ -17,4 +17,5 @@ export class ExchangeDto {
     transferRate: number;
     withdrawRate: number;
     depositRate: number;
+    currencyType: number;
 }

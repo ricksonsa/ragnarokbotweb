@@ -10,6 +10,8 @@
         public string BaseUrl { get; set; }
         public string PayPalUrl { get; set; }
         public int SocketServerPort { get; set; }
+        public string DiscordToken { get; set; }
+        public string DiscordInstallLink { get; set; }
     }
 
     public class SecuritySettings

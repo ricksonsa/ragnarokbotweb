@@ -31,8 +31,8 @@ public class FtpService : IFtpService, IAsyncDisposable
         try
         {
             _activeConnections.AddOrUpdate(serverKey, 1, (key, count) => count + 1);
-            _logger.LogDebug("Acquired FTP connection for {ServerKey}, active connections: {Count}",
-                serverKey, _activeConnections[serverKey]);
+            //_logger.LogDebug("Acquired FTP connection for {ServerKey}, active connections: {Count}",
+            //serverKey, _activeConnections[serverKey]);
 
             using var client = await CreateAndConnectClientAsync(ftp, cancellationToken);
             return await operation(client);
@@ -41,8 +41,8 @@ public class FtpService : IFtpService, IAsyncDisposable
         {
             _activeConnections.AddOrUpdate(serverKey, 0, (key, count) => Math.Max(0, count - 1));
             semaphore.Release();
-            _logger.LogDebug("Released FTP connection for {ServerKey}, active connections: {Count}",
-                serverKey, _activeConnections.GetValueOrDefault(serverKey, 0));
+            //_logger.LogDebug("Released FTP connection for {ServerKey}, active connections: {Count}",
+            //serverKey, _activeConnections.GetValueOrDefault(serverKey, 0));
         }
     }
 
@@ -53,7 +53,7 @@ public class FtpService : IFtpService, IAsyncDisposable
         try
         {
             await client.Connect(cancellationToken);
-            _logger.LogDebug("Created and connected new FTP client for {ServerKey}", GetServerKey(ftp));
+            //_logger.LogDebug("Created and connected new FTP client for {ServerKey}", GetServerKey(ftp));
             return client;
         }
         catch

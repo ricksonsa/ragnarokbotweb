@@ -1,4 +1,6 @@
-﻿namespace RagnarokBotWeb.Domain.Services.Dto
+﻿using RagnarokBotWeb.Domain.Enums;
+
+namespace RagnarokBotWeb.Domain.Services.Dto
 {
     public class ExchangeDto
     {
@@ -19,5 +21,6 @@
         public double WithdrawRate { get; set; }
         public double DepositRate { get; set; }
         public double TransferRate { get; set; }
+        public EExchangeGameCurrencyType CurrencyType { get; set; } = EExchangeGameCurrencyType.Money;
     }
 }

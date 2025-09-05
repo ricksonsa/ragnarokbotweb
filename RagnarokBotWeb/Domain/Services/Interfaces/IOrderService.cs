@@ -20,5 +20,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<Order?> PlaceTaxiOrderFromDiscord(ulong guildId, ulong discordId, long taxiId);
         Task<Order> ExchangeWithdrawOrder(long serverId, ulong discordId, long amount);
         Task<Order> ExchangeDepositOrder(long serverId, ulong discordId, long amount);
+        Task<OrderDto> RequeueOrder(long orderId);
+        Task<OrderDto> CancelOrder(long orderId);
     }
 }

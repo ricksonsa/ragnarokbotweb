@@ -10,6 +10,9 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { OrderDto } from '../../../models/order.dto';
 import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, Observable, of, startWith, switchMap, tap } from 'rxjs';
 import { OrderService } from '../../../services/order.service';
+import { EventManager, EventWithContent } from '../../../services/event-manager.service';
+import { Alert } from '../../../models/alert';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 
 @Component({
   selector: 'app-orders',
@@ -25,7 +28,7 @@ import { OrderService } from '../../../services/order.service';
     NzIconModule,
     NzCardModule,
     NzTableModule,
-
+    NzButtonModule
   ]
 })
 export class OrdersComponent implements OnInit {
@@ -36,13 +39,22 @@ export class OrdersComponent implements OnInit {
   searchControl = new FormControl();
   suggestions$: Observable<OrderDto[]> = of([]);
   isLoading = false;
+  cancelLoading = false;
+  requeLoading = false;
 
-  constructor(private readonly orderService: OrderService, private readonly router: Router) { }
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly router: Router,
+    private readonly eventManager: EventManager) { }
 
   pageIndex$ = new BehaviorSubject<number>(1);
   pageSize$ = new BehaviorSubject<number>(10);
 
   ngOnInit() {
+    this.load();
+  }
+
+  load() {
     this.suggestions$ = combineLatest([
       this.searchControl.valueChanges.pipe(startWith(''), debounceTime(300), distinctUntilChanged()),
       this.pageIndex$,
@@ -51,8 +63,7 @@ export class OrdersComponent implements OnInit {
       tap(() => {
         this.isLoading = true;
       }),
-      switchMap(([query, pageIndex, pageSize]) =>
-        this.orderService.getOrders(pageSize, pageIndex, query)
+      switchMap(([query, pageIndex, pageSize]) => this.orderService.getOrders(pageSize, pageIndex, query)
       ),
       tap(page => {
         if (page.totalPages > 0 && this.pageIndex > page.totalPages && this.pageIndex !== 1) {
@@ -76,6 +87,43 @@ export class OrdersComponent implements OnInit {
 
   pageSizeChange(size: number) {
     this.pageSize$.next(size);
+  }
+
+  cancel(order: OrderDto) {
+    this.cancelLoading = true;
+    this.orderService.cancelOrder(order.id)
+      .subscribe({
+        next: (order) => {
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Order number ${order.id} canceled.`, 'success')));
+          this.load();
+        },
+        error: (err) => {
+          this.cancelLoading = false;
+          let msg = '';
+          if (err.error?.details) msg = err.error.details;
+          if (err?.details) msg = err.details;
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Error', msg, 'error')));
+        }
+      });
+  }
+
+  requeue(order: OrderDto) {
+    this.requeLoading = true;
+    this.orderService.requeueOrder(order.id)
+      .subscribe({
+        next: (order) => {
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Order number ${order.id} requeued.`, 'success')));
+          this.load();
+          this.requeLoading = false;
+        },
+        error: (err) => {
+          this.requeLoading = false;
+          let msg = '';
+          if (err.error?.details) msg = err.error.details;
+          if (err?.details) msg = err.details;
+          this.eventManager.broadcast(new EventWithContent('alert', new Alert('Error', msg, 'error')));
+        }
+      });
   }
 
   resolveOrderType(type: number) {

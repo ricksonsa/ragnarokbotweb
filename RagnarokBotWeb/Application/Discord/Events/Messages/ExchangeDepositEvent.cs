@@ -80,17 +80,18 @@ public class ExchangeDepositEvent : IMessageEventHandler
 
             if (long.TryParse(amount, out var value))
             {
-                if (player.Money < value)
+                if (!player.HasBalance(value, server.Exchange.CurrencyType))
                 {
                     embedBuilder.WithColor(Color.Red);
-                    embedBuilder.WithDescription("You don't have the amount of in-game money you are trying to deposit");
+                    embedBuilder.WithDescription($"You don't have the amount of {value} in-game {server.Exchange.CurrencyType} to deposit. If you have the amount required in-game, please wait a few minutes for the server to synchronize your data.");
                     await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
                     return;
                 }
 
-                await orderService.ExchangeDepositOrder(player.ScumServer.Id, player.DiscordId.Value, new CoinConverterManager(player.ScumServer).ToDiscordCoins(value));
+                var next = new CoinConverterManager(server).ToDiscordCoins(value);
+                await orderService.ExchangeDepositOrder(player.ScumServer.Id, player.DiscordId.Value, value);
                 embedBuilder.WithColor(Color.Green);
-                embedBuilder.WithDescription($"Your deposit of {value} in-game money to coins will be processed soon");
+                embedBuilder.WithDescription($"Your deposit of {value} in-game {server.Exchange.CurrencyType} to coins will be processed soon.\n\nCurrent Balance: {player.Coin}\nNext Balance: {player.Coin + next}\nTax Applied: {server.Exchange.DepositRate * 100}%");
                 await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
                 return;
             }

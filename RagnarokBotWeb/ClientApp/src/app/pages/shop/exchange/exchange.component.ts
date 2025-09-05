@@ -93,7 +93,8 @@ export class ExchangeComponent implements OnInit {
       allowTransfer: [true],
       depositRate: [0, [Validators.required, Validators.min(0)]],
       transferRate: [0, [Validators.required, Validators.min(0)]],
-      withdrawRate: [0, [Validators.required, Validators.min(0)]]
+      withdrawRate: [0, [Validators.required, Validators.min(0)]],
+      currencyType: [0],
     });
   }
 

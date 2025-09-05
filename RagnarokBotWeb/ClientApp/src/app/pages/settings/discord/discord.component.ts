@@ -58,6 +58,7 @@ export class DiscordComponent implements OnInit, OnDestroy {
 
   isDiscordSettingsSaving = false;
   runTemplate = false;
+  installLink: string;
 
   constructor(
     private readonly authService: AuthenticationService,
@@ -113,6 +114,16 @@ export class DiscordComponent implements OnInit, OnDestroy {
     this.loadAccount();
     // this.loadDiscordChannels();
     this.loadTemplateDiscordChannels();
+    this.loadInstallLink();
+  }
+
+  loadInstallLink() {
+    this.serverService.getDiscordInstallLink()
+      .subscribe({
+        next: (result) => {
+          this.installLink = result.discordInstallLink;
+        }
+      })
   }
 
   loadAccount(force = false) {

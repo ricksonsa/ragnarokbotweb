@@ -29,6 +29,20 @@ namespace RagnarokBotWeb.Controllers
             return Ok(order);
         }
 
+        [HttpPatch("{id}/requeue")]
+        public async Task<IActionResult> RequeueOrder(long id)
+        {
+            var order = await _orderService.RequeueOrder(id);
+            return Ok(order);
+        }
+
+        [HttpPatch("{id}/cancel")]
+        public async Task<IActionResult> CancelOrder(long id)
+        {
+            var order = await _orderService.CancelOrder(id);
+            return Ok(order);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetPage([FromQuery] Paginator paginator, string? filter)
         {

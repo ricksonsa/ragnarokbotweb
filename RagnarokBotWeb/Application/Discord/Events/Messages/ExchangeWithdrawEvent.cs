@@ -87,14 +87,15 @@ public class ExchangeWithdrawEvent : IMessageEventHandler
                     if (player.Coin < value)
                     {
                         embedBuilder.WithColor(Color.Red);
-                        embedBuilder.WithDescription("You don't have the amount of coins you are trying to withdraw");
+                        embedBuilder.WithDescription($"You don't have the amount of {value} coins to withdraw");
                         await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
                         return;
                     }
 
-                    await orderService.ExchangeWithdrawOrder(player.ScumServer.Id, player.DiscordId.Value, new CoinConverterManager(player.ScumServer).ToInGameMoney(value));
+                    var money = new CoinConverterManager(server).ToInGameMoney(value);
+                    await orderService.ExchangeWithdrawOrder(player.ScumServer.Id, player.DiscordId.Value, value);
                     embedBuilder.WithColor(Color.Green);
-                    embedBuilder.WithDescription($"Your withdraw of {value} coins to in-game money will be processed soon");
+                    embedBuilder.WithDescription($"Your withdraw of {value} coins to in-game {server.Exchange.CurrencyType} will be processed soon.\n\nCurrent Balance: {player.Coin}\nNext Balance: {player.Coin - value}\nIn-game {server.Exchange.CurrencyType}: +{money}");
                     await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
                     return;
                 }

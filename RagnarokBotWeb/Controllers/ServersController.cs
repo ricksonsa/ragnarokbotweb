@@ -37,6 +37,13 @@ namespace RagnarokBotWeb.Controllers
             return Ok(guild);
         }
 
+        [HttpGet("discord/init")]
+        public IActionResult GetDiscordInitData()
+        {
+            _logger.LogDebug("GET request to get discord init data");
+            return Ok(_serverService.GetDiscordInit());
+        }
+
         [HttpPatch("discord/channels/run-template")]
         public async Task<IActionResult> RunDiscordTemplate()
         {

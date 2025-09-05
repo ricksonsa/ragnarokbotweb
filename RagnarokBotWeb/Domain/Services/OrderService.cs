@@ -62,6 +62,28 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<OrderDto>(order);
         }
 
+        public async Task<OrderDto> CancelOrder(long orderId)
+        {
+            var order = await _orderRepository.FindByIdAsync(orderId);
+            if (order is null) throw new NotFoundException("Order not found");
+
+            order.Status = EOrderStatus.Canceled;
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+            return _mapper.Map<OrderDto>(order);
+        }
+
+        public async Task<OrderDto> RequeueOrder(long orderId)
+        {
+            var order = await _orderRepository.FindByIdAsync(orderId);
+            if (order is null) throw new NotFoundException("Order not found");
+
+            order.Status = EOrderStatus.Created;
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+            return _mapper.Map<OrderDto>(order);
+        }
+
         public Task<IEnumerable<Order>> GetCreatedOrders()
         {
             return _orderRepository.FindAsync(order => order.Status == EOrderStatus.Created);
@@ -298,7 +320,7 @@ namespace RagnarokBotWeb.Domain.Services
                 throw new DomainException("Invalid server");
             }
 
-            if (player.Coin < amount)
+            if (player.Money < amount)
             {
                 throw new DomainException("You don't have enough ingame money.");
             }

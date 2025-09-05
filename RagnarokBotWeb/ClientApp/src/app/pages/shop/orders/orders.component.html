@@ -36,6 +36,11 @@
           <td>{{data.player.discordName}}</td>
           <td>{{resolveOrderStatus(data.status)}}</td>
           <td>{{data.createDate | date: 'MM/dd/yyyy HH:mm'}}</td>
+          <td>
+            <button nz-button nzType="link" (click)="requeue(data)" [nzLoading]="requeLoading">Requeue</button>
+            <button *ngIf="data.status < 2" nz-button nzType="link" nzDanger (click)="cancel(data)"
+              [nzLoading]="cancelLoading">Cancel</button>
+          </td>
         </tr>
       </tbody>
     </nz-table>

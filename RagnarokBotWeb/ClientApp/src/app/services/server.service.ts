@@ -51,6 +51,10 @@ export class ServerService {
     return this.http.get<{ discordId: string, name: string }[]>(`${environment.apiUrl}/api/servers/discord/roles`);
   }
 
+  getDiscordInstallLink() {
+    return this.http.get<{ discordInstallLink: string}>(`${environment.apiUrl}/api/servers/discord/init`);
+  }
+
   getSquads() {
     return this.http.get<Squad[]>(`${environment.apiUrl}/api/servers/squads`);
   }

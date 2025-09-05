@@ -147,23 +147,30 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             {
                 case EExchangeType.Withdraw:
                     var withdraw = converter.ToInGameMoney(order.ExchangeAmount);
-                    if (order.Player.Coin < withdraw)
+                    if (order.Player.Coin < order.ExchangeAmount)
                     {
                         order.Status = EOrderStatus.Canceled;
                         return;
                     }
                     await coinManager.RemoveCoinsByPlayerId(order.Player.Id, order.ExchangeAmount);
-                    command.ChangeMoney(order.Player!.SteamId64!, withdraw);
+                    if (order.ScumServer.Exchange.CurrencyType == Domain.Enums.EExchangeGameCurrencyType.Money)
+                        command.ChangeMoney(order.Player!.SteamId64!, withdraw);
+                    else if (order.ScumServer.Exchange.CurrencyType == Domain.Enums.EExchangeGameCurrencyType.Gold)
+                        command.ChangeGold(order.Player!.SteamId64!, withdraw);
                     break;
+
                 case EExchangeType.Deposit:
                     var deposit = converter.ToDiscordCoins(order.ExchangeAmount);
-                    if (order.Player.Money < deposit)
+                    if (!order.Player.HasBalance(order.ExchangeAmount, order.ScumServer.Exchange.CurrencyType))
                     {
                         order.Status = EOrderStatus.Canceled;
                         return;
                     }
                     await coinManager.AddCoinsByPlayerId(order.Player.Id, deposit);
-                    command.ChangeMoney(order.Player!.SteamId64!, -deposit);
+                    if (order.ScumServer.Exchange.CurrencyType == Domain.Enums.EExchangeGameCurrencyType.Money)
+                        command.ChangeMoney(order.Player!.SteamId64!, -order.ExchangeAmount);
+                    else if (order.ScumServer.Exchange.CurrencyType == Domain.Enums.EExchangeGameCurrencyType.Gold)
+                        command.ChangeGold(order.Player!.SteamId64!, -order.ExchangeAmount);
                     break;
             }
         }

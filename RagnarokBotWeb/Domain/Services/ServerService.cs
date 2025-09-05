@@ -2,7 +2,9 @@
 using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using RagnarokBotWeb.Application.Discord;
+using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -30,6 +32,7 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IChannelRepository _channelRepository;
         private readonly ICacheService _cacheService;
         private readonly IFileService _fileService;
+        private readonly AppSettings _appSettings;
 
         public ServerService(
             IHttpContextAccessor httpContext,
@@ -47,6 +50,7 @@ namespace RagnarokBotWeb.Domain.Services
             IChannelRepository channelRepository,
             ICacheService cacheService,
             StartupDiscordTemplate startupDiscordTemplate,
+            IOptions<AppSettings> appSettingsOptions,
             IFileService fileService) : base(httpContext)
         {
             _logger = logger;
@@ -64,6 +68,7 @@ namespace RagnarokBotWeb.Domain.Services
             _cacheService = cacheService;
             _startupDiscordTemplate = startupDiscordTemplate;
             _fileService = fileService;
+            _appSettings = appSettingsOptions.Value;
         }
 
         public async Task<ScumServerDto> ChangeFtp(FtpDto ftpDto)
@@ -547,6 +552,14 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var server = ServerId();
             return _cacheService.GetSquads(server!.Value).FirstOrDefault(s => s.SquadId == squadId);
+        }
+
+        public object? GetDiscordInit()
+        {
+            return new
+            {
+                DiscordInstallLink = _appSettings.DiscordInstallLink
+            };
         }
     }
 }

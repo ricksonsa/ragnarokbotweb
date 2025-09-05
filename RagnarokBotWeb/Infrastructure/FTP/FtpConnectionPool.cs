@@ -26,7 +26,7 @@ public class FtpConnectionPool : IAsyncDisposable
         {
             var client = FtpClientFactory.CreateClient(ftp, cancellationToken: cancellationToken);
             await client.Connect(cancellationToken);
-            _logger.LogDebug("Created new FTP client for {ServerKey}", serverKey);
+            //_logger.LogDebug("Created new FTP client for {ServerKey}", serverKey);
             return client;
         }
         catch (Exception ex)

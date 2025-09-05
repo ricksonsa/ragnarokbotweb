@@ -1,4 +1,5 @@
 ﻿using RagnarokBotWeb.Domain.Entities.Base;
+using RagnarokBotWeb.Domain.Enums;
 
 namespace RagnarokBotWeb.Domain.Entities;
 public class Player : BaseEntity
@@ -113,4 +114,10 @@ public class Player : BaseEntity
         }
     }
 
+    public bool HasBalance(long value, EExchangeGameCurrencyType currencyType)
+    {
+        if (currencyType == EExchangeGameCurrencyType.Money) return Money >= value;
+        else if (currencyType == EExchangeGameCurrencyType.Gold) return Gold >= value;
+        return false;
+    }
 }

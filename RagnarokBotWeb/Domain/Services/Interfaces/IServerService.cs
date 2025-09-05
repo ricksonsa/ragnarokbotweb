@@ -25,5 +25,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<ScumServerDto> UpdateRankAwards(UpdateRankAwardsDto dto);
         List<Shared.Models.ScumSquad> GetSquads();
         Shared.Models.ScumSquad? GetSquad(int squadId);
+        object? GetDiscordInit();
     }
 }

@@ -28,4 +28,12 @@ export class OrderService {
   getByOrderId(id: number) {
     return this.http.get<OrderDto>(`${environment.apiUrl}/api/orders/${id}`);
   }
+
+  cancelOrder(id: number) {
+    return this.http.patch<OrderDto>(`${environment.apiUrl}/api/orders/${id}/cancel`, null);
+  }
+
+  requeueOrder(id: number) {
+    return this.http.patch<OrderDto>(`${environment.apiUrl}/api/orders/${id}/requeue`, null);
+  }
 }
