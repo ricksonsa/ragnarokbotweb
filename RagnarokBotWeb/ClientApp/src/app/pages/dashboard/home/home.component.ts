@@ -27,6 +27,8 @@ import { Alert } from '../../../models/alert';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { RouterModule } from '@angular/router';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzPopoverModule } from 'ng-zorro-antd/popover';
 Chart.register(...registerables);
 
 @Component({
@@ -44,10 +46,12 @@ Chart.register(...registerables);
     NzBadgeModule,
     NzGridModule,
     NzTableModule,
+    NzIconModule,
     NzListModule,
     NzDescriptionsModule,
     NzSpinModule,
-    NzEmptyModule
+    NzEmptyModule,
+    NzPopoverModule
   ]
 })
 export class HomeComponent implements OnInit, OnDestroy {
@@ -73,7 +77,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   totalPlayers: number;
   totalVips: number;
   totalWhitelisted: number;
-
+  
   constructor(
     private readonly serverService: ServerService,
     private readonly eventManager: EventManager,

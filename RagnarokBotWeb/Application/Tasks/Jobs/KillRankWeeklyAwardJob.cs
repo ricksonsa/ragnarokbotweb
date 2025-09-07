@@ -24,10 +24,10 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             try
             {
                 var server = await GetServerAsync(context);
-                var topKillersMonthly = await TopPlayers(unitOfWork, server, ERankingPeriod.Monthly);
+                var topKillersWeekly = await TopPlayers(unitOfWork, server, ERankingPeriod.Weekly);
 
                 var manager = new PlayerCoinManager(unitOfWork);
-                await HandleAwardsWeekly(unitOfWork, discordService, server, topKillersMonthly, manager);
+                await HandleAwards(unitOfWork, discordService, server, topKillersWeekly, manager);
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
@@ -37,119 +37,52 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             }
         }
 
-        private static async Task HandleAwardsWeekly(
-            IUnitOfWork uow,
-            IDiscordService discordService,
-            ScumServer server,
-            List<PlayerStatsDto> topKillers,
-            PlayerCoinManager manager)
+        private static async Task HandleAwards(
+               IUnitOfWork uow,
+               IDiscordService discordService,
+               ScumServer server,
+               List<PlayerStatsDto> topKillers,
+               PlayerCoinManager manager)
         {
-            if (server.KillRankWeeklyTop1Award.HasValue && server.KillRankWeeklyTop1Award.Value > 0)
+            var awards = new[]
             {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topKillers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.KillRankWeeklyTop1Award.Value;
+                (Rank: 1, Amount: server.KillRankDailyTop1Award),
+                (Rank: 2, Amount: server.KillRankDailyTop2Award),
+                (Rank: 3, Amount: server.KillRankDailyTop3Award),
+                (Rank: 4, Amount: server.KillRankDailyTop4Award),
+                (Rank: 5, Amount: server.KillRankDailyTop5Award)
+            };
 
-                if (player != null)
-                {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
-                    {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 1 spot in the Weekly Kill Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
-                }
-            }
-
-            if (server.KillRankWeeklyTop2Award.HasValue && server.KillRankWeeklyTop2Award.Value > 0)
+            for (int i = 0; i < awards.Length; i++)
             {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topKillers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.KillRankWeeklyTop2Award.Value;
-
-                if (player != null)
+                var (rank, amount) = awards[i];
+                if (amount.HasValue && amount.Value > 0 && topKillers.Count > i)
                 {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
+                    var stats = topKillers[i];
+
+                    var player = await uow.Players
+                        .Include(p => p.ScumServer)
+                        .FirstOrDefaultAsync(p => p.SteamId64 == stats.SteamId && p.ScumServerId == server.Id);
+
+                    if (player != null)
                     {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 2 spot in the Weekly Kill Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
-                }
-            }
+                        await manager.AddCoinsByPlayerId(player.Id, amount.Value);
 
-            if (server.KillRankWeeklyTop3Award.HasValue && server.KillRankWeeklyTop3Award.Value > 0)
-            {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topKillers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.KillRankWeeklyTop3Award.Value;
-
-                if (player != null)
-                {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
-                    {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 3 spot in the Weekly Kill Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
-                }
-            }
-
-            if (server.KillRankWeeklyTop4Award.HasValue && server.KillRankWeeklyTop4Award.Value > 0)
-            {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topKillers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.KillRankWeeklyTop4Award.Value;
-
-                if (player != null)
-                {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
-                    {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 4 spot in the Weekly Kill Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
-                }
-            }
-
-            if (server.KillRankWeeklyTop5Award.HasValue && server.KillRankWeeklyTop5Award.Value > 0)
-            {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topKillers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.KillRankWeeklyTop5Award.Value;
-
-                if (player != null)
-                {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
-                    {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 5 spot in the Weekly Kill Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
+                        if (player.DiscordId.HasValue)
+                        {
+                            var embed = new CreateEmbed(player.DiscordId.Value)
+                            {
+                                Title = "🏆 Congratulations! 🏆",
+                                Text = $"You secured the Top {rank} spot in the Weekly Kill Ranking.\r\n" +
+                                       $"As a reward you’ve earned 💰 {amount.Value} Coins! 🔥\r\n\r\n",
+                                Color = Color.DarkOrange
+                            };
+                            await discordService.SendEmbedToUserDM(embed);
+                        }
                     }
                 }
             }
         }
-
         private static DateTime GetStartOfWeek(DateTime date, DayOfWeek startOfWeek = DayOfWeek.Monday)
         {
             int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;

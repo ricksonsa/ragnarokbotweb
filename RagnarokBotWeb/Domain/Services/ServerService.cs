@@ -144,7 +144,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server is null) return [];
-
+            var squads = _cacheService.GetSquads(serverId!.Value);
             var onlinePlayers = _cacheService.GetConnectedPlayers(serverId.Value).Select(p => new PlayerDto
             {
                 Online = true,
@@ -153,7 +153,13 @@ namespace RagnarokBotWeb.Domain.Services
                 SteamName = p.SteamName,
                 Fame = p.Fame,
                 Money = p.AccountBalance,
-                Gold = p.GoldBalance
+                Gold = p.GoldBalance,
+                SquadName = p.SquadName,
+                SquadId = p.SquadId,
+                X = p.X,
+                Y = p.Y,
+                Z = p.Z,
+                Sector = new ScumCoordinate(p.X, p.Y).GetSectorReference()
             });
 
             foreach (var player in onlinePlayers)

@@ -40,6 +40,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<PlayerDto> AddSilence(long id, PlayerVipDto dto);
         Task<PlayerDto> AddVip(long id, PlayerVipDto dto);
         Task<PlayerDto> UpdateCoins(long id, ChangeAmountDto dto);
+        Task UpdateCoinsToAll(bool online, ChangeAmountDto dto);
         Task<PlayerDto> UpdateFame(long id, ChangeAmountDto dto);
         Task<PlayerDto> UpdateGold(long id, ChangeAmountDto dto);
         Task<PlayerDto> UpdateMoney(long id, ChangeAmountDto dto);

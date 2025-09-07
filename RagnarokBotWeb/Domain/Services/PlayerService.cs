@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Crosscutting.Utils;
 using RagnarokBotWeb.Domain.Entities;
@@ -180,6 +181,27 @@ namespace RagnarokBotWeb.Domain.Services
 
             await _playerRepository.CreateOrUpdateAsync(player);
             await _playerRepository.SaveAsync();
+
+            var squads = _cacheService.GetSquads(server.Id);
+            var squad = squads.FirstOrDefault(s => s.Members.Any(x => x.SteamId == steamId64));
+
+            if (!_cacheService.GetConnectedPlayers(server.Id).Any(p => p.SteamID == steamId64))
+            {
+                _cacheService.GetConnectedPlayers(server.Id).Add(new ScumPlayer()
+                {
+                    Name = name,
+                    SteamID = steamId64,
+                    X = x,
+                    Y = y,
+                    Z = z,
+                    SquadId = squad?.SquadId,
+                    SquadName = squad?.SquadName,
+                    AccountBalance = player.Money ?? 0,
+                    GoldBalance = player.Gold ?? 0,
+                    Fame = player.Fame ?? 0,
+                    SteamName = player.SteamName,
+                });
+            }
         }
 
         public ScumPlayer? PlayerDisconnected(long serverId, string steamId64)
@@ -190,7 +212,11 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (player is not null)
             {
-                _cacheService.GetConnectedPlayers(serverId).Remove(player);
+                try
+                {
+                    _cacheService.GetConnectedPlayers(serverId).Remove(player);
+                }
+                catch { }
             }
 
             return null;
@@ -492,18 +518,44 @@ namespace RagnarokBotWeb.Domain.Services
             ValidateServerOwner(player.ScumServer);
             ValidateSubscription(player.ScumServer);
 
+            var manager = new PlayerCoinManager(_unitOfWork);
             if (dto.Amount > 0)
             {
-                await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT addcoinstoplayer({0}, {1})", player.Id, dto.Amount);
+                await manager.AddCoinsByPlayerId(player.Id, dto.Amount);
             }
             else
             {
-                await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync("SELECT reducecoinstoplayer({0}, {1})", player.Id, Math.Abs(dto.Amount));
+                await manager.RemoveCoinsByPlayerId(player.Id, Math.Abs(dto.Amount));
             }
 
             player.Coin += dto.Amount;
 
             return _mapper.Map<PlayerDto>(player);
+        }
+
+        public async Task UpdateCoinsToAll(bool online, ChangeAmountDto dto)
+        {
+            var serverId = ServerId();
+            var server = await _scumServerRepository.FindByIdAsNoTrackingAsync(serverId!.Value);
+            ValidateSubscription(server!);
+
+            var players = (await _playerRepository.GetAllByServerId(serverId.Value)).Select(_mapper.Map<PlayerDto>);
+            var onlinePlayers = _cacheService.GetConnectedPlayers(serverId.Value);
+
+            if (online) players = players.Where(p => onlinePlayers.Any(x => x.SteamID == p.SteamId64));
+
+            foreach (var player in players)
+            {
+                var manager = new PlayerCoinManager(_unitOfWork);
+                if (dto.Amount > 0)
+                {
+                    await manager.AddCoinsByPlayerId(player.Id, dto.Amount);
+                }
+                else
+                {
+                    await manager.RemoveCoinsByPlayerId(player.Id, Math.Abs(dto.Amount));
+                }
+            }
         }
 
         public async Task<PlayerDto> UpdateFame(long id, ChangeAmountDto dto)

@@ -28,6 +28,10 @@ namespace RagnarokBotWeb.Domain.Services.Dto
         public string? SquadName { get; set; }
         public int? SquadId { get; set; }
         public string? IpAddress { get; set; }
+        public double? X { get; set; }
+        public double? Y { get; set; }
+        public double? Z { get; set; }
+        public string? Sector { get; set; }
 
         public void SetSquad(ScumSquad? squad)
         {

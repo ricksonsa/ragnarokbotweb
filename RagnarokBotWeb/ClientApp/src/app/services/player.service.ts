@@ -89,6 +89,10 @@ export class PlayerService {
     return this.http.patch<PlayerDto>(`${environment.apiUrl}/api/players/${id}/coins`, { amount: value });
   }
 
+  updateCoinsToAll(online: boolean, value: number) {
+    return this.http.patch<PlayerDto>(`${environment.apiUrl}/api/players/coins?online=${online}`, { amount: value });
+  }
+
   updateFame(id: number, value: number) {
     return this.http.patch<PlayerDto>(`${environment.apiUrl}/api/players/${id}/fame`, { amount: value });
   }

@@ -14,7 +14,6 @@ namespace RagnarokBotClient
 
         private readonly WebApi _remote;
         private readonly ScumManager _scumManager;
-
         private Process? _gameProcess;
         private bool _setup = false;
 
@@ -33,10 +32,10 @@ namespace RagnarokBotClient
         private string BOT_SERVER_ENDPOINT = "api.thescumbot.com";
         private int BOT_SERVER_PORT = 9000;
 
-        private static bool connected = false;
         private BotSocketClient _client;
 
-        private readonly System.Windows.Forms.Timer _pingTimer;
+        // Simplified - single ping timer
+        private readonly System.Windows.Forms.Timer _statusTimer;
 
         public Form1()
         {
@@ -51,29 +50,42 @@ namespace RagnarokBotClient
             Text += $" - {GetVersion()}";
             Task.Run(CheckVersion);
 
-            _pingTimer = new();
-            _pingTimer.Interval = 180000;
-            _pingTimer.Tick += PingTimer_Tick;
-            _pingTimer.Start();
+            // Single timer for status checking - simplified
+            _statusTimer = new();
+            _statusTimer.Interval = 120000; // Check every 2 minutes
+            _statusTimer.Tick += StatusTimer_Tick;
         }
 
-        private async void PingTimer_Tick(object? sender, EventArgs e)
+        private async void StatusTimer_Tick(object? sender, EventArgs e)
         {
             if (_client == null || IsStopped) return;
 
             try
             {
+                // Simple status check - if bot isn't connected according to server, restart
                 var result = await _remote.GetAsync<BotState>($"api/bots/{_client.BotId}");
-
                 if (result == null || !result.Connected)
                 {
-                    Stop();
-                    await Task.Delay(1000);
-                    Start();
-                    return;
+                    UpdateStatus("Server reports bot disconnected - restarting", force: true);
+                    RestartBot();
                 }
             }
-            catch { return; }
+            catch (Exception ex)
+            {
+                Logger.LogWrite($"Status check failed: {ex.Message}", write: true);
+            }
+        }
+
+        private void RestartBot()
+        {
+            try
+            {
+                _client.ForceReconnect();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWrite($"Restart failed: {ex.Message}", write: true);
+            }
         }
 
         private string GetVersion()
@@ -149,9 +161,10 @@ namespace RagnarokBotClient
             if (int.TryParse(portString, out var port)) BOT_SERVER_PORT = port;
         }
 
-        private async Task SendCheckState(CancellationToken token)
+        // Simplified - single status ping instead of multiple check types
+        private async Task SendStatusPing(CancellationToken token)
         {
-            UpdateStatus("SendCheckState started", false);
+            UpdateStatus("Status ping started", false);
 
             while (!token.IsCancellationRequested)
             {
@@ -159,24 +172,26 @@ namespace RagnarokBotClient
                 {
                     if (!string.IsNullOrEmpty(_client.BotId))
                     {
-                        UpdateStatus("sending check-state", false);
-                        var command = new BotCommand();
-                        command.Values = [
-                        new BotCommandValue
+                        UpdateStatus("Sending status ping", false);
+                        var command = new BotCommand
                         {
-                            Type = Shared.Enums.ECommandType.SayLocal,
-                            Value = $"!check-state-{_client.BotId}"
-                        }];
+                            Values = [
+                            new BotCommandValue
+                            {
+                                Type = Shared.Enums.ECommandType.SayLocal,
+                                Value = $"!check-state-{_client.BotId}"
+                            }]
+                        };
                         _priorityCommandQueue.Enqueue(command);
                     }
-
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWrite($"SendCheckState Exception: {ex.Message}", write: true);
+                    Logger.LogWrite($"Status ping exception: {ex.Message}", write: true);
                 }
-                await Task.Delay(TimeSpan.FromSeconds(120), token);
 
+                // Ping every 3 minutes (increased interval)
+                await Task.Delay(TimeSpan.FromMinutes(3), token);
             }
         }
 
@@ -257,7 +272,6 @@ namespace RagnarokBotClient
 
         public async Task Login()
         {
-
             if (_token is null) return;
             AuthResponse? tokenResult = null;
             try
@@ -326,7 +340,11 @@ namespace RagnarokBotClient
 
                             await _client.ConnectAsync(token);
                             IsStopped = false;
-                            _ = SendCheckState(token);
+
+                            // Start both status ping and status timer
+                            _ = SendStatusPing(token);
+                            _statusTimer.Start();
+
                             UpdateStatusSafe("Started...");
                         }
                         else
@@ -351,7 +369,8 @@ namespace RagnarokBotClient
         public void Stop()
         {
             _cancellationTokenSource?.Cancel();
-            connected = false;
+            _statusTimer?.Stop();
+
             if (StatusValue.InvokeRequired)
             {
                 StartButton.Invoke(new Action(() => StartButton.Text = "Start"));
@@ -386,31 +405,15 @@ namespace RagnarokBotClient
             token.ThrowIfCancellationRequested();
             var processes = Process.GetProcessesByName("SCUM");
             UpdateStatus("Waiting for SCUM process.");
-            //if (!processes.Any() && !string.IsNullOrEmpty(_gameDirPath))
-            //{
-            //    Process.Start(_gameDirPath);
-            //    await Task.Delay(5000, token);
-            //}
+
             while (!processes.Any())
             {
                 token.ThrowIfCancellationRequested();
                 await Task.Delay(500, token);
-                continue;
+                processes = Process.GetProcessesByName("SCUM");
             }
+
             _gameProcess = processes.First();
-            //try
-            //{
-            //    _gameProcess.EnableRaisingEvents = true;
-
-            //}
-            //catch (Exception) { }
-            //_gameDirPath = Path.Combine(_gameProcess.StartInfo.WorkingDirectory, _gameProcess.StartInfo.FileName);
-            //try
-            //{
-            //    File.WriteAllText(Path.Combine(_exePath, "gamedir"), _gameDirPath);
-            //}
-            //catch (Exception) { }
-
             _gameProcess.Exited += ScumProcess_Exited;
             UpdateStatus($"SCUM process found with PID: {_gameProcess.Id}.", false);
             UpdateStatus("Attempting to connect to game server.");
@@ -424,6 +427,7 @@ namespace RagnarokBotClient
             {
                 try
                 {
+                    // Process priority commands first
                     if (_priorityCommandQueue.TryDequeue(out BotCommand? priorityCommand) && priorityCommand is not null)
                     {
                         var tasks = new CommandHandler(_scumManager, _remote).Handle(priorityCommand);
@@ -431,12 +435,13 @@ namespace RagnarokBotClient
                         {
                             foreach (var task in tasks)
                             {
-                                UpdateStatus("Processing command.");
+                                UpdateStatus("Processing priority command.");
                                 await task();
                             }
                         }
                     }
 
+                    // Process regular commands
                     if (_commandQueue.TryDequeue(out BotCommand? command) && command is not null)
                     {
                         if (command.Values.Any(cmd => cmd.Type == Shared.Enums.ECommandType.Reconnect))
@@ -444,14 +449,16 @@ namespace RagnarokBotClient
                             UpdateStatus("Bot flagged for reconnect.");
                             await _scumManager.ReconnectToServer();
                             await Task.Delay(TimeSpan.FromSeconds(Math.Max(_timeToLoadWorld, 1)));
+
+                            // Send status ping after reconnect
                             _priorityCommandQueue.Enqueue(new BotCommand
                             {
                                 Values = [
-                                new BotCommandValue
-                                {
-                                    Type = Shared.Enums.ECommandType.SayLocal,
-                                    Value = $"!check-state-{_client.BotId}"
-                                }]
+                                    new BotCommandValue
+                                    {
+                                        Type = Shared.Enums.ECommandType.SayLocal,
+                                        Value = $"!status-{_client.BotId}"
+                                    }]
                             });
                         }
                         else
@@ -466,11 +473,14 @@ namespace RagnarokBotClient
                                 }
                             }
                         }
-
                     }
                 }
-                catch (Exception) { }
-                await Task.Delay(1000);
+                catch (Exception ex)
+                {
+                    Logger.LogWrite($"Command processing error: {ex.Message}", write: true);
+                }
+
+                await Task.Delay(1000); // Process commands every second
             }
         }
 
@@ -499,7 +509,7 @@ namespace RagnarokBotClient
             if (StatusValue.InvokeRequired)
             {
                 if (changeLabel) StatusValue.Invoke(new Action(() => StatusValue.Text = status));
-                if (debugCheckBox.Checked && !force)
+                if (debugCheckBox.Checked || force)
                 {
                     StatusValue.Invoke(action);
                     StatusValue.Invoke(clearTextAction);
@@ -518,17 +528,13 @@ namespace RagnarokBotClient
             }
         }
 
-        private void StatusValue_Click(object sender, EventArgs e)
-        {
-
-        }
+        private void StatusValue_Click(object sender, EventArgs e) { }
 
         private void StartButton_Click(object sender, EventArgs e)
         {
             if (StartButton.Text == "Start")
             {
                 Start();
-
             }
             else
             {
@@ -576,14 +582,11 @@ namespace RagnarokBotClient
 
         private void thescumbotSite_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            // Mark the link as visited
             thescumbotSite.LinkVisited = true;
-
-            // Open the URL in the default browser
             Process.Start(new ProcessStartInfo
             {
                 FileName = thescumbotSite.Text,
-                UseShellExecute = true // This ensures the default browser is used
+                UseShellExecute = true
             });
         }
     }

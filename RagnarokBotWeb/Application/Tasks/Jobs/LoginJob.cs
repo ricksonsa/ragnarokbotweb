@@ -27,22 +27,28 @@ public class LoginJob(
             var processor = new ScumFileProcessor(server, uow);
             await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService, context.CancellationToken))
             {
-                if (string.IsNullOrEmpty(line)) continue;
+                try
+                {
+                    var (Date, IpAddress, SteamId, PlayerName, ScumId, IsLoggedIn, X, Y, Z) = new LoginLogParser().Parse(line);
+                    if (string.IsNullOrWhiteSpace(SteamId)) continue;
 
-                var (Date, IpAddress, SteamId, PlayerName, ScumId, IsLoggedIn, X, Y, Z) = new LoginLogParser().Parse(line);
-                if (string.IsNullOrWhiteSpace(SteamId)) continue;
+                    if (IsLoggedIn)
+                        await playerService.PlayerConnected(server, SteamId, ScumId, PlayerName, X, Y, Z, IpAddress);
+                    else
+                        playerService.PlayerDisconnected(server.Id, SteamId);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "{JobKey} Exception", context.JobDetail.Key.Name);
+                }
 
-                if (IsLoggedIn)
-                    await playerService.PlayerConnected(server, SteamId, ScumId, PlayerName, X, Y, Z, IpAddress);
-                else
-                    playerService.PlayerDisconnected(server.Id, SteamId);
             }
         }
         catch (ServerUncompliantException) { }
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError(ex.Message);
+            logger.LogError(ex, "{JobKey} Exception", context.JobDetail.Key.Name);
         }
     }
 }

@@ -38,113 +38,47 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         }
 
         private static async Task HandleAwardsDaily(
-           IUnitOfWork uow,
-           IDiscordService discordService,
-           ScumServer server,
-           List<LockpickStatsDto> topLockpickers,
-           PlayerCoinManager manager)
+          IUnitOfWork uow,
+          IDiscordService discordService,
+          ScumServer server,
+          List<LockpickStatsDto> topLockpickers,
+          PlayerCoinManager manager)
         {
-            if (server.LockpickRankDailyTop1Award.HasValue && server.LockpickRankDailyTop1Award.Value > 0)
+            var awards = new[]
             {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topLockpickers[0].PlayerName && p.ScumServerId == server.Id);
-                var amount = server.LockpickRankDailyTop1Award.Value;
+                (Rank: 1, Amount: server.LockpickRankDailyTop1Award),
+                (Rank: 2, Amount: server.LockpickRankDailyTop2Award),
+                (Rank: 3, Amount: server.LockpickRankDailyTop3Award),
+                (Rank: 4, Amount: server.LockpickRankDailyTop4Award),
+                (Rank: 5, Amount: server.LockpickRankDailyTop5Award)
+            };
 
-                if (player != null)
-                {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
-                    {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 1 spot in the Daily Lockpick Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
-                }
-            }
-
-            if (server.LockpickRankDailyTop2Award.HasValue && server.LockpickRankDailyTop2Award.Value > 0)
+            for (int i = 0; i < awards.Length; i++)
             {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topLockpickers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.LockpickRankDailyTop2Award.Value;
-
-                if (player != null)
+                var (rank, amount) = awards[i];
+                if (amount.HasValue && amount.Value > 0 && topLockpickers.Count > i)
                 {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
+                    var stats = topLockpickers[i]; // correct player for this rank
+
+                    var player = await uow.Players
+                        .Include(p => p.ScumServer)
+                        .FirstOrDefaultAsync(p => p.SteamId64 == stats.SteamId && p.ScumServerId == server.Id);
+
+                    if (player != null)
                     {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 2 spot in the Daily Lockpick Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
-                }
-            }
+                        await manager.AddCoinsByPlayerId(player.Id, amount.Value);
 
-            if (server.LockpickRankDailyTop3Award.HasValue && server.LockpickRankDailyTop3Award.Value > 0)
-            {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topLockpickers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.LockpickRankDailyTop3Award.Value;
-
-                if (player != null)
-                {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
-                    {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 3 spot in the Daily Lockpick Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
-                }
-            }
-
-            if (server.LockpickRankDailyTop4Award.HasValue && server.LockpickRankDailyTop4Award.Value > 0)
-            {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topLockpickers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.LockpickRankDailyTop4Award.Value;
-
-                if (player != null)
-                {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
-                    {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 4 spot in the Daily Lockpick Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
-                    }
-                }
-            }
-
-            if (server.LockpickRankDailyTop5Award.HasValue && server.LockpickRankDailyTop5Award.Value > 0)
-            {
-                var player = await uow.Players
-                    .Include(p => p.ScumServer)
-                    .FirstOrDefaultAsync(p => p.SteamId64 == topLockpickers[0].SteamId && p.ScumServerId == server.Id);
-                var amount = server.LockpickRankDailyTop5Award.Value;
-
-                if (player != null)
-                {
-                    await manager.AddCoinsByPlayerId(player.Id, amount);
-                    if (player.DiscordId.HasValue)
-                    {
-                        var embed = new CreateEmbed(player.DiscordId.Value);
-                        embed.Title = "🏆 Congratulations! 🏆";
-                        embed.Text = $"You secured the Top 5 spot in the Daily Lockpick Ranking.\r\nAs a reward you’ve earned 💰 {amount} Coins! 🔥\r\n\r\n";
-                        embed.Color = Color.DarkOrange;
-                        await discordService.SendEmbedToUserDM(embed);
+                        if (player.DiscordId.HasValue)
+                        {
+                            var embed = new CreateEmbed(player.DiscordId.Value)
+                            {
+                                Title = "🏆 Congratulations! 🏆",
+                                Text = $"You secured the Top {rank} spot in the Daily Lockpick Ranking.\r\n" +
+                                       $"As a reward you’ve earned 💰 {amount.Value} Coins! 🔥\r\n\r\n",
+                                Color = Color.DarkOrange
+                            };
+                            await discordService.SendEmbedToUserDM(embed);
+                        }
                     }
                 }
             }

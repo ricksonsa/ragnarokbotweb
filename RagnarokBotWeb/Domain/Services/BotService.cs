@@ -47,6 +47,13 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var serverId = ServerId();
             var players = ListPlayersParser.Parse(input.Value);
+            var squads = _cacheService.GetSquads(serverId!.Value);
+            foreach (var player in players)
+            {
+                var squad = squads.FirstOrDefault(squad => squad.Members.Any(member => member.SteamId == player.SteamID));
+                player.SquadName = squad?.SquadName;
+                player.SquadId = squad?.SquadId;
+            }
             _cacheService.SetConnectedPlayers(serverId!.Value, players);
             await UpdateFromScumPlayers(serverId.Value, players);
         }

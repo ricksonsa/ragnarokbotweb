@@ -30,9 +30,12 @@ export class SquadComponent implements OnInit {
 
   ngOnInit() {
     this.route.data.subscribe(data => {
-      var item = data['squad'];
+      var item: Squad = data['squad'];
       if (item) {
         this.squad = item;
+        this.squad.members = this.squad.members.sort((a, b) => {
+          return a.memberRank - b.memberRank;
+        }).reverse();
       }
     });
   }

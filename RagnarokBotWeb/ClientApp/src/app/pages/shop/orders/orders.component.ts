@@ -95,6 +95,7 @@ export class OrdersComponent implements OnInit {
       .subscribe({
         next: (order) => {
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('', `Order number ${order.id} canceled.`, 'success')));
+          this.cancelLoading = false;
           this.load();
         },
         error: (err) => {
@@ -162,6 +163,7 @@ export class OrdersComponent implements OnInit {
       case 0: return 'Queued';
       case 1: return 'Processing';
       case 2: return 'Completed';
+      case 3: return 'Canceled';
       default: return type.toString();
     }
   }

@@ -211,6 +211,39 @@ namespace Shared.Models
             return this;
         }
 
+        public BotCommand ChangeFameToAll(long amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ChangeFameToAll,
+                Value = amount.ToString(),
+                CheckTargetOnline = true
+            });
+            return this;
+        }
+
+        public BotCommand ChangeGoldToAll(long amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ChangeGoldToAll,
+                Value = amount.ToString(),
+                CheckTargetOnline = true
+            });
+            return this;
+        }
+
+        public BotCommand ChangeMoneyToAll(long amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ChangeMoneyToAll,
+                Value = amount.ToString(),
+                CheckTargetOnline = true
+            });
+            return this;
+        }
+
         public override string ToString()
         {
             return string.Join(';', Values?.Select(x => x.Type.ToString()) ?? []);

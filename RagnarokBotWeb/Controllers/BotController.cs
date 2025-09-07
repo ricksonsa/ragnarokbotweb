@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Exceptions;
+using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using System.Text.Json;
 
@@ -150,6 +152,73 @@ namespace RagnarokBotWeb.Controllers
             }
         }
 
+        [HttpPost("{botId}/command")]
+        public async Task<IActionResult> SendCommand(string botId, SendCommandDto command)
+        {
+            var serverId = HttpContext?.User?.FindFirst(ClaimConstants.ServerId)?.Value;
+            if (serverId == null) throw new UnauthorizedAccessException();
+
+            try
+            {
+                await _botSocketServer.SendCommandAsync(long.Parse(serverId), botId, new Shared.Models.BotCommand().SayOrCommand(command.Command));
+                return Ok(new
+                {
+                    Message = $"Command sent to bot {botId}",
+                    BotId = botId,
+                    ServerId = serverId,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending command to bot {BotId} on server {ServerId}", botId, serverId);
+                return StatusCode(500, new { Error = "Failed to send command", Details = ex.Message });
+            }
+        }
+
+        [HttpPost("command")]
+        public async Task<IActionResult> SendCommand(SendCommandDto command)
+        {
+            var serverId = HttpContext?.User?.FindFirst(ClaimConstants.ServerId)?.Value;
+            if (serverId == null) throw new UnauthorizedAccessException();
+
+            if (!_botSocketServer.IsBotConnected(long.Parse(serverId))) throw new DomainException("No bots online at the moment");
+            try
+            {
+                if (command.Command.StartsWith("!give_money_online"))
+                {
+                    var amount = long.Parse(command.Command.Split(':')[1]);
+                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeMoneyToAll(amount));
+                }
+                else if (command.Command.StartsWith("!give_gold_online"))
+                {
+                    var amount = long.Parse(command.Command.Split(':')[1]);
+                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeGoldToAll(amount));
+                }
+                else if (command.Command.StartsWith("!give_fame_online"))
+                {
+                    var amount = long.Parse(command.Command.Split(':')[1]);
+                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeFameToAll(amount));
+                }
+                else
+                {
+                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().SayOrCommand(command.Command));
+                }
+
+                return Ok(new
+                {
+                    Message = $"Command sent",
+                    ServerId = serverId,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending command on server {ServerId}", serverId);
+                return StatusCode(500, new { Error = "Failed to send command", Details = ex.Message });
+            }
+        }
+
         [HttpGet("{botId}")]
         public IActionResult GetBot(string botId)
         {
@@ -166,7 +235,7 @@ namespace RagnarokBotWeb.Controllers
                     BotId = bot.Guid.ToString(),
                     SteamId = bot.SteamId ?? "Unknown",
                     Connected = bot.TcpClient?.Connected == true,
-                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value).TotalMinutes < 5,
+                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value) < BotSocketServer.PING_TIMEOUT,
                     LastSeen = (bot.LastPinged ?? bot.LastInteracted).ToString("yyyy-MM-dd HH:mm:ss UTC"),
                     MinutesSinceLastSeen = bot.LastPinged.HasValue
                         ? Math.Round((now - bot.LastPinged.Value).TotalMinutes, 1)
@@ -198,7 +267,7 @@ namespace RagnarokBotWeb.Controllers
                     BotId = bot.Guid.ToString(),
                     SteamId = bot.SteamId ?? "Unknown",
                     Connected = bot.TcpClient?.Connected == true,
-                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value).TotalMinutes < 5,
+                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value) < BotSocketServer.PING_TIMEOUT,
                     LastSeen = (bot.LastPinged ?? bot.LastInteracted).ToString("yyyy-MM-dd HH:mm:ss UTC"),
                     MinutesSinceLastSeen = bot.LastPinged.HasValue
                         ? Math.Round((now - bot.LastPinged.Value).TotalMinutes, 1)

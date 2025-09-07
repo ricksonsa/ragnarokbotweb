@@ -24,4 +24,8 @@ export class PlayerDto {
     silenceExpiresAt?: Date;
     lastLoggedIn?: Date;
     ipAddress?: string;
+    x?: number;
+    y?: number;
+    z?: number;
+    sector?: string;
 }

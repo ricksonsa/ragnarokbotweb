@@ -111,6 +111,13 @@ namespace RagnarokBotWeb.Controllers
             return Ok(players);
         }
 
+        [HttpPatch("coins")]
+        public async Task<IActionResult> UpdatePlayerCoins(bool online, ChangeAmountDto dto)
+        {
+            await _playerService.UpdateCoinsToAll(online, dto);
+            return Ok();
+        }
+
         [HttpPatch("{id}/coins")]
         public async Task<IActionResult> UpdatePlayerCoins(long id, ChangeAmountDto dto)
         {

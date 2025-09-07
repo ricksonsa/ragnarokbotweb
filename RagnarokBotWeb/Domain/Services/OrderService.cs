@@ -70,6 +70,14 @@ namespace RagnarokBotWeb.Domain.Services
             order.Status = EOrderStatus.Canceled;
             await _orderRepository.CreateOrUpdateAsync(order);
             await _orderRepository.SaveAsync();
+
+            if (order.Player != null)
+            {
+                var price = order.GetPrice();
+                var manager = new PlayerCoinManager(_unitOfWork);
+                await manager.AddCoinsByPlayerId(order.Player.Id, price);
+            }
+
             return _mapper.Map<OrderDto>(order);
         }
 

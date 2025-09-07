@@ -40,8 +40,12 @@ public class ScumFileProcessor
 
     private static bool IsIrrelevantLine(ReadOnlySpan<char> line)
     {
-        return line.IsEmpty || line.IsWhiteSpace() || line.Contains("Game version".AsSpan(), StringComparison.Ordinal);
+        if (line.IsEmpty || line.IsWhiteSpace())
+            return true;
+
+        return line.ToString().Contains("Game version", StringComparison.Ordinal);
     }
+
 
     private static bool IsExpired(DateTime createdAt) => DateTime.UtcNow - createdAt > TimeSpan.FromMinutes(10);
 
@@ -321,7 +325,6 @@ public class ScumFileProcessor
 
         var (localFilePath, currentPointer) = preparedFile.Value;
 
-        // Stream lines with minimal memory usage
         await foreach (var line in ReadLinesFromFileAsync(localFilePath, currentPointer, cancellationToken))
         {
             yield return line;
@@ -355,14 +358,15 @@ public class ScumFileProcessor
                 continue;
             }
 
-            if (IsIrrelevantLine(line))
+            // Use span-based cleaning for efficiency
+            var cleanedLine = CleanLine(line);
+
+            if (IsIrrelevantLine(cleanedLine))
             {
                 lineNumber++;
                 continue;
             }
 
-            // Use span-based cleaning for efficiency
-            var cleanedLine = CleanLine(line);
             if (!string.IsNullOrWhiteSpace(cleanedLine))
             {
                 yield return cleanedLine;
@@ -481,44 +485,7 @@ public class ScumFileProcessor
                 continue;
 
             // Now we can safely stream lines (no try-catch around yield)
-            await foreach (var line in StreamLinesWithErrorHandlingAsync(file, pointer, ftpService, cancellationToken))
-            {
-                yield return line;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Wrapper method that handles errors without yield return
-    /// </summary>
-    private async IAsyncEnumerable<string> StreamLinesWithErrorHandlingAsync(
-        FtpListItem file,
-        ReaderPointer? pointer,
-        IFtpService ftpService,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        IAsyncEnumerable<string>? lineStream = null;
-
-        try
-        {
-            lineStream = StreamLinesFromFileAsync(file, pointer, ftpService, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error preparing to stream file {FileName} for server {ServerId}", file.Name, _scumServer.Id);
-
-            if (IsConnectionError(ex))
-            {
-                if (_ftp != null)
-                    await ftpService.ClearPoolForServerAsync(_ftp);
-            }
-            // Return empty stream on error
-            yield break;
-        }
-
-        if (lineStream != null)
-        {
-            await foreach (var line in lineStream)
+            await foreach (var line in StreamLinesFromFileAsync(file, pointer, ftpService, cancellationToken))
             {
                 yield return line;
             }

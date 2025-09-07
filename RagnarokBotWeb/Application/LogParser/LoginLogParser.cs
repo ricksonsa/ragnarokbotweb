@@ -11,7 +11,7 @@ namespace RagnarokBotWeb.Application.LogParser
 
             var match = Regex.Match(line, pattern);
             if (!match.Success)
-                throw new FormatException("Log line not in expected format");
+                throw new FormatException($"Log line not in expected format: {line}");
 
             var date = DateTime.ParseExact(match.Groups["date"].Value, "yyyy.MM.dd-HH.mm.ss", null);
             var ip = match.Groups["ip"].Value;

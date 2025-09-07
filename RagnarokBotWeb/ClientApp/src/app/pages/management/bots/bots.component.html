@@ -12,7 +12,6 @@
           <th>Steam ID</th>
           <th>Connected</th>
           <th>Game Active</th>
-          <th>Minutes Since Last Seen</th>
           <th></th>
         </tr>
       </thead>
@@ -29,10 +28,11 @@
               [nzPopoverContent]="data.gameActive ? 'Yes' : 'No'"
               [ngClass]="{ 'success': data.gameActive, 'danger': !data.gameActive}"></nz-icon>
           </td>
-          <td>{{data.minutesSinceLastSeen}}</td>
-
           <td>
-            <button nz-button nzType="link" (click)="sendReconnect(data.botId)">
+            <button *ngIf="data.gameActive && data.connected" nz-button nzType="link" (click)="openSendCommand(data.botId)">
+              Send Command
+            </button>
+            <button *ngIf="!data.gameActive" nz-button nzType="link" (click)="sendReconnect(data.botId)">
               Send Reconnect Signal
             </button>
           </td>
@@ -41,3 +41,14 @@
     </nz-table>
   </nz-card>
 </div>
+
+<nz-modal [(nzVisible)]="botId" nzTitle="Send Command" (nzOnCancel)="closeSendCommand()">
+  <div *nzModalContent>
+    <p nz-typography nzType="secondary">Enter the command that the bot will execute.</p>
+    <input nz-input type="text" [(ngModel)]="command" />
+  </div>
+  <div *nzModalFooter>
+    <button nz-button nzType="default" (click)="closeSendCommand()">Cancel</button>
+    <button nz-button nzType="primary" [nzLoading]="loadingCommand" (click)="sendCommand()">Send</button>
+  </div>
+</nz-modal>

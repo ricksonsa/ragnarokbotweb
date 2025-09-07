@@ -24,7 +24,7 @@ namespace RagnarokBotWeb.Application.Models
         [JsonProperty("raiding-times", NullValueHandling = NullValueHandling.Ignore)]
         public List<RaidingTime> RaidingTimes { get; set; }
 
-        static bool IsBetweenDays(DayOfWeek start, DayOfWeek end, DayOfWeek current)
+        private static bool IsBetweenDays(DayOfWeek start, DayOfWeek end, DayOfWeek current)
         {
             if (start <= end)
                 return current >= start && current <= end;
@@ -32,19 +32,19 @@ namespace RagnarokBotWeb.Application.Models
                 return current >= start || current <= end;
         }
 
-        static HashSet<DayOfWeek> ExpandDays(string dayString)
+        private static HashSet<DayOfWeek> ExpandDays(string dayString)
         {
             var result = new HashSet<DayOfWeek>();
 
             if (dayString.Equals("Weekdays", StringComparison.OrdinalIgnoreCase))
             {
                 result.UnionWith(new[] {
-                DayOfWeek.Monday,
-                DayOfWeek.Tuesday,
-                DayOfWeek.Wednesday,
-                DayOfWeek.Thursday,
-                DayOfWeek.Friday
-            });
+                    DayOfWeek.Monday,
+                    DayOfWeek.Tuesday,
+                    DayOfWeek.Wednesday,
+                    DayOfWeek.Thursday,
+                    DayOfWeek.Friday
+                });
             }
             else if (dayString.Equals("Weekend", StringComparison.OrdinalIgnoreCase))
             {
@@ -53,8 +53,11 @@ namespace RagnarokBotWeb.Application.Models
             else if (dayString.Contains("-"))
             {
                 var parts = dayString.Split('-');
-                if (Enum.TryParse(parts[0], true, out DayOfWeek startDay) &&
-                    Enum.TryParse(parts[1], true, out DayOfWeek endDay))
+                var init = parts[0];
+                var end = parts[1];
+                if (end.StartsWith("00")) end = "23:59";
+                if (Enum.TryParse(init, true, out DayOfWeek startDay) &&
+                    Enum.TryParse(end, true, out DayOfWeek endDay))
                 {
                     for (int i = 0; i < 7; i++)
                     {
@@ -79,16 +82,38 @@ namespace RagnarokBotWeb.Application.Models
         private bool IsRtInRaidingTime(RaidingTime rt, DateTimeOffset now)
         {
             var days = ExpandDays(rt.Day);
-
             if (!days.Contains(now.DayOfWeek)) return false;
 
             var times = rt.Time.Split('-');
-            var start = TimeSpan.ParseExact(times[0], "hh\\:mm", CultureInfo.InvariantCulture);
-            var end = TimeSpan.ParseExact(times[1], "hh\\:mm", CultureInfo.InvariantCulture);
+            if (times.Length != 2) return false;
+
+            var startStr = times[0].Trim();
+            var endStr = times[1].Trim();
+
+            if (!TimeSpan.TryParseExact(startStr, "hh\\:mm", CultureInfo.InvariantCulture, out var start) &&
+                !TimeSpan.TryParseExact(startStr, "HH\\:mm", CultureInfo.InvariantCulture, out start))
+            {
+                return false; // invalid start format
+            }
+
+            if (!TimeSpan.TryParseExact(endStr, "hh\\:mm", CultureInfo.InvariantCulture, out var end) &&
+                !TimeSpan.TryParseExact(endStr, "HH\\:mm", CultureInfo.InvariantCulture, out end))
+            {
+                return false; // invalid end format
+            }
+
+            // Treat 00:00 as midnight (end of day)
+            if (end == TimeSpan.Zero)
+                end = TimeSpan.FromDays(1);
 
             var nowTime = now.TimeOfDay;
-            return nowTime >= start && nowTime <= end;
+
+            if (start <= end)
+                return nowTime >= start && nowTime <= end;
+            else
+                return nowTime >= start || nowTime <= end; // overnight
         }
+
 
         public bool IsInRaidTime(ScumServer server)
         {

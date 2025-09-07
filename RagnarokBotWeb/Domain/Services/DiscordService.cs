@@ -648,60 +648,59 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task SendKillFeedEmbed(ScumServer server, Kill kill)
         {
-            var killFeedChannel = await _channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.KillFeed);
-            if (killFeedChannel is null) return;
-            var channel = await _client.GetChannelAsync(killFeedChannel.DiscordId) as IMessageChannel;
-            if (channel is null) return;
-
-            var embedBuilder = new EmbedBuilder()
-                .WithColor(Color.DarkOrange)
-                .WithFooter(GetAuthor())
-                .WithTimestamp(new DateTimeOffset(kill.CreateDate, TimeSpan.Zero));
-
-            if (server.ShowKillerName)
+            try
             {
-                embedBuilder.AddField(server.ShowKillOnMap ? "Killer [red]" : "Killer", kill.KillerName, true);
-                embedBuilder.AddField(server.ShowKillOnMap ? "Victim [black]" : "Victim", kill.TargetName, true);
-            }
-            else
-            {
-                embedBuilder.AddField("Victim", kill.TargetName, false);
-            }
+                var killFeedChannel = await _channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.KillFeed);
+                if (killFeedChannel is null) return;
+                var channel = await _client.GetChannelAsync(killFeedChannel.DiscordId) as IMessageChannel;
+                if (channel is null) return;
 
-            if (server.ShowKillWeapon)
-                embedBuilder.AddField("Weapon", kill.DisplayWeapon, false);
+                var embedBuilder = new EmbedBuilder()
+                    .WithColor(Color.DarkOrange)
+                    .WithFooter(GetAuthor())
+                    .WithTimestamp(new DateTimeOffset(kill.CreateDate, TimeSpan.Zero));
 
-            if (server.ShowKillDistance)
-                embedBuilder.AddField("Distance", kill.Distance.HasValue ? $"{Convert.ToInt32(Math.Round(kill.Distance.Value / 100f))}m" : "Unknown", false);
+                if (server.ShowKillerName)
+                {
+                    embedBuilder.AddField(server.ShowKillOnMap ? "Killer [red]" : "Killer", kill.KillerName, true);
+                    embedBuilder.AddField(server.ShowKillOnMap ? "Victim [black]" : "Victim", kill.TargetName, true);
+                }
+                else
+                {
+                    embedBuilder.AddField("Victim", kill.TargetName, false);
+                }
 
-            if (server.ShowKillSector)
-                embedBuilder.AddField("Sector", kill.Sector, false);
+                if (server.ShowKillWeapon)
+                    embedBuilder.AddField("Weapon", kill.DisplayWeapon, false);
 
-            if (server.ShowKillCoordinates)
-            {
-                embedBuilder.AddField("Killer Coordinates", $"{new ScumCoordinate(kill.KillerX, kill.KillerY, kill.KillerZ)}", true);
-                embedBuilder.AddField("Victim Coordinates", $"{new ScumCoordinate(kill.VictimX, kill.VictimY, kill.VictimZ)}", true);
-            }
+                if (server.ShowKillDistance)
+                    embedBuilder.AddField("Distance", kill.Distance.HasValue ? $"{Convert.ToInt32(Math.Round(kill.Distance.Value / 100f))}m" : "Unknown", false);
 
-            if (server.ShowKillOnMap)
-            {
+                if (server.ShowKillSector)
+                    embedBuilder.AddField("Sector", kill.Sector, false);
+
+                if (server.ShowKillCoordinates)
+                {
+                    embedBuilder.AddField("Killer Coordinates", $"{new ScumCoordinate(kill.KillerX, kill.KillerY, kill.KillerZ)}", true);
+                    embedBuilder.AddField("Victim Coordinates", $"{new ScumCoordinate(kill.VictimX, kill.VictimY, kill.VictimZ)}", true);
+                }
+
+                if (server.ShowKillOnMap)
+                {
+                    try
+                    {
+                        embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{kill.ImageUrl}");
+                    }
+                    catch { }
+                }
+
                 try
                 {
-                    embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{kill.ImageUrl}");
+                    embedBuilder.WithThumbnailUrl($"{_appSettings.BaseUrl}/images/scum_images/{kill.Weapon!.Substring(0, kill.Weapon.LastIndexOf("_C"))}.webp");
                 }
                 catch { }
-            }
 
-            try
-            {
-                embedBuilder.WithThumbnailUrl($"{_appSettings.BaseUrl}/images/scum_images/{kill.Weapon!.Substring(0, kill.Weapon.LastIndexOf("_C"))}.webp");
-            }
-            catch { }
-
-            try
-            {
                 await channel.SendMessageAsync(embed: embedBuilder.Build());
-
             }
             catch (Exception ex)
             {

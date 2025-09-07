@@ -55,8 +55,8 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.ScumServer)
             .Include(player => player.ScumServer.Exchange)
             .Include(player => player.ScumServer.Guild)
-            .Include(warzone => warzone.ScumServer.Tenant)
-            .Include(warzone => warzone.ScumServer.Tenant.Payments)
+            .Include(player => player.ScumServer.Tenant)
+            .Include(player => player.ScumServer.Tenant.Payments)
                 .ThenInclude(payment => payment.Subscription)
             .FirstOrDefaultAsync(player => player.ScumServerId == serverId && player.SteamId64 == steamId64);
     }
@@ -69,6 +69,9 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
             .Include(player => player.Silences)
             .Include(player => player.ScumServer)
             .Include(player => player.ScumServer.Exchange)
+            .Include(player => player.ScumServer.Tenant)
+            .Include(player => player.ScumServer.Tenant.Payments)
+                .ThenInclude(payment => payment.Subscription)
             .Where(player => player.ScumServer.Id == serverId)
             .ToListAsync();
     }

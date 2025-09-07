@@ -135,24 +135,10 @@ public class KillLogJob(
 
     private static bool IsSameSquad(Kill kill, List<Shared.Models.ScumSquad> squads)
     {
-        bool killerInSquad = false;
-        bool targetInSameSquad = false;
-
-        foreach (var squad in squads)
-        {
-            var memberIds = squad.Members.Select(m => m.SteamId).ToHashSet();
-
-            if (memberIds.Contains(kill.KillerSteamId64!))
-                killerInSquad = true;
-
-            if (memberIds.Contains(kill.TargetSteamId64!))
-                targetInSameSquad = true;
-
-            // Both are in the same squad, skip
-            if (killerInSquad && targetInSameSquad) return true;
-        }
-
-        return false;
+        return squads.Any(squad =>
+            squad.Members.Any(m => m.SteamId == kill.KillerSteamId64) &&
+            squad.Members.Any(m => m.SteamId == kill.TargetSteamId64)
+        );
     }
 
     private static async Task HandleAnnounceText(IBotService botService, ScumServer server, Kill kill)

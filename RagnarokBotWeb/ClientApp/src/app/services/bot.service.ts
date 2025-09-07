@@ -24,4 +24,12 @@ export class BotService {
     reconnect(botId: string) {
         return this.http.post<any>(`${environment.apiUrl}/api/bots/${botId}/reconnect`, null);
     }
+
+    send(botId: string, command: any) {
+        return this.http.post<any>(`${environment.apiUrl}/api/bots/${botId}/command`, command);
+    }
+
+    sendCommand(command: any) {
+        return this.http.post<any>(`${environment.apiUrl}/api/bots/command`, command);
+    }
 }

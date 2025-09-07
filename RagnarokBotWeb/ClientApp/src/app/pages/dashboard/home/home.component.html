@@ -47,19 +47,15 @@
   </nz-card>
 
   <nz-card nzSize="small" class="statistics-card">
-    <nz-spin *ngIf="!totalPlayers" [nzTip]="'Loading...'" [nzSpinning]="false"></nz-spin>
-
-    <nz-statistic *ngIf="totalPlayers" [nzValue]="totalPlayers" nzTitle="Total Players"></nz-statistic>
+    <nz-statistic [nzValue]="totalPlayers" nzTitle="Total Players"></nz-statistic>
   </nz-card>
 
   <nz-card nzSize="small" class="statistics-card">
-    <nz-spin *ngIf="!totalVips" [nzTip]="'Loading...'" [nzSpinning]="false"></nz-spin>
-    <nz-statistic *ngIf="totalVips" [nzValue]="totalVips" nzTitle="Vip Players"></nz-statistic>
+    <nz-statistic [nzValue]="totalVips" nzTitle="Vip Players"></nz-statistic>
   </nz-card>
 
   <nz-card nzSize="small" class="statistics-card">
-    <nz-spin *ngIf="!totalWhitelisted" [nzTip]="'Loading...'" [nzSpinning]="false"></nz-spin>
-    <nz-statistic *ngIf="totalWhitelisted" [nzValue]="totalWhitelisted" nzTitle="Whitelisted Players"></nz-statistic>
+    <nz-statistic [nzValue]="totalWhitelisted" nzTitle="Whitelisted Players"></nz-statistic>
   </nz-card>
 </div>
 
@@ -67,19 +63,19 @@
 <br>
 
 <div class="grid">
-  <nz-card nzSize="small" class="graph-card" nzTitle="Best Sellers">
+  <nz-card nzSize="small" class="graph-card" nzTitle="Shop Best Sellers">
     <canvas *ngIf="bestSellers.length > 0" id="orders"></canvas>
     <nz-empty *ngIf="bestSellers.length === 0" nzNotFoundImage="simple"></nz-empty>
   </nz-card>
 
-  <nz-card nzSize="small" class="graph-card" nzTitle="Players Registering Per Month">
+  <nz-card nzSize="small" class="graph-card" nzTitle="New Players Monthly">
     <div *ngIf="playerStatistics.length > 0" class="bar-holder">
       <canvas id="newPlayers"></canvas>
     </div>
     <nz-empty *ngIf="playerStatistics.length === 0" nzNotFoundImage="simple"></nz-empty>
   </nz-card>
 
-  <nz-card nzSize="small" class="statistics-card fit-content" nzTitle="Lockpicks General">
+  <nz-card nzSize="small" class="statistics-card fit-content" nzTitle="Lockpicks Overview">
     <div class="wrapper">
       <nz-table nzSize="small" #lockpickTable [nzData]="lockpicks" nzShowPagination="false">
         <thead>
@@ -104,7 +100,7 @@
     </div>
   </nz-card>
 
-  <nz-card nzSize="small" class="statistics-card fit-content" nzTitle="Kills General">
+  <nz-card nzSize="small" class="statistics-card fit-content" nzTitle="Kills Overview">
     <div class="wrapper">
       <nz-table nzSize="small" #killTable [nzData]="kills" nzShowPagination="false">
         <thead>
@@ -131,15 +127,17 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>Money</th>
-            <th>Gold</th>
+            <th>Fame</th>
+            <th>Squad</th>
+            <th>Sector</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let data of playersTable.data">
             <td><a [routerLink]="['/management', 'players', data.steamId64]">{{data.name}}</a></td>
-            <td>{{data.money}}</td>
-            <td>{{data.gold}}</td>
+            <td>{{data.fame}}</td>
+            <td><a [routerLink]="['/management', 'squads', data.squadId]">{{data.squadName}}</a></td>
+            <td>{{data.sector}}</td>
           </tr>
         </tbody>
       </nz-table>

@@ -7,10 +7,11 @@
 <br>
 <br>
 <div class="main">
-  <nz-card nzSize="small" [nzTitle]="squad?.squadName">
-    <nz-table #basicTable [nzData]="squad?.members">
+  <nz-card [nzTitle]="squad?.squadName" nzSize="small">
+    <nz-table #basicTable [nzData]="squad?.members" nzSize="small">
       <thead>
         <tr>
+          <th>#</th>
           <th>Name</th>
           <th>Steam Name</th>
           <th>Steam ID</th>
@@ -19,8 +20,9 @@
         </tr>
       </thead>
       <tbody>
-        @for (data of basicTable.data; track data) {
+        @for (data of basicTable.data; track data; let i = $index) {
         <tr>
+          <td>{{ i + 1 }}</td>
           <td>{{ data.characterName }}</td>
           <td>{{ data.steamName }}</td>
           <td>{{ data.steamId }}</td>

@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-using Shared.Models;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace ConsoleAppTest
 {
@@ -15,44 +13,29 @@ namespace ConsoleAppTest
             return $"{fileName}";
         }
 
-
-        public static List<ScumPlayer> Parse(string data)
+        public static (DateTime Date, string IpAddress, string SteamId, string PlayerName, string ScumId, bool IsLoggedIn, float X, float Y, float Z) Parse(string line)
         {
-            var players = new List<ScumPlayer>();
-            string[] values = data.Trim().Split(new string[] { "\r\n\r\n", "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+            string pattern =
+                @"^(?<date>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2}): '\s*(?<ip>\d{1,3}(?:\.\d{1,3}){3})\s+(?<steamId>\d{17}):(?<player>.+)\((?<scumId>\d+)\)'\s+(?<status>logged in|logged out)\s+at:\s+X=(?<x>[-+]?\d*\.?\d+)\s+Y=(?<y>[-+]?\d*\.?\d+)\s+Z=(?<z>[-+]?\d*\.?\d+)$";
 
-            try
-            {
-                foreach (var value in values)
-                {
-                    var pattern = @"^\d+\.\s*(?<name>.+)\r?\nSteam: (?<steamName>.+) \((?<steamId>\d+)\)\r?\nFame: (?<fame>\d+)\s*\r?\nAccount balance: (?<accountBalance>\d+)\r?\nGold balance: (?<goldBalance>\d+)\r?\nLocation: X=(?<x>-?\d+\.?\d*) Y=(?<y>-?\d+\.?\d*) Z=(?<z>-?\d+\.?\d*)";
+            var match = Regex.Match(line, pattern);
+            if (!match.Success)
+                throw new FormatException("Log line not in expected format");
 
-                    var match = Regex.Match(value.TrimStart(), pattern, RegexOptions.Multiline);
-                    if (match.Success)
-                    {
-                        players.Add(new ScumPlayer
-                        {
-                            Name = match.Groups["name"].Value,
-                            SteamName = match.Groups["steamName"].Value,
-                            SteamID = match.Groups["steamId"].Value,
-                            Fame = int.Parse(match.Groups["fame"].Value),
-                            AccountBalance = int.Parse(match.Groups["accountBalance"].Value),
-                            GoldBalance = int.Parse(match.Groups["goldBalance"].Value),
-                            X = double.Parse(match.Groups["x"].Value),
-                            Y = double.Parse(match.Groups["y"].Value),
-                            Z = double.Parse(match.Groups["z"].Value)
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
+            var date = DateTime.ParseExact(match.Groups["date"].Value, "yyyy.MM.dd-HH.mm.ss", null);
+            var ip = match.Groups["ip"].Value;
+            var steamId = match.Groups["steamId"].Value;
+            var player = match.Groups["player"].Value.Trim();
+            var scumId = match.Groups["scumId"].Value;
+            var status = match.Groups["status"].Value == "logged in";
+            var x = float.Parse(match.Groups["x"].Value, System.Globalization.CultureInfo.InvariantCulture);
+            var y = float.Parse(match.Groups["y"].Value, System.Globalization.CultureInfo.InvariantCulture);
+            var z = float.Parse(match.Groups["z"].Value, System.Globalization.CultureInfo.InvariantCulture);
 
-                throw;
-            }
-
-            return players;
+            return (date, ip, steamId, player, scumId, status, x, y, z);
         }
+
+
 
         static async Task Main(string[] args)
         {
@@ -63,56 +46,9 @@ namespace ConsoleAppTest
                 // Coordenada central - centro do mapa (setor B2)
                 var centerCoord = ScumCoordinate.FromSectorCenter("B2");
 
-                var list = @"
- 1. kanfox
-Steam: kanfox (76561198372541307)
-Fame: 273                 
-Account balance: 121063
-Gold balance: 4
-Location: X=-233789.594 Y=-48906.258 Z=35754.148
+                var line = "2025.09.05-09.05.49: '170.246.119.51 76561198356493229:FerreiraJJ(1247)' logged in at: X=155135.000 Y=53565.000 Z=30406.000";
+                var login = Parse(line);
 
- 2. GHOST
-Steam: GHOST (76561199162601005)
-Fame: 1046                
-Account balance: 9381
-Gold balance: 153
-Location: X=-235860.313 Y=-62408.930 Z=38316.609
-
- 3. Miguels
-Steam: Miguels (76561198393076063)
-Fame: 3526                
-Account balance: 59598
-Gold balance: 1158
-Location: X=-167484.859 Y=441298.625 Z=72471.039
-
- 4. JajaEuVolto
-Steam: JajaEuVolto (76561198299977265)
-Fame: 625                 
-Account balance: 209506
-Gold balance: 143
-Location: X=269314.656 Y=509088.188 Z=21733.738
-
- 5. HarysonFPS
-Steam: HarysonFPS (76561198065306838)
-Fame: 2290                
-Account balance: 129915
-Gold balance: 0
-Location: X=-91006.297 Y=333766.844 Z=76922.609
-
- 6. Ragnarok
-Steam: Korosu 殺 (76561198002224431)
-Fame: 2607                
-Account balance: 208706
-Gold balance: 15
-Location: X=431209.000 Y=-834088.000 Z=2188.610
-";
-
-                var players = Parse(list).DistinctBy(x => x.SteamID);
-                var json = JsonConvert.SerializeObject(players, Formatting.Indented);
-                var d1 = new ScumCoordinate(120690.578, -808264.750, 13222.057);
-                var d2 = new ScumCoordinate(125631.469, -813236.875, 13115.753);
-                var distance = d1.DistanceTo(d2).ToString();
-                Console.WriteLine(distance);
 
                 // Lista de pontos usando diferentes métodos
                 //var points = new List<ScumCoordinate>

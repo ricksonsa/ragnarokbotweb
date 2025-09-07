@@ -38,8 +38,8 @@ namespace RagnarokBotWeb.Controllers
             var dateString = line.Substring(0, line.IndexOf(':'));
             string format = "yyyy.MM.dd-HH.mm.ss";
             var date = DateTime.ParseExact(dateString, format, CultureInfo.InvariantCulture);
-
-            return new GenericLogValue { Date = TimeZoneInfo.ConvertTimeFromUtc(date, server.GetTimeZoneOrDefault()), Line = line };
+            //date = TimeZoneInfo.ConvertTimeFromUtc(date, server.GetTimeZoneOrDefault());
+            return new GenericLogValue { Date = date, Line = line };
         }
 
         [HttpGet("kills")]

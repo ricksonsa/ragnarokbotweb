@@ -20,6 +20,9 @@
         ChangeMoney,
         Silence,
         SayOrCommand,
-        Reconnect
+        Reconnect,
+        ChangeFameToAll,
+        ChangeGoldToAll,
+        ChangeMoneyToAll,
     }
 }

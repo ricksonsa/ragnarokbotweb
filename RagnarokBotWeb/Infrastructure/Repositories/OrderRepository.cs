@@ -19,6 +19,24 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return base.AddAsync(entity);
         }
 
+        public override Task<Order?> FindByIdAsync(long id)
+        {
+            return DbSet()
+               .Include(order => order.ScumServer)
+               .Include(order => order.ScumServer.Uav)
+               .Include(order => order.Taxi)
+                   .ThenInclude(taxi => taxi.TaxiTeleports)
+                   .ThenInclude(tp => tp.Teleport)
+               .Include(order => order.Player)
+               .Include(order => order.Pack)
+               .ThenInclude(pack => pack.PackItems)
+               .ThenInclude(packItems => packItems.Item)
+               .Include(order => order.Warzone)
+                   .ThenInclude(warzone => warzone.Teleports)
+                   .ThenInclude(teleport => teleport.Teleport)
+               .FirstOrDefaultAsync(order => order.Id == id);
+        }
+
         public Task<List<Order>> FindManyForProcessor(Expression<Func<Order, bool>> predicate)
         {
             return DbSet()
