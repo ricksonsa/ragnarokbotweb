@@ -82,6 +82,18 @@ namespace RagnarokBotClient
                     case ECommandType.ChangeFame:
                         tasks.Add(() => _scumManager.ChangeFame(commandValue.Target!, commandValue.Value));
                         break;
+
+                    case ECommandType.ChangeGoldToAll:
+                        tasks.Add(() => _scumManager.ChangeCurrency("Gold", commandValue.Target!, commandValue.Value));
+                        break;
+
+                    case ECommandType.ChangeMoneyToAll:
+                        tasks.Add(() => _scumManager.ChangeCurrency("Normal", commandValue.Target!, commandValue.Value));
+                        break;
+
+                    case ECommandType.ChangeFameToAll:
+                        tasks.Add(() => _scumManager.ChangeFame(commandValue.Target!, commandValue.Value));
+                        break;
                 }
             }
 
@@ -120,9 +132,19 @@ namespace RagnarokBotClient
             while (remaining > 0)
             {
                 int batch = Math.Min(10, remaining);
-                await _scumManager.SpawnItem(commandValue.Value!, batch, commandValue.Target!);
+
+                if (IsVehicle(commandValue))
+                    await _scumManager.SpawnVehicle(commandValue.Value!, batch, commandValue.Target!);
+                else
+                    await _scumManager.SpawnItem(commandValue.Value!, batch, commandValue.Target!);
+
                 remaining -= batch;
             }
+        }
+
+        private static bool IsVehicle(BotCommandValue commandValue)
+        {
+            return commandValue.Value!.ToLower().StartsWith("bp_") && commandValue.Value.ToLower() != "bp_headlamp";
         }
 
         private async Task HandleListPlayers()

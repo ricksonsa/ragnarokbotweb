@@ -46,10 +46,11 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             try
             {
                 var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
-                var orders = await _orderRepository.FindManyByServer(server.Id);
+                var orders = await _orderRepository.FindManyByServerForCommand(server.Id);
 
                 if (orders.Count == 0) return;
                 var isBotOnline = _botService.IsBotOnline(server.Id);
+                if (!isBotOnline) return;
                 var players = _cacheService.GetConnectedPlayers(server.Id);
 
                 foreach (var order in orders)
@@ -62,25 +63,23 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                     await _orderRepository.SaveAsync();
                     var command = new BotCommand();
 
-                    if (order.OrderType == EOrderType.Pack)
+                    switch (order.OrderType)
                     {
-                        HandlePackOrder(isBotOnline, order, command);
-                    }
-                    else if (order.OrderType == EOrderType.Warzone)
-                    {
-                        HandleWarzoneOrder(isBotOnline, order, command);
-                    }
-                    else if (order.OrderType == EOrderType.UAV)
-                    {
-                        await HandleUavOrder(server, isBotOnline, players, order, command);
-                    }
-                    else if (order.OrderType == EOrderType.Taxi)
-                    {
-                        HandleTaxiOrder(isBotOnline, order, command);
-                    }
-                    else if (order.OrderType == EOrderType.Exchange)
-                    {
-                        await HandleExchangeOrder(isBotOnline, _unitOfWork, order, command);
+                        case EOrderType.Pack:
+                            HandlePackOrder(order, command);
+                            break;
+                        case EOrderType.Warzone:
+                            HandleWarzoneOrder(order, command);
+                            break;
+                        case EOrderType.UAV:
+                            await HandleUavOrder(server, players, order, command);
+                            break;
+                        case EOrderType.Taxi:
+                            HandleTaxiOrder(order, command);
+                            break;
+                        case EOrderType.Exchange:
+                            await HandleExchangeOrder(_unitOfWork, order, command);
+                            break;
                     }
 
                     if (command != null) await _botService.SendCommand(order.ScumServer.Id, command);
@@ -96,9 +95,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             }
         }
 
-        private async Task HandleUavOrder(Domain.Entities.ScumServer server, bool isBotOnline, List<ScumPlayer> players, Order order, BotCommand command)
+        private async Task HandleUavOrder(Domain.Entities.ScumServer server, List<ScumPlayer> players, Order order, BotCommand command)
         {
-            if (!isBotOnline) return;
             if (order.ScumServer?.Uav is null) return;
 
             await new UavHandler(
@@ -115,18 +113,16 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             await _orderRepository.SaveAsync();
         }
 
-        private static void HandleWarzoneOrder(bool isBotOnline, Order order, BotCommand command)
+        private static void HandleWarzoneOrder(Order order, BotCommand command)
         {
-            if (!isBotOnline) return;
             if (order.Warzone is null) return;
             var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
             command.Data = "order_" + order.Id.ToString();
             command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
         }
 
-        private static void HandleTaxiOrder(bool isBotOnline, Order order, BotCommand command)
+        private static void HandleTaxiOrder(Order order, BotCommand command)
         {
-            if (!isBotOnline) return;
             if (order.Taxi is null) return;
             var teleport = order.Taxi.TaxiTeleports.FirstOrDefault(t => t.Id.ToString() == order.TaxiTeleportId);
             if (teleport is null) return;
@@ -134,9 +130,8 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
         }
 
-        private static async Task HandleExchangeOrder(bool isBotOnline, IUnitOfWork uow, Order order, BotCommand command)
+        private static async Task HandleExchangeOrder(IUnitOfWork uow, Order order, BotCommand command)
         {
-            if (!isBotOnline) return;
             if (order.Player is null) return;
             if (order.Player.ScumServer.Exchange is null) return;
             command.Data = "order_" + order.Id.ToString();
@@ -175,13 +170,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             }
         }
 
-        private static void HandlePackOrder(bool isBotOnline, Order order, BotCommand command)
+        private static void HandlePackOrder(Order order, BotCommand command)
         {
-            if (!isBotOnline) return;
+            if (order.Pack is null) return;
+
             var deliveryText = order.ResolvedDeliveryText();
             if (deliveryText is not null) command.Say(deliveryText);
 
-            if (order.Pack is null) return;
             foreach (var packItem in order.Pack.PackItems)
             {
                 if (packItem.AmmoCount > 0)

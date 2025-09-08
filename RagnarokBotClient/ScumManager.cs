@@ -135,6 +135,12 @@ namespace RagnarokBotClient
             return RunCommand($"#spawnitem {item} {amount} location {location}");
         }
 
+        public Task SpawnVehicle(string item, int amount, string location)
+        {
+            Logger.LogWrite($"Spawning item {amount} x {item} at location {location}");
+            return RunCommand($"#spawnvehicle {item} {amount} location {location}");
+        }
+
         public Task SpawnItem(string item, int amount, int ammoCount, string location)
         {
             Logger.LogWrite($"Spawning item {amount} x {item} with AmmoCount {ammoCount} at location {location}");
@@ -219,7 +225,19 @@ namespace RagnarokBotClient
             return RunCommand($"#ChangeCurrencyBalance {type} {value} {target}");
         }
 
+        public Task ChangeCurrencyToAll(string type, string target, string value)
+        {
+            Logger.LogWrite($"ChangeCurrencyBalance {type} {value} {target}");
+            return RunCommand($"#ChangeCurrencyBalance {type} {value} {target}");
+        }
+
         public Task ChangeFame(string target, string value)
+        {
+            Logger.LogWrite($"ChangeFamePoints {value} {target}");
+            return RunCommand($"#ChangeFamePoints {value} {target}");
+        }
+
+        public Task ChangeFameToAll(string target, string value)
         {
             Logger.LogWrite($"ChangeFamePoints {value} {target}");
             return RunCommand($"#ChangeFamePoints {value} {target}");

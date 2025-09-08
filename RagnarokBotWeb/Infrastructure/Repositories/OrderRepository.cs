@@ -85,7 +85,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .FirstOrDefaultAsync(order => order.Status == EOrderStatus.Created);
         }
 
-        public Task<List<Order>> FindManyByServer(long serverId)
+        public Task<List<Order>> FindManyByServerForCommand(long serverId)
         {
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
@@ -103,6 +103,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                     .ThenInclude(teleport => teleport.Teleport)
                 .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId && order.Status == EOrderStatus.Created)
                 .OrderBy(order => order.CreateDate)
+                .Take(5)
                 .ToListAsync();
         }
 

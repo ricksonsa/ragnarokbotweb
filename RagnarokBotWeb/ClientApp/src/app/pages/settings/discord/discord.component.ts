@@ -19,7 +19,7 @@ import { Alert } from '../../../models/alert';
 import { ChannelDto } from '../../../models/channel.dto';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { Observable, pipe, Subscription, switchMap, take } from 'rxjs';
+import { Subscription, switchMap, take } from 'rxjs';
 
 @Component({
   selector: 'app-discord',
@@ -152,8 +152,10 @@ export class DiscordComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           response.forEach(item => {
-            this.channelsForm.controls[item.key].patchValue(item.value);
-            this.channels.find(channel => channel.discordId === item.value).disabled = true;
+            if (this.channelsForm.controls[item.key]) {
+              this.channelsForm.controls[item.key].patchValue(item.value);
+              this.channels.find(channel => channel.discordId === item.value).disabled = true;
+            }
           });
 
           this.registerFormChanges();
@@ -202,8 +204,10 @@ export class DiscordComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.channels.forEach(channel => channel.disabled = false);
           response.forEach(item => {
-            this.channelsForm.controls[item.key].patchValue(item.value);
-            this.channels.find(channel => channel.discordId === item.value).disabled = true;
+            if (this.channelsForm.controls[item.key]) {
+              this.channelsForm.controls[item.key].patchValue(item.value);
+              this.channels.find(channel => channel.discordId === item.value).disabled = true;
+            }
           });
         },
         complete: () => this.registerFormChanges()
