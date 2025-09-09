@@ -7,9 +7,29 @@
 <br>
 <div class="main single">
   <nz-card nzTitle="Kill Rank Awards" nzSize="small">
-    <p nz-typography nzType="secondary">The amount of coins that will be awarded to players for each rank. Leave it blank if for no awards.
+    <p nz-typography nzType="secondary">The amount of coins that will be awarded to players for each rank. Leave it
+      blank if for no awards.
     </p>
     <form nz-form [formGroup]="form">
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="rankEnabled">Enabled</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="rankEnabled"></label>
+        </nz-form-control>
+        <p nz-typography nzType="secondary" style="margin: 0;">Enable/Disable ranking rewards</p>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="middle">
+        <nz-form-label [nzSpan]="0" nzFor="rankVipOnly">VIP Only</nz-form-label>
+        <nz-form-control [nzSpan]="2">
+          <label nz-checkbox formControlName="rankVipOnly"></label>
+        </nz-form-control>
+        <p nz-typography style="margin: 0;" nzType="secondary">Determine whether ranking rewards will only be available
+          for
+          VIP Players.</p>
+      </nz-form-item>
+
       <nz-divider nzText="Daily"></nz-divider>
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="killRankDailyTop1Award">Top1 Award</nz-form-label>

@@ -19,14 +19,25 @@
 
   <ng-template #onlineExtraOptions>
     <nz-list [nzBordered]="false" nzSize="small">
-      <nz-list-item><button nz-button nzType="link" (click)="addingCoins = true">Give Coins To
-          All</button></nz-list-item>
-      <nz-list-item><button nz-button nzType="link" (click)="addingCoinsOnline = true">Give Coins To All
-          Online</button></nz-list-item>
-      <nz-list-item><button nz-button nzType="link" (click)="addingMoney = true">Give Money To All
-          Online</button></nz-list-item>
-      <nz-list-item><button nz-button nzType="link" (click)="addingGold = true">Give Gold To All
-          Online</button></nz-list-item>
+      <nz-list-item>
+        <button nz-button nzType="link" (click)="addingCoins = true">Give Coins To All</button>
+      </nz-list-item>
+      <nz-list-item>
+        <button nz-button nzType="link" (click)="addingCoinsOnline = true">Give Coins To All Online</button>
+      </nz-list-item>
+      <nz-list-item>
+        <button nz-button nzType="link" (click)="addingMoney = true">Give Money To All Online</button>
+      </nz-list-item>
+      <nz-list-item>
+        <button nz-button nzType="link" (click)="addingGold = true">Give Gold To All Online</button>
+      </nz-list-item>
+
+      <nz-list-item>
+        <button nz-button nzType="link" (click)="addingMoneyAll = true">Give Money To All</button>
+      </nz-list-item>
+      <nz-list-item>
+        <button nz-button nzType="link" (click)="addingGoldAll = true">Give Gold To All</button>
+      </nz-list-item>
     </nz-list>
   </ng-template>
   <nz-card nzTitle="Players" [nzExtra]="newItem">
@@ -103,6 +114,33 @@
   </div>
 </nz-modal>
 
+
+<nz-modal [(nzVisible)]="addingGoldAll" nzTitle="Add/Remove Gold" (nzOnCancel)="addingGoldAll = false">
+  <div *nzModalContent>
+    <p nz-typography>Adding ingame gold to all players, input negative values to remove gold.</p>
+    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take
+      sometime to update after applied.</p>
+    <input nz-input type="number" [(ngModel)]="addGoldValue">
+  </div>
+  <div *nzModalFooter>
+    <button nz-button nzType="default" (click)="addingGoldAll = false;">Cancel</button>
+    <button nz-button nzType="primary" (click)="addGold(false)" [nzLoading]="addingLoader">Add</button>
+  </div>
+</nz-modal>
+
+<nz-modal [(nzVisible)]="addingMoneyAll" nzTitle="Add/Remove Money" (nzOnCancel)="addingMoneyAll = false">
+  <div *nzModalContent>
+    <p nz-typography>Adding ingame money to all players, input negative values to remove money.</p>
+    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take
+      sometime to update after applied.</p>
+    <input nz-input type="number" [(ngModel)]="addMoneyValue">
+  </div>
+  <div *nzModalFooter>
+    <button nz-button nzType="default" (click)="addingMoneyAll = false;">Cancel</button>
+    <button nz-button nzType="primary" (click)="addMoney(false)" [nzLoading]="addingLoader">Add</button>
+  </div>
+</nz-modal>
+
 <nz-modal [(nzVisible)]="addingGold" nzTitle="Add/Remove Gold" (nzOnCancel)="addingGold = false">
   <div *nzModalContent>
     <p nz-typography>Adding ingame gold to all players online, input negative values to remove gold.</p>
@@ -112,7 +150,7 @@
   </div>
   <div *nzModalFooter>
     <button nz-button nzType="default" (click)="addingGold = false;">Cancel</button>
-    <button nz-button nzType="primary" (click)="addGold()" [nzLoading]="addingLoader">Add</button>
+    <button nz-button nzType="primary" (click)="addGold(true)" [nzLoading]="addingLoader">Add</button>
   </div>
 </nz-modal>
 
@@ -125,19 +163,6 @@
   </div>
   <div *nzModalFooter>
     <button nz-button nzType="default" (click)="addingMoney = false;">Cancel</button>
-    <button nz-button nzType="primary" (click)="addMoney()" [nzLoading]="addingLoader">Add</button>
-  </div>
-</nz-modal>
-
-<nz-modal [(nzVisible)]="addingFame" nzTitle="Add/Remove Fame" (nzOnCancel)="addingFame = false">
-  <div *nzModalContent>
-    <p nz-typography>Adding ingame fame to all players online, input negative values to remove fame.</p>
-    <p nz-typography nzType="warning">This is a bot command meaning it depends on the bot availability and may take
-      sometime to update after applied.</p>
-    <input nz-input type="number" [(ngModel)]="addFameValue">
-  </div>
-  <div *nzModalFooter>
-    <button nz-button nzType="default" (click)="addingFame = false;">Cancel</button>
-    <button nz-button nzType="primary" (click)="addFame()" [nzLoading]="addingLoader">Add</button>
+    <button nz-button nzType="primary" (click)="addMoney(true)" [nzLoading]="addingLoader">Add</button>
   </div>
 </nz-modal>

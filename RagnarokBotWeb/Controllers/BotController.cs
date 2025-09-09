@@ -188,17 +188,22 @@ namespace RagnarokBotWeb.Controllers
                 if (command.Command.StartsWith("!give_money_online"))
                 {
                     var amount = long.Parse(command.Command.Split(':')[1]);
-                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeMoneyToAll(amount));
+                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeMoneyToAllOnline(amount));
                 }
                 else if (command.Command.StartsWith("!give_gold_online"))
                 {
                     var amount = long.Parse(command.Command.Split(':')[1]);
-                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeGoldToAll(amount));
+                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeGoldToAllOnline(amount));
                 }
-                else if (command.Command.StartsWith("!give_fame_online"))
+                else if (command.Command.StartsWith("!give_gold_all"))
                 {
                     var amount = long.Parse(command.Command.Split(':')[1]);
-                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeFameToAll(amount));
+                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeGoldToAll(amount));
+                }
+                else if (command.Command.StartsWith("!give_money_all"))
+                {
+                    var amount = long.Parse(command.Command.Split(':')[1]);
+                    await _botSocketServer.SendCommandAsync(long.Parse(serverId), new Shared.Models.BotCommand().ChangeMoneyToAll(amount));
                 }
                 else
                 {

@@ -21,6 +21,7 @@ namespace RagnarokBotWeb.Domain.Entities
 
             var now = DateTime.UtcNow;
             var expirationDate = ConfirmDate.Value.AddDays(Subscription.RollingDays);
+            if (ExpireAt.HasValue) return now < ExpireAt.Value;
             return now < expirationDate;
         }
     }

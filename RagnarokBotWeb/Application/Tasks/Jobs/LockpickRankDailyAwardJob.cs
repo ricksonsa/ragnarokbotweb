@@ -22,7 +22,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             try
             {
                 var server = await GetServerAsync(context);
-
+                if (!server.RankEnabled) return;
                 var manager = new PlayerCoinManager(unitOfWork);
                 var topPlayers = await GetLockpickRank(unitOfWork, server);
                 await HandleAwardsDaily(unitOfWork, discordService, server, topPlayers, manager);
@@ -53,21 +53,22 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 (Rank: 5, Amount: server.LockpickRankDailyTop5Award)
             };
 
-            for (int i = 0; i < awards.Length; i++)
+            for (int i = 0; i < topLockpickers.Count; i++)
             {
                 var (rank, amount) = awards[i];
-                if (amount.HasValue && amount.Value > 0 && topLockpickers.Count > i)
+                if (amount.HasValue && amount.Value > 0)
                 {
-                    var stats = topLockpickers[i]; // correct player for this rank
+                    var stats = topLockpickers[i];
 
                     var player = await uow.Players
                         .Include(p => p.ScumServer)
+                        .Include(p => p.Vips)
                         .FirstOrDefaultAsync(p => p.SteamId64 == stats.SteamId && p.ScumServerId == server.Id);
 
                     if (player != null)
                     {
+                        if (server.RankVipOnly && !player.IsVip()) continue;
                         await manager.AddCoinsByPlayerId(player.Id, amount.Value);
-
                         if (player.DiscordId.HasValue)
                         {
                             var embed = new CreateEmbed(player.DiscordId.Value)

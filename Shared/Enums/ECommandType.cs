@@ -21,8 +21,9 @@
         Silence,
         SayOrCommand,
         Reconnect,
-        ChangeFameToAll,
         ChangeGoldToAll,
         ChangeMoneyToAll,
+        ChangeGoldToAllOnline,
+        ChangeMoneyToAllOnline,
     }
 }

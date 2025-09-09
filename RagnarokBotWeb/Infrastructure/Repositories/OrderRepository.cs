@@ -110,7 +110,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
 
         public Task<List<Order>> FindManyCommandByServer(long serverId)
         {
-            var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-5);
+            var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-10);
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
                 .Where(order => order.ScumServer != null

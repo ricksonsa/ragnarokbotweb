@@ -54,6 +54,8 @@ export class RankingsComponent implements OnInit {
     private readonly serverService: ServerService
   ) {
     this.form = this.fb.group({
+      rankEnabled: [false],
+      rankVipOnly: [false],
       killRankDailyTop1Award: [null],
       killRankDailyTop2Award: [null],
       killRankDailyTop3Award: [null],
@@ -89,9 +91,15 @@ export class RankingsComponent implements OnInit {
   save() {
     this.loading = true;
     const value = this.form.value;
+
     for (let attr in value) {
-      if (value[attr] != null && value[attr] != '') value[attr] = Math.abs(value[attr]);
+      if (value[attr] != null && value[attr] !== '') {
+        if (typeof value[attr] === 'number') {
+          value[attr] = Math.abs(value[attr]);
+        }
+      }
     }
+
     this.form.patchValue(value);
     this.serverService.updateRankAwards(value)
       .subscribe({

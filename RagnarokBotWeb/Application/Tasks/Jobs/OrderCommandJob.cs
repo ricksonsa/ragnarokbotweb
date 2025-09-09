@@ -48,15 +48,26 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
                 var orders = await _orderRepository.FindManyByServerForCommand(server.Id);
 
-                if (orders.Count == 0) return;
-                var isBotOnline = _botService.IsBotOnline(server.Id);
-                if (!isBotOnline) return;
-                var players = _cacheService.GetConnectedPlayers(server.Id);
+                if (orders.Count == 0)
+                {
+                    _logger.LogInformation("{Job} -> No orders found, skipping execution", context.JobDetail.Key.Name);
+                    return;
+                }
 
+                if (!_botService.IsBotOnline(server.Id))
+                {
+                    _logger.LogInformation("{Job} -> No bots online, skipping execution", context.JobDetail.Key.Name);
+                    return;
+                }
+
+                var players = _cacheService.GetConnectedPlayers(server.Id);
                 foreach (var order in orders)
                 {
-                    if (order.Player?.SteamId64 is null) continue;
-                    if (!players.Any(player => player.SteamID == order.Player.SteamId64)) continue;
+                    if (order.Player?.SteamId64 is null)
+                    {
+                        _logger.LogInformation("{Job} -> Order have no player or player steamId is null, skipping execution", context.JobDetail.Key.Name);
+                        return;
+                    }
 
                     order.Status = EOrderStatus.Command;
                     _orderRepository.Update(order);

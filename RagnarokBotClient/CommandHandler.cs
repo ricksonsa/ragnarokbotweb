@@ -84,15 +84,19 @@ namespace RagnarokBotClient
                         break;
 
                     case ECommandType.ChangeGoldToAll:
-                        tasks.Add(() => _scumManager.ChangeCurrency("Gold", commandValue.Target!, commandValue.Value));
+                        tasks.Add(() => _scumManager.ChangeCurrencyToAll("Gold", commandValue.Value));
                         break;
 
                     case ECommandType.ChangeMoneyToAll:
-                        tasks.Add(() => _scumManager.ChangeCurrency("Normal", commandValue.Target!, commandValue.Value));
+                        tasks.Add(() => _scumManager.ChangeCurrencyToAll("Normal", commandValue.Value));
                         break;
 
-                    case ECommandType.ChangeFameToAll:
-                        tasks.Add(() => _scumManager.ChangeFame(commandValue.Target!, commandValue.Value));
+                    case ECommandType.ChangeGoldToAllOnline:
+                        tasks.Add(() => _scumManager.ChangeCurrencyToAllOnline("Gold", commandValue.Value));
+                        break;
+
+                    case ECommandType.ChangeMoneyToAllOnline:
+                        tasks.Add(() => _scumManager.ChangeCurrencyToAllOnline("Normal", commandValue.Value));
                         break;
                 }
             }

@@ -264,8 +264,7 @@ namespace RagnarokBotWeb.Application.BotServer
             await stream.FlushAsync();
         }
 
-        // Fix for BotSocketServer - HandleClientAsync method
-        private async Task HandleClientAsync(TcpClient client, CancellationToken token)
+        private async Task AcceptClientAsync(TcpClient client, CancellationToken token)
         {
             using var stream = client.GetStream();
             BotUser? bot = null;
@@ -438,7 +437,7 @@ namespace RagnarokBotWeb.Application.BotServer
                         {
                             var client = await _listener.AcceptTcpClientAsync(token);
                             _logger.LogDebug("New client connected from {RemoteEndpoint}", client.Client.RemoteEndPoint);
-                            _ = HandleClientAsync(client, token);
+                            _ = AcceptClientAsync(client, token);
                         }
                         catch (OperationCanceledException)
                         {

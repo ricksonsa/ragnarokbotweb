@@ -2,6 +2,8 @@
 {
     public class UpdateRankAwardsDto
     {
+        public bool RankEnabled { get; set; }
+        public bool RankVipOnly { get; set; }
         public long? KillRankMonthlyTop1Award { get; set; }
         public long? KillRankMonthlyTop2Award { get; set; }
         public long? KillRankMonthlyTop3Award { get; set; }

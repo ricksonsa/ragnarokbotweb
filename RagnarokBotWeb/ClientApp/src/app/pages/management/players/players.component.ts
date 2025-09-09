@@ -53,12 +53,18 @@ export class PlayersComponent implements OnInit {
   total = 0;
   pageIndex = 1;
   pageSize = 10;
+
+  addingGoldAll = false;
   addingGold = false;
   addGoldValue = 0;
+
+  addingMoneyAll = false;
   addingMoney = false;
   addMoneyValue = 0;
+
   addingFame = false;
   addFameValue = 0;
+
   addingLoader = false;
 
   addingCoins = false;
@@ -120,9 +126,10 @@ export class PlayersComponent implements OnInit {
     return `${remaining} days to expire`;
   }
 
-  addGold() {
+  addGold(online: boolean) {
     this.addingLoader = true;
-    this.botService.sendCommand({ command: `!give_gold_online:${this.addGoldValue}` })
+    const cmd = online ? `!give_gold_online:${this.addGoldValue}` : `!give_gold_all:${this.addGoldValue}`;
+    this.botService.sendCommand({ command: cmd })
       .subscribe({
         next: (player) => {
           this.addingGold = false;
@@ -138,9 +145,10 @@ export class PlayersComponent implements OnInit {
       });
   }
 
-  addMoney() {
+  addMoney(online: boolean) {
     this.addingLoader = true;
-    this.botService.sendCommand({ command: `!give_money_online:${this.addMoneyValue}` })
+    const cmd = online ? `!give_money_online:${this.addMoneyValue}` : `!give_money_all:${this.addMoneyValue}`;
+    this.botService.sendCommand({ command: cmd })
       .subscribe({
         next: (player) => {
           this.addingMoney = false;
@@ -155,6 +163,7 @@ export class PlayersComponent implements OnInit {
         }
       });
   }
+
 
   addFame() {
     this.addingLoader = true;

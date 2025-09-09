@@ -164,7 +164,7 @@ namespace RagnarokBotWeb.Domain.Services
             }
         }
 
-        public async Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, float x, float y, float z, string ipAddress)
+        public async Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, double? x, double? y, double? z, string ipAddress)
         {
             var player = await _playerRepository.FindOneWithServerAsync(p => p.SteamId64 == steamId64 && p.ScumServer.Id == server.Id);
 
@@ -191,9 +191,9 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     Name = name,
                     SteamID = steamId64,
-                    X = x,
-                    Y = y,
-                    Z = z,
+                    X = x ?? 0,
+                    Y = y ?? 0,
+                    Z = z ?? 0,
                     SquadId = squad?.SquadId,
                     SquadName = squad?.SquadName,
                     AccountBalance = player.Money ?? 0,

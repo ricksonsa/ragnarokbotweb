@@ -211,24 +211,13 @@ namespace Shared.Models
             return this;
         }
 
-        public BotCommand ChangeFameToAll(long amount)
-        {
-            Values.Add(new BotCommandValue
-            {
-                Type = ECommandType.ChangeFameToAll,
-                Value = amount.ToString(),
-                CheckTargetOnline = true
-            });
-            return this;
-        }
-
         public BotCommand ChangeGoldToAll(long amount)
         {
             Values.Add(new BotCommandValue
             {
                 Type = ECommandType.ChangeGoldToAll,
                 Value = amount.ToString(),
-                CheckTargetOnline = true
+                CheckTargetOnline = false
             });
             return this;
         }
@@ -239,7 +228,29 @@ namespace Shared.Models
             {
                 Type = ECommandType.ChangeMoneyToAll,
                 Value = amount.ToString(),
-                CheckTargetOnline = true
+                CheckTargetOnline = false
+            });
+            return this;
+        }
+
+        public BotCommand ChangeGoldToAllOnline(long amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ChangeGoldToAllOnline,
+                Value = amount.ToString(),
+                CheckTargetOnline = false
+            });
+            return this;
+        }
+
+        public BotCommand ChangeMoneyToAllOnline(long amount)
+        {
+            Values.Add(new BotCommandValue
+            {
+                Type = ECommandType.ChangeMoneyToAllOnline,
+                Value = amount.ToString(),
+                CheckTargetOnline = false
             });
             return this;
         }

@@ -26,6 +26,8 @@ export class ScumServer {
     slots?: number;
     uav?: UavDto;
     exchange?: ExchangeDto;
+    rankEnabled: boolean;
+    rankVipOnly: boolean;
     killRankDailyTop1Award?: number;
     killRankDailyTop2Award?: number;
     killRankDailyTop3Award?: number;

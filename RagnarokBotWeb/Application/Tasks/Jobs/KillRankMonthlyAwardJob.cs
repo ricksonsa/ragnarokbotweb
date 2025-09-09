@@ -24,6 +24,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             try
             {
                 var server = await GetServerAsync(context);
+                if (!server.RankEnabled) return;
                 var topKillersMonthly = await TopPlayers(unitOfWork, server, ERankingPeriod.Monthly);
 
                 var manager = new PlayerCoinManager(unitOfWork);
@@ -38,11 +39,11 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         }
 
         private static async Task HandleAwards(
-               IUnitOfWork uow,
-               IDiscordService discordService,
-               ScumServer server,
-               List<PlayerStatsDto> topKillers,
-               PlayerCoinManager manager)
+                IUnitOfWork uow,
+                IDiscordService discordService,
+                ScumServer server,
+                List<PlayerStatsDto> topKillers,
+                PlayerCoinManager manager)
         {
             var awards = new[]
             {
@@ -53,19 +54,21 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 (Rank: 5, Amount: server.KillRankDailyTop5Award)
             };
 
-            for (int i = 0; i < awards.Length; i++)
+            for (int i = 0; i < topKillers.Count; i++)
             {
                 var (rank, amount) = awards[i];
-                if (amount.HasValue && amount.Value > 0 && topKillers.Count > i)
+                if (amount.HasValue && amount.Value > 0)
                 {
                     var stats = topKillers[i];
 
                     var player = await uow.Players
                         .Include(p => p.ScumServer)
+                        .Include(p => p.Vips)
                         .FirstOrDefaultAsync(p => p.SteamId64 == stats.SteamId && p.ScumServerId == server.Id);
 
                     if (player != null)
                     {
+                        if (server.RankVipOnly && !player.IsVip()) continue;
                         await manager.AddCoinsByPlayerId(player.Id, amount.Value);
 
                         if (player.DiscordId.HasValue)
@@ -136,23 +139,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 })
                 .ToListAsync();
 
-            // Group by TargetName (victims)
-            var victimStats = await kills
-                .GroupBy(k => k.TargetName)
-                .Select(g => new
-                {
-                    PlayerName = g.Key,
-                    DeathCount = g.Count()
-                })
-                .ToListAsync();
-
             // Merge both lists by player name
             var topPlayers = killerStats
                 .Select(killer => new PlayerStatsDto
                 {
                     PlayerName = killer.PlayerName,
                     KillCount = killer.KillCount,
-                    DeathCount = victimStats.FirstOrDefault(v => v.PlayerName == killer.PlayerName)?.DeathCount ?? 0,
                     LastKillDate = killer.LastKillDate
                 })
                 .OrderByDescending(p => p.KillCount)

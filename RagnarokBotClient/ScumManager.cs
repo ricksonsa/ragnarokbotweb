@@ -225,19 +225,19 @@ namespace RagnarokBotClient
             return RunCommand($"#ChangeCurrencyBalance {type} {value} {target}");
         }
 
-        public Task ChangeCurrencyToAll(string type, string target, string value)
+        public Task ChangeCurrencyToAll(string type, string value)
         {
-            Logger.LogWrite($"ChangeCurrencyBalance {type} {value} {target}");
-            return RunCommand($"#ChangeCurrencyBalance {type} {value} {target}");
+            Logger.LogWrite($"ChangeCurrencyBalanceToAll {type} {value}");
+            return RunCommand($"#ChangeCurrencyBalanceToAll {type} {value}");
+        }
+
+        public Task ChangeCurrencyToAllOnline(string type, string value)
+        {
+            Logger.LogWrite($"ChangeCurrencyBalanceToAllOnline {type} {value}");
+            return RunCommand($"#ChangeCurrencyBalanceToAllOnline {type} {value}");
         }
 
         public Task ChangeFame(string target, string value)
-        {
-            Logger.LogWrite($"ChangeFamePoints {value} {target}");
-            return RunCommand($"#ChangeFamePoints {value} {target}");
-        }
-
-        public Task ChangeFameToAll(string target, string value)
         {
             Logger.LogWrite($"ChangeFamePoints {value} {target}");
             return RunCommand($"#ChangeFamePoints {value} {target}");
