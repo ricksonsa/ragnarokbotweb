@@ -1,4 +1,4 @@
-﻿using Quartz;
+﻿using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Entities;
@@ -39,69 +39,73 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             _unitOfWork = unitOfWork;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId)
         {
-            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            var jobName = $"{GetType().Name}({serverId})";
+            _logger.LogInformation("Triggered {Job} -> Execute at: {time}", jobName, DateTimeOffset.Now);
 
             try
             {
-                var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+                var server = await GetServerAsync(serverId, ftpRequired: false, validateSubscription: true);
+
                 var orders = await _orderRepository.FindManyByServerForCommand(server.Id);
 
                 if (orders.Count == 0)
                 {
-                    _logger.LogInformation("{Job} -> No orders found, skipping execution", context.JobDetail.Key.Name);
+                    _logger.LogDebug("{Job} -> No orders found, skipping execution", jobName);
                     return;
                 }
 
                 if (!_botService.IsBotOnline(server.Id))
                 {
-                    _logger.LogInformation("{Job} -> No bots online, skipping execution", context.JobDetail.Key.Name);
+                    _logger.LogDebug("{Job} -> No bots online, skipping execution", jobName);
                     return;
                 }
 
                 var players = _cacheService.GetConnectedPlayers(server.Id);
-                foreach (var order in orders)
+
+                foreach (var notTrackedOrder in orders)
                 {
-                    if (order.Player?.SteamId64 is null)
+                    var order = await _orderRepository.FindByIdAsync(notTrackedOrder.Id);
+
+                    if (order?.Player?.SteamId64 is null)
                     {
-                        _logger.LogInformation("{Job} -> Order have no player or player steamId is null, skipping execution", context.JobDetail.Key.Name);
-                        return;
+                        _logger.LogDebug("{Job} -> Order {OrderId} has no player or SteamId, skipping", jobName, notTrackedOrder.Id);
+                        continue;
                     }
 
-                    order.Status = EOrderStatus.Command;
-                    _orderRepository.Update(order);
-                    await _orderRepository.SaveAsync();
                     var command = new BotCommand();
-
                     switch (order.OrderType)
                     {
                         case EOrderType.Pack:
-                            HandlePackOrder(order, command);
+                            await HandlePackOrder(order, command);
                             break;
                         case EOrderType.Warzone:
-                            HandleWarzoneOrder(order, command);
+                            await HandleWarzoneOrder(order, command);
                             break;
                         case EOrderType.UAV:
                             await HandleUavOrder(server, players, order, command);
                             break;
                         case EOrderType.Taxi:
-                            HandleTaxiOrder(order, command);
+                            await HandleTaxiOrder(order, command);
                             break;
                         case EOrderType.Exchange:
                             await HandleExchangeOrder(_unitOfWork, order, command);
                             break;
                     }
 
-                    if (command != null) await _botService.SendCommand(order.ScumServer.Id, command);
-
+                    if (order.OrderType != EOrderType.UAV)
+                    {
+                        await _unitOfWork.AppDbContext.Database.ExecuteSqlAsync($@"UPDATE ""Orders"" SET ""Status"" = {(int)EOrderStatus.Command} WHERE ""Id"" = {order.Id}");
+                    }
                 }
+
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
             catch (Exception ex)
             {
-                _logger.LogError("OrderCommandJob Exception -> {Ex}", ex.Message);
+                _logger.LogError(ex, "{Job} Exception -> {Message}", jobName, ex.Message);
                 throw;
             }
         }
@@ -119,29 +123,30 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var deliveryText = order.ResolvedDeliveryText();
             if (deliveryText is not null) command.Say(deliveryText);
 
-            order.Status = EOrderStatus.Done;
-            _orderRepository.Update(order);
-            await _orderRepository.SaveAsync();
+            await _botService.SendCommand(order.ScumServer.Id, command);
+            await _unitOfWork.AppDbContext.Database.ExecuteSqlAsync($@"UPDATE ""Orders"" SET ""Status"" = {(int)EOrderStatus.Done} WHERE ""Id"" = {order.Id}");
         }
 
-        private static void HandleWarzoneOrder(Order order, BotCommand command)
+        private async Task HandleWarzoneOrder(Order order, BotCommand command)
         {
             if (order.Warzone is null) return;
             var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
             command.Data = "order_" + order.Id.ToString();
             command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
+            await _botService.SendCommand(order.ScumServer.Id, command);
         }
 
-        private static void HandleTaxiOrder(Order order, BotCommand command)
+        private async Task HandleTaxiOrder(Order order, BotCommand command)
         {
             if (order.Taxi is null) return;
             var teleport = order.Taxi.TaxiTeleports.FirstOrDefault(t => t.Id.ToString() == order.TaxiTeleportId);
             if (teleport is null) return;
             command.Data = "order_" + order.Id.ToString();
             command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
+            await _botService.SendCommand(order.ScumServer.Id, command);
         }
 
-        private static async Task HandleExchangeOrder(IUnitOfWork uow, Order order, BotCommand command)
+        private async Task HandleExchangeOrder(IUnitOfWork uow, Order order, BotCommand command)
         {
             if (order.Player is null) return;
             if (order.Player.ScumServer.Exchange is null) return;
@@ -179,9 +184,10 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         command.ChangeGold(order.Player!.SteamId64!, -order.ExchangeAmount);
                     break;
             }
+            await _botService.SendCommand(order.ScumServer.Id, command);
         }
 
-        private static void HandlePackOrder(Order order, BotCommand command)
+        private async Task HandlePackOrder(Order order, BotCommand command)
         {
             if (order.Pack is null) return;
 
@@ -197,6 +203,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             }
 
             command.Data = "order_" + order.Id.ToString();
+            await _botService.SendCommand(order.ScumServer.Id, command);
         }
     }
 }

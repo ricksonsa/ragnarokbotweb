@@ -1,11 +1,10 @@
-﻿using Quartz;
-using RagnarokBotWeb.Domain.Exceptions;
+﻿using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
-    public class CloseWarzoneJob : AbstractJob, IJob
+    public class CloseWarzoneJob : AbstractJob, IWarzoneJob
     {
         private readonly ILogger<CloseWarzoneJob> _logger;
         private readonly IWarzoneService _warzoneService;
@@ -19,23 +18,20 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             _warzoneService = warzoneService;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId, long warzoneId)
         {
-            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            _logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({warzoneId})", DateTimeOffset.Now);
 
             try
             {
-                var server = await GetServerAsync(context, ftpRequired: false);
-                var warzoneId = GetValueFromContext<long>(context, "warzone_id");
-                if (warzoneId == 0) return;
-
-                await _warzoneService.CloseWarzone(server, context.CancellationToken);
+                var warzone = await _warzoneService.FetchWarzoneById(warzoneId);
+                var server = await GetServerAsync(serverId, ftpRequired: false);
+                await _warzoneService.CloseWarzone(warzoneId);
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
             catch (Exception)
             {
-
                 throw;
             }
 

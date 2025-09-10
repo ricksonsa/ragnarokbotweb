@@ -1,5 +1,4 @@
-﻿using Quartz;
-using RagnarokBotWeb.Domain.Services.Interfaces;
+﻿using RagnarokBotWeb.Domain.Services.Interfaces;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
@@ -14,22 +13,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             _orderService = orderService;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId)
         {
-            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            _logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
             try
             {
-                JobDataMap dataMap = context.JobDetail.JobDataMap;
-                long? serverId = dataMap.GetLong("server_id");
-
-                if (!serverId.HasValue)
-                {
-                    _logger.LogError("No value for variable serverId");
-                    return;
-                }
-
-                await _orderService.ResetCommandOrders(serverId.Value);
+                await _orderService.ResetCommandOrders(serverId);
             }
             catch (Exception ex)
             {

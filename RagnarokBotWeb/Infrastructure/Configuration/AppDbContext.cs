@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Entities.Base;
 
 namespace RagnarokBotWeb.Infrastructure.Configuration
 {
@@ -75,11 +76,51 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
                     if (property.ClrType == typeof(DateTime))
                     {
                         property.SetValueConverter(new ValueConverter<DateTime, DateTime>(
-                            v => v.Kind == DateTimeKind.Local ? v.ToUniversalTime() : v,
-                            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)));
+                            v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(), // store as UTC
+                            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)              // read as UTC
+                        ));
                     }
                 }
             }
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    modelBuilder.Entity(entityType.ClrType, builder =>
+                    {
+                        builder.Property("CreateDate").HasColumnType("timestamptz");
+                        builder.Property("UpdateDate").HasColumnType("timestamptz");
+                    });
+                }
+            }
+
+            modelBuilder.Entity<Ban>()
+                .Property(x => x.ExpirationDate).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<Silence>()
+                .Property(x => x.ExpirationDate).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<DiscordRole>()
+                .Property(x => x.ExpirationDate).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<Vip>()
+                .Property(x => x.ExpirationDate).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<Payment>()
+                .Property(x => x.ConfirmDate).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<Bunker>()
+                .Property(x => x.Available).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<Player>()
+                .Property(x => x.LastLoggedIn).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<ReaderPointer>()
+                .Property(x => x.FileDate).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<ReaderPointer>()
+                .Property(x => x.LastUpdated).HasColumnType("timestamptz");
 
             modelBuilder.Entity<Uav>()
                 .HasOne(u => u.ScumServer)

@@ -1,18 +1,22 @@
 using Discord;
 using Discord.WebSocket;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
-using Quartz;
 using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Application.Mapping;
 using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Application.Tasks.BackgroundServices;
+using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Configuration;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.Filters;
 using RagnarokBotWeb.HostedServices;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.FTP;
@@ -54,11 +58,21 @@ namespace RagnarokBotWeb
 
             Environment.SetEnvironmentVariable("jwt_secret", "p2tfCQNn6FJrM7XmdAsW5zKc4DHyYbELwuPV93BRv8xeqkSjZaVhN64mSPatj9H5FqfU2rCTEWvpskKQy3eZwLGXnb8RudD7zBYMwRJXr2b6tsQZWNLUDV4C8nmpKyc7fagGqh5MFux39kASvPEdBzZd7wKDnsq8j9WTHaGmbAkeYN4RPJrEp3UXS5LCvQy6hzxBVMcFsDh3SGNHjf7qARkxzMe2VpyPncmbvJCKTX4ruZWtB86dLQ9YF5");
 
-            builder.Services.AddQuartz(q =>
+            builder.Services.AddHangfire(configuration => configuration
+              .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+              .UseSimpleAssemblyNameTypeSerializer()
+              .UseRecommendedSerializerSettings()
+              .UsePostgreSqlStorage(c =>
+              {
+                  c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+              }));
+
+            // Add the processing server as IHostedService
+            builder.Services.AddHangfireServer(options =>
             {
-                q.UseMicrosoftDependencyInjectionJobFactory();
+                options.WorkerCount = Environment.ProcessorCount * 2; // Adjust based on your needs
+                options.Queues = new[] { "default", "high", "low" }; // Optional: define custom queues
             });
-            builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
             builder.Services.AddAuthenticationModule();
             builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -88,22 +102,22 @@ namespace RagnarokBotWeb
                         Scheme = "Bearer"
                     });
                     options.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                {
                     {
-                        new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference
+                            new OpenApiSecurityScheme
                             {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            },
-                            Scheme = "oauth2",
-                            Name = "Bearer",
-                            In = ParameterLocation.Header,
-                            },
-                        new List<string>()
-                    }
-                });
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                },
+                                Scheme = "oauth2",
+                                Name = "Bearer",
+                                In = ParameterLocation.Header,
+                                },
+                            new List<string>()
+                        }
+                    });
                 });
             }
 
@@ -145,6 +159,13 @@ namespace RagnarokBotWeb
 
             builder.Services.AddHostedService<DiscordBotService>();
             builder.Services.AddHostedService<DiscordEventService>();
+
+            builder.Services.AddHostedService<ChatJobRunnerService>();
+            builder.Services.AddHostedService<FileChangeJobRunnerService>();
+            builder.Services.AddHostedService<OrderCommandJobRunnerService>();
+            builder.Services.AddScoped<OrderCommandJob>();
+            builder.Services.AddScoped<ChatJob>();
+            builder.Services.AddScoped<FileChangeJob>();
 
             builder.Services.AddSingleton<IMessageEventHandlerFactory, MessageEventHandlerFactory>();
             builder.Services.AddSingleton<IInteractionEventHandlerFactory, InteractionEventHandlerFactory>();
@@ -263,6 +284,18 @@ namespace RagnarokBotWeb
 
             var app = builder.Build();
 
+            // Protect dashboard with basic auth
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[]
+            {
+                new HangfireCustomBasicAuthenticationFilter
+                {
+                    User = "thescumbot@hangfire",
+                    Pass = "secret"
+                }
+            }
+            });
             if (app.Environment.IsDevelopment())
             {
                 app.UseCors(DefaultCorsPolicy);

@@ -1,0 +1,888 @@
+2025-09-09 23:45:44.852 -03:00 [INF] Start installing Hangfire SQL objects...
+2025-09-09 23:45:44.956 -03:00 [INF] Hangfire SQL objects installed.
+2025-09-09 23:45:47.049 -03:00 [INF] Loaded 0 bots from state file
+2025-09-09 23:45:47.218 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:45:47.236 -03:00 [INF] CacheService instance #1 created with ID: "f360779d-9a21-48d1-8ca8-53bd29737ac5"
+2025-09-09 23:45:47.700 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:45:47.858 -03:00 [INF] Starting BotSocketServer...
+2025-09-09 23:45:47.866 -03:00 [INF] Socket server started on port 9000
+2025-09-09 23:45:47.872 -03:00 [INF] Loading Custom Tasks
+2025-09-09 23:45:47.929 -03:00 [INF] 23:45:47 Discord     Discord.Net v3.17.1 (API v10)
+2025-09-09 23:45:47.940 -03:00 [INF] Discord bot started.
+2025-09-09 23:45:47.960 -03:00 [INF] 23:45:47 Gateway     Connecting
+2025-09-09 23:45:47.980 -03:00 [INF] Starting to schedule FTP tasks for server id 3
+2025-09-09 23:45:47.990 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 3
+2025-09-09 23:45:47.991 -03:00 [INF] Starting to schedule server tasks for server id 3
+2025-09-09 23:45:47.992 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 3
+2025-09-09 23:46:05.727 -03:00 [INF] ChatJobRunnerService started.
+2025-09-09 23:46:05.854 -03:00 [INF] FileChangeJobRunnerService started.
+2025-09-09 23:46:10.944 -03:00 [INF] OrderCommandJobRunnerService started.
+2025-09-09 23:46:10.955 -03:00 [INF] Triggered FileChangeJob(2) -> Execute at: "2025-09-09T23:46:10.9550534-03:00"
+2025-09-09 23:46:11.001 -03:00 [INF] Triggered OrderCommandJob(2) -> Execute at: "2025-09-09T23:46:11.0009681-03:00"
+2025-09-09 23:46:25.142 -03:00 [INF] Triggered OrderCommandJob(3) -> Execute at: "2025-09-09T23:46:25.1420930-03:00"
+2025-09-09 23:46:25.142 -03:00 [INF] Triggered FileChangeJob(3) -> Execute at: "2025-09-09T23:46:25.1421067-03:00"
+2025-09-09 23:46:25.164 -03:00 [INF] Triggered ChatJob(3) -> Execute at: "2025-09-09T23:46:25.1570306-03:00"
+2025-09-09 23:46:25.212 -03:00 [INF] Triggered FileChangeJob(4) -> Execute at: "2025-09-09T23:46:25.2118445-03:00"
+2025-09-09 23:46:25.300 -03:00 [INF] Triggered FileChangeJob(5) -> Execute at: "2025-09-09T23:46:25.3004398-03:00"
+2025-09-09 23:46:25.351 -03:00 [INF] Triggered FileChangeJob(6) -> Execute at: "2025-09-09T23:46:25.3512378-03:00"
+2025-09-09 23:46:25.410 -03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: ragnarokbot, Schema: hangfire'
+2025-09-09 23:46:25.412 -03:00 [INF] Using the following options for PostgreSQL job storage:
+2025-09-09 23:46:25.413 -03:00 [INF]     Queue poll interval: 00:00:15.
+2025-09-09 23:46:25.414 -03:00 [INF]     Invisibility timeout: 00:30:00.
+2025-09-09 23:46:25.415 -03:00 [INF]     Use sliding invisibility timeout: False.
+2025-09-09 23:46:25.416 -03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 24
+    Listening queues: 'default', 'high', 'low'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2025-09-09 23:46:25.519 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 802
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 524
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:46:25.539 -03:00 [INF] Triggered OrderCommandJob(4) -> Execute at: "2025-09-09T23:46:25.5394233-03:00"
+2025-09-09 23:46:25.541 -03:00 [INF] Server desktop-esht7fl:53008:dce64683 successfully announced in 25.3532 ms
+2025-09-09 23:46:25.550 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 802
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 524
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:46:25.583 -03:00 [INF] Server desktop-esht7fl:53008:dce64683 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2025-09-09 23:46:25.605 -03:00 [INF] Triggered OrderCommandJob(5) -> Execute at: "2025-09-09T23:46:25.6053254-03:00"
+2025-09-09 23:46:25.605 -03:00 [INF] Application is stopping, saving bot state...
+2025-09-09 23:46:25.626 -03:00 [INF] 2 servers were removed due to timeout
+2025-09-09 23:46:25.673 -03:00 [INF] Triggered OrderCommandJob(6) -> Execute at: "2025-09-09T23:46:25.6730152-03:00"
+2025-09-09 23:46:25.751 -03:00 [INF] Successfully loaded 13 server tasks for server id 3
+2025-09-09 23:46:25.752 -03:00 [INF] Starting to schedule server tasks for server id 6
+2025-09-09 23:46:25.756 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 6
+2025-09-09 23:46:25.808 -03:00 [INF] Server desktop-esht7fl:53008:dce64683 all the dispatchers started
+2025-09-09 23:46:25.856 -03:00 [INF] Bot state saved on shutdown
+2025-09-09 23:46:25.857 -03:00 [INF] Bot state saved successfully during shutdown
+2025-09-09 23:46:25.859 -03:00 [INF] Server desktop-esht7fl:53008:dce64683 caught stopping signal...
+2025-09-09 23:46:26.035 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 3
+2025-09-09 23:46:26.043 -03:00 [INF] Starting to schedule FTP tasks for server id 6
+2025-09-09 23:46:26.045 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 6
+2025-09-09 23:46:26.045 -03:00 [WRN] Worker stop requested while processing background job '22'. It will be re-queued.
+2025-09-09 23:46:26.045 -03:00 [WRN] Worker stop requested while processing background job '23'. It will be re-queued.
+2025-09-09 23:46:26.069 -03:00 [ERR] Failed to schedule server tasks for server id 6
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+2025-09-09 23:46:26.126 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadAllServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 508
+   at RagnarokBotWeb.HostedServices.LoadServerTaskService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadServerTaskService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:46:26.131 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadAllServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 508
+   at RagnarokBotWeb.HostedServices.LoadServerTaskService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadServerTaskService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:46:26.193 -03:00 [INF] Server desktop-esht7fl:53008:dce64683 All dispatchers stopped
+2025-09-09 23:46:26.205 -03:00 [INF] Server desktop-esht7fl:53008:dce64683 successfully reported itself as stopped in 4.0645 ms
+2025-09-09 23:46:26.206 -03:00 [INF] Server desktop-esht7fl:53008:dce64683 has been stopped in total 344.4825 ms
+2025-09-09 23:46:26.299 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 6
+2025-09-09 23:46:26.440 -03:00 [INF] 23:46:26 Gateway     System.TimeoutException: The operation has timed out.
+   at Discord.WebSocket.DiscordSocketClient.OnConnectingAsync()
+   at Discord.ConnectionManager.ConnectAsync(CancellationTokenSource reconnectCancelToken)
+   at Discord.ConnectionManager.<>c__DisplayClass29_0.<<StartAsync>b__0>d.MoveNext()
+2025-09-09 23:46:26.442 -03:00 [INF] 23:46:26 Gateway     Disconnecting
+2025-09-09 23:46:26.466 -03:00 [INF] 23:46:26 Gateway     Disconnected
+2025-09-09 23:46:27.534 -03:00 [INF] 23:46:27 Gateway     Connecting
+2025-09-09 23:46:28.145 -03:00 [INF] 23:46:28 Gateway     You're using the GuildScheduledEvents gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:46:28.146 -03:00 [INF] 23:46:28 Gateway     You're using the GuildInvites gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:46:28.147 -03:00 [INF] 23:46:28 Gateway     Connected
+2025-09-09 23:46:28.647 -03:00 [INF] Discord bot ready.
+2025-09-09 23:46:28.648 -03:00 [INF] Discord bot has the following Guilds:
+2025-09-09 23:46:28.651 -03:00 [INF] Guild Id: 1411946389553807492, Guild Name: End Of The World Scum Server, Guild Created: "2025-09-01T05:30:51.9650000+00:00"
+2025-09-09 23:46:28.653 -03:00 [INF] Guild Id: 1338349844309348394, Guild Name: RAGNAROK BLACK MARKET, Guild Created: "2025-02-10T03:24:28.2210000+00:00"
+2025-09-09 23:46:28.654 -03:00 [INF] Guild Id: 1404334393794756719, Guild Name: The SCUM Bot, Guild Created: "2025-08-11T05:23:30.7520000+00:00"
+2025-09-09 23:46:28.657 -03:00 [INF] 23:46:28 Gateway     Ready
+2025-09-09 23:46:36.461 -03:00 [INF] Stopping BotSocketServer...
+2025-09-09 23:46:36.481 -03:00 [INF] BotSocketServer stopped
+2025-09-09 23:46:36.489 -03:00 [INF] 23:46:36 Gateway     System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Discord.ConnectionManager.<>c__DisplayClass29_0.<<StartAsync>b__0>d.MoveNext()
+2025-09-09 23:46:36.489 -03:00 [INF] 23:46:36 Gateway     Disconnecting
+2025-09-09 23:46:36.495 -03:00 [INF] 23:46:36 Gateway     Disconnected
+2025-09-09 23:49:50.938 -03:00 [INF] Start installing Hangfire SQL objects...
+2025-09-09 23:49:51.042 -03:00 [INF] Hangfire SQL objects installed.
+2025-09-09 23:49:52.761 -03:00 [INF] Loaded 0 bots from state file
+2025-09-09 23:49:52.847 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:49:52.872 -03:00 [INF] CacheService instance #1 created with ID: "c52c91d3-e4a7-46d7-bac0-44304d432cc8"
+2025-09-09 23:49:53.459 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:49:53.612 -03:00 [INF] Starting BotSocketServer...
+2025-09-09 23:49:53.626 -03:00 [INF] Socket server started on port 9000
+2025-09-09 23:49:53.632 -03:00 [INF] Loading Custom Tasks
+2025-09-09 23:49:53.681 -03:00 [INF] 23:49:53 Discord     Discord.Net v3.17.1 (API v10)
+2025-09-09 23:49:53.689 -03:00 [INF] Discord bot started.
+2025-09-09 23:49:53.694 -03:00 [INF] 23:49:53 Gateway     Connecting
+2025-09-09 23:49:53.735 -03:00 [INF] Starting to schedule FTP tasks for server id 3
+2025-09-09 23:49:53.745 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 3
+2025-09-09 23:49:53.746 -03:00 [INF] ChatJobRunnerService started.
+2025-09-09 23:49:53.746 -03:00 [INF] Starting to schedule server tasks for server id 3
+2025-09-09 23:49:53.852 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 3
+2025-09-09 23:49:54.264 -03:00 [INF] FileChangeJobRunnerService started.
+2025-09-09 23:49:54.269 -03:00 [INF] OrderCommandJobRunnerService started.
+2025-09-09 23:49:54.324 -03:00 [INF] Triggered OrderCommandJob(2) -> Execute at: "2025-09-09T23:49:54.3247092-03:00"
+2025-09-09 23:49:54.324 -03:00 [INF] Triggered FileChangeJob(2) -> Execute at: "2025-09-09T23:49:54.3243409-03:00"
+2025-09-09 23:49:54.338 -03:00 [INF] Triggered ChatJob(3) -> Execute at: "2025-09-09T23:49:54.3383100-03:00"
+2025-09-09 23:49:54.432 -03:00 [INF] Triggered FileChangeJob(3) -> Execute at: "2025-09-09T23:49:54.4320597-03:00"
+2025-09-09 23:49:54.432 -03:00 [INF] Triggered OrderCommandJob(3) -> Execute at: "2025-09-09T23:49:54.4322355-03:00"
+2025-09-09 23:49:54.485 -03:00 [INF] Triggered FileChangeJob(4) -> Execute at: "2025-09-09T23:49:54.4851990-03:00"
+2025-09-09 23:49:54.496 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 802
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 524
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:54.535 -03:00 [INF] Triggered FileChangeJob(5) -> Execute at: "2025-09-09T23:49:54.5355270-03:00"
+2025-09-09 23:49:54.562 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 802
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 524
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:54.572 -03:00 [INF] Application is stopping, saving bot state...
+2025-09-09 23:49:54.623 -03:00 [INF] Triggered FileChangeJob(6) -> Execute at: "2025-09-09T23:49:54.6238645-03:00"
+2025-09-09 23:49:54.658 -03:00 [INF] Successfully loaded 13 server tasks for server id 3
+2025-09-09 23:49:54.660 -03:00 [INF] Starting to schedule server tasks for server id 6
+2025-09-09 23:49:54.661 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 6
+2025-09-09 23:49:54.689 -03:00 [INF] Bot state saved on shutdown
+2025-09-09 23:49:54.691 -03:00 [INF] Bot state saved successfully during shutdown
+2025-09-09 23:49:54.768 -03:00 [ERR] BackgroundService failed
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at RagnarokBotWeb.Application.Tasks.BackgroundServices.FileChangeJobRunnerService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Tasks\BackgroundServices\FileChangeJobRunnerService.cs:line 44
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:54.796 -03:00 [ERR] BackgroundService failed
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at RagnarokBotWeb.Application.Discord.DiscordSocketClientUtils.AwaitDiscordSocketClientIsReady(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Discord\DiscordSocketClientUtils.cs:line 27
+   at RagnarokBotWeb.Application.Discord.DiscordEventService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Discord\DiscordEventService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:54.797 -03:00 [ERR] BackgroundService failed
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at RagnarokBotWeb.Application.Tasks.BackgroundServices.OrderCommandJobRunnerService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Tasks\BackgroundServices\OrderCommandJobRunnerService.cs:line 44
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:54.797 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at RagnarokBotWeb.Application.Tasks.BackgroundServices.FileChangeJobRunnerService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Tasks\BackgroundServices\FileChangeJobRunnerService.cs:line 44
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:54.800 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at RagnarokBotWeb.Application.Discord.DiscordSocketClientUtils.AwaitDiscordSocketClientIsReady(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Discord\DiscordSocketClientUtils.cs:line 27
+   at RagnarokBotWeb.Application.Discord.DiscordEventService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Discord\DiscordEventService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:54.803 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at RagnarokBotWeb.Application.Tasks.BackgroundServices.OrderCommandJobRunnerService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Tasks\BackgroundServices\OrderCommandJobRunnerService.cs:line 44
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:54.815 -03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: ragnarokbot, Schema: hangfire'
+2025-09-09 23:49:54.817 -03:00 [INF] Using the following options for PostgreSQL job storage:
+2025-09-09 23:49:54.819 -03:00 [INF]     Queue poll interval: 00:00:15.
+2025-09-09 23:49:54.822 -03:00 [INF]     Invisibility timeout: 00:30:00.
+2025-09-09 23:49:54.823 -03:00 [INF]     Use sliding invisibility timeout: False.
+2025-09-09 23:49:54.824 -03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 24
+    Listening queues: 'default', 'high', 'low'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2025-09-09 23:49:54.859 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 3
+2025-09-09 23:49:54.860 -03:00 [INF] Starting to schedule FTP tasks for server id 6
+2025-09-09 23:49:54.861 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 6
+2025-09-09 23:49:54.916 -03:00 [INF] Server desktop-esht7fl:74980:8dde4212 successfully announced in 15.004 ms
+2025-09-09 23:49:54.945 -03:00 [ERR] Failed to schedule server tasks for server id 6
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+2025-09-09 23:49:54.957 -03:00 [INF] Server desktop-esht7fl:74980:8dde4212 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2025-09-09 23:49:55.024 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadAllServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 508
+   at RagnarokBotWeb.HostedServices.LoadServerTaskService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadServerTaskService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:55.046 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadAllServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 508
+   at RagnarokBotWeb.HostedServices.LoadServerTaskService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadServerTaskService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:49:55.667 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 6
+2025-09-09 23:49:55.880 -03:00 [INF] Server desktop-esht7fl:74980:8dde4212 all the dispatchers started
+2025-09-09 23:49:56.137 -03:00 [INF] Triggered RaidTimesJob(6) -> Execute at: "2025-09-09T23:49:56.1369704-03:00"
+2025-09-09 23:49:56.139 -03:00 [INF] Triggered RaidTimesJob(6) -> Execute at: "2025-09-09T23:49:56.1399206-03:00"
+2025-09-09 23:49:56.143 -03:00 [INF] Triggered RaidTimesJob(3) -> Execute at: "2025-09-09T23:49:56.1439566-03:00"
+2025-09-09 23:49:56.144 -03:00 [INF] Triggered KillLogJob(6) -> Execute at: "2025-09-09T23:49:56.1446300-03:00"
+2025-09-09 23:49:56.153 -03:00 [INF] Triggered CommandQueueProcessorJob(3) -> Execute at: "2025-09-09T23:49:56.1511822-03:00"
+2025-09-09 23:49:56.143 -03:00 [INF] Triggered RaidTimesJob(3) -> Execute at: "2025-09-09T23:49:56.1439540-03:00"
+2025-09-09 23:49:56.141 -03:00 [INF] Triggered RaidTimesJob(6) -> Execute at: "2025-09-09T23:49:56.1414963-03:00"
+2025-09-09 23:49:56.226 -03:00 [INF] Triggered KillLogJob(3) -> Execute at: "2025-09-09T23:49:56.2261636-03:00"
+2025-09-09 23:49:56.266 -03:00 [INF] Triggered OrderResetJob(6) -> Execute at: "2025-09-09T23:49:56.2666520-03:00"
+2025-09-09 23:49:56.345 -03:00 [INF] Triggered EconomyJob(3) -> Execute at: "2025-09-09T23:49:56.3450594-03:00"
+2025-09-09 23:49:56.367 -03:00 [INF] Triggered OrderResetJob(3) -> Execute at: "2025-09-09T23:49:56.3675017-03:00"
+2025-09-09 23:49:56.411 -03:00 [INF] Triggered EconomyJob(6) -> Execute at: "2025-09-09T23:49:56.4108519-03:00"
+2025-09-09 23:49:56.435 -03:00 [INF] Triggered KillLogJob(6) -> Execute at: "2025-09-09T23:49:56.4349746-03:00"
+2025-09-09 23:49:56.472 -03:00 [ERR] CopyFilesAsync failed for /SCUM/Saved/Config/WindowsServer/RaidTimes.json
+2025-09-09 23:49:56.474 -03:00 [INF] Triggered UavClearJob(6) -> Execute at: "2025-09-09T23:49:56.4730113-03:00"
+2025-09-09 23:49:56.575 -03:00 [INF] Triggered GamePlayJob(6) -> Execute at: "2025-09-09T23:49:56.5755933-03:00"
+2025-09-09 23:49:56.715 -03:00 [INF] Triggered LoginJob(6) -> Execute at: "2025-09-09T23:49:56.7144687-03:00"
+2025-09-09 23:49:56.773 -03:00 [INF] Triggered CommandQueueProcessorJob(6) -> Execute at: "2025-09-09T23:49:56.7738921-03:00"
+2025-09-09 23:49:56.773 -03:00 [ERR] Error downloading RaidTimes for server 3
+RagnarokBotWeb.Domain.Exceptions.DomainException: Error while copying files from FTP
+   at RagnarokBotWeb.Domain.Services.FtpService.CopyFilesAsync(AsyncFtpClient client, String targetFolder, IList`1 remoteFilePaths, CancellationToken token) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\FtpService.cs:line 162
+   at RagnarokBotWeb.HostedServices.Base.ScumFileProcessor.<>c__DisplayClass24_0.<<DownloadRaidTimes>b__0>d.MoveNext() in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\Base\ScumFileProcessor.cs:line 609
+--- End of stack trace from previous location ---
+   at RagnarokBotWeb.Domain.Services.FtpService.ExecuteAsync[T](Ftp ftp, Func`2 operation, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\FtpService.cs:line 38
+   at RagnarokBotWeb.HostedServices.Base.ScumFileProcessor.DownloadRaidTimes(IFtpService ftpService) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\Base\ScumFileProcessor.cs:line 607
+2025-09-09 23:49:56.925 -03:00 [ERR] RaidTimesJob(3) Exception
+RagnarokBotWeb.Domain.Exceptions.DomainException: Error while copying files from FTP
+   at RagnarokBotWeb.Domain.Services.FtpService.CopyFilesAsync(AsyncFtpClient client, String targetFolder, IList`1 remoteFilePaths, CancellationToken token) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\FtpService.cs:line 162
+   at RagnarokBotWeb.HostedServices.Base.ScumFileProcessor.<>c__DisplayClass24_0.<<DownloadRaidTimes>b__0>d.MoveNext() in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\Base\ScumFileProcessor.cs:line 609
+--- End of stack trace from previous location ---
+   at RagnarokBotWeb.Domain.Services.FtpService.ExecuteAsync[T](Ftp ftp, Func`2 operation, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\FtpService.cs:line 38
+   at RagnarokBotWeb.HostedServices.Base.ScumFileProcessor.DownloadRaidTimes(IFtpService ftpService) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\Base\ScumFileProcessor.cs:line 607
+   at RagnarokBotWeb.HostedServices.Base.ScumFileProcessor.DownloadRaidTimes(IFtpService ftpService) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\Base\ScumFileProcessor.cs:line 627
+   at RagnarokBotWeb.Application.Tasks.Jobs.RaidTimesJob.Execute(Int64 serverId) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Tasks\Jobs\RaidTimesJob.cs:line 27
+2025-09-09 23:49:56.927 -03:00 [INF] Triggered UavClearJob(3) -> Execute at: "2025-09-09T23:49:56.9275617-03:00"
+2025-09-09 23:49:56.988 -03:00 [INF] Triggered LoginJob(3) -> Execute at: "2025-09-09T23:49:56.9884856-03:00"
+2025-09-09 23:49:57.024 -03:00 [WRN] Failed to process the job '24': an exception occurred. Retry attempt 1 of 10 will be performed in 00:00:31.
+RagnarokBotWeb.Domain.Exceptions.DomainException: Error while copying files from FTP
+   at RagnarokBotWeb.Domain.Services.FtpService.CopyFilesAsync(AsyncFtpClient client, String targetFolder, IList`1 remoteFilePaths, CancellationToken token) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\FtpService.cs:line 162
+   at RagnarokBotWeb.HostedServices.Base.ScumFileProcessor.<>c__DisplayClass24_0.<<DownloadRaidTimes>b__0>d.MoveNext() in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\Base\ScumFileProcessor.cs:line 609
+--- End of stack trace from previous location ---
+   at RagnarokBotWeb.Domain.Services.FtpService.ExecuteAsync[T](Ftp ftp, Func`2 operation, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\FtpService.cs:line 38
+   at RagnarokBotWeb.HostedServices.Base.ScumFileProcessor.DownloadRaidTimes(IFtpService ftpService) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\Base\ScumFileProcessor.cs:line 607
+   at RagnarokBotWeb.HostedServices.Base.ScumFileProcessor.DownloadRaidTimes(IFtpService ftpService) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\Base\ScumFileProcessor.cs:line 627
+   at RagnarokBotWeb.Application.Tasks.Jobs.RaidTimesJob.Execute(Int64 serverId) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Application\Tasks\Jobs\RaidTimesJob.cs:line 27
+   at InvokeStub_TaskAwaiter.GetResult(Object, Object, IntPtr*)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+2025-09-09 23:49:57.048 -03:00 [INF] Triggered GamePlayJob(3) -> Execute at: "2025-09-09T23:49:57.0487466-03:00"
+2025-09-09 23:49:57.268 -03:00 [INF] Triggered SilenceExpireJob(3) -> Execute at: "2025-09-09T23:49:57.2678840-03:00"
+2025-09-09 23:49:57.292 -03:00 [INF] 23:49:57 Gateway     You're using the GuildScheduledEvents gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:49:57.296 -03:00 [INF] 23:49:57 Gateway     You're using the GuildInvites gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:49:57.300 -03:00 [INF] 23:49:57 Gateway     Connected
+2025-09-09 23:49:57.316 -03:00 [INF] Triggered BanExpireJob(3) -> Execute at: "2025-09-09T23:49:57.3165293-03:00"
+2025-09-09 23:49:57.330 -03:00 [INF] Triggered VipExpireJob(3) -> Execute at: "2025-09-09T23:49:57.3300167-03:00"
+2025-09-09 23:49:57.383 -03:00 [INF] Triggered CustomTaskJob(3) -> Execute at: "2025-09-09T23:49:57.3835961-03:00"
+2025-09-09 23:49:57.428 -03:00 [INF] Triggered WarzoneBootstartJob(3) -> Execute at: "2025-09-09T23:49:57.4279832-03:00"
+2025-09-09 23:49:57.460 -03:00 [INF] Triggered DiscordRoleExpireJob(3) -> Execute at: "2025-09-09T23:49:57.4599794-03:00"
+2025-09-09 23:49:57.480 -03:00 [INF] Triggered VipExpireJob(6) -> Execute at: "2025-09-09T23:49:57.4805026-03:00"
+2025-09-09 23:49:57.548 -03:00 [INF] Triggered BanExpireJob(6) -> Execute at: "2025-09-09T23:49:57.5484769-03:00"
+2025-09-09 23:49:57.597 -03:00 [INF] Triggered SilenceExpireJob(6) -> Execute at: "2025-09-09T23:49:57.5971404-03:00"
+2025-09-09 23:49:57.615 -03:00 [INF] Triggered DiscordRoleExpireJob(6) -> Execute at: "2025-09-09T23:49:57.6158583-03:00"
+2025-09-09 23:49:57.642 -03:00 [INF] Triggered WarzoneBootstartJob(6) -> Execute at: "2025-09-09T23:49:57.6429147-03:00"
+2025-09-09 23:49:57.802 -03:00 [INF] Discord bot ready.
+2025-09-09 23:49:57.803 -03:00 [INF] Discord bot has the following Guilds:
+2025-09-09 23:49:57.814 -03:00 [INF] Guild Id: 1411946389553807492, Guild Name: End Of The World Scum Server, Guild Created: "2025-09-01T05:30:51.9650000+00:00"
+2025-09-09 23:49:57.819 -03:00 [INF] Guild Id: 1338349844309348394, Guild Name: RAGNAROK BLACK MARKET, Guild Created: "2025-02-10T03:24:28.2210000+00:00"
+2025-09-09 23:49:57.820 -03:00 [INF] Guild Id: 1404334393794756719, Guild Name: The SCUM Bot, Guild Created: "2025-08-11T05:23:30.7520000+00:00"
+2025-09-09 23:49:57.822 -03:00 [INF] 23:49:57 Gateway     Ready
+2025-09-09 23:50:11.546 -03:00 [INF] Stopping BotSocketServer...
+2025-09-09 23:50:11.547 -03:00 [INF] BotSocketServer stopped
+2025-09-09 23:50:11.549 -03:00 [INF] Server desktop-esht7fl:74980:8dde4212 caught stopping signal...
+2025-09-09 23:50:12.061 -03:00 [INF] Server desktop-esht7fl:74980:8dde4212 caught stopped signal...
+2025-09-09 23:50:24.900 -03:00 [INF] 23:50:24 Gateway     System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Discord.ConnectionManager.<>c__DisplayClass29_0.<<StartAsync>b__0>d.MoveNext()
+2025-09-09 23:50:24.901 -03:00 [INF] 23:50:24 Gateway     Disconnecting
+2025-09-09 23:50:24.913 -03:00 [INF] 23:50:24 Gateway     Disconnected
+2025-09-09 23:50:24.929 -03:00 [FTL] Application start-up failed
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Hangfire.Processing.TaskExtensions.WaitOneAsync(WaitHandle waitHandle, TimeSpan timeout, CancellationToken token) in C:\projects\hangfire-525\src\Hangfire.Core\Processing\TaskExtensions.cs:line 95
+   at Hangfire.Processing.BackgroundDispatcher.WaitAsync(TimeSpan timeout, CancellationToken cancellationToken) in C:\projects\hangfire-525\src\Hangfire.Core\Processing\BackgroundDispatcher.cs:line 82
+   at Hangfire.Server.BackgroundProcessingServer.WaitForShutdownAsync(CancellationToken cancellationToken) in C:\projects\hangfire-525\src\Hangfire.Core\Server\BackgroundProcessingServer.cs:line 148
+   at Hangfire.BackgroundJobServerHostedService.StopAsync(CancellationToken cancellationToken) in C:\projects\hangfire-525\src\Hangfire.NetCore\BackgroundJobServerHostedService.cs:line 134
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+   at Microsoft.Extensions.Hosting.Internal.Host.StopAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.WaitForShutdownAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.Run(IHost host)
+   at RagnarokBotWeb.Program.Main(String[] args) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Program.cs:line 344
+2025-09-09 23:51:46.756 -03:00 [INF] Start installing Hangfire SQL objects...
+2025-09-09 23:51:46.867 -03:00 [INF] Hangfire SQL objects installed.
+2025-09-09 23:51:48.922 -03:00 [INF] Loaded 0 bots from state file
+2025-09-09 23:51:49.010 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:51:49.033 -03:00 [INF] CacheService instance #1 created with ID: "b00d52ec-b67f-4866-8f64-81cf5011b682"
+2025-09-09 23:51:49.526 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:51:49.690 -03:00 [INF] Starting BotSocketServer...
+2025-09-09 23:51:49.694 -03:00 [INF] Socket server started on port 9000
+2025-09-09 23:51:49.713 -03:00 [INF] Loading Custom Tasks
+2025-09-09 23:51:49.763 -03:00 [INF] 23:51:49 Discord     Discord.Net v3.17.1 (API v10)
+2025-09-09 23:51:49.772 -03:00 [INF] Discord bot started.
+2025-09-09 23:51:49.775 -03:00 [INF] 23:51:49 Gateway     Connecting
+2025-09-09 23:51:49.834 -03:00 [INF] Starting to schedule FTP tasks for server id 3
+2025-09-09 23:51:49.834 -03:00 [INF] ChatJobRunnerService started.
+2025-09-09 23:51:49.889 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 3
+2025-09-09 23:51:49.845 -03:00 [INF] Starting to schedule server tasks for server id 3
+2025-09-09 23:51:49.941 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 3
+2025-09-09 23:51:50.000 -03:00 [INF] FileChangeJobRunnerService started.
+2025-09-09 23:51:50.011 -03:00 [INF] OrderCommandJobRunnerService started.
+2025-09-09 23:51:50.030 -03:00 [INF] Triggered FileChangeJob(2) -> Execute at: "2025-09-09T23:51:50.0292035-03:00"
+2025-09-09 23:51:50.037 -03:00 [INF] Triggered OrderCommandJob(2) -> Execute at: "2025-09-09T23:51:50.0371746-03:00"
+2025-09-09 23:51:50.461 -03:00 [INF] Triggered FileChangeJob(3) -> Execute at: "2025-09-09T23:51:50.4611853-03:00"
+2025-09-09 23:51:50.461 -03:00 [INF] Triggered OrderCommandJob(3) -> Execute at: "2025-09-09T23:51:50.4611822-03:00"
+2025-09-09 23:51:50.476 -03:00 [INF] Triggered ChatJob(3) -> Execute at: "2025-09-09T23:51:50.4758061-03:00"
+2025-09-09 23:51:50.478 -03:00 [INF] Triggered FileChangeJob(4) -> Execute at: "2025-09-09T23:51:50.4784046-03:00"
+2025-09-09 23:51:50.537 -03:00 [INF] Triggered FileChangeJob(5) -> Execute at: "2025-09-09T23:51:50.5370593-03:00"
+2025-09-09 23:51:50.614 -03:00 [INF] Triggered FileChangeJob(6) -> Execute at: "2025-09-09T23:51:50.6146338-03:00"
+2025-09-09 23:51:50.631 -03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: ragnarokbot, Schema: hangfire'
+2025-09-09 23:51:50.632 -03:00 [INF] Using the following options for PostgreSQL job storage:
+2025-09-09 23:51:50.633 -03:00 [INF]     Queue poll interval: 00:00:15.
+2025-09-09 23:51:50.634 -03:00 [INF]     Invisibility timeout: 00:30:00.
+2025-09-09 23:51:50.635 -03:00 [INF]     Use sliding invisibility timeout: False.
+2025-09-09 23:51:50.636 -03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 24
+    Listening queues: 'default', 'high', 'low'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2025-09-09 23:51:50.725 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 799
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 524
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:51:50.746 -03:00 [INF] Server desktop-esht7fl:27464:d7ea133e successfully announced in 24.3162 ms
+2025-09-09 23:51:50.758 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 799
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 524
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:51:50.797 -03:00 [INF] Server desktop-esht7fl:27464:d7ea133e is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2025-09-09 23:51:50.801 -03:00 [INF] Application is stopping, saving bot state...
+2025-09-09 23:51:50.816 -03:00 [INF] Triggered OrderCommandJob(4) -> Execute at: "2025-09-09T23:51:50.8165748-03:00"
+2025-09-09 23:51:50.892 -03:00 [INF] Successfully loaded 13 server tasks for server id 3
+2025-09-09 23:51:50.911 -03:00 [INF] Triggered OrderCommandJob(5) -> Execute at: "2025-09-09T23:51:50.9115032-03:00"
+2025-09-09 23:51:50.911 -03:00 [INF] Starting to schedule server tasks for server id 6
+2025-09-09 23:51:50.922 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 6
+2025-09-09 23:51:51.018 -03:00 [INF] Triggered OrderCommandJob(6) -> Execute at: "2025-09-09T23:51:51.0180236-03:00"
+2025-09-09 23:51:51.087 -03:00 [INF] Bot state saved on shutdown
+2025-09-09 23:51:51.089 -03:00 [INF] Bot state saved successfully during shutdown
+2025-09-09 23:51:51.095 -03:00 [INF] Server desktop-esht7fl:27464:d7ea133e caught stopping signal...
+2025-09-09 23:51:51.116 -03:00 [INF] Server desktop-esht7fl:27464:d7ea133e all the dispatchers started
+2025-09-09 23:51:51.220 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 3
+2025-09-09 23:51:51.221 -03:00 [INF] Starting to schedule FTP tasks for server id 6
+2025-09-09 23:51:51.222 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 6
+2025-09-09 23:51:51.327 -03:00 [ERR] Failed to schedule server tasks for server id 6
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+2025-09-09 23:51:51.570 -03:00 [WRN] Worker stop requested while processing background job '53'. It will be re-queued.
+2025-09-09 23:51:51.607 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadAllServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 508
+   at RagnarokBotWeb.HostedServices.LoadServerTaskService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadServerTaskService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:51:51.615 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadAllServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 508
+   at RagnarokBotWeb.HostedServices.LoadServerTaskService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadServerTaskService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:51:51.633 -03:00 [INF] Server desktop-esht7fl:27464:d7ea133e caught stopped signal...
+2025-09-09 23:51:51.756 -03:00 [INF] Server desktop-esht7fl:27464:d7ea133e All dispatchers stopped
+2025-09-09 23:51:51.872 -03:00 [INF] Server desktop-esht7fl:27464:d7ea133e successfully reported itself as stopped in 29.8925 ms
+2025-09-09 23:51:51.873 -03:00 [INF] Server desktop-esht7fl:27464:d7ea133e has been stopped in total 773.3725 ms
+2025-09-09 23:51:51.912 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 6
+2025-09-09 23:51:52.417 -03:00 [INF] 23:51:52 Gateway     You're using the GuildScheduledEvents gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:51:52.418 -03:00 [INF] 23:51:52 Gateway     You're using the GuildInvites gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:51:52.420 -03:00 [INF] 23:51:52 Gateway     Connected
+2025-09-09 23:51:52.918 -03:00 [INF] Discord bot ready.
+2025-09-09 23:51:52.923 -03:00 [INF] Discord bot has the following Guilds:
+2025-09-09 23:51:52.937 -03:00 [INF] Guild Id: 1411946389553807492, Guild Name: End Of The World Scum Server, Guild Created: "2025-09-01T05:30:51.9650000+00:00"
+2025-09-09 23:51:52.944 -03:00 [INF] Guild Id: 1338349844309348394, Guild Name: RAGNAROK BLACK MARKET, Guild Created: "2025-02-10T03:24:28.2210000+00:00"
+2025-09-09 23:51:52.952 -03:00 [INF] Guild Id: 1404334393794756719, Guild Name: The SCUM Bot, Guild Created: "2025-08-11T05:23:30.7520000+00:00"
+2025-09-09 23:51:52.954 -03:00 [INF] 23:51:52 Gateway     Ready
+2025-09-09 23:52:02.043 -03:00 [INF] Stopping BotSocketServer...
+2025-09-09 23:52:02.062 -03:00 [INF] BotSocketServer stopped
+2025-09-09 23:52:02.072 -03:00 [INF] 23:52:02 Gateway     System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Discord.ConnectionManager.<>c__DisplayClass29_0.<<StartAsync>b__0>d.MoveNext()
+2025-09-09 23:52:02.074 -03:00 [INF] 23:52:02 Gateway     Disconnecting
+2025-09-09 23:52:02.086 -03:00 [INF] 23:52:02 Gateway     Disconnected
+2025-09-09 23:52:28.300 -03:00 [INF] Start installing Hangfire SQL objects...
+2025-09-09 23:52:28.408 -03:00 [INF] Hangfire SQL objects installed.
+2025-09-09 23:52:30.050 -03:00 [INF] Loaded 0 bots from state file
+2025-09-09 23:52:30.121 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:52:30.140 -03:00 [INF] CacheService instance #1 created with ID: "5b80a0b6-3320-4a69-b260-96cd72ba6e1f"
+2025-09-09 23:52:30.622 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:52:30.773 -03:00 [INF] Starting BotSocketServer...
+2025-09-09 23:52:30.775 -03:00 [INF] Socket server started on port 9000
+2025-09-09 23:52:30.781 -03:00 [INF] Loading Custom Tasks
+2025-09-09 23:52:30.826 -03:00 [INF] 23:52:30 Discord     Discord.Net v3.17.1 (API v10)
+2025-09-09 23:52:30.835 -03:00 [INF] Discord bot started.
+2025-09-09 23:52:30.840 -03:00 [INF] 23:52:30 Gateway     Connecting
+2025-09-09 23:52:30.872 -03:00 [INF] ChatJobRunnerService started.
+2025-09-09 23:52:30.874 -03:00 [INF] Starting to schedule FTP tasks for server id 3
+2025-09-09 23:52:30.913 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 3
+2025-09-09 23:52:30.921 -03:00 [INF] FileChangeJobRunnerService started.
+2025-09-09 23:52:30.922 -03:00 [INF] Starting to schedule server tasks for server id 3
+2025-09-09 23:52:31.010 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 3
+2025-09-09 23:52:31.032 -03:00 [INF] OrderCommandJobRunnerService started.
+2025-09-09 23:52:31.038 -03:00 [INF] Triggered FileChangeJob(2) -> Execute at: "2025-09-09T23:52:31.0383589-03:00"
+2025-09-09 23:52:31.047 -03:00 [INF] Triggered OrderCommandJob(2) -> Execute at: "2025-09-09T23:52:31.0471619-03:00"
+2025-09-09 23:52:31.381 -03:00 [INF] Triggered FileChangeJob(3) -> Execute at: "2025-09-09T23:52:31.3813696-03:00"
+2025-09-09 23:52:31.431 -03:00 [INF] Triggered OrderCommandJob(3) -> Execute at: "2025-09-09T23:52:31.4310309-03:00"
+2025-09-09 23:52:31.446 -03:00 [INF] Triggered ChatJob(3) -> Execute at: "2025-09-09T23:52:31.4461464-03:00"
+2025-09-09 23:52:31.448 -03:00 [INF] Triggered FileChangeJob(4) -> Execute at: "2025-09-09T23:52:31.4483838-03:00"
+2025-09-09 23:52:31.494 -03:00 [INF] Triggered FileChangeJob(5) -> Execute at: "2025-09-09T23:52:31.4943818-03:00"
+2025-09-09 23:52:31.541 -03:00 [INF] Triggered FileChangeJob(6) -> Execute at: "2025-09-09T23:52:31.5411261-03:00"
+2025-09-09 23:52:31.553 -03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: ragnarokbot, Schema: hangfire'
+2025-09-09 23:52:31.555 -03:00 [INF] Using the following options for PostgreSQL job storage:
+2025-09-09 23:52:31.556 -03:00 [INF]     Queue poll interval: 00:00:15.
+2025-09-09 23:52:31.557 -03:00 [INF]     Invisibility timeout: 00:30:00.
+2025-09-09 23:52:31.558 -03:00 [INF]     Use sliding invisibility timeout: False.
+2025-09-09 23:52:31.559 -03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 24
+    Listening queues: 'default', 'high', 'low'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2025-09-09 23:52:31.642 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 799
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 524
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:52:31.658 -03:00 [INF] Server desktop-esht7fl:82624:7b9736d9 successfully announced in 20.813 ms
+2025-09-09 23:52:31.672 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 799
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 524
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:52:31.676 -03:00 [INF] Server desktop-esht7fl:82624:7b9736d9 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2025-09-09 23:52:31.681 -03:00 [INF] Application is stopping, saving bot state...
+2025-09-09 23:52:31.731 -03:00 [INF] Triggered OrderCommandJob(4) -> Execute at: "2025-09-09T23:52:31.7319604-03:00"
+2025-09-09 23:52:31.794 -03:00 [INF] Triggered OrderCommandJob(5) -> Execute at: "2025-09-09T23:52:31.7948608-03:00"
+2025-09-09 23:52:31.857 -03:00 [INF] Bot state saved on shutdown
+2025-09-09 23:52:31.866 -03:00 [INF] Bot state saved successfully during shutdown
+2025-09-09 23:52:31.866 -03:00 [INF] Successfully loaded 13 server tasks for server id 3
+2025-09-09 23:52:31.868 -03:00 [INF] Server desktop-esht7fl:82624:7b9736d9 caught stopping signal...
+2025-09-09 23:52:31.891 -03:00 [INF] Starting to schedule server tasks for server id 6
+2025-09-09 23:52:31.908 -03:00 [INF] Triggered OrderCommandJob(6) -> Execute at: "2025-09-09T23:52:31.9083582-03:00"
+2025-09-09 23:52:31.915 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 6
+2025-09-09 23:52:31.944 -03:00 [INF] Server desktop-esht7fl:82624:7b9736d9 all the dispatchers started
+2025-09-09 23:52:32.103 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 3
+2025-09-09 23:52:32.116 -03:00 [INF] Starting to schedule FTP tasks for server id 6
+2025-09-09 23:52:32.116 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 6
+2025-09-09 23:52:32.179 -03:00 [WRN] Worker stop requested while processing background job '53'. It will be re-queued.
+2025-09-09 23:52:32.179 -03:00 [WRN] Worker stop requested while processing background job '54'. It will be re-queued.
+2025-09-09 23:52:32.197 -03:00 [INF] Server desktop-esht7fl:82624:7b9736d9 All dispatchers stopped
+2025-09-09 23:52:32.216 -03:00 [INF] Server desktop-esht7fl:82624:7b9736d9 successfully reported itself as stopped in 4.8894 ms
+2025-09-09 23:52:32.217 -03:00 [INF] Server desktop-esht7fl:82624:7b9736d9 has been stopped in total 309.0387 ms
+2025-09-09 23:52:32.317 -03:00 [ERR] Failed to schedule server tasks for server id 6
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+2025-09-09 23:52:32.396 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadAllServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 508
+   at RagnarokBotWeb.HostedServices.LoadServerTaskService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadServerTaskService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:52:32.401 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Minutes: Value must be a number between 1 and 59 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseNumber(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 371
+   at Cronos.CronParser.ParseStep(CronField field, Char*& pointer, Int32 low, Int32 high) in C:\projects\cronos\src\Cronos\CronParser.cs:line 318
+   at Cronos.CronParser.ParseStar(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 277
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 226
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 69
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.AddPaydayJob(ScumServer server) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 457
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 244
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadAllServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 508
+   at RagnarokBotWeb.HostedServices.LoadServerTaskService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadServerTaskService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:52:32.555 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 6
+2025-09-09 23:52:33.385 -03:00 [INF] 23:52:33 Gateway     You're using the GuildScheduledEvents gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:52:33.388 -03:00 [INF] 23:52:33 Gateway     You're using the GuildInvites gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:52:33.389 -03:00 [INF] 23:52:33 Gateway     Connected
+2025-09-09 23:52:34.056 -03:00 [INF] Discord bot ready.
+2025-09-09 23:52:34.059 -03:00 [INF] Discord bot has the following Guilds:
+2025-09-09 23:52:34.063 -03:00 [INF] Guild Id: 1411946389553807492, Guild Name: End Of The World Scum Server, Guild Created: "2025-09-01T05:30:51.9650000+00:00"
+2025-09-09 23:52:34.064 -03:00 [INF] Guild Id: 1338349844309348394, Guild Name: RAGNAROK BLACK MARKET, Guild Created: "2025-02-10T03:24:28.2210000+00:00"
+2025-09-09 23:52:34.065 -03:00 [INF] Guild Id: 1404334393794756719, Guild Name: The SCUM Bot, Guild Created: "2025-08-11T05:23:30.7520000+00:00"
+2025-09-09 23:52:34.067 -03:00 [INF] 23:52:34 Gateway     Ready
+2025-09-09 23:52:42.611 -03:00 [INF] Stopping BotSocketServer...
+2025-09-09 23:52:42.633 -03:00 [INF] BotSocketServer stopped
+2025-09-09 23:52:42.643 -03:00 [INF] 23:52:42 Gateway     System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Discord.ConnectionManager.<>c__DisplayClass29_0.<<StartAsync>b__0>d.MoveNext()
+2025-09-09 23:52:42.645 -03:00 [INF] 23:52:42 Gateway     Disconnecting
+2025-09-09 23:52:42.658 -03:00 [INF] 23:52:42 Gateway     Disconnected
+2025-09-09 23:58:58.301 -03:00 [INF] Start installing Hangfire SQL objects...
+2025-09-09 23:58:58.517 -03:00 [INF] Hangfire SQL objects installed.
+2025-09-09 23:59:00.235 -03:00 [INF] Loaded 0 bots from state file
+2025-09-09 23:59:00.311 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:59:00.334 -03:00 [INF] CacheService instance #1 created with ID: "127f6cce-902e-4ec4-9d87-43b4f8a2dce6"
+2025-09-09 23:59:00.904 -03:00 [INF] Loading Ftp Tasks
+2025-09-09 23:59:01.068 -03:00 [INF] Starting BotSocketServer...
+2025-09-09 23:59:01.072 -03:00 [INF] Socket server started on port 9000
+2025-09-09 23:59:01.083 -03:00 [INF] Loading Custom Tasks
+2025-09-09 23:59:01.140 -03:00 [INF] 23:59:01 Discord     Discord.Net v3.17.1 (API v10)
+2025-09-09 23:59:01.152 -03:00 [INF] Discord bot started.
+2025-09-09 23:59:01.157 -03:00 [INF] 23:59:01 Gateway     Connecting
+2025-09-09 23:59:01.183 -03:00 [INF] Starting to schedule FTP tasks for server id 3
+2025-09-09 23:59:01.196 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 3
+2025-09-09 23:59:01.200 -03:00 [INF] Starting to schedule server tasks for server id 3
+2025-09-09 23:59:01.201 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 3
+2025-09-09 23:59:01.392 -03:00 [INF] ChatJobRunnerService started.
+2025-09-09 23:59:01.405 -03:00 [INF] FileChangeJobRunnerService started.
+2025-09-09 23:59:01.412 -03:00 [INF] OrderCommandJobRunnerService started.
+2025-09-09 23:59:01.429 -03:00 [INF] Triggered FileChangeJob(2) -> Execute at: "2025-09-09T23:59:01.4294145-03:00"
+2025-09-09 23:59:01.437 -03:00 [INF] Triggered OrderCommandJob(2) -> Execute at: "2025-09-09T23:59:01.4377360-03:00"
+2025-09-09 23:59:01.853 -03:00 [INF] Triggered OrderCommandJob(3) -> Execute at: "2025-09-09T23:59:01.8533500-03:00"
+2025-09-09 23:59:01.895 -03:00 [INF] Triggered FileChangeJob(3) -> Execute at: "2025-09-09T23:59:01.8952520-03:00"
+2025-09-09 23:59:01.900 -03:00 [INF] Triggered ChatJob(3) -> Execute at: "2025-09-09T23:59:01.9006640-03:00"
+2025-09-09 23:59:01.910 -03:00 [INF] Triggered FileChangeJob(4) -> Execute at: "2025-09-09T23:59:01.9104679-03:00"
+2025-09-09 23:59:01.965 -03:00 [INF] Triggered FileChangeJob(5) -> Execute at: "2025-09-09T23:59:01.9655767-03:00"
+2025-09-09 23:59:02.019 -03:00 [INF] Triggered FileChangeJob(6) -> Execute at: "2025-09-09T23:59:02.0191294-03:00"
+2025-09-09 23:59:02.137 -03:00 [ERR] BackgroundService failed
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 772
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 497
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:59:02.150 -03:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: localhost, DB: ragnarokbot, Schema: hangfire'
+2025-09-09 23:59:02.168 -03:00 [INF] Using the following options for PostgreSQL job storage:
+2025-09-09 23:59:02.168 -03:00 [FTL] The HostOptions.BackgroundServiceExceptionBehavior is configured to StopHost. A BackgroundService has thrown an unhandled exception, and the IHost instance is stopping. To avoid this behavior, configure this to Ignore; however the BackgroundService will not be restarted.
+System.ArgumentException: CRON expression is invalid. Please see the inner exception for details. (Parameter 'cronExpression')
+ ---> Cronos.CronFormatException: The given cron expression has an invalid format. The given cron expression has an invalid format. Hours: Value must be a number between 0 and 23 (all inclusive).
+   at Cronos.CronParser.ThrowFormatException(CronField field, String format, Object[] args) in C:\projects\cronos\src\Cronos\CronParser.cs:line 502
+   at Cronos.CronParser.ParseValue(CronField field, Char*& pointer) in C:\projects\cronos\src\Cronos\CronParser.cs:line 381
+   at Cronos.CronParser.ParseField(CronField field, Char*& pointer, CronExpressionFlag& flags) in C:\projects\cronos\src\Cronos\CronParser.cs:line 229
+   at Cronos.CronParser.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronParser.cs:line 72
+   at Cronos.CronExpression.Parse(String expression, CronFormat format) in C:\projects\cronos\src\Cronos\CronExpression.cs:line 151
+   at Hangfire.RecurringJobEntity.ParseCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobEntity.cs:line 305
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 158
+   --- End of inner exception stack trace ---
+   at Hangfire.RecurringJobManager.ValidateCronExpression(String cronExpression) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 162
+   at Hangfire.RecurringJobManager.AddOrUpdate(String recurringJobId, Job job, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManager.cs:line 104
+   at Hangfire.RecurringJobManagerExtensions.AddOrUpdate[T](IRecurringJobManager manager, String recurringJobId, Expression`1 methodCall, String cronExpression, RecurringJobOptions options) in C:\projects\hangfire-525\src\Hangfire.Core\RecurringJobManagerExtensions.cs:line 532
+   at RagnarokBotWeb.Domain.Services.TaskService.ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 772
+   at RagnarokBotWeb.Domain.Services.TaskService.LoadCustomServersTasks(CancellationToken cancellationToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\Domain\Services\TaskService.cs:line 497
+   at RagnarokBotWeb.HostedServices.LoadCustomTasksHostedService.ExecuteAsync(CancellationToken stoppingToken) in C:\Users\ricks\source\repos\RagnarokBotWeb\RagnarokBotWeb\HostedServices\LoadCustomTasksHostedService.cs:line 23
+   at Microsoft.Extensions.Hosting.Internal.Host.TryExecuteBackgroundServiceAsync(BackgroundService backgroundService)
+2025-09-09 23:59:02.169 -03:00 [INF]     Queue poll interval: 00:00:15.
+2025-09-09 23:59:02.174 -03:00 [INF] Application is stopping, saving bot state...
+2025-09-09 23:59:02.174 -03:00 [INF]     Invisibility timeout: 00:30:00.
+2025-09-09 23:59:02.175 -03:00 [INF]     Use sliding invisibility timeout: False.
+2025-09-09 23:59:02.176 -03:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 24
+    Listening queues: 'default', 'high', 'low'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2025-09-09 23:59:02.187 -03:00 [INF] Triggered OrderCommandJob(4) -> Execute at: "2025-09-09T23:59:02.1879227-03:00"
+2025-09-09 23:59:02.250 -03:00 [INF] Triggered OrderCommandJob(5) -> Execute at: "2025-09-09T23:59:02.2500570-03:00"
+2025-09-09 23:59:02.310 -03:00 [INF] Bot state saved on shutdown
+2025-09-09 23:59:02.310 -03:00 [INF] Triggered OrderCommandJob(6) -> Execute at: "2025-09-09T23:59:02.3107648-03:00"
+2025-09-09 23:59:02.311 -03:00 [INF] Bot state saved successfully during shutdown
+2025-09-09 23:59:02.310 -03:00 [INF] Server desktop-esht7fl:65208:44939b12 successfully announced in 29.4088 ms
+2025-09-09 23:59:02.315 -03:00 [INF] Server desktop-esht7fl:65208:44939b12 caught stopping signal...
+2025-09-09 23:59:02.326 -03:00 [INF] Server desktop-esht7fl:65208:44939b12 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2025-09-09 23:59:02.582 -03:00 [INF] Server desktop-esht7fl:65208:44939b12 all the dispatchers started
+2025-09-09 23:59:02.596 -03:00 [INF] Server desktop-esht7fl:65208:44939b12 All dispatchers stopped
+2025-09-09 23:59:02.597 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 3
+2025-09-09 23:59:02.598 -03:00 [INF] Successfully loaded 12 server tasks for server id 3
+2025-09-09 23:59:02.600 -03:00 [INF] Starting to schedule FTP tasks for server id 6
+2025-09-09 23:59:02.603 -03:00 [INF] Starting to schedule server tasks for server id 6
+2025-09-09 23:59:02.604 -03:00 [INF] Cleaned up existing FtpJobs jobs for server 6
+2025-09-09 23:59:02.605 -03:00 [INF] Cleaned up existing ServerJobs jobs for server 6
+2025-09-09 23:59:02.613 -03:00 [INF] Server desktop-esht7fl:65208:44939b12 successfully reported itself as stopped in 4.5052 ms
+2025-09-09 23:59:02.614 -03:00 [INF] Server desktop-esht7fl:65208:44939b12 has been stopped in total 297.8442 ms
+2025-09-09 23:59:02.708 -03:00 [INF] Successfully loaded 10 FTP tasks for server id 6
+2025-09-09 23:59:02.717 -03:00 [INF] Successfully loaded 12 server tasks for server id 6
+2025-09-09 23:59:03.213 -03:00 [INF] 23:59:03 Gateway     You're using the GuildScheduledEvents gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:59:03.213 -03:00 [INF] 23:59:03 Gateway     You're using the GuildInvites gateway intent without listening to any events related to that intent, consider removing the intent from your config.
+2025-09-09 23:59:03.215 -03:00 [INF] 23:59:03 Gateway     Connected
+2025-09-09 23:59:03.727 -03:00 [INF] Discord bot ready.
+2025-09-09 23:59:03.728 -03:00 [INF] Discord bot has the following Guilds:
+2025-09-09 23:59:03.730 -03:00 [INF] Guild Id: 1411946389553807492, Guild Name: End Of The World Scum Server, Guild Created: "2025-09-01T05:30:51.9650000+00:00"
+2025-09-09 23:59:03.731 -03:00 [INF] Guild Id: 1338349844309348394, Guild Name: RAGNAROK BLACK MARKET, Guild Created: "2025-02-10T03:24:28.2210000+00:00"
+2025-09-09 23:59:03.732 -03:00 [INF] Guild Id: 1404334393794756719, Guild Name: The SCUM Bot, Guild Created: "2025-08-11T05:23:30.7520000+00:00"
+2025-09-09 23:59:03.733 -03:00 [INF] 23:59:03 Gateway     Ready
+2025-09-09 23:59:12.302 -03:00 [INF] Stopping BotSocketServer...
+2025-09-09 23:59:12.321 -03:00 [INF] BotSocketServer stopped
+2025-09-09 23:59:12.329 -03:00 [INF] 23:59:12 Gateway     System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Discord.ConnectionManager.<>c__DisplayClass29_0.<<StartAsync>b__0>d.MoveNext()
+2025-09-09 23:59:12.330 -03:00 [INF] 23:59:12 Gateway     Disconnecting
+2025-09-09 23:59:12.342 -03:00 [INF] 23:59:12 Gateway     Disconnected

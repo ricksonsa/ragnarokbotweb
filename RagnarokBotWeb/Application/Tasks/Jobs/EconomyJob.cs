@@ -1,6 +1,5 @@
-﻿using Quartz;
+﻿using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
-using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs;
@@ -8,20 +7,16 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs;
 
 public class EconomyJob(
     ILogger<EconomyJob> logger,
-    IScumServerRepository scumServerRepository,
-    IPlayerService playerService,
-    IFtpService ftpService,
-    IUnitOfWork uow
-) : AbstractJob(scumServerRepository), IJob
+    IScumServerRepository scumServerRepository
+) : AbstractJob(scumServerRepository), IFtpJob
 {
-    public async Task Execute(IJobExecutionContext context)
+    public async Task Execute(long serverId, EFileType fileType)
     {
         try
         {
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
-            var server = await GetServerAsync(context);
-            var fileType = GetFileTypeFromContext(context);
+            var server = await GetServerAsync(serverId);
 
             //var processor = new ScumFileProcessor(server, uow);
 
@@ -38,7 +33,7 @@ public class EconomyJob(
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
+            logger.LogError(ex, "{Job} Exception", $"{GetType().Name}({serverId})");
             throw;
         }
     }

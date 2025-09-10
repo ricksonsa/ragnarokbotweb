@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Quartz;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
@@ -16,12 +15,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         ICacheService cache
         ) : AbstractJob(scumServerRepository), IJob
     {
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId)
         {
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
             try
             {
-                var server = await GetServerAsync(context);
+                var server = await GetServerAsync(serverId);
                 if (server.Ftp is null) return;
 
                 var processor = new ScumFileProcessor(server, uow);
@@ -34,7 +33,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             catch (FtpNotSetException) { }
             catch (Exception ex)
             {
-                logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
+                logger.LogError(ex, "{Job} Exception", $"{GetType().Name}({serverId})");
                 throw;
             }
 

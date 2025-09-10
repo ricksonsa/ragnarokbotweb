@@ -1,42 +1,30 @@
-﻿using Quartz;
-using RagnarokBotWeb.Domain.Services.Interfaces;
+﻿using RagnarokBotWeb.Domain.Services.Interfaces;
 using Shared.Models;
 
 namespace RagnarokBotWeb.Application.Tasks.Jobs
 {
-    public class CustomJob : IJob
+    public class CustomJob : ICustomJob
     {
         private ILogger<CustomJob> _logger;
-        private readonly ICacheService _cacheService;
         private readonly IBotService _botService;
 
-        public CustomJob(ILogger<CustomJob> logger, ICacheService cacheService)
+        public CustomJob(ILogger<CustomJob> logger)
         {
             _logger = logger;
-            _cacheService = cacheService;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId, string commandString)
         {
-            var jobName = context.JobDetail.Key.Name;
+            _logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
+            if (commandString is null) return;
 
-            JobDataMap dataMap = context.JobDetail.JobDataMap;
-            long? serverId = dataMap.GetLong("server_id");
-            string? commandsString = dataMap.GetString("commands");
-
-            if (serverId is null) return;
-            if (commandsString is null) return;
-
-            IEnumerable<string> commands = commandsString.ToString()!.Split(";");
-
-            _logger.LogDebug($"Executing job: {jobName} from serverId: {serverId.Value} at {DateTime.Now}");
-
+            IEnumerable<string> commands = commandString.ToString()!.Split(";");
 
             foreach (var command in commands)
             {
                 var botCommand = new BotCommand();
                 botCommand.Command(command);
-                await _botService.SendCommand(serverId.Value, botCommand);
+                await _botService.SendCommand(serverId, botCommand);
             }
         }
     }

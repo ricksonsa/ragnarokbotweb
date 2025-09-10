@@ -1,5 +1,4 @@
-﻿using Quartz;
-using RagnarokBotWeb.Application.Handlers.ChangeFileHandler;
+﻿using RagnarokBotWeb.Application.Handlers.ChangeFileHandler;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -16,14 +15,14 @@ public class FileChangeJob(
     IBotService botService
 ) : AbstractJob(scumServerRepository), IJob
 {
-    public async Task Execute(IJobExecutionContext context)
+    public async Task Execute(long serverId)
     {
 
-        logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+        logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
         try
         {
-            var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+            var server = await GetServerAsync(serverId, ftpRequired: false, validateSubscription: true);
             if (cacheService.TryDequeueFileChangeCommand(server.Id, out var command))
             {
                 try
@@ -49,7 +48,7 @@ public class FileChangeJob(
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
+            logger.LogError(ex, "{Job} Exception", $"{GetType().Name}({serverId})");
             throw;
         }
 

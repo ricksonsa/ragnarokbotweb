@@ -1,7 +1,7 @@
-﻿using Quartz;
-using RagnarokBotWeb.Application.Handlers;
+﻿using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
@@ -20,21 +20,21 @@ public class KillLogJob(
     IFtpService ftpService,
     ICacheService cacheService,
     IBotService botService
-) : AbstractJob(scumServerRepository), IJob
+) : AbstractJob(scumServerRepository), IFtpJob
 {
-    public async Task Execute(IJobExecutionContext context)
+    public async Task Execute(long serverId, EFileType fileType)
     {
-        logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+        logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
         try
         {
-            var server = await GetServerAsync(context);
+            var server = await GetServerAsync(serverId);
             var uow = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IUnitOfWork>();
             var processor = new ScumFileProcessor(server, uow);
 
             string lastLine = string.Empty;
 
-            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), ftpService, context.CancellationToken))
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService))
             {
                 if (!line.Contains('{'))
                 {
@@ -82,7 +82,7 @@ public class KillLogJob(
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
+            logger.LogError(ex, "{Job} Exception", $"{GetType().Name}({serverId})");
             throw;
         }
     }

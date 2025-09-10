@@ -195,6 +195,81 @@ namespace RagnarokBotClient
             }
         }
 
+        private async Task SendListPlayers(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(_client.BotId))
+                    {
+                        var command = new BotCommand
+                        {
+                            Values = [
+                            new BotCommandValue
+                            {
+                                Type = Shared.Enums.ECommandType.ListPlayers
+                            }]
+                        };
+                        _commandQueue.Enqueue(command);
+                    }
+                }
+                catch { }
+
+                await Task.Delay(TimeSpan.FromMinutes(1), token);
+            }
+        }
+
+        private async Task SendListSquads(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(_client.BotId))
+                    {
+                        var command = new BotCommand
+                        {
+                            Values = [
+                            new BotCommandValue
+                            {
+                                Type = Shared.Enums.ECommandType.ListSquads
+                            }]
+                        };
+                        _commandQueue.Enqueue(command);
+                    }
+                }
+                catch { }
+
+                await Task.Delay(TimeSpan.FromMinutes(10), token);
+            }
+        }
+
+        private async Task SendListFlags(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(_client.BotId))
+                    {
+                        var command = new BotCommand
+                        {
+                            Values = [
+                            new BotCommandValue
+                            {
+                                Type = Shared.Enums.ECommandType.ListFlags
+                            }]
+                        };
+                        _commandQueue.Enqueue(command);
+                    }
+                }
+                catch { }
+
+                await Task.Delay(TimeSpan.FromMinutes(30), token);
+            }
+        }
+
         private void Logger_OnLogging(object? sender, string e)
         {
             UpdateStatus(e, false);
@@ -343,6 +418,9 @@ namespace RagnarokBotClient
 
                             // Start both status ping and status timer
                             _ = SendStatusPing(token);
+                            _ = SendListPlayers(token);
+                            _ = SendListFlags(token);
+                            _ = SendListSquads(token);
                             _statusTimer.Start();
 
                             UpdateStatusSafe("Started...");

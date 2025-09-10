@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Microsoft.EntityFrameworkCore;
-using Quartz;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
@@ -18,12 +17,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         IUnitOfWork unitOfWork
         ) : AbstractJob(scumServerRepository), IJob
     {
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId)
         {
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
             try
             {
-                var server = await GetServerAsync(context);
+                var server = await GetServerAsync(serverId);
                 if (!server.RankEnabled) return;
                 var topKillersDaily = await TopPlayers(unitOfWork, server, ERankingPeriod.Daily);
 

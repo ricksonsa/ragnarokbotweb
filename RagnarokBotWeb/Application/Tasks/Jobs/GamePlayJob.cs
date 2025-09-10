@@ -1,10 +1,10 @@
 ﻿using Discord;
 using Microsoft.EntityFrameworkCore;
-using Quartz;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Entities;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
@@ -21,20 +21,20 @@ public class GamePlayJob(
     IDiscordService discordService,
     ICacheService cache,
     IBotService botService
-) : AbstractJob(scumServerRepository), IJob
+) : AbstractJob(scumServerRepository), IFtpJob
 {
-    public async Task Execute(IJobExecutionContext context)
+    public async Task Execute(long serverId, EFileType fileTye)
     {
-        logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+        logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
         try
         {
-            var server = await GetServerAsync(context);
+            var server = await GetServerAsync(serverId);
 
             using var scope = services.CreateScope();
             var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
             var processor = new ScumFileProcessor(server, uow);
 
-            await foreach (var line in processor.UnreadFileLinesAsync(GetFileTypeFromContext(context), ftpService, context.CancellationToken))
+            await foreach (var line in processor.UnreadFileLinesAsync(fileTye, ftpService))
             {
                 try
                 {
@@ -55,7 +55,7 @@ public class GamePlayJob(
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError(ex, "{Job} Exception", context.JobDetail.Key.Name);
+            logger.LogError(ex, "{Job} Exception", $"{GetType().Name}({serverId})");
         }
     }
 

@@ -1,5 +1,4 @@
-﻿using Quartz;
-using RagnarokBotWeb.Domain.Exceptions;
+﻿using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -20,12 +19,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             _serverService = serverService;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId)
         {
-            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            _logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
             try
             {
-                var server = await GetServerAsync(context, ftpRequired: true);
+                var server = await GetServerAsync(serverId, ftpRequired: true);
                 await _serverService.UpdateServerData(server);
             }
             catch (ServerUncompliantException) { }

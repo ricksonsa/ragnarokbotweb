@@ -141,6 +141,7 @@ namespace RagnarokBotWeb.Domain.Services
                 var players = _cacheService.GetConnectedPlayers(serverId);
                 if (!players.Any(player => player.SteamID == command.Values.First(v => v.CheckTargetOnline).Target))
                 {
+                    _logger.LogInformation("Command received but player {Player} is not online, caching command", command.Values.First(v => v.CheckTargetOnline).Target);
                     _cacheService.EnqueueCommand(serverId, command);
                     return;
                 }

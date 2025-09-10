@@ -67,7 +67,7 @@ export class CustomTaskComponent implements OnInit {
     hideSpecificMonthWeekTab: false,
     use24HourTime: true,
     hideSeconds: false,
-    cronFlavor: "quartz" //standard or quartz
+    cronFlavor: "standard" //standard or quartz
   };
 
   constructor(

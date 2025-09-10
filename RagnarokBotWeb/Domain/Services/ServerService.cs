@@ -120,7 +120,7 @@ namespace RagnarokBotWeb.Domain.Services
                 await _unitOfWork.SaveAsync();
             }
 
-            await _taskService.FtpConfigAddedAsync(server);
+            _taskService.FtpConfigAddedAsync(server);
 
             return _mapper.Map<ScumServerDto>(server);
         }
@@ -506,7 +506,6 @@ namespace RagnarokBotWeb.Domain.Services
                 server.AllowMinesOutsideFlag = true;
             }
 
-            await _taskService.AddPaydayJob(server);
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();
 

@@ -14,7 +14,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task DeleteDiscordMessage(Warzone? warzone);
         Task<ulong> GenerateDiscordWarzoneButton(Warzone warzone);
         Task<WarzoneDto?> OpenWarzone(ScumServer server, bool? force = false, CancellationToken token = default);
-        Task<WarzoneDto?> CloseWarzone(ScumServer server, CancellationToken token = default);
+        Task<WarzoneDto?> CloseWarzone(long warzoneId);
         Task<WarzoneDto?> OpenWarzone(bool? force = false);
         Task<WarzoneDto?> CloseWarzone();
     }

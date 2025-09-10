@@ -10,9 +10,9 @@
 		<PackageProjectUrl>www.thescumbot.com</PackageProjectUrl>
 		<PackageIcon>thescumbot.png</PackageIcon>
 
-		<Version>1.0.4.0</Version>
-		<AssemblyVersion>1.0.4.0</AssemblyVersion>
-		<FileVersion>1.0.4.0</FileVersion>
+		<Version>1.0.5.0</Version>
+		<AssemblyVersion>1.0.5.0</AssemblyVersion>
+		<FileVersion>1.0.5.0</FileVersion>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -28,18 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Costura.Fody" Version="6.0.0">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Fody" Version="6.9.3">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="Quartz" Version="3.13.1" />
-		<PackageReference Include="Quartz.AspNetCore" Version="3.13.1" />
-		<PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.1" />
 	</ItemGroup>
 
 	<ItemGroup>

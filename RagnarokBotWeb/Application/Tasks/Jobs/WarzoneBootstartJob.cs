@@ -1,5 +1,4 @@
-﻿using Quartz;
-using RagnarokBotWeb.Domain.Exceptions;
+﻿using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -10,41 +9,33 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         private readonly ILogger<WarzoneBootstartJob> _logger;
         private readonly IBotService _botService;
         private readonly IWarzoneService _warzoneService;
-        private readonly ISchedulerFactory _schedulerFactory;
 
         public WarzoneBootstartJob(
           IScumServerRepository scumServerRepository,
           IBotService botService,
           IWarzoneService warzoneService,
-          ILogger<WarzoneBootstartJob> logger,
-          ISchedulerFactory schedulerFactory) : base(scumServerRepository)
+          ILogger<WarzoneBootstartJob> logger) : base(scumServerRepository)
         {
             _botService = botService;
             _warzoneService = warzoneService;
             _logger = logger;
-            _schedulerFactory = schedulerFactory;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId)
         {
-            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            _logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
             try
             {
-                var server = await GetServerAsync(context, ftpRequired: false, validateSubscription: true);
+                var server = await GetServerAsync(serverId, ftpRequired: false, validateSubscription: true);
 
                 if (!_botService.IsBotOnline(server.Id)) return;
 
-                var scheduler = await _schedulerFactory.GetScheduler();
-                if (!await scheduler.CheckExists(new JobKey(nameof(CloseWarzoneJob), $"WarzoneJobs({server.Id})")))
-                {
-                    await _warzoneService.OpenWarzone(server, token: context.CancellationToken);
-                }
+                await _warzoneService.OpenWarzone(server);
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
             catch (Exception)
             {
-
                 throw;
             }
 

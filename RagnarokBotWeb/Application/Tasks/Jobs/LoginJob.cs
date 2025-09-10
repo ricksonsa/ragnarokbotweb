@@ -1,5 +1,5 @@
-﻿using Quartz;
-using RagnarokBotWeb.Application.LogParser;
+﻿using RagnarokBotWeb.Application.LogParser;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.HostedServices.Base;
@@ -13,19 +13,18 @@ public class LoginJob(
     IPlayerService playerService,
     IUnitOfWork uow,
     IFtpService ftpService
-    ) : AbstractJob(scumServerRepository), IJob
+    ) : AbstractJob(scumServerRepository), IFtpJob
 {
 
-    public async Task Execute(IJobExecutionContext context)
+    public async Task Execute(long serverId, EFileType fileType)
     {
-        logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+        logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
         try
         {
-            var server = await GetServerAsync(context);
-            var fileType = GetFileTypeFromContext(context);
+            var server = await GetServerAsync(serverId);
 
             var processor = new ScumFileProcessor(server, uow);
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService, context.CancellationToken))
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService))
             {
                 try
                 {
@@ -39,7 +38,7 @@ public class LoginJob(
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "{JobKey} Exception", context.JobDetail.Key.Name);
+                    logger.LogError(ex, "{JobKey} Exception", $"{GetType().Name}({serverId})");
                 }
 
             }
@@ -48,7 +47,7 @@ public class LoginJob(
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError(ex, "{JobKey} Exception", context.JobDetail.Key.Name);
+            logger.LogError(ex, "{JobKey} Exception", $"{GetType().Name}({serverId})");
         }
     }
 }

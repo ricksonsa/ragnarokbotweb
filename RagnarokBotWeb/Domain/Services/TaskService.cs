@@ -1,11 +1,10 @@
 ﻿using AutoMapper;
+using Hangfire;
+using Hangfire.Storage;
 using Newtonsoft.Json;
-using Quartz;
-using Quartz.Impl.Matchers;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Application.Tasks.Jobs;
-using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -19,322 +18,458 @@ namespace RagnarokBotWeb.Domain.Services
     public class TaskService : BaseService, ITaskService
     {
         private readonly ILogger<TaskService> _logger;
-        private readonly ISchedulerFactory _schedulerFactory;
+        private readonly IRecurringJobManager _recurringJobManager;
+        private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IMapper _mapper;
         private readonly IScumServerRepository _scumServerRepository;
         private readonly ICustomTaskRepository _customTaskRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
+        private readonly IServiceProvider _serviceProvider;
+
+        // Store job IDs for cleanup
+        private readonly Dictionary<long, List<string>> _serverJobIds = new();
+        private readonly Dictionary<long, List<string>> _ftpJobIds = new();
 
         public TaskService(
             IHttpContextAccessor httpContextAccessor,
-            ISchedulerFactory schedulerFactory,
+            IRecurringJobManager recurringJobManager,
+            IBackgroundJobClient backgroundJobClient,
             IScumServerRepository scumServerRepository,
             ICustomTaskRepository customTaskRepository,
             ICacheService cacheService,
             ILogger<TaskService> logger,
             IUnitOfWork unitOfWork,
-            IMapper mapper) : base(httpContextAccessor)
+            IMapper mapper,
+            IServiceProvider serviceProvider) : base(httpContextAccessor)
         {
-            _schedulerFactory = schedulerFactory;
+            _recurringJobManager = recurringJobManager;
+            _backgroundJobClient = backgroundJobClient;
             _scumServerRepository = scumServerRepository;
             _customTaskRepository = customTaskRepository;
             _cacheService = cacheService;
             _logger = logger;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _serviceProvider = serviceProvider;
         }
 
-        private static ITrigger CronTrigger(string cron, ScumServer server, bool startNow = false)
+        private static string GetCronWithTimeZone(string cron, TimeZoneInfo timeZone)
         {
-            var trigger = TriggerBuilder.Create()
-                        .WithCronSchedule(cron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()));
-
-            if (startNow)
-                trigger.StartNow();
-
-            return trigger.Build();
+            // Hangfire uses UTC by default, but we can handle timezone conversion in the job itself
+            // or use Hangfire.Cron helper methods
+            return cron;
         }
 
-        private static ITrigger OneMinTrigger(ScumServer server) => TriggerBuilder.Create()
-                         .WithCronSchedule(AppSettingsStatic.OneMinCron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
-                         .Build();
-
-        private static ITrigger TwoMinTrigger(ScumServer server) => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.TwoMinCron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
-                            .Build();
-
-        private static ITrigger DefaultTrigger(ScumServer server) => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.DefaultCron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
-                            .Build();
-
-        private static ITrigger FiveMinTrigger(ScumServer server) => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.FiveMinCron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
-                            .Build();
-
-        private static ITrigger TenMinTrigger(ScumServer server) => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.TenMinCron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
-                            .Build();
-
-        private static ITrigger TenSecondsTrigger(ScumServer server) => TriggerBuilder.Create()
-                            .WithCronSchedule(AppSettingsStatic.TenSecondsCron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
-                            .Build();
-
-        private static ITrigger ThirtySecondsTrigger(ScumServer server) => TriggerBuilder.Create()
-                          .WithCronSchedule(AppSettingsStatic.ThirtySecondsCron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
-                          .Build();
-
-        private static ITrigger EveryDayTrigger(ScumServer server) => TriggerBuilder.Create()
-                          .WithCronSchedule(AppSettingsStatic.EveryDayCron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(server.GetTimeZoneOrDefault()))
-                          .Build();
-
-        private async Task ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken = default)
+        private void CleanupServerJobs(long serverId, string jobType)
         {
-            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
-
-            var job = JobBuilder.Create<OrderResetJob>()
-                .WithIdentity(nameof(OrderResetJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger(server));
-
-            job = JobBuilder.Create<ListPlayersJob>()
-                .WithIdentity(nameof(ListPlayersJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, OneMinTrigger(server));
-
-            job = JobBuilder.Create<ListSquadsJob>()
-                .WithIdentity(nameof(ListSquadsJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0/15 * * * ?", server));
-
-            job = JobBuilder.Create<ListFlagsJob>()
-                .WithIdentity(nameof(ListFlagsJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 0/2 * * ?", server));
-
-            job = JobBuilder.Create<CommandQueueProcessorJob>()
-                .WithIdentity(nameof(CommandQueueProcessorJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, ThirtySecondsTrigger(server));
-
-            job = JobBuilder.Create<OrderCommandJob>()
-                .WithIdentity(nameof(OrderCommandJob), $"ServerJobs({server.Id})")
-                 .UsingJobData("server_id", server.Id)
-                 .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0/10 * * * * ?", server));
-
-            job = JobBuilder.Create<UavClearJob>()
-                .WithIdentity(nameof(UavClearJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, OneMinTrigger(server));
-
-            job = JobBuilder.Create<WarzoneBootstartJob>()
-                .WithIdentity(nameof(WarzoneBootstartJob), $"WarzoneJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0/10 * * * ?", server, startNow: true));
-
-            job = JobBuilder.Create<BunkerStateJob>()
-                .WithIdentity(nameof(BunkerStateJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", server, startNow: false));
-
-            job = JobBuilder.Create<KillRankJob>()
-                .WithIdentity(nameof(KillRankJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", server, startNow: false));
-
-            job = JobBuilder.Create<LockpickRankJob>()
-                .WithIdentity(nameof(LockpickRankJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * ? * *", server, startNow: false));
-
-            job = JobBuilder.Create<LockpickRankDailyAwardJob>()
-                .WithIdentity(nameof(LockpickRankDailyAwardJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 55 23 * * ? *", server, startNow: false));
-
-            job = JobBuilder.Create<KillRankDailyAwardJob>()
-                .WithIdentity(nameof(KillRankDailyAwardJob), $"ServerJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 55 23 * * ? *", server, startNow: false));
-
-            job = JobBuilder.Create<KillRankWeeklyAwardJob>()
-              .WithIdentity(nameof(KillRankWeeklyAwardJob), $"ServerJobs({server.Id})")
-              .UsingJobData("server_id", server.Id)
-              .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 0 ? * SUN *", server, startNow: false));
-
-            job = JobBuilder.Create<KillRankMonthlyAwardJob>()
-              .WithIdentity(nameof(KillRankMonthlyAwardJob), $"ServerJobs({server.Id})")
-              .UsingJobData("server_id", server.Id)
-              .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 0 L * ? *", server, startNow: false));
-
-            await AddPaydayJob(server);
-
-            _logger.LogInformation("Loaded server tasks for server id {Id}", server.Id);
-        }
-
-        private async Task ScheduleFtpServerTasks(ScumServer server, CancellationToken cancellationToken = default)
-        {
-            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
-
-            var job = JobBuilder.Create<ChatJob>()
-                .WithIdentity(nameof(ChatJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("file_type", EFileType.Chat.ToString())
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0/10 * * * * ?", server));
-
-            job = JobBuilder.Create<KillLogJob>()
-                   .WithIdentity(nameof(KillLogJob), $"FtpJobs({server.Id})")
-                   .UsingJobData("server_id", server.Id)
-                   .UsingJobData("file_type", EFileType.Kill.ToString())
-                   .Build();
-            await scheduler.ScheduleJob(job, ThirtySecondsTrigger(server));
-
-            job = JobBuilder.Create<EconomyJob>()
-                .WithIdentity(nameof(EconomyJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("file_type", EFileType.Economy.ToString())
-                .Build();
-            await scheduler.ScheduleJob(job, FiveMinTrigger(server));
-
-            job = JobBuilder.Create<LoginJob>()
-                .WithIdentity(nameof(LoginJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("file_type", EFileType.Login.ToString())
-                .Build();
-            await scheduler.ScheduleJob(job, OneMinTrigger(server));
-
-            job = JobBuilder.Create<GamePlayJob>()
-                .WithIdentity(nameof(GamePlayJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("file_type", EFileType.Gameplay.ToString())
-                .Build();
-            await scheduler.ScheduleJob(job, ThirtySecondsTrigger(server));
-
-            job = JobBuilder.Create<VipExpireJob>()
-                .WithIdentity(nameof(VipExpireJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger(server));
-
-            job = JobBuilder.Create<BanExpireJob>()
-                .WithIdentity(nameof(BanExpireJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger(server));
-
-            job = JobBuilder.Create<SilenceExpireJob>()
-                .WithIdentity(nameof(SilenceExpireJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger(server));
-
-            job = JobBuilder.Create<DiscordRoleExpireJob>()
-                .WithIdentity(nameof(DiscordRoleExpireJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, TenMinTrigger(server));
-
-            job = JobBuilder.Create<UpdateServerDataJob>()
-                .WithIdentity(nameof(UpdateServerDataJob), $"FtpJobs({server.Id})")
-               .UsingJobData("server_id", server.Id)
-               .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 */6 * * ?", server));
-
-            job = JobBuilder.Create<RaidTimesJob>()
-                .WithIdentity(nameof(RaidTimesJob), $"FtpJobs({server.Id})")
-               .UsingJobData("server_id", server.Id)
-               .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0 0 * * * ?", server, startNow: true));
-
-            job = JobBuilder.Create<FileChangeJob>()
-                .WithIdentity(nameof(FileChangeJob), $"FtpJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .Build();
-            await scheduler.ScheduleJob(job, CronTrigger("0/30 * * * * ?", server));
-
-            _logger.LogInformation("Loaded ftp tasks for server id {Id}", server.Id);
-        }
-
-        public async Task AddPaydayJob(ScumServer server)
-        {
-
-            var scheduler = await _schedulerFactory.GetScheduler();
-            var jobKey = new JobKey(nameof(PaydayJob), $"ServerJobs({server.Id})");
             try
             {
-                if (await scheduler.CheckExists(jobKey)) await DeleteJob(jobKey.Name, jobKey.Group);
-            }
-            catch (Exception) { }
-            if (server.CoinAwardIntervalMinutes > 0)
-            {
-                ITrigger trigger = TriggerBuilder.Create()
-                    .WithSimpleSchedule(x => x
-                    .WithIntervalInMinutes((int)server.CoinAwardIntervalMinutes)
-                    .RepeatForever())
-                    .Build();
+                var jobIds = jobType == "ServerJobs"
+                    ? _serverJobIds.GetValueOrDefault(serverId, new List<string>())
+                    : _ftpJobIds.GetValueOrDefault(serverId, new List<string>());
 
-                var job = JobBuilder.Create<PaydayJob>()
-                    .WithIdentity(jobKey)
-                    .UsingJobData("server_id", server.Id)
-                    .Build();
+                foreach (var jobId in jobIds)
+                {
+                    try
+                    {
+                        _recurringJobManager.RemoveIfExists(jobId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to remove job {JobId}", jobId);
+                    }
+                }
 
-                await scheduler.ScheduleJob(job, trigger);
-            }
-        }
+                if (jobType == "ServerJobs")
+                    _serverJobIds[serverId] = new List<string>();
+                else
+                    _ftpJobIds[serverId] = new List<string>();
 
-        public async Task NewServerAddedAsync(ScumServer server)
-        {
-            await ScheduleServerTasks(server);
-            _cacheService.AddServers([server]);
-        }
-
-        public async Task FtpConfigAddedAsync(ScumServer server)
-        {
-            var scheduler = await _schedulerFactory.GetScheduler();
-
-            try
-            {
-                var jobKeys = await scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals($"FtpJobs({server.Id})"));
-                if (jobKeys.Any()) await scheduler.DeleteJobs(jobKeys.ToList());
+                _logger.LogInformation("Cleaned up existing {JobType} jobs for server {ServerId}",
+                    jobType, serverId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogWarning(ex, "Failed to cleanup existing jobs for server {ServerId} in type {JobType}",
+                    serverId, jobType);
             }
+        }
 
-            await ScheduleFtpServerTasks(server);
+        private void ScheduleServerTasks(ScumServer server, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to schedule server tasks for server id {ServerId}", server.Id);
+
+                // Clean up existing jobs for this server first
+                CleanupServerJobs(server.Id, "ServerJobs");
+
+                var jobIds = new List<string>();
+
+                // OrderResetJob - every 5 minutes
+                var orderResetJobId = $"OrderResetJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<OrderResetJob>(
+                    orderResetJobId,
+                    job => job.Execute(server.Id),
+                    "*/5 * * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(orderResetJobId);
+
+                // CommandQueueProcessorJob - every 1 min
+                var commandQueueJobId = $"CommandQueueProcessorJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<CommandQueueProcessorJob>(
+                    commandQueueJobId,
+                    job => job.Execute(server.Id),
+                   "* * * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(commandQueueJobId);
+
+                // UavClearJob - every minute
+                var uavClearJobId = $"UavClearJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<UavClearJob>(
+                    uavClearJobId,
+                    job => job.Execute(server.Id),
+                    "* * * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(uavClearJobId);
+
+                // BunkerStateJob - every hour
+                var bunkerStateJobId = $"BunkerStateJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<BunkerStateJob>(
+                    bunkerStateJobId,
+                    job => job.Execute(server.Id),
+                    "0 * * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(bunkerStateJobId);
+
+                // KillRankJob - every hour
+                var killRankJobId = $"KillRankJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<KillRankJob>(
+                    killRankJobId,
+                    job => job.Execute(server.Id),
+                    "0 * * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(killRankJobId);
+
+                // LockpickRankJob - every hour
+                var lockpickRankJobId = $"LockpickRankJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<LockpickRankJob>(
+                    lockpickRankJobId,
+                    job => job.Execute(server.Id),
+                    "0 * * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(lockpickRankJobId);
+
+                // LockpickRankDailyAwardJob - daily at 23:55
+                var lockpickDailyAwardJobId = $"LockpickRankDailyAwardJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<LockpickRankDailyAwardJob>(
+                    lockpickDailyAwardJobId,
+                    job => job.Execute(server.Id),
+                    "55 23 * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(lockpickDailyAwardJobId);
+
+                // KillRankDailyAwardJob - daily at 23:55
+                var killDailyAwardJobId = $"KillRankDailyAwardJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<KillRankDailyAwardJob>(
+                    killDailyAwardJobId,
+                    job => job.Execute(server.Id),
+                    "55 23 * * *", // Daily at 23:55
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(killDailyAwardJobId);
+
+                // KillRankWeeklyAwardJob - weekly on Sunday
+                var killWeeklyAwardJobId = $"KillRankWeeklyAwardJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<KillRankWeeklyAwardJob>(
+                    killWeeklyAwardJobId,
+                    job => job.Execute(server.Id),
+                    "0 0 * * 0", // Weekly on Sunday at midnight
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(killWeeklyAwardJobId);
+
+                // KillRankMonthlyAwardJob - monthly on last day
+                var killMonthlyAwardJobId = $"KillRankMonthlyAwardJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<KillRankMonthlyAwardJob>(
+                    killMonthlyAwardJobId,
+                    job => job.Execute(server.Id),
+                    "0 0 28-31 * *", // Last few days of month (Hangfire will handle)
+                     new RecurringJobOptions
+                     {
+                         TimeZone = server.GetTimeZoneOrDefault()
+                     });
+                jobIds.Add(killMonthlyAwardJobId);
+
+                // WarzoneBootstartJob - every 10 minutes
+                var warzoneBootstartJobId = $"WarzoneBootstartJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<WarzoneBootstartJob>(
+                    warzoneBootstartJobId,
+                    job => job.Execute(server.Id),
+                    "*/10 * * * *", // Every 10 minutes
+                     new RecurringJobOptions
+                     {
+                         TimeZone = server.GetTimeZoneOrDefault()
+                     });
+                jobIds.Add(warzoneBootstartJobId);
+
+                _serverJobIds[server.Id] = jobIds;
+
+                BackgroundJob.Schedule<PaydayJob>(
+                   job => job.Execute(server.Id),
+                   TimeSpan.FromMinutes(server.CoinAwardIntervalMinutes)
+                );
+
+                _logger.LogInformation("Successfully loaded {JobCount} server tasks for server id {ServerId}",
+                    jobIds.Count + 1, server.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to schedule server tasks for server id {ServerId}", server.Id);
+                throw;
+            }
+        }
+
+        private void ScheduleFtpServerTasks(ScumServer server, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to schedule FTP tasks for server id {ServerId}", server.Id);
+
+                // Clean up existing FTP jobs for this server first
+                CleanupServerJobs(server.Id, "FtpJobs");
+
+                var jobIds = new List<string>();
+
+                // KillLogJob - every 1 minute
+                var killLogJobId = $"KillLogJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<KillLogJob>(
+                    killLogJobId,
+                    job => job.Execute(server.Id, EFileType.Kill),
+                    "* * * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    }); // Every 1 minute
+                jobIds.Add(killLogJobId);
+
+                // EconomyJob - every 5 minutes
+                var economyJobId = $"EconomyJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<EconomyJob>(
+                    economyJobId,
+                    job => job.Execute(server.Id, EFileType.Economy),
+                    "*/5 * * * *", // Every 5 minutes
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(economyJobId);
+
+                // LoginJob - every minute
+                var loginJobId = $"LoginJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<LoginJob>(
+                    loginJobId,
+                    job => job.Execute(server.Id, EFileType.Login),
+                    "* * * * *", // Every minute
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(loginJobId);
+
+                // GamePlayJob - every 1 min
+                var gamePlayJobId = $"GamePlayJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<GamePlayJob>(
+                    gamePlayJobId,
+                    job => job.Execute(server.Id, EFileType.Gameplay),
+                    "* * * * *", // Every minute
+                     new RecurringJobOptions
+                     {
+                         TimeZone = server.GetTimeZoneOrDefault()
+                     });
+                jobIds.Add(gamePlayJobId);
+
+                // VipExpireJob - every 10 minutes
+                var vipExpireJobId = $"VipExpireJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<VipExpireJob>(
+                    vipExpireJobId,
+                    job => job.Execute(server.Id),
+                    "*/10 * * * *", // Every 10 minutes
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(vipExpireJobId);
+
+                // BanExpireJob - every 10 minutes
+                var banExpireJobId = $"BanExpireJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<BanExpireJob>(
+                    banExpireJobId,
+                    job => job.Execute(server.Id),
+                    "*/10 * * * *", // Every 10 minutes
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(banExpireJobId);
+
+                // SilenceExpireJob - every 10 minutes
+                var silenceExpireJobId = $"SilenceExpireJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<SilenceExpireJob>(
+                    silenceExpireJobId,
+                    job => job.Execute(server.Id),
+                    "*/10 * * * *", // Every 10 minutes
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(silenceExpireJobId);
+
+                // DiscordRoleExpireJob - every 10 minutes
+                var discordRoleExpireJobId = $"DiscordRoleExpireJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<DiscordRoleExpireJob>(
+                    discordRoleExpireJobId,
+                    job => job.Execute(server.Id),
+                    "*/10 * * * *", // Every 10 minutes
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(discordRoleExpireJobId);
+
+                // UpdateServerDataJob - every 1 hours
+                var updateServerDataJobId = $"UpdateServerDataJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<UpdateServerDataJob>(
+                    updateServerDataJobId,
+                    job => job.Execute(server.Id),
+                    "0 */1 * * *", // Every 1 hours
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(updateServerDataJobId);
+
+                // RaidTimesJob - every hour (start now)
+                var raidTimesJobId = $"RaidTimesJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<RaidTimesJob>(
+                    raidTimesJobId,
+                    job => job.Execute(server.Id),
+                    "0 * * * *", // Every hour
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                // Trigger immediately
+                _backgroundJobClient.Enqueue<RaidTimesJob>(job => job.Execute(server.Id));
+                jobIds.Add(raidTimesJobId);
+
+                _ftpJobIds[server.Id] = jobIds;
+
+                _logger.LogInformation("Successfully loaded {JobCount} FTP tasks for server id {ServerId}",
+                    jobIds.Count, server.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to schedule FTP tasks for server id {ServerId}", server.Id);
+                throw;
+            }
+        }
+
+        // Get job statistics
+        public Dictionary<string, object> GetJobStatistics()
+        {
+            try
+            {
+                var api = JobStorage.Current.GetMonitoringApi();
+                var statistics = api.GetStatistics();
+
+                return new Dictionary<string, object>
+                {
+                    ["EnqueuedCount"] = statistics.Enqueued,
+                    ["FailedCount"] = statistics.Failed,
+                    ["ProcessingCount"] = statistics.Processing,
+                    ["ScheduledCount"] = statistics.Scheduled,
+                    ["SucceededCount"] = statistics.Succeeded,
+                    ["DeletedCount"] = statistics.Deleted,
+                    ["RecurringJobCount"] = statistics.Recurring,
+                    ["Servers"] = statistics.Servers,
+                    ["Queues"] = statistics.Queues
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get job statistics");
+                return new Dictionary<string, object>();
+            }
+        }
+
+        // Health check method
+        public bool IsSchedulerHealthy()
+        {
+            try
+            {
+                var api = JobStorage.Current.GetMonitoringApi();
+                var statistics = api.GetStatistics();
+                return statistics.Servers > 0; // At least one server is running
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Scheduler health check failed");
+                return false;
+            }
+        }
+
+        public void NewServerAddedAsync(ScumServer server)
+        {
+            ScheduleServerTasks(server);
             _cacheService.AddServers([server]);
         }
 
-        public async Task DeleteJob(string jobKey, string groupKey)
+        public void FtpConfigAddedAsync(ScumServer server)
         {
-            var scheduler = await _schedulerFactory.GetScheduler();
-            await scheduler.DeleteJob(new JobKey(jobKey, groupKey));
+            try
+            {
+                CleanupServerJobs(server.Id, "FtpJobs");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error cleaning up FTP jobs for server {ServerId}", server.Id);
+            }
+
+            ScheduleFtpServerTasks(server);
+            _cacheService.AddServers([server]);
+        }
+
+        public void DeleteJob(string jobKey, string groupKey)
+        {
+            var jobId = $"{jobKey}-{groupKey.Replace("ServerJobs(", "").Replace("FtpJobs(", "").Replace(")", "")}";
+            _recurringJobManager.RemoveIfExists(jobId);
         }
 
         public async Task LoadAllServersTasks(CancellationToken cancellationToken)
@@ -343,7 +478,7 @@ namespace RagnarokBotWeb.Domain.Services
             _cacheService.AddServers(servers);
             foreach (var server in await _scumServerRepository.GetActiveServersWithFtp())
             {
-                await ScheduleServerTasks(server, cancellationToken);
+                ScheduleServerTasks(server, cancellationToken);
             }
         }
 
@@ -351,7 +486,7 @@ namespace RagnarokBotWeb.Domain.Services
         {
             foreach (var server in await _scumServerRepository.GetActiveServersWithFtp())
             {
-                await ScheduleFtpServerTasks(server, cancellationToken);
+                ScheduleFtpServerTasks(server, cancellationToken);
             }
         }
 
@@ -359,13 +494,12 @@ namespace RagnarokBotWeb.Domain.Services
         {
             foreach (var task in await _customTaskRepository.GetServersEnabledCustomTasks())
             {
-                await ScheduleCustomTask(task, cancellationToken);
+                ScheduleCustomTask(task, cancellationToken);
             }
         }
 
         public async Task LoadRaidTimes(CancellationToken stoppingToken)
         {
-
             foreach (var server in await _scumServerRepository.FindActive())
             {
                 var processor = new ScumFileProcessor(server, _unitOfWork);
@@ -388,7 +522,6 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task LoadSquads(CancellationToken stoppingToken)
         {
-
             foreach (var server in await _scumServerRepository.FindActive())
             {
                 var processor = new ScumFileProcessor(server, _unitOfWork);
@@ -411,7 +544,6 @@ namespace RagnarokBotWeb.Domain.Services
 
         public async Task LoadFlags(CancellationToken stoppingToken)
         {
-
             foreach (var server in await _scumServerRepository.FindActive())
             {
                 var processor = new ScumFileProcessor(server, _unitOfWork);
@@ -432,97 +564,116 @@ namespace RagnarokBotWeb.Domain.Services
             }
         }
 
-        public async Task CreateWarzoneJobs(ScumServer server, Warzone warzone)
+        public void CreateWarzoneJobs(ScumServer server, Warzone warzone)
         {
-            var scheduler = await _schedulerFactory.GetScheduler();
+            // CloseWarzoneJob - scheduled for specific time
+            var closeWarzoneJobId = $"CloseWarzoneJob-{server.Id}-{warzone.Id}";
+            _backgroundJobClient.Schedule<CloseWarzoneJob>(
+                job => job.Execute(server.Id, warzone.Id),
+                warzone.StopAt!.Value);
 
-            var closeWarzoneJob = JobBuilder.Create<CloseWarzoneJob>()
-                .WithIdentity(nameof(CloseWarzoneJob), $"WarzoneJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("warzone_id", warzone.Id)
-                .Build();
+            // WarzoneItemSpawnJob - recurring
+            var warzoneItemSpawnJobId = $"WarzoneItemSpawnJob-{server.Id}-{warzone.Id}";
+            _recurringJobManager.AddOrUpdate<CloseWarzoneJob>(
+                warzoneItemSpawnJobId,
+                job => job.Execute(server.Id, warzone.Id),
+                $"*/{warzone.ItemSpawnInterval} * * * *", // Every X minutes
+                 new RecurringJobOptions
+                 {
+                     TimeZone = server.GetTimeZoneOrDefault()
+                 });
 
-            ITrigger warzoneClosingTrigger = TriggerBuilder.Create()
-                .StartAt(new DateTimeOffset(warzone.StopAt!.Value))
-                .WithSimpleSchedule(x => x.WithRepeatCount(0)) // only once
-                .Build();
+            // Track these jobs for cleanup
+            if (!_serverJobIds.ContainsKey(server.Id))
+                _serverJobIds[server.Id] = new List<string>();
 
-            await scheduler.ScheduleJob(closeWarzoneJob, warzoneClosingTrigger);
-
-            var warzoneItemSpawnJob = JobBuilder.Create<WarzoneItemSpawnJob>()
-                .WithIdentity(nameof(WarzoneItemSpawnJob), $"WarzoneJobs({server.Id})")
-                .UsingJobData("server_id", server.Id)
-                .UsingJobData("warzone_id", warzone.Id)
-                .Build();
-
-            ITrigger warzoneItemSpawnJobTrigger = TriggerBuilder.Create()
-                .StartNow() // Start immediately
-                .WithSimpleSchedule(x => x
-                    .WithIntervalInMinutes((int)warzone.ItemSpawnInterval)
-                .RepeatForever())
-                .Build();
-
-            await scheduler.ScheduleJob(warzoneItemSpawnJob, warzoneItemSpawnJobTrigger);
+            _serverJobIds[server.Id].AddRange([closeWarzoneJobId, warzoneItemSpawnJobId]);
         }
 
-        public async Task TriggerJob(string jobId, string groupId)
+        public void TriggerJob(string jobId, string groupId)
         {
-            var scheduler = await _schedulerFactory.GetScheduler();
+            // Extract server ID from group and create Hangfire job ID
+            var serverId = groupId.Replace("ServerJobs(", "").Replace("FtpJobs(", "").Replace(")", "");
+            var hangfireJobId = $"{jobId}-{serverId}";
 
-            var jobKey = new JobKey(jobId, groupId);
-
-            // Trigger the job immediately
-            await scheduler.TriggerJob(jobKey);
+            _backgroundJobClient.Enqueue(() => TriggerJobByName(hangfireJobId));
         }
 
-        public async Task<List<JobModel>> ListJobs()
+        [AutomaticRetry(Attempts = 1)]
+        public void TriggerJobByName(string jobName)
         {
-            var scheduler = await _schedulerFactory.GetScheduler();
-            List<JobModel> jobs = [];
-
-            // Get all job group names
-            var jobGroupNames = await scheduler.GetJobGroupNames();
-
-            foreach (var group in jobGroupNames)
-            {
-                // Get all job keys in the group
-                var jobKeys = await scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals(group));
-
-                foreach (var jobKey in jobKeys)
-                {
-                    var job = new JobModel
-                    {
-                        JobID = jobKey.Name,
-                        GroupID = jobKey.Group
-                    };
-
-                    var triggers = await scheduler.GetTriggersOfJob(jobKey);
-                    foreach (var trigger in triggers)
-                    {
-                        job.NextFireTime = trigger.GetNextFireTimeUtc();
-                    }
-                    jobs.Add(job);
-                }
-            }
-            return jobs;
+            // This method will be used to trigger specific jobs by name
+            // You can implement logic to map job names to their execution methods
+            _logger.LogInformation("Manually triggered job: {JobName}", jobName);
         }
 
-        public async Task DeleteWarzoneJobs(ScumServer server)
+        public List<JobModel> ListJobs()
         {
-            var scheduler = await _schedulerFactory.GetScheduler();
+            var jobs = new List<JobModel>();
 
             try
             {
-                var jobKeys = await scheduler.GetJobKeys(GroupMatcher<JobKey>.GroupEquals($"WarzoneJobs({server.Id})"));
+                var api = JobStorage.Current.GetMonitoringApi();
+                List<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
 
-                if (jobKeys.Any())
+                foreach (var job in recurringJobs)
                 {
-                    await scheduler.DeleteJobs(jobKeys.ToList());
+                    jobs.Add(new JobModel
+                    {
+                        JobID = job.Id,
+                        GroupID = "RecurringJobs", // Hangfire doesn't use groups like Quartz
+                        NextFireTime = job.NextExecution
+                    });
+                }
+
+                // Add scheduled jobs
+                var scheduledJobs = api.ScheduledJobs(0, int.MaxValue);
+                foreach (var job in scheduledJobs)
+                {
+                    jobs.Add(new JobModel
+                    {
+                        JobID = job.Key,
+                        GroupID = "ScheduledJobs",
+                        NextFireTime = job.Value.EnqueueAt
+                    });
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogError(ex, "Failed to list jobs");
+            }
+
+            return jobs;
+        }
+
+        public RecurringJobDto? FindJob(string jobName)
+        {
+            var jobs = new List<JobModel>();
+            var api = JobStorage.Current.GetMonitoringApi();
+            List<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+            return recurringJobs.FirstOrDefault(x => x.Id.StartsWith(jobName));
+        }
+
+        public void DeleteWarzoneJobs(ScumServer server)
+        {
+            try
+            {
+                var api = JobStorage.Current.GetMonitoringApi();
+                List<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+
+                // Find and remove warzone-related jobs for this server
+                var warzoneJobs = recurringJobs.Where(job =>
+                    job.Id.StartsWith($"CloseWarzoneJob-{server.Id}") ||
+                    job.Id.StartsWith($"WarzoneItemSpawnJob-{server.Id}"));
+
+                foreach (var job in warzoneJobs)
+                {
+                    _recurringJobManager.RemoveIfExists(job.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete warzone jobs for server {ServerId}", server.Id);
             }
         }
 
@@ -556,7 +707,7 @@ namespace RagnarokBotWeb.Domain.Services
             await _customTaskRepository.CreateOrUpdateAsync(customTask);
             await _customTaskRepository.SaveAsync();
 
-            await ScheduleCustomTask(customTask);
+            ScheduleCustomTask(customTask);
 
             return _mapper.Map<CustomTaskDto>(customTask);
         }
@@ -576,14 +727,13 @@ namespace RagnarokBotWeb.Domain.Services
             await _customTaskRepository.CreateOrUpdateAsync(customTask);
             await _customTaskRepository.SaveAsync();
 
-            await ScheduleCustomTask(customTask);
+            ScheduleCustomTask(customTask);
 
             return _mapper.Map<CustomTaskDto>(customTask);
         }
 
         public async Task<CustomTaskDto> DeleteCustomTask(long id)
         {
-            var scheduler = await _schedulerFactory.GetScheduler();
             var serverId = ServerId();
             var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server == null) throw new NotFoundException("Invalid server");
@@ -592,43 +742,41 @@ namespace RagnarokBotWeb.Domain.Services
             var customTask = await _customTaskRepository.FindByIdAsync(id);
             if (customTask == null) throw new NotFoundException("CustomTask not found");
 
-            var key = $"{nameof(CustomTaskJob)}({customTask.Id})";
-            var group = $"CustomTasks({customTask.ScumServerId})";
+            var jobId = $"CustomTaskJob-{customTask.ScumServerId}-{customTask.Id}";
 
             _customTaskRepository.Delete(customTask);
             await _customTaskRepository.SaveAsync();
 
             try
             {
-                if (await scheduler.CheckExists(new JobKey(key, group))) await DeleteJob(key, group);
+                _recurringJobManager.RemoveIfExists(jobId);
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to remove custom task job {JobId}", jobId);
+            }
 
             return _mapper.Map<CustomTaskDto>(customTask);
         }
 
-        public async Task ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken = default)
+        public void ScheduleCustomTask(CustomTask customTask, CancellationToken cancellationToken = default)
         {
-            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
-            var key = $"{nameof(CustomTaskJob)}({customTask.Id})";
-            var group = $"CustomTasks({customTask.ScumServerId})";
-
-            var customTaskJob = JobBuilder.Create<CustomTaskJob>()
-                .WithIdentity(key, group)
-                .UsingJobData("server_id", customTask.ScumServerId!.Value)
-                .UsingJobData("custom_task_id", customTask.Id)
-                .Build();
+            var jobId = $"CustomTaskJob-{customTask.ScumServerId}-{customTask.Id}";
 
             try
             {
-                if (await scheduler.CheckExists(new JobKey(key, group), cancellationToken)) await DeleteJob(key, group);
+                _recurringJobManager.RemoveIfExists(jobId);
             }
             catch (Exception) { }
 
-            var trigger = TriggerBuilder.Create().WithCronSchedule(customTask.Cron, cronScheduleBuilder =>
-                                cronScheduleBuilder.InTimeZone(customTask.ScumServer.GetTimeZoneOrDefault()));
-
-            await scheduler.ScheduleJob(customTaskJob, trigger.Build(), cancellationToken);
+            _recurringJobManager.AddOrUpdate<CustomTaskJob>(
+                jobId,
+                job => job.Execute(customTask.ScumServerId!.Value, customTask.Id),
+                customTask.Cron,
+                new RecurringJobOptions
+                {
+                    TimeZone = customTask.ScumServer.GetTimeZoneOrDefault()
+                });
         }
     }
 }

@@ -187,7 +187,7 @@
             ServerListBox.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             ServerListBox.FormattingEnabled = true;
             ServerListBox.ItemHeight = 20;
-            ServerListBox.Location = new Point(13, 68);
+            ServerListBox.Location = new Point(7, 67);
             ServerListBox.Name = "ServerListBox";
             ServerListBox.Size = new Size(467, 322);
             ServerListBox.TabIndex = 0;

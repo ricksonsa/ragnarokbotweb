@@ -64,7 +64,7 @@ namespace RagnarokBotWeb.Controllers
         public async Task<IActionResult> TriggerJob(string jobId, string groupId)
         {
             _logger.Log(LogLevel.Debug, "PATCH Request to trigger job[{Job}] group[{Group}]", jobId, groupId);
-            await _taskService.TriggerJob(jobId, groupId);
+            _taskService.TriggerJob(jobId, groupId);
             return Ok();
         }
 
@@ -72,7 +72,7 @@ namespace RagnarokBotWeb.Controllers
         public async Task<IActionResult> Jobs()
         {
             _logger.Log(LogLevel.Debug, "GET Request to fetch scheduled jobs");
-            return Ok(await _taskService.ListJobs());
+            return Ok(_taskService.ListJobs());
         }
     }
 }

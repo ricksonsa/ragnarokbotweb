@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
 using Discord;
 using Microsoft.EntityFrameworkCore;
-using Quartz;
 using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Application.Pagination;
-using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Domain.Business;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -23,7 +21,6 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IDiscordService _discordService;
         private readonly IBotService _botService;
         private readonly IScumServerRepository _scumServerRepository;
-        private readonly ISchedulerFactory _schedulerFactory;
         private readonly IMapper _mapper;
         private readonly ITaskService _taskService;
         private readonly ICacheService _cacheService;
@@ -38,7 +35,6 @@ namespace RagnarokBotWeb.Domain.Services
             IDiscordService discordService,
             ITaskService taskService,
             ICacheService cacheService,
-            ISchedulerFactory schedulerFactory,
             IFileService fileService,
             IBotService botService) : base(httpContextAccessor)
         {
@@ -50,7 +46,6 @@ namespace RagnarokBotWeb.Domain.Services
             _discordService = discordService;
             _taskService = taskService;
             _cacheService = cacheService;
-            _schedulerFactory = schedulerFactory;
             _fileService = fileService;
             _botService = botService;
         }
@@ -135,11 +130,8 @@ namespace RagnarokBotWeb.Domain.Services
             RemoveWarzoneSpawnPoints(warzoneDto, warzone);
             RemoveWarzoneTeleports(warzoneDto, warzone);
 
-            var scheduler = await _schedulerFactory.GetScheduler();
-            if (await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({serverId!.Value})")) && !warzoneDto.Enabled)
-            {
-                await CloseWarzone(warzone.ScumServer);
-            }
+            var job = _taskService.FindJob($"CloseWarzoneJob-{serverId!.Value}");
+            if (job is not null) await CloseWarzone(long.Parse(job.Id.Split('-')[2]));
 
             if (warzone.Enabled)
             {
@@ -286,7 +278,8 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (warzone.IsRunning)
             {
-                await CloseWarzone(warzone.ScumServer);
+                var job = _taskService.FindJob($"CloseWarzoneJob-{serverId!.Value}");
+                if (job is not null) await CloseWarzone(long.Parse(job.Id.Split('-')[2]));
             }
 
             // === Remove related entities ===
@@ -346,7 +339,9 @@ namespace RagnarokBotWeb.Domain.Services
             if (!serverId.HasValue) throw new UnauthorizedException("Invalid server id");
             var server = await _scumServerRepository.FindByIdAsync(serverId!.Value);
             if (server is null) throw new NotFoundException("Server not found");
-            return await CloseWarzone(server);
+            var job = _taskService.FindJob($"CloseWarzoneJob-{serverId!.Value}");
+            if (job is not null) return await CloseWarzone(long.Parse(job.Id.Split('-')[2]));
+            return null;
         }
 
         public async Task<WarzoneDto?> OpenWarzone(ScumServer server, bool? force = false, CancellationToken token = default)
@@ -368,9 +363,8 @@ namespace RagnarokBotWeb.Domain.Services
                 await _unitOfWork.SaveAsync();
             }
 
-            var scheduler = await _schedulerFactory.GetScheduler();
-            if (await scheduler.CheckExists(new JobKey($"CloseWarzoneJob({server.Id})"), token))
-                await CloseWarzone(server, token);
+            var job = _taskService.FindJob($"CloseWarzoneJob-{server.Id}");
+            if (job is not null) await CloseWarzone(long.Parse(job.Id.Split('-')[2]));
 
             if (!string.IsNullOrEmpty(warzone.StartMessage))
             {
@@ -398,42 +392,27 @@ namespace RagnarokBotWeb.Domain.Services
 
             }
 
-            await _taskService.CreateWarzoneJobs(server, warzone);
+            _taskService.CreateWarzoneJobs(server, warzone);
             return _mapper.Map<WarzoneDto>(warzone);
         }
 
-        public async Task<WarzoneDto?> CloseWarzone(ScumServer server, CancellationToken token = default)
+        public async Task<WarzoneDto?> CloseWarzone(long warzoneId)
         {
-            var scheduler = await _schedulerFactory.GetScheduler();
-            Warzone? warzone = null;
-
-            var jobKey = new JobKey(nameof(WarzoneItemSpawnJob), $"WarzoneJobs({server.Id})");
-            if (await scheduler.CheckExists(jobKey))
-            {
-                IJobDetail? jobDetail = await scheduler.GetJobDetail(jobKey, token);
-                if (jobDetail == null) return null;
-
-                if (jobDetail.JobDataMap.TryGetLong("warzone_id", out var warzoneId))
-                {
-                    warzone = await _unitOfWork.Warzones
-                       .Include(warzone => warzone.ScumServer)
-                       .FirstOrDefaultAsync(wz => wz.Id == warzoneId);
-                }
-                else
-                {
-                    return null;
-                }
-            }
+            var warzone = await _unitOfWork.Warzones
+                                   .Include(warzone => warzone.ScumServer)
+                                   .FirstOrDefaultAsync(wz => wz.Id == warzoneId);
 
             if (warzone == null) return null;
             warzone.Stop();
+
+            var server = warzone.ScumServer;
 
             _unitOfWork.Warzones.Update(warzone);
             await _unitOfWork.SaveAsync();
 
             try
             {
-                await _taskService.DeleteWarzoneJobs(server);
+                _taskService.DeleteWarzoneJobs(server);
             }
             catch (Exception ex)
             {

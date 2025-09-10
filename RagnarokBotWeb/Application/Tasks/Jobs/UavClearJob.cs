@@ -1,5 +1,4 @@
-﻿using Quartz;
-using RagnarokBotWeb.Domain.Exceptions;
+﻿using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -11,13 +10,13 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         IDiscordService discordService
         ) : AbstractJob(scumServerRepository), IJob
     {
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId)
         {
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
             try
             {
-                var server = await GetServerAsync(context);
+                var server = await GetServerAsync(serverId);
                 if (server.Uav?.DiscordChannelId != null)
                 {
                     await discordService.DeleteAllMessagesInChannelByDate(ulong.Parse(server.Uav.DiscordChannelId), DateTime.UtcNow.AddMinutes(-15));

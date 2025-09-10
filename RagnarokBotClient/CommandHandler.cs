@@ -148,7 +148,7 @@ namespace RagnarokBotClient
 
         private static bool IsVehicle(BotCommandValue commandValue)
         {
-            return commandValue.Value!.ToLower().StartsWith("bp_") && commandValue.Value.ToLower() != "bp_headlamp";
+            return (commandValue.Value!.ToLower().StartsWith("bp_") && commandValue.Value.ToLower() != "bp_headlamp") || commandValue.Value!.ToLower().StartsWith("bpc_");
         }
 
         private async Task HandleListPlayers()

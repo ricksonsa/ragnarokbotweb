@@ -306,12 +306,30 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task ResetCommandOrders(long serverId)
         {
             var orders = await _orderRepository.FindManyCommandByServer(serverId);
+            var timeToCancel = DateTime.UtcNow.AddMinutes(-30);
+            var manager = new PlayerCoinManager(_unitOfWork);
+
             foreach (var order in orders)
             {
-                order.Status = EOrderStatus.Created;
-                await _orderRepository.CreateOrUpdateAsync(order);
-                await _orderRepository.SaveAsync();
+                if (timeToCancel > order.CreateDate)
+                {
+                    order.Status = EOrderStatus.Canceled;
+                    await _orderRepository.CreateOrUpdateAsync(order);
+
+                    if (order.Player != null)
+                    {
+                        var price = order.GetPrice();
+                        await manager.AddCoinsByPlayerId(order.Player.Id, price);
+                    }
+                }
+                else if (order.Status != EOrderStatus.Created)
+                {
+                    order.Status = EOrderStatus.Created;
+                    await _orderRepository.CreateOrUpdateAsync(order);
+                }
             }
+
+            await _orderRepository.SaveAsync();
         }
 
         public async Task<Order> ExchangeDepositOrder(long serverId, ulong discordId, long amount)

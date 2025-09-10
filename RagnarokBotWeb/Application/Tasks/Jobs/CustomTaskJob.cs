@@ -1,5 +1,4 @@
-﻿using Quartz;
-using RagnarokBotWeb.Application.Models;
+﻿using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
@@ -14,16 +13,15 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
     ICustomTaskRepository customTaskRepository,
     ICacheService cache,
     IBotService botService,
-    IScumServerRepository scumServerRepository) : AbstractJob(scumServerRepository), IJob
+    IScumServerRepository scumServerRepository) : AbstractJob(scumServerRepository), ICustomTaskJob
     {
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId, long customTaskId)
         {
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
             try
             {
-                var server = await GetServerAsync(context, validateSubscription: true);
-                var customTaskId = GetValueFromContext<long>(context, "custom_task_id");
+                var server = await GetServerAsync(serverId, validateSubscription: true);
                 var customTask = await customTaskRepository.FindByIdAsync(customTaskId);
                 if (customTask is null) return;
 

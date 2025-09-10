@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Quartz;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -16,12 +15,12 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         IChannelService channelService
         ) : AbstractJob(scumServerRepository), IJob
     {
-        public async Task Execute(IJobExecutionContext context)
+        public async Task Execute(long serverId)
         {
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
+            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
             try
             {
-                var server = await GetServerAsync(context);
+                var server = await GetServerAsync(serverId);
 
                 var channel = await channelService.FindByGuildIdAndChannelTypeAsync(server.Guild!.Id, ChannelTemplateValues.LockPickRank);
                 if (channel is null) return;

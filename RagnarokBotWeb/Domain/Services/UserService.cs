@@ -153,7 +153,7 @@ namespace RagnarokBotWeb.Domain.Services
             var server = new ScumServer(tenant);
             await _scumServerRepository.CreateOrUpdateAsync(server);
             await _scumServerRepository.SaveAsync();
-            await _taskService.NewServerAddedAsync(server);
+            _taskService.NewServerAddedAsync(server);
             return server;
         }
 

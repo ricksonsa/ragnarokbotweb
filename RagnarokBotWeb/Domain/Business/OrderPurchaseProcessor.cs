@@ -3,6 +3,7 @@ using RagnarokBotWeb.Domain.Entities.Base;
 using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using Shared.Enums;
 
 namespace RagnarokBotWeb.Domain.Business
 {
@@ -51,12 +52,7 @@ namespace RagnarokBotWeb.Domain.Business
                     throw new DomainException("This shop item cannot be purchased during Raid Period.");
             }
 
-            var previousSameOrders = await _orderRepository.FindManyForProcessor(o =>
-                o.ScumServer.Id == order.ScumServer.Id
-                && o.OrderType == order.OrderType
-                && order.Player != null
-                && order.Player.Id == _player.Id);
-
+            List<Order> previousSameOrders = await GetLastSameOrders(order);
             if (item.PurchaseCooldownSeconds.HasValue)
             {
                 var previousOrder = previousSameOrders.FirstOrDefault(WasPurchasedWithinPurchaseCooldownSeconds);
@@ -64,11 +60,47 @@ namespace RagnarokBotWeb.Domain.Business
                     throw new DomainException($"This shop item is under cooldown time. {previousOrder.ResolveCooldownText(item)}");
             }
 
-            if (order.Player!.IsVip() && previousSameOrders.Where(WasPurchasedWithinLast24Hours).Count() >= item.StockPerVipPlayer)
-                throw new DomainException("This shop item is out of stock, try again later.");
+            var maxStock = order.Player!.IsVip() ? item.StockPerVipPlayer : item.StockPerPlayer;
 
-            if (!order.Player!.IsVip() && previousSameOrders.Where(WasPurchasedWithinLast24Hours).Count() >= item.StockPerPlayer)
+            if (previousSameOrders.Where(WasPurchasedWithinLast24Hours).Count() >= maxStock)
                 throw new DomainException("This shop item is out of stock, try again later.");
+        }
+
+        private async Task<List<Order>> GetLastSameOrders(Order order)
+        {
+            if (order.OrderType == EOrderType.Pack)
+            {
+                return await _orderRepository.FindManyForProcessor(o =>
+                o.ScumServer.Id == order.ScumServer.Id
+                && o.OrderType == order.OrderType
+                && o.Pack!.Id == order.Pack!.Id
+                && order.Player != null
+                && order.Player.Id == _player.Id);
+            }
+            else if (order.OrderType == EOrderType.Taxi)
+            {
+                return await _orderRepository.FindManyForProcessor(o =>
+                o.ScumServer.Id == order.ScumServer.Id
+                && o.OrderType == order.OrderType
+                && o.Taxi!.Id == order.Taxi!.Id
+                && order.Player != null
+                && order.Player.Id == _player.Id);
+            }
+            else if (order.OrderType == EOrderType.Warzone)
+            {
+                return await _orderRepository.FindManyForProcessor(o =>
+                o.ScumServer.Id == order.ScumServer.Id
+                && o.OrderType == order.OrderType
+                && o.Warzone!.Id == order.Warzone!.Id
+                && order.Player != null
+                && order.Player.Id == _player.Id);
+            }
+
+            return await _orderRepository.FindManyForProcessor(o =>
+                o.ScumServer.Id == order.ScumServer.Id
+                && o.OrderType == order.OrderType
+                && order.Player != null
+                && order.Player.Id == _player.Id);
         }
 
         private bool WasPurchasedWithinLast24Hours(Order order)

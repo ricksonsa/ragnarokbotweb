@@ -31,10 +31,10 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<bool>("Indefinitely")
                         .HasColumnType("boolean");
@@ -46,7 +46,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -70,13 +70,13 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<int>("EntityType")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Value")
                         .IsRequired()
@@ -96,10 +96,10 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime?>("Available")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<bool>("Locked")
                         .HasColumnType("boolean");
@@ -112,7 +112,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -137,7 +137,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Label")
                         .IsRequired()
@@ -147,7 +147,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("numeric(20,0)");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -172,7 +172,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -182,7 +182,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -203,7 +203,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal>("DiscordId")
                         .HasColumnType("numeric(20,0)");
@@ -212,7 +212,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -243,14 +243,14 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -269,10 +269,10 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Version")
                         .IsRequired()
@@ -295,7 +295,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Cron")
                         .IsRequired()
@@ -330,7 +330,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -348,13 +348,13 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal>("DiscordId")
                         .HasColumnType("numeric(20,0)");
 
                     b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<bool>("Indefinitely")
                         .HasColumnType("boolean");
@@ -366,7 +366,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -393,7 +393,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<int>("CurrencyType")
                         .HasColumnType("integer");
@@ -454,7 +454,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("VipPrice")
                         .HasColumnType("bigint");
@@ -480,7 +480,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -496,7 +496,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -519,7 +519,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal>("DiscordId")
                         .HasColumnType("numeric(20,0)");
@@ -542,7 +542,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -568,14 +568,14 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -591,7 +591,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<float?>("Distance")
                         .HasColumnType("real");
@@ -636,7 +636,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<double>("VictimX")
                         .HasColumnType("double precision");
@@ -672,7 +672,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("LockType")
                         .IsRequired()
@@ -700,7 +700,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -718,7 +718,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("ExchangeAmount")
                         .HasColumnType("bigint");
@@ -751,7 +751,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long?>("WarzoneId")
                         .HasColumnType("bigint");
@@ -780,7 +780,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("Deleted")
                         .HasColumnType("timestamp without time zone");
@@ -835,7 +835,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("VipPrice")
                         .HasColumnType("bigint");
@@ -862,7 +862,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("Deleted")
                         .HasColumnType("timestamp without time zone");
@@ -874,7 +874,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -894,10 +894,10 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime?>("ConfirmDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("ExpireAt")
                         .HasColumnType("timestamp without time zone");
@@ -915,7 +915,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Url")
                         .HasColumnType("text");
@@ -941,7 +941,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal?>("DiscordId")
                         .HasColumnType("numeric(20,0)");
@@ -962,7 +962,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("LastLoggedIn")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long?>("Money")
                         .HasColumnType("bigint");
@@ -983,7 +983,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<double?>("X")
                         .HasColumnType("double precision");
@@ -1010,7 +1010,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal>("DiscordId")
                         .HasColumnType("numeric(20,0)");
@@ -1022,7 +1022,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("WelcomePackId")
                         .IsRequired()
@@ -1044,10 +1044,10 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime>("FileDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("FileName")
                         .IsRequired()
@@ -1057,7 +1057,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("LastUpdated")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<int>("LineNumber")
                         .HasColumnType("integer");
@@ -1066,7 +1066,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -1087,7 +1087,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("CronExpression")
                         .IsRequired()
@@ -1113,7 +1113,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Value")
                         .HasColumnType("text");
@@ -1158,7 +1158,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long?>("ExchangeId")
                         .HasColumnType("bigint");
@@ -1299,7 +1299,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<bool>("UseKillFeed")
                         .HasColumnType("boolean");
@@ -1340,10 +1340,10 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<bool>("Indefinitely")
                         .HasColumnType("boolean");
@@ -1355,7 +1355,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -1373,13 +1373,13 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<int>("RollingDays")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -1395,7 +1395,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("Deleted")
                         .HasColumnType("timestamp without time zone");
@@ -1450,7 +1450,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("VipPrice")
                         .HasColumnType("bigint");
@@ -1471,7 +1471,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("TaxiId")
                         .HasColumnType("bigint");
@@ -1480,7 +1480,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -1504,14 +1504,14 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -1527,7 +1527,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal?>("DiscordId")
                         .HasColumnType("numeric(20,0)");
@@ -1542,7 +1542,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -1561,10 +1561,10 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -1585,7 +1585,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("Deleted")
                         .HasColumnType("timestamp without time zone");
@@ -1640,7 +1640,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("VipPrice")
                         .HasColumnType("bigint");
@@ -1668,7 +1668,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -1696,7 +1696,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -1714,13 +1714,13 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal?>("DiscordRoleId")
                         .HasColumnType("numeric(20,0)");
 
                     b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<bool>("Indefinitely")
                         .HasColumnType("boolean");
@@ -1732,7 +1732,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 
@@ -1750,7 +1750,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("Deleted")
                         .HasColumnType("timestamp without time zone");
@@ -1814,7 +1814,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("VipPrice")
                         .HasColumnType("bigint");
@@ -1838,7 +1838,7 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<DateTime?>("Deleted")
                         .HasColumnType("timestamp without time zone");
@@ -1850,7 +1850,7 @@ namespace RagnarokBotWeb.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("WarzoneId")
                         .HasColumnType("bigint");
@@ -1873,13 +1873,13 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("TeleportId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("WarzoneId")
                         .HasColumnType("bigint");
@@ -1902,13 +1902,13 @@ namespace RagnarokBotWeb.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("TeleportId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamptz");
 
                     b.Property<long>("WarzoneId")
                         .HasColumnType("bigint");

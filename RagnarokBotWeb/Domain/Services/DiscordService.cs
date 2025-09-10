@@ -6,6 +6,7 @@ using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Configuration.Data;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using System.Text;
 using static RagnarokBotWeb.Application.Tasks.Jobs.KillRankJob;
@@ -437,15 +438,15 @@ namespace RagnarokBotWeb.Domain.Services
         public Task<IGuildUser?> GetDiscordUser(ulong guildId, ulong userId)
         {
             var socketGuild = _client.GetGuild(guildId); // SocketGuild
-            IGuild guild = socketGuild; // Pode ser usado como IGuild
+            IGuild guild = socketGuild;
 
             return guild.GetUserAsync(userId);
         }
 
         public async Task AddUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId)
         {
-            var socketGuild = _client.GetGuild(guildId); // SocketGuild
-            IGuild guild = socketGuild; // Pode ser usado como IGuild
+            var socketGuild = _client.GetGuild(guildId);
+            IGuild guild = socketGuild;
 
             var user = await guild.GetUserAsync(userDiscordId);
             if (user == null)
@@ -461,8 +462,33 @@ namespace RagnarokBotWeb.Domain.Services
                 return;
             }
 
-            await user.AddRoleAsync(role);
-            _logger.LogInformation("Added Discord Role Id[{Role}] to user[{User}]", roleId, userDiscordId);
+            if (user.GuildId != role.Guild.Id)
+            {
+                _logger.LogError("User guild[{UserGuild}] does not match role[{roleId}] guild[{RoleGuild}]", user.GuildId, roleId, role.Guild.Id);
+                return;
+            }
+
+            if (role.IsManaged)
+            {
+                _logger.LogError("Cannot assign managed role Id[{Id}]", role.Id);
+                throw new DomainException("This role is managed by another app and cannot be assigned.");
+            }
+
+            if (socketGuild.CurrentUser.Hierarchy <= role.Position)
+            {
+                _logger.LogError("TheSCUMBot role is not high enough to assign role[{Id}]", role.Name);
+                throw new DomainException($"TheSCUMBot role is not high enough to assign role[{role.Name}]");
+            }
+
+            try
+            {
+                await user.AddRoleAsync(role);
+                _logger.LogInformation("Added Discord Role Id[{Role}] to user[{User}]", roleId, userDiscordId);
+            }
+            catch (Discord.Net.HttpException ex)
+            {
+                _logger.LogError(ex, "Failed to add role Id[{Role}] to user[{User}]", roleId, userDiscordId);
+            }
         }
 
         public async Task RemoveUserRoleAsync(ulong guildId, ulong userDiscordId, ulong roleId)

@@ -23,17 +23,18 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return DbSet()
                .Include(order => order.ScumServer)
-               .Include(order => order.ScumServer.Uav)
-               .Include(order => order.Taxi)
-                   .ThenInclude(taxi => taxi.TaxiTeleports)
-                   .ThenInclude(tp => tp.Teleport)
-               .Include(order => order.Player)
-               .Include(order => order.Pack)
-               .ThenInclude(pack => pack.PackItems)
-               .ThenInclude(packItems => packItems.Item)
-               .Include(order => order.Warzone)
-                   .ThenInclude(warzone => warzone.Teleports)
-                   .ThenInclude(teleport => teleport.Teleport)
+                .Include(order => order.ScumServer.Uav)
+                .Include(order => order.Taxi)
+                    .ThenInclude(taxi => taxi.TaxiTeleports)
+                    .ThenInclude(tp => tp.Teleport)
+                .Include(order => order.Player)
+                .Include(order => order.Pack)
+                .ThenInclude(pack => pack.PackItems)
+                .ThenInclude(packItems => packItems.Item)
+                .Include(order => order.Warzone)
+                    .ThenInclude(warzone => warzone.Teleports)
+                    .ThenInclude(teleport => teleport.Teleport)
+               .AsSplitQuery()
                .FirstOrDefaultAsync(order => order.Id == id);
         }
 
@@ -52,6 +53,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                .Include(order => order.Warzone)
                    .ThenInclude(warzone => warzone.Teleports)
                    .ThenInclude(teleport => teleport.Teleport)
+               .AsSplitQuery()
                .Where(predicate)
                .ToListAsync();
         }
@@ -82,6 +84,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                     .ThenInclude(teleport => teleport.Teleport)
                 .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId)
                 .OrderBy(order => order.CreateDate)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(order => order.Status == EOrderStatus.Created);
         }
 
@@ -89,34 +92,23 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
-                .Include(order => order.ScumServer.Uav)
-                .Include(order => order.ScumServer.Exchange)
-                .Include(order => order.Player)
-                .Include(order => order.Taxi)
-                    .ThenInclude(taxi => taxi.TaxiTeleports)
-                    .ThenInclude(tp => tp.Teleport)
-                .Include(order => order.Pack)
-                    .ThenInclude(pack => pack.PackItems)
-                    .ThenInclude(packItems => packItems.Item)
-                .Include(order => order.Warzone)
-                    .ThenInclude(warzone => warzone.Teleports)
-                    .ThenInclude(teleport => teleport.Teleport)
                 .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId && order.Status == EOrderStatus.Created)
                 .OrderBy(order => order.CreateDate)
                 .Take(5)
+                .AsNoTracking()
+                .AsSplitQuery()
                 .ToListAsync();
         }
 
-
         public Task<List<Order>> FindManyCommandByServer(long serverId)
         {
-            var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-10);
+            var time = DateTime.UtcNow.AddMinutes(-30);
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
                 .Where(order => order.ScumServer != null
                     && order.ScumServer.Id == serverId
                     && order.Status == EOrderStatus.Command
-                    && order.UpdateDate < fiveMinutesAgo)
+                    && order.UpdateDate < time)
                 .OrderBy(order => order.CreateDate)
                 .ToListAsync();
         }

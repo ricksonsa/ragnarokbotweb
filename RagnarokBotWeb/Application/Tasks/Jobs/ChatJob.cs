@@ -1,4 +1,3 @@
-using Quartz;
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
@@ -25,22 +24,19 @@ public class ChatJob(
     IFtpService ftpService,
     IBotService botService,
     DiscordChannelPublisher publisher
-) : AbstractJob(scumServerRepository), IJob
+) : AbstractJob(scumServerRepository), IFtpJob
 {
-    public async Task Execute(IJobExecutionContext context)
+    public async Task Execute(long serverId, EFileType fileType)
     {
         try
         {
-            var server = await GetServerAsync(context);
+            var server = await GetServerAsync(serverId);
 
-            var jobName = context.JobDetail.Key.Name;
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", context.JobDetail.Key.Name, DateTimeOffset.Now);
-
-            var fileType = GetFileTypeFromContext(context);
+            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
             var processor = new ScumFileProcessor(server, uow);
 
-            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService, context.CancellationToken))
+            await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService))
             {
                 var parsed = new ChatTextParser().Parse(line);
                 if (parsed is null)
@@ -92,7 +88,7 @@ public class ChatJob(
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError("{Job} Exception -> {Ex}", context.JobDetail.Key.Name, ex.Message);
+            logger.LogError("{Job} Exception -> {Ex}", $"{GetType().Name}({serverId})", ex.Message);
             throw;
         }
     }
