@@ -163,6 +163,13 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<ChatJobRunnerService>();
             builder.Services.AddHostedService<FileChangeJobRunnerService>();
             builder.Services.AddHostedService<OrderCommandJobRunnerService>();
+            builder.Services.AddHostedService<LoginJobRunnerService>();
+            builder.Services.AddHostedService<KillLogJobRunnerService>();
+            builder.Services.AddHostedService<GameplayJobRunnerService>();
+
+            builder.Services.AddScoped<LoginJob>();
+            builder.Services.AddScoped<KillLogJob>();
+            builder.Services.AddScoped<GamePlayJob>();
             builder.Services.AddScoped<OrderCommandJob>();
             builder.Services.AddScoped<ChatJob>();
             builder.Services.AddScoped<FileChangeJob>();

@@ -8,6 +8,7 @@ public class FtpConnectionPool : IAsyncDisposable
 {
     private readonly ILogger<FtpConnectionPool> _logger;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _serverLimits = new();
+    private readonly ConcurrentDictionary<AsyncFtpClient, string> _clientToServerMap = new();
     private const int MaxConnectionsPerServer = 3;
 
     public FtpConnectionPool(ILogger<FtpConnectionPool> logger)
@@ -26,7 +27,11 @@ public class FtpConnectionPool : IAsyncDisposable
         {
             var client = FtpClientFactory.CreateClient(ftp, cancellationToken: cancellationToken);
             await client.Connect(cancellationToken);
-            //_logger.LogDebug("Created new FTP client for {ServerKey}", serverKey);
+
+            // Track which server this client belongs to
+            _clientToServerMap.TryAdd(client, serverKey);
+
+            _logger.LogDebug("Created new FTP client for {ServerKey}", serverKey);
             return client;
         }
         catch (Exception ex)
@@ -41,8 +46,16 @@ public class FtpConnectionPool : IAsyncDisposable
     {
         if (client == null) return;
 
-        // Find and release the semaphore for this client's server
-        // Note: This is a simplified approach - in production you'd want to track which semaphore belongs to which client
+        // Find and release the correct semaphore for this client's server
+        if (_clientToServerMap.TryRemove(client, out var serverKey))
+        {
+            if (_serverLimits.TryGetValue(serverKey, out var semaphore))
+            {
+                semaphore.Release();
+                _logger.LogDebug("Released semaphore for server {ServerKey}", serverKey);
+            }
+        }
+
         try
         {
             if (client.IsConnected && !client.IsDisposed)
@@ -72,20 +85,40 @@ public class FtpConnectionPool : IAsyncDisposable
 
     public async Task ClearPoolAsync(Ftp ftp)
     {
-        // In this simplified version, we just log the request
         var serverKey = GetKey(ftp);
-        _logger.LogInformation("Clear pool requested for {ServerKey} (simplified implementation)", serverKey);
-        await Task.CompletedTask;
+
+        // Find and dispose all clients for this specific server
+        var clientsToRemove = _clientToServerMap
+            .Where(kvp => kvp.Value == serverKey)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var client in clientsToRemove)
+        {
+            await ReleaseClientAsync(client);
+        }
+
+        _logger.LogInformation("Cleared pool for {ServerKey}, removed {Count} clients", serverKey, clientsToRemove.Count);
     }
 
-    private static string GetKey(Ftp ftp) => $"{ftp.UserName}@{ftp.Address}:{ftp.Port}";
+    private static string GetKey(Ftp ftp) => $"{ftp.UserName}@{ftp.Address}:{ftp.Port}:{ftp.RootFolder ?? ""}";
 
     public async ValueTask DisposeAsync()
     {
+        // Dispose all clients first
+        var allClients = _clientToServerMap.Keys.ToList();
+        foreach (var client in allClients)
+        {
+            await ReleaseClientAsync(client);
+        }
+
+        // Then dispose semaphores
         foreach (var semaphore in _serverLimits.Values)
         {
             semaphore.Dispose();
         }
+
         _serverLimits.Clear();
+        _clientToServerMap.Clear();
     }
 }

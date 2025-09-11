@@ -14,7 +14,7 @@ public class ReaderPointerRepository(AppDbContext dbContext)
     public override async Task<ReaderPointer?> FindOneAsync(Expression<Func<ReaderPointer, bool>> predicate)
     {
         return await _dbContext.ReaderPointers
-            //.Include(x => x.ScumServer)
+            .Include(x => x.ScumServer)
             .FirstOrDefaultAsync(predicate);
     }
 

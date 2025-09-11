@@ -246,6 +246,11 @@ namespace RagnarokBotWeb.Domain.Services
                    TimeSpan.FromMinutes(server.CoinAwardIntervalMinutes)
                 );
 
+                //BackgroundJob.Schedule<ChatJob>(
+                //    job => job.Execute(server.Id, EFileType.Chat),
+                //    TimeSpan.FromSeconds(20)
+                // );
+
                 _logger.LogInformation("Successfully loaded {JobCount} server tasks for server id {ServerId}",
                     jobIds.Count + 1, server.Id);
             }
@@ -267,18 +272,6 @@ namespace RagnarokBotWeb.Domain.Services
 
                 var jobIds = new List<string>();
 
-                // KillLogJob - every 1 minute
-                var killLogJobId = $"KillLogJob-{server.Id}";
-                _recurringJobManager.AddOrUpdate<KillLogJob>(
-                    killLogJobId,
-                    job => job.Execute(server.Id, EFileType.Kill),
-                    "* * * * *",
-                    new RecurringJobOptions
-                    {
-                        TimeZone = server.GetTimeZoneOrDefault()
-                    }); // Every 1 minute
-                jobIds.Add(killLogJobId);
-
                 // EconomyJob - every 5 minutes
                 var economyJobId = $"EconomyJob-{server.Id}";
                 _recurringJobManager.AddOrUpdate<EconomyJob>(
@@ -291,29 +284,17 @@ namespace RagnarokBotWeb.Domain.Services
                     });
                 jobIds.Add(economyJobId);
 
-                // LoginJob - every minute
-                var loginJobId = $"LoginJob-{server.Id}";
-                _recurringJobManager.AddOrUpdate<LoginJob>(
-                    loginJobId,
-                    job => job.Execute(server.Id, EFileType.Login),
-                    "* * * * *", // Every minute
-                    new RecurringJobOptions
-                    {
-                        TimeZone = server.GetTimeZoneOrDefault()
-                    });
-                jobIds.Add(loginJobId);
-
-                // GamePlayJob - every 1 min
-                var gamePlayJobId = $"GamePlayJob-{server.Id}";
-                _recurringJobManager.AddOrUpdate<GamePlayJob>(
-                    gamePlayJobId,
-                    job => job.Execute(server.Id, EFileType.Gameplay),
-                    "* * * * *", // Every minute
-                     new RecurringJobOptions
-                     {
-                         TimeZone = server.GetTimeZoneOrDefault()
-                     });
-                jobIds.Add(gamePlayJobId);
+                //// ChatJob - every 1 min
+                //var chatJobId = $"ChatJob-{server.Id}";
+                //_recurringJobManager.AddOrUpdate<ChatJob>(
+                //    chatJobId,
+                //    job => job.Execute(server.Id, EFileType.Chat),
+                //    "*/1 * * * *", // Every minute
+                //     new RecurringJobOptions
+                //     {
+                //         TimeZone = server.GetTimeZoneOrDefault()
+                //     });
+                //jobIds.Add(chatJobId);
 
                 // VipExpireJob - every 10 minutes
                 var vipExpireJobId = $"VipExpireJob-{server.Id}";

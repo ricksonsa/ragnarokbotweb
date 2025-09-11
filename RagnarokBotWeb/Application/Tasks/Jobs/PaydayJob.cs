@@ -15,7 +15,7 @@ public class PaydayJob(
 {
     public async Task Execute(long serverId)
     {
-        logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
+        logger.LogDebug("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
         try
         {

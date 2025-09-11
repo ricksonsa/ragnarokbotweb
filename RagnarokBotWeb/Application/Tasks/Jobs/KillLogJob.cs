@@ -24,7 +24,7 @@ public class KillLogJob(
 {
     public async Task Execute(long serverId, EFileType fileType)
     {
-        logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
+        logger.LogDebug("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
         try
         {

@@ -3,12 +3,12 @@ using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
 namespace RagnarokBotWeb.Application.Tasks.BackgroundServices
 {
-    public class FileChangeJobRunnerService : BackgroundService
+    public class KillLogJobRunnerService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<FileChangeJobRunnerService> _logger;
+        private readonly ILogger<KillLogJobRunnerService> _logger;
 
-        public FileChangeJobRunnerService(IServiceProvider serviceProvider, ILogger<FileChangeJobRunnerService> logger)
+        public KillLogJobRunnerService(IServiceProvider serviceProvider, ILogger<KillLogJobRunnerService> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
@@ -16,7 +16,7 @@ namespace RagnarokBotWeb.Application.Tasks.BackgroundServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("FileChangeJobRunnerService started.");
+            _logger.LogInformation("KillLogJobRunnerService started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -35,15 +35,15 @@ namespace RagnarokBotWeb.Application.Tasks.BackgroundServices
                         _ = Task.Run(async () =>
                         {
                             using var jobScope = _serviceProvider.CreateScope();
-                            var job = jobScope.ServiceProvider.GetRequiredService<FileChangeJob>();
+                            var job = jobScope.ServiceProvider.GetRequiredService<KillLogJob>();
 
                             try
                             {
-                                await job.Execute(server.Id);
+                                await job.Execute(server.Id, Domain.Enums.EFileType.Kill);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogError(ex, "Error while executing FileChangeJob for server {ServerId}", server.Id);
+                                _logger.LogError(ex, "Error while executing KillLogJob for server {ServerId}", server.Id);
                             }
                         }, stoppingToken);
                     }
@@ -54,7 +54,7 @@ namespace RagnarokBotWeb.Application.Tasks.BackgroundServices
                     _logger.LogError(ex, "Error while running jobs");
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
             }
         }
     }

@@ -32,9 +32,22 @@ namespace RagnarokBotWeb.Application.Tasks.BackgroundServices
                         if (stoppingToken.IsCancellationRequested)
                             break;
 
-                        var job = scope.ServiceProvider.GetRequiredService<ChatJob>();
-                        await job.Execute(server.Id, Domain.Enums.EFileType.Chat);
+                        _ = Task.Run(async () =>
+                        {
+                            using var jobScope = _serviceProvider.CreateScope();
+                            var job = jobScope.ServiceProvider.GetRequiredService<ChatJob>();
+
+                            try
+                            {
+                                await job.Execute(server.Id, Domain.Enums.EFileType.Chat);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Error while executing ChatJob for server {ServerId}", server.Id);
+                            }
+                        }, stoppingToken);
                     }
+
                 }
                 catch (Exception ex)
                 {

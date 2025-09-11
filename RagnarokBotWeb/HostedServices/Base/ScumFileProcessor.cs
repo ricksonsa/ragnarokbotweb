@@ -25,7 +25,7 @@ public class ScumFileProcessor
     private readonly ILogger<ScumFileProcessor> _logger;
     private readonly ScumServer _scumServer;
     private readonly Ftp? _ftp;
-    private static readonly ConcurrentDictionary<(string, long), (SemaphoreSlim, DateTime)> _semaphores = [];
+    private static readonly ConcurrentDictionary<(long, string), DateTime> _semaphores = [];
 
     public ScumFileProcessor(ScumServer server, IUnitOfWork unitOfWork)
     {
@@ -35,7 +35,6 @@ public class ScumFileProcessor
         _scumServer = server ?? throw new ArgumentNullException(nameof(server));
         _ftp = server.Ftp;
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        ClearOldSemaphores();
     }
 
     private static bool IsIrrelevantLine(ReadOnlySpan<char> line)
@@ -46,18 +45,7 @@ public class ScumFileProcessor
         return line.ToString().Contains("Game version", StringComparison.Ordinal);
     }
 
-
     private static bool IsExpired(DateTime createdAt) => DateTime.UtcNow - createdAt > TimeSpan.FromMinutes(10);
-
-    private static void ClearOldSemaphores()
-    {
-        foreach (var item in _semaphores.ToArray()) // Convert to array to avoid collection modification issues
-        {
-            var (_, date) = item.Value;
-            if (IsExpired(date))
-                _semaphores.TryRemove(item.Key, out _);
-        }
-    }
 
     private async Task<List<FtpListItem>> GetLogFilesAsync(IFtpService ftpService, string? rootFolder, EFileType fileType, CancellationToken cancellationToken)
     {
@@ -73,88 +61,99 @@ public class ScumFileProcessor
             throw new InvalidOperationException($"Root folder is null or empty for server {_scumServer.Id}");
         }
 
-        return await ftpService.ExecuteAsync(_ftp, async client =>
+        var client = await ftpService.GetClientAsync(_ftp, cancellationToken);
+        var today = DateTime.UtcNow;
+        var logPath = $"{rootFolder}/Saved/SaveFiles/Logs/";
+
+        try
         {
-            var today = DateTime.UtcNow;
-            var logPath = $"{rootFolder}/Saved/SaveFiles/Logs/";
-
-            try
+            // Ensure client is connected
+            if (!client.IsConnected)
             {
-                // Ensure client is connected
-                if (!client.IsConnected)
-                {
-                    _logger.LogInformation("FTP client not connected, attempting to connect for server {ServerId}", _scumServer.Id);
-                    await client.Connect(cancellationToken);
-                }
-
-                // Check if directory exists
-                if (!await client.DirectoryExists(logPath, cancellationToken))
-                {
-                    _logger.LogWarning("Log directory does not exist: {LogPath} for server {ServerId}", logPath, _scumServer.Id);
-                    return new List<FtpListItem>();
-                }
-
-                var listing = await client.GetListing(logPath, FtpListOption.Modify | FtpListOption.Size, cancellationToken);
-
-                if (listing == null)
-                {
-                    _logger.LogWarning("FTP listing returned null for path {LogPath} on server {ServerId}", logPath, _scumServer.Id);
-                    return new List<FtpListItem>();
-                }
-
-                var fileTypePrefix = fileType.ToString().ToLower();
-                var filteredFiles = listing
-                    .Where(file => file != null &&
-                                 !string.IsNullOrEmpty(file.Name) &&
-                                 file.Name.StartsWith(fileTypePrefix, StringComparison.OrdinalIgnoreCase) &&
-                                 IsFileInValidTimeRange(file, today))
-                    .OrderBy(file => file.RawModified)
-                    .ToList();
-
-                _logger.LogDebug("Found {Count} log files of type {FileType} for server {ServerId}",
-                    filteredFiles.Count, fileType, _scumServer.Id);
-
-                return filteredFiles;
+                _logger.LogInformation("FTP client not connected, attempting to connect for server {ServerId}", _scumServer.Id);
+                await client.Connect(cancellationToken);
             }
-            catch (ObjectDisposedException ex)
+
+            var fileTypePrefix = fileType.ToString().ToLower();
+
+            var fileNames = await client.GetNameListing(logPath, cancellationToken);
+
+            var matchingFiles = new List<FtpListItem>();
+            fileNames = fileNames
+                .Where(name =>
+                    name.StartsWith($"{fileTypePrefix}_{today.AddDays(-1):yyyyMMdd}", StringComparison.OrdinalIgnoreCase) ||
+                    name.StartsWith($"{fileTypePrefix}_{today:yyyyMMdd}", StringComparison.OrdinalIgnoreCase) ||
+                    name.StartsWith($"{fileTypePrefix}_{today.AddDays(1):yyyyMMdd}", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            foreach (var fileName in fileNames)
             {
-                _logger.LogError(ex, "Error getting log files of type {FileType} from path {LogPath} for server {ServerId}",
-                    fileType, logPath, _scumServer.Id);
-                throw new InvalidOperationException("FTP client was disposed");
+                try
+                {
+                    var fileInfo = await client.GetObjectInfo($"{logPath}/{fileName}");
+                    if (fileInfo != null && fileInfo.Type == FtpObjectType.File)
+                    {
+                        var listItem = new FtpListItem
+                        {
+                            Name = fileName,
+                            FullName = $"{logPath}/{fileName}",
+                            Type = FtpObjectType.File,
+                            Size = fileInfo.Size,
+                            Modified = fileInfo.Modified,
+                            RawModified = fileInfo.RawModified
+                        };
+                        matchingFiles.Add(listItem);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Could not get info for file {FileName}", fileName);
+                    continue;
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting log files of type {FileType} from path {LogPath} for server {ServerId}",
-                    fileType, logPath, _scumServer.Id);
-                throw;
-            }
-        }, cancellationToken);
+
+            return matchingFiles.OrderBy(f => f.RawModified).ToList();
+        }
+        catch (ObjectDisposedException ex)
+        {
+            _logger.LogError(ex, "Error getting log files of type {FileType} from path {LogPath} for server {ServerId}",
+                fileType, logPath, _scumServer.Id);
+            throw new InvalidOperationException("FTP client was disposed");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting log files of type {FileType} from path {LogPath} for server {ServerId}",
+                fileType, logPath, _scumServer.Id);
+            throw;
+        }
     }
 
-    private static bool IsFileInValidTimeRange(FtpListItem file, DateTime today)
+    private static bool IsFileInValidTimeRange(FtpListItem file, DateTime today, int daysBack = 10)
     {
         try
         {
-            var fileMonth = file.RawModified.Month;
-            var currentMonth = today.Month;
+            var modified = file.RawModified != DateTime.MinValue
+                ? file.RawModified
+                : file.Modified;
 
-            // Allow current month, previous month, and next month
-            return fileMonth == currentMonth ||
-                   fileMonth == currentMonth - 1 ||
-                   fileMonth == currentMonth + 1 ||
-                   (currentMonth == 1 && fileMonth == 12) || // Handle year boundary
-                   (currentMonth == 12 && fileMonth == 1);
+            var cutoffDate = today.AddDays(-daysBack);
+
+            return modified >= cutoffDate && modified <= today;
         }
         catch (Exception)
         {
-            // If there's any issue with date comparison, include the file
             return true;
         }
     }
 
-    private async Task<List<FtpListItem>> GetLogFilesWithRetryAsync(IFtpService ftpService, string? rootFolder, DateTime from, DateTime to, EFileType fileType)
+    private async Task<List<FtpListItem>> GetLogFilesWithRetryAsync(
+        IFtpService ftpService,
+        string? rootFolder,
+        DateTime from,
+        DateTime to,
+        EFileType fileType,
+        CancellationToken cancellationToken = default)
     {
-        // Add null checks
         if (_ftp == null)
         {
             _logger.LogError("FTP configuration is null for server {ServerId}", _scumServer.Id);
@@ -173,42 +172,57 @@ public class ScumFileProcessor
 
             try
             {
-                // Ensure client is connected
                 if (!client.IsConnected)
                 {
                     _logger.LogInformation("FTP client not connected, attempting to connect for server {ServerId}", _scumServer.Id);
-                    await client.Connect();
+                    await client.Connect(cancellationToken);
                 }
 
-                // Check if directory exists
-                if (!await client.DirectoryExists(logPath))
+                var now = DateTime.UtcNow;
+                var fileTypePrefix = fileType.ToString().ToLower();
+                var fileNames = await client.GetNameListing(logPath, cancellationToken);
+
+                var matchingFiles = new List<FtpListItem>();
+
+                foreach (var fileName in fileNames.Where(name =>
+                    name.StartsWith($"{fileTypePrefix}_{now:yyyyMM}", StringComparison.OrdinalIgnoreCase) ||
+                    name.StartsWith($"{fileTypePrefix}_{now.AddMonths(-1):yyyyMM}", StringComparison.OrdinalIgnoreCase)))
                 {
-                    _logger.LogWarning("Log directory does not exist: {LogPath} for server {ServerId}", logPath, _scumServer.Id);
-                    return new List<FtpListItem>();
+                    try
+                    {
+                        var fileInfo = await client.GetObjectInfo($"{logPath}/{fileName}");
+
+                        if (fileInfo != null &&
+                            fileInfo.Type == FtpObjectType.File &&
+                            fileInfo.RawModified.Date >= from.Date &&
+                            fileInfo.RawModified.Date <= to.Date)
+                        {
+                            var listItem = new FtpListItem
+                            {
+                                Name = fileName,
+                                FullName = $"{logPath}/{fileName}",
+                                Type = FtpObjectType.File,
+                                Size = fileInfo.Size,
+                                Modified = fileInfo.Modified,
+                                RawModified = fileInfo.RawModified
+                            };
+
+                            matchingFiles.Add(listItem);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Could not get info for file {FileName}", fileName);
+                        continue;
+                    }
                 }
 
-                var listing = await client.GetListing(logPath, FtpListOption.Modify | FtpListOption.Size);
-
-                if (listing == null)
-                {
-                    _logger.LogWarning("FTP listing returned null for path {LogPath} on server {ServerId}", logPath, _scumServer.Id);
-                    return new List<FtpListItem>();
-                }
-
-                var fileTypePrefix = $"{fileType.ToString().ToLower()}_";
-                var filteredFiles = listing
-                    .Where(file => file != null &&
-                                 !string.IsNullOrEmpty(file.Name) &&
-                                 file.Name.StartsWith(fileTypePrefix, StringComparison.OrdinalIgnoreCase) &&
-                                 file.RawModified.Date >= from &&
-                                 file.RawModified.Date <= to)
-                    .OrderBy(file => file.RawModified)
-                    .ToList();
+                var ordered = matchingFiles.OrderBy(f => f.RawModified).ToList();
 
                 _logger.LogDebug("Found {Count} log files of type {FileType} between {From} and {To} for server {ServerId}",
-                    filteredFiles.Count, fileType, from.Date, to.Date, _scumServer.Id);
+                    ordered.Count, fileType, from.Date, to.Date, _scumServer.Id);
 
-                return filteredFiles;
+                return ordered;
             }
             catch (Exception ex)
             {
@@ -279,34 +293,25 @@ public class ScumFileProcessor
             return null;
         }
 
-        var (semaphore, _) = _semaphores.GetOrAdd((file.FullName, _scumServer.Id), (new SemaphoreSlim(1, 1), DateTime.Now));
+        // Download single file to local temp location
+        string localPath = Path.Combine(GetLocalPath(), "temp");
+        Directory.CreateDirectory(localPath);
 
-        await semaphore.WaitAsync(cancellationToken);
-        try
+        string localFilePath = Path.Combine(localPath, file.Name);
+
+        await ftpService.ExecuteAsync(_ftp, async client =>
         {
-            // Download single file to local temp location
-            string localPath = Path.Combine(GetLocalPath(), "temp");
-            Directory.CreateDirectory(localPath);
+            await ftpService.CopyFilesAsync(client, localPath, [file.FullName], cancellationToken);
+            return true;
+        }, cancellationToken);
 
-            string localFilePath = Path.Combine(localPath, file.Name);
+        // Prepare pointer
+        ReaderPointer currentPointer = existingPointer is not null
+            ? UpdateReaderPointer(existingPointer, file)
+            : BuildReaderPointer(file);
 
-            await ftpService.ExecuteAsync(_ftp, async client =>
-            {
-                await ftpService.CopyFilesAsync(client, localPath, [file.FullName], cancellationToken);
-                return true;
-            }, cancellationToken);
+        return (localFilePath, currentPointer);
 
-            // Prepare pointer
-            ReaderPointer currentPointer = existingPointer is not null
-                ? UpdateReaderPointer(existingPointer, file)
-                : BuildReaderPointer(file);
-
-            return (localFilePath, currentPointer);
-        }
-        finally
-        {
-            semaphore.Release();
-        }
     }
 
     /// <summary>
@@ -331,6 +336,9 @@ public class ScumFileProcessor
         }
     }
 
+    /// <summary>
+    /// Modified to work with already downloaded local files
+    /// </summary>
     private async IAsyncEnumerable<string> ReadLinesFromFileAsync(
         string filePath,
         ReaderPointer currentPointer,
@@ -432,12 +440,16 @@ public class ScumFileProcessor
 
     /// <summary>
     /// True streaming implementation - processes files one by one with minimal memory usage
+    /// Now with batch downloading for better performance
     /// </summary>
     public async IAsyncEnumerable<string> UnreadFileLinesAsync(
         EFileType fileType,
         IFtpService ftpService,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (_semaphores.ContainsKey((_scumServer.Id, fileType.ToString()))) yield break;
+        _semaphores.TryAdd((_scumServer.Id, fileType.ToString()), DateTime.UtcNow);
+
         if (_ftp is null)
         {
             _logger.LogWarning("FTP configuration is null for server {ServerId}, cannot process files", _scumServer.Id);
@@ -456,40 +468,150 @@ public class ScumFileProcessor
             {
                 await ftpService.ClearPoolForServerAsync(_ftp);
             }
-            throw;
+            yield break;
         }
 
         var readerPointerRepository = new ReaderPointerRepository(_unitOfWork.CreateDbContext());
+        var filesToProcess = new List<(FtpListItem file, ReaderPointer? pointer)>();
 
-        // Process files sequentially to minimize memory usage
-        foreach (var file in ftpFiles)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            ReaderPointer? pointer = null;
-            bool shouldProcessFile = false;
-
-            // Check if we should process this file (outside yield context)
-            try
+            // First, determine which files need processing and get their pointers
+            foreach (var file in ftpFiles)
             {
-                pointer = await readerPointerRepository.FindOneAsync(p => p.FileName == file.Name);
-                shouldProcessFile = pointer == null || pointer.LastUpdated != file.Modified || pointer.FileSize != file.Size;
+                cancellationToken.ThrowIfCancellationRequested();
+
+                ReaderPointer? pointer = null;
+                bool shouldProcessFile = false;
+
+                try
+                {
+                    pointer = await readerPointerRepository.FindOneAsync(p => p.FileName == file.Name && p.ScumServer.Id == _scumServer.Id);
+                    shouldProcessFile = pointer == null || pointer.LastUpdated != file.Modified || pointer.FileSize != file.Size;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error checking pointer for file {FileName}", file.Name);
+                    continue;
+                }
+
+                if (shouldProcessFile)
+                {
+                    filesToProcess.Add((file, pointer));
+                }
             }
-            catch (Exception ex)
+
+            if (!filesToProcess.Any())
             {
-                _logger.LogError(ex, "Error checking pointer for file {FileName}", file.Name);
-                continue;
+                _logger.LogDebug("No files need processing for server {ServerId}", _scumServer.Id);
+                yield break;
             }
 
-            if (!shouldProcessFile)
-                continue;
+            // Download all files at once
+            var localFilesPaths = await BatchDownloadFilesAsync(filesToProcess.Select(x => x.file).ToList(), ftpService, cancellationToken);
 
-            // Now we can safely stream lines (no try-catch around yield)
-            await foreach (var line in StreamLinesFromFileAsync(file, pointer, ftpService, cancellationToken))
+            // Process each downloaded file
+            foreach (var (fileItem, pointer) in filesToProcess)
             {
-                yield return line;
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (!localFilesPaths.TryGetValue(fileItem.Name, out var localFilePath) ||
+                    !File.Exists(localFilePath))
+                {
+                    _logger.LogWarning("File {FileName} was not downloaded successfully", fileItem.Name);
+                    continue;
+                }
+
+                var currentPointer = pointer is not null
+                    ? UpdateReaderPointer(pointer, fileItem)
+                    : BuildReaderPointer(fileItem);
+
+                await foreach (var line in ReadLinesFromFileAsync(localFilePath, currentPointer, cancellationToken))
+                {
+                    yield return line;
+                }
             }
         }
+        finally
+        {
+            _semaphores.Remove((_scumServer.Id, fileType.ToString()), out var value);
+        }
+    }
+
+    /// <summary>
+    /// Download all files at once for better performance
+    /// </summary>
+    private async Task<Dictionary<string, string>> BatchDownloadFilesAsync(
+        List<FtpListItem> files,
+        IFtpService ftpService,
+        CancellationToken cancellationToken = default)
+    {
+        if (_ftp == null)
+        {
+            _logger.LogError("FTP configuration is null, cannot batch download files");
+            return new Dictionary<string, string>();
+        }
+
+        var result = new Dictionary<string, string>();
+
+        if (!files.Any())
+        {
+            return result;
+        }
+
+        // Create temp directory for this batch
+        string localPath = Path.Combine(GetLocalPath(), "temp");
+        Directory.CreateDirectory(localPath);
+
+        try
+        {
+            _logger.LogDebug("Starting batch download of {Count} files for server {ServerId}", files.Count, _scumServer.Id);
+
+            await ftpService.ExecuteAsync(_ftp, async client =>
+            {
+                // Prepare list of remote file paths for batch download
+                var remoteFilePaths = files.Select(f => f.FullName).ToList();
+
+                _logger.LogDebug("Downloading files: {Files}", string.Join(", ", files.Select(f => f.Name)));
+
+                // Use the existing CopyFilesAsync method which handles batch downloads
+                await ftpService.CopyFilesAsync(client, localPath, remoteFilePaths, cancellationToken);
+
+                // Build result dictionary with local file paths
+                foreach (var file in files)
+                {
+                    var localFilePath = Path.Combine(localPath, file.Name);
+                    if (File.Exists(localFilePath))
+                    {
+                        result[file.Name] = localFilePath;
+                        _logger.LogDebug("Successfully downloaded {FileName} to {LocalPath}", file.Name, localFilePath);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("File {FileName} was not found after download", file.Name);
+                    }
+                }
+
+                return true;
+            }, cancellationToken);
+
+            _logger.LogDebug("Completed batch download: {SuccessCount}/{TotalCount} files for server {ServerId}",
+                result.Count, files.Count, _scumServer.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during batch download for server {ServerId}", _scumServer.Id);
+
+            if (IsConnectionError(ex))
+            {
+                await ftpService.ClearPoolForServerAsync(_ftp);
+            }
+
+            // Return partial results if any files were downloaded before the error
+            return result;
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -526,12 +648,10 @@ public class ScumFileProcessor
         string localPath = Path.Combine(GetLocalPath(), "logs");
         Directory.CreateDirectory(localPath);
 
-        // Process files sequentially
         foreach (var file in ftpFiles)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Prepare file (download if needed) outside yield context
             string? localFilePath = null;
             try
             {
@@ -545,13 +665,11 @@ public class ScumFileProcessor
                 {
                     await ftpService.ClearPoolForServerAsync(_ftp);
                 }
-                // Continue with next file
                 continue;
             }
 
             if (localFilePath != null)
             {
-                // Stream lines from local file (no try-catch around yield)
                 await foreach (var line in ReadLinesFromLocalFileAsync(localFilePath, cancellationToken))
                 {
                     yield return line;

@@ -15,7 +15,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
         public async Task Execute(long serverId, string commandString)
         {
-            _logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
+            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
             if (commandString is null) return;
 
             IEnumerable<string> commands = commandString.ToString()!.Split(";");

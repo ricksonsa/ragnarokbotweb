@@ -14,7 +14,7 @@ public class EconomyJob(
     {
         try
         {
-            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
+            logger.LogDebug("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
             var server = await GetServerAsync(serverId);
 

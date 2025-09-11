@@ -14,7 +14,7 @@ public class FtpService : IFtpService, IAsyncDisposable
     private readonly ILogger<FtpService> _logger;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _serverSemaphores = new();
     private readonly ConcurrentDictionary<string, int> _activeConnections = new();
-    private const int MaxConnectionsPerServer = 3;
+    private const int MaxConnectionsPerServer = 20;
 
     public FtpService(ILogger<FtpService> logger)
     {

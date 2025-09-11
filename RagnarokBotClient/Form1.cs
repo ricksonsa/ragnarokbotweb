@@ -535,7 +535,7 @@ namespace RagnarokBotClient
                                     new BotCommandValue
                                     {
                                         Type = Shared.Enums.ECommandType.SayLocal,
-                                        Value = $"!status-{_client.BotId}"
+                                        Value = $"!check-state-{_client.BotId}"
                                     }]
                             });
                         }

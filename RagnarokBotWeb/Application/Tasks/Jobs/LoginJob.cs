@@ -18,7 +18,7 @@ public class LoginJob(
 
     public async Task Execute(long serverId, EFileType fileType)
     {
-        logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
+        logger.LogDebug("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
         try
         {
             var server = await GetServerAsync(serverId);

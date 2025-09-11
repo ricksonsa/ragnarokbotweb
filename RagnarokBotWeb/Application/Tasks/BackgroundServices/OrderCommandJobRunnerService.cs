@@ -32,9 +32,22 @@ namespace RagnarokBotWeb.Application.Tasks.BackgroundServices
                         if (stoppingToken.IsCancellationRequested)
                             break;
 
-                        var job = scope.ServiceProvider.GetRequiredService<OrderCommandJob>();
-                        await job.Execute(server.Id);
+                        _ = Task.Run(async () =>
+                        {
+                            using var jobScope = _serviceProvider.CreateScope();
+                            var job = jobScope.ServiceProvider.GetRequiredService<OrderCommandJob>();
+
+                            try
+                            {
+                                await job.Execute(server.Id);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Error while executing OrderCommandJob for server {ServerId}", server.Id);
+                            }
+                        }, stoppingToken);
                     }
+
                 }
                 catch (Exception ex)
                 {

@@ -38,40 +38,42 @@ public class ChatJob(
 
             await foreach (var line in processor.UnreadFileLinesAsync(fileType, ftpService))
             {
-                var parsed = new ChatTextParser().Parse(line);
-                if (parsed is null)
+                try
                 {
-                    logger.LogError("line {Line} > Could not be parsed", line);
-                    continue;
-                }
-
-                if (IsCompliant())
-                {
-                    var chatCommandHandler = new ExclamationCommandHandlerFactory(
-                   server,
-                   botService,
-                   scumServerRepository,
-                   playerRespository,
-                   playerRegisterRepository,
-                   discordService,
-                   orderService
-                   ).Create(parsed.Text);
-
-                    if (chatCommandHandler is not null)
-                        await chatCommandHandler.ExecuteAsync(parsed);
-                }
-
-                if (parsed.Text.Contains("!check-state"))
-                {
-                    var match = Regex.Match(parsed.Text, @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
-                    if (match.Success)
+                    var parsed = new ChatTextParser().Parse(line);
+                    if (parsed is null)
                     {
-                        var guid = new Guid(match.Value);
-                        botService.BotPingUpdate(server.Id, guid, parsed.SteamId);
+                        logger.LogError("line {Line} > Could not be parsed", line);
+                        continue;
                     }
-                }
-                else
-                {
+
+                    if (parsed.Text.Contains("!check-state") || parsed.Text.Contains("!status"))
+                    {
+                        var match = Regex.Match(parsed.Text, @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+                        if (match.Success)
+                        {
+                            var guid = new Guid(match.Value);
+                            botService.BotPingUpdate(server.Id, guid, parsed.SteamId);
+                        }
+                        continue;
+                    }
+
+                    if (IsCompliant())
+                    {
+                        var chatCommandHandler = new ExclamationCommandHandlerFactory(
+                               server,
+                               botService,
+                               scumServerRepository,
+                               playerRespository,
+                               playerRegisterRepository,
+                               discordService,
+                               orderService
+                           ).Create(parsed.Text);
+
+                        if (chatCommandHandler is not null)
+                            await chatCommandHandler.ExecuteAsync(parsed);
+                    }
+
                     if (!IsCommand(parsed)
                         && IsServerAllowed(server, parsed)
                         && !IsBotSteamId(botService, server, parsed)
@@ -82,13 +84,17 @@ public class ChatJob(
                          ChannelTemplateValues.GameChat);
                     }
                 }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "{Job} Exception", $"{GetType().Name}({serverId})");
+                }
             }
         }
         catch (ServerUncompliantException) { }
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {
-            logger.LogError("{Job} Exception -> {Ex}", $"{GetType().Name}({serverId})", ex.Message);
+            logger.LogError(ex, "{Job} Exception", $"{GetType().Name}({serverId})");
             throw;
         }
     }
