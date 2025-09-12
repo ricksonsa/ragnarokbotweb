@@ -22,6 +22,7 @@ public class CommandQueueProcessorJob(
             if (!botService.IsBotOnline(server.Id)) return;
             if (cacheService.TryDequeueCommand(server.Id, out var command))
             {
+                logger.LogInformation("Retrieved command from command queue for server {Server}", server.Id);
                 if (command is null) throw new ArgumentNullException("command");
                 await botService.SendCommand(server.Id, command);
             }

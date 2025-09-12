@@ -42,7 +42,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
         public async Task Execute(long serverId)
         {
             var jobName = $"{GetType().Name}({serverId})";
-            _logger.LogInformation("Triggered {Job} -> Execute at: {time}", jobName, DateTimeOffset.Now);
+            _logger.LogDebug("Triggered {Job} -> Execute at: {time}", jobName, DateTimeOffset.Now);
 
             try
             {
@@ -58,7 +58,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 if (!_botService.IsBotOnline(server.Id))
                 {
-                    _logger.LogDebug("{Job} -> No bots online, skipping execution", jobName);
+                    _logger.LogWarning("{Job} -> No bots online, skipping execution", jobName);
                     return;
                 }
 
@@ -99,7 +99,6 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                         await _unitOfWork.AppDbContext.Database.ExecuteSqlAsync($@"UPDATE ""Orders"" SET ""Status"" = {(int)EOrderStatus.Command} WHERE ""Id"" = {order.Id}");
                     }
                 }
-
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }

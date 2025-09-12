@@ -241,10 +241,13 @@ namespace RagnarokBotWeb.Domain.Services
 
                 _serverJobIds[server.Id] = jobIds;
 
-                BackgroundJob.Schedule<PaydayJob>(
-                   job => job.Execute(server.Id),
-                   TimeSpan.FromMinutes(server.CoinAwardIntervalMinutes)
-                );
+                if (server.CoinAwardIntervalMinutes > 0)
+                {
+                    BackgroundJob.Schedule<PaydayJob>(
+                        job => job.Execute(server.Id),
+                        TimeSpan.FromMinutes(server.CoinAwardIntervalMinutes)
+                    );
+                }
 
                 //BackgroundJob.Schedule<ChatJob>(
                 //    job => job.Execute(server.Id, EFileType.Chat),

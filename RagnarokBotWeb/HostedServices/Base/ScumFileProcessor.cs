@@ -80,17 +80,29 @@ public class ScumFileProcessor
 
             var matchingFiles = new List<FtpListItem>();
             fileNames = fileNames
-                .Where(name =>
-                    name.StartsWith($"{fileTypePrefix}_{today.AddDays(-1):yyyyMMdd}", StringComparison.OrdinalIgnoreCase) ||
-                    name.StartsWith($"{fileTypePrefix}_{today:yyyyMMdd}", StringComparison.OrdinalIgnoreCase) ||
-                    name.StartsWith($"{fileTypePrefix}_{today.AddDays(1):yyyyMMdd}", StringComparison.OrdinalIgnoreCase))
+                .Select(name => Path.GetFileName(name))
+                .Where(name => name.StartsWith(fileTypePrefix, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(f =>
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(f);
+                    string datePart = fileName.Replace($"{fileTypePrefix}_", "");
+                    if (DateTime.TryParseExact(datePart, "yyyyMMddHHmmss",
+                                               null,
+                                               System.Globalization.DateTimeStyles.None,
+                                               out var dt))
+                    {
+                        return dt;
+                    }
+                    return DateTime.MinValue;
+                })
+                .Take(10)
                 .ToArray();
 
             foreach (var fileName in fileNames)
             {
                 try
                 {
-                    var fileInfo = await client.GetObjectInfo($"{logPath}/{fileName}");
+                    var fileInfo = await client.GetObjectInfo($"{logPath}{fileName}", dateModified: true);
                     if (fileInfo != null && fileInfo.Type == FtpObjectType.File)
                     {
                         var listItem = new FtpListItem
@@ -184,13 +196,29 @@ public class ScumFileProcessor
 
                 var matchingFiles = new List<FtpListItem>();
 
-                foreach (var fileName in fileNames.Where(name =>
-                    name.StartsWith($"{fileTypePrefix}_{now:yyyyMM}", StringComparison.OrdinalIgnoreCase) ||
-                    name.StartsWith($"{fileTypePrefix}_{now.AddMonths(-1):yyyyMM}", StringComparison.OrdinalIgnoreCase)))
+                fileNames = fileNames
+                    .Select(name => Path.GetFileName(name))
+                    .Where(name => name.StartsWith(fileTypePrefix, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(f =>
+                    {
+                        string fileName = Path.GetFileNameWithoutExtension(f);
+                        string datePart = fileName.Replace($"{fileTypePrefix}_", "");
+                        if (DateTime.TryParseExact(datePart, "yyyyMMddHHmmss",
+                                                   null,
+                                                   System.Globalization.DateTimeStyles.None,
+                                                   out var dt))
+                        {
+                            return dt;
+                        }
+                        return DateTime.MinValue;
+                    })
+                    .ToArray();
+
+                foreach (var fileName in fileNames)
                 {
                     try
                     {
-                        var fileInfo = await client.GetObjectInfo($"{logPath}/{fileName}");
+                        var fileInfo = await client.GetObjectInfo($"{logPath}{fileName}");
 
                         if (fileInfo != null &&
                             fileInfo.Type == FtpObjectType.File &&
@@ -200,7 +228,7 @@ public class ScumFileProcessor
                             var listItem = new FtpListItem
                             {
                                 Name = fileName,
-                                FullName = $"{logPath}/{fileName}",
+                                FullName = $"{logPath}{fileName}",
                                 Type = FtpObjectType.File,
                                 Size = fileInfo.Size,
                                 Modified = fileInfo.Modified,
@@ -588,7 +616,7 @@ public class ScumFileProcessor
                     }
                     else
                     {
-                        _logger.LogWarning("File {FileName} was not found after download", file.Name);
+                        _logger.LogDebug("File {FileName} was not found after download", file.Name);
                     }
                 }
 
