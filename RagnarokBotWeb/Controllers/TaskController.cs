@@ -39,6 +39,12 @@ namespace RagnarokBotWeb.Controllers
             return Ok(await _taskService.GetTaskPageByFilterAsync(paginator, filter));
         }
 
+        [HttpGet("custom-tasks/ids")]
+        public async Task<IActionResult> GetAllTasksIds()
+        {
+            return Ok(await _taskService.GetAllTaskIds());
+        }
+
         [HttpGet("custom-tasks/{id}")]
         public async Task<IActionResult> GetCustomTask(long id)
         {
@@ -59,7 +65,7 @@ namespace RagnarokBotWeb.Controllers
             return Ok(task);
         }
 
-        [ValidateAccessLevel(Domain.Enums.AccessLevel.Admin)]
+        [ValidateAccessLevel(Domain.Enums.AccessLevel.Mod)]
         [HttpPatch("trigger")]
         public async Task<IActionResult> TriggerJob(string jobId, string groupId)
         {

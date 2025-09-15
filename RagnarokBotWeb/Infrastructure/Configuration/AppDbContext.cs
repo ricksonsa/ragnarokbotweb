@@ -122,6 +122,15 @@ namespace RagnarokBotWeb.Infrastructure.Configuration
             modelBuilder.Entity<ReaderPointer>()
                 .Property(x => x.LastUpdated).HasColumnType("timestamptz");
 
+            modelBuilder.Entity<Lockpick>()
+                .Property(x => x.AttemptDate).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<CustomTask>()
+                .Property(x => x.ExpireAt).HasColumnType("timestamptz");
+
+            modelBuilder.Entity<CustomTask>()
+                .Property(x => x.LastRunned).HasColumnType("timestamptz");
+
             modelBuilder.Entity<Uav>()
                 .HasOne(u => u.ScumServer)
                 .WithOne(s => s.Uav)

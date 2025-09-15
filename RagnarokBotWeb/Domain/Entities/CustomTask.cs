@@ -10,9 +10,11 @@ namespace RagnarokBotWeb.Domain.Entities
         public string Cron { get; set; }
         public bool Enabled { get; set; }
         public bool IsBlockPurchaseRaidTime { get; set; }
+        public bool DeleteExpired { get; set; }
         public string? StartMessage { get; set; }
         public long? MinPlayerOnline { get; set; }
         public DateTime? LastRunned { get; set; }
+        public DateTime? ExpireAt { get; set; }
         public ECustomTaskType TaskType { get; set; }
         public ScumServer ScumServer { get; set; }
         public long? ScumServerId { get; set; }

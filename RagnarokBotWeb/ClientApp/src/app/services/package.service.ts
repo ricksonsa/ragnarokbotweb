@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { PackageDto } from '../models/package.dto';
 import { environment } from '../../environments/environment';
 import { Page } from '../core/pagination/pager';
+import { IdsDto } from '../models/ids-dto';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,11 @@ export class PackageService {
     var url = `${environment.apiUrl}/api/packs?pageSize=${pageSize}&pageNumber=${pageNumber}`;
     if (filter) url += `&filter=${filter}`;
     return this.http.get<Page<PackageDto>>(url);
+  }
+
+  getPackIds() {
+    var url = `${environment.apiUrl}/api/packs/ids`;
+    return this.http.get<IdsDto[]>(url);
   }
 
   getWelcomePack() {

@@ -123,7 +123,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 .Include(kill => kill.ScumServer)
                 .Where(k => k.ScumServer.Id == server.Id
                     && k.CreateDate >= periodStart
-                    && k.KillerSteamId64 != "-1"
+                    && k.KillerSteamId64 != "-1" && k.KillerSteamId64 != "NPC"
                     && !k.IsSameSquad
                     && k.Rankable);
 

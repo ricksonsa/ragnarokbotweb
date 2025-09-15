@@ -7,7 +7,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     {
         bool IsBotOnline();
         bool IsBotOnline(long serverId);
-        Task ConfirmDelivery(long orderId);
         List<BotUser> FindActiveBotsByServerId(long serverId);
         Task ResetBotState(long value);
         Task<BotUser?> FindBotByGuid(Guid guid);

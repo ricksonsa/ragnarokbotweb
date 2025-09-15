@@ -256,5 +256,12 @@ namespace RagnarokBotWeb.Domain.Services
             var page = await _taxiRepository.GetPageByServerAndFilter(paginator, serverId!.Value, filter);
             return new Page<TaxiDto>(page.Content.Select(_mapper.Map<TaxiDto>), page.TotalPages, page.TotalElements, paginator.PageNumber, paginator.PageSize);
         }
+
+        public async Task<IEnumerable<IdsDto>> GetAllTaxisIds()
+        {
+            var serverId = ServerId();
+            var taxis = await _taxiRepository.FindAsync(taxi => taxi.ScumServer.Id == serverId!.Value);
+            return taxis.Select(taxi => new IdsDto { Id = taxi.Id, Name = taxi.Name });
+        }
     }
 }

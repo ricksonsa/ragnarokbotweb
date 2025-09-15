@@ -53,6 +53,7 @@ namespace RagnarokBotWeb.Application.Discord.Events.Messages
                       .Build();
 
                     await component.RespondAsync(embed: embed, ephemeral: true);
+                    await orderService.ProcessOrder(order);
                     return;
                 }
                 catch (NotFoundException)

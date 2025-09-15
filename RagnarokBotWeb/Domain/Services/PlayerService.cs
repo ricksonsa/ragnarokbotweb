@@ -651,7 +651,7 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var serverId = ServerId();
 
-            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server is null) throw new NotFoundException("Invalid server");
 
             var lockpicks = _unitOfWork.Lockpicks
@@ -687,7 +687,7 @@ namespace RagnarokBotWeb.Domain.Services
             // Filter kills by server and period
             var kills = _unitOfWork.Kills
                 .Include(k => k.ScumServer)
-                .Where(k => k.ScumServer.Id == server.Id && k.KillerSteamId64 != "-1");
+                .Where(k => k.ScumServer.Id == server.Id && k.KillerSteamId64 != "-1" && k.KillerSteamId64 != "NPC");
 
             // Group by KillerName
             return await kills
@@ -706,7 +706,7 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var serverId = ServerId();
 
-            var server = await _scumServerRepository.FindActiveById(serverId.Value);
+            var server = await _scumServerRepository.FindActiveById(serverId!.Value);
             if (server is null) throw new NotFoundException("Invalid server");
 
             // Filter kills by server and period

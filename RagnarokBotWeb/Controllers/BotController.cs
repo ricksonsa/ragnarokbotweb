@@ -18,12 +18,14 @@ namespace RagnarokBotWeb.Controllers
         private readonly ILogger<BotController> _logger;
         private readonly IBotService _botService;
         private readonly BotSocketServer _botSocketServer;
+        private readonly IOrderService _orderService;
 
-        public BotController(ILogger<BotController> logger, IBotService botService, BotSocketServer botSocketServer)
+        public BotController(ILogger<BotController> logger, IBotService botService, BotSocketServer botSocketServer, IOrderService orderService)
         {
             _logger = logger;
             _botService = botService;
             _botSocketServer = botSocketServer;
+            _orderService = orderService;
         }
 
         [HttpGet]
@@ -71,7 +73,7 @@ namespace RagnarokBotWeb.Controllers
         [HttpPatch("deliveries/{id}/confirm")]
         public async Task<IActionResult> ConfirmDelivery(long id)
         {
-            await _botService.ConfirmDelivery(id);
+            await _orderService.ConfirmServerDelivery(id);
             return Ok();
         }
 

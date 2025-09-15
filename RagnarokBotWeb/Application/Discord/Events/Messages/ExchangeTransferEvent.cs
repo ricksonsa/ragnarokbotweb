@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Application.Handlers;
+using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -113,6 +114,16 @@ public class ExchangeTransferEvent : IMessageEventHandler
                 embedBuilder.WithColor(Color.Green);
                 embedBuilder.WithDescription($"You have successfully transfered {value} coins to {targetPlayer.Name}");
                 await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+
+                await orderService.CreateOrder(new Order
+                {
+                    OrderType = Shared.Enums.EOrderType.Exchange,
+                    Status = Shared.Enums.EOrderStatus.Done,
+                    ExchangeAmount = value,
+                    ExchangeType = Shared.Enums.EExchangeType.Transfer,
+                    Player = player,
+                    ScumServer = player.ScumServer
+                });
                 return;
             }
             else

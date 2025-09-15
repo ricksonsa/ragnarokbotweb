@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Page } from '../core/pagination/pager';
 import { CustomTaskDto } from '../models/custom-task.dto';
+import { IdsDto } from '../models/ids-dto';
 
 @Injectable({
     providedIn: 'root'
@@ -14,6 +15,11 @@ export class TaskService {
         var url = `${environment.apiUrl}/api/tasks/custom-tasks?pageSize=${pageSize}&pageNumber=${pageNumber}`;
         if (filter) url += `&filter=${filter}`;
         return this.http.get<Page<CustomTaskDto>>(url);
+    }
+
+    getTaskIds() {
+        var url = `${environment.apiUrl}/api/tasks/custom-tasks/ids`;
+        return this.http.get<IdsDto[]>(url);
     }
 
     getById(id: number) {

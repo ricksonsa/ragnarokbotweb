@@ -89,10 +89,11 @@ public class ExchangeDepositEvent : IMessageEventHandler
                 }
 
                 var next = new CoinConverterManager(server).ToDiscordCoins(value);
-                await orderService.ExchangeDepositOrder(player.ScumServer.Id, player.DiscordId.Value, value);
+                var order = await orderService.ExchangeDepositOrder(player.ScumServer.Id, player.DiscordId.Value, value);
                 embedBuilder.WithColor(Color.Green);
                 embedBuilder.WithDescription($"Your deposit of {value} in-game {server.Exchange.CurrencyType} to coins will be processed soon.\n\nCurrent Balance: {player.Coin}\nNext Balance: {player.Coin + next}\nTax Applied: {server.Exchange.DepositRate * 100}%");
                 await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                await orderService.ProcessOrder(order);
                 return;
             }
             else

@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Page } from '../core/pagination/pager';
 import { TaxiDto } from '../models/taxi.dto';
+import { IdsDto } from '../models/ids-dto';
 
 @Injectable({
     providedIn: 'root'
@@ -14,6 +15,11 @@ export class TaxiService {
         var url = `${environment.apiUrl}/api/taxis?pageSize=${pageSize}&pageNumber=${pageNumber}`;
         if (filter) url += `&filter=${filter}`;
         return this.http.get<Page<TaxiDto>>(url);
+    }
+
+    getTaxiIds() {
+        var url = `${environment.apiUrl}/api/taxis/ids`;
+        return this.http.get<IdsDto[]>(url);
     }
 
     getById(id: number) {

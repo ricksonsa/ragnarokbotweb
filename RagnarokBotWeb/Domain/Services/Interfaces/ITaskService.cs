@@ -29,6 +29,9 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<CustomTaskDto> DeleteCustomTask(long id);
         bool IsSchedulerHealthy();
         Dictionary<string, object> GetJobStatistics();
+        Task<CustomTaskDto> DeleteCustomTaskFromJob(long id);
+        Task<CustomTaskDto> UpdateTaskFromJob(long id, CustomTaskDto customTaskDto);
         RecurringJobDto? FindJob(string jobName);
+        Task<IEnumerable<IdsDto>> GetAllTaskIds();
     }
 }

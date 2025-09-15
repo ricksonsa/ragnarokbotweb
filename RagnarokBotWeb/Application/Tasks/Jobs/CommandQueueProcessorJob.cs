@@ -1,4 +1,5 @@
-﻿using RagnarokBotWeb.Domain.Exceptions;
+﻿using Hangfire;
+using RagnarokBotWeb.Domain.Exceptions;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
@@ -12,6 +13,7 @@ public class CommandQueueProcessorJob(
     IBotService botService
 ) : AbstractJob(scumServerRepository), IJob
 {
+    [DisableConcurrentExecution(timeoutInSeconds: 300)]
     public async Task Execute(long serverId)
     {
         logger.LogDebug("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);

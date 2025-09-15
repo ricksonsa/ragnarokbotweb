@@ -10,5 +10,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<TaxiDto> CreateTaxiAsync(TaxiDto createWarzone);
         Task<TaxiDto> UpdateTaxiAsync(long id, TaxiDto createWarzone);
         Task DeleteTaxiAsync(long id);
+        Task<IEnumerable<IdsDto>> GetAllTaxisIds();
     }
 }

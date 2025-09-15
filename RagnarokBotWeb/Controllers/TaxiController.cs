@@ -27,6 +27,12 @@ namespace RagnarokBotWeb.Controllers
             return Ok(await _taxiService.GetTaxisPageByFilterAsync(paginator, filter));
         }
 
+        [HttpGet("ids")]
+        public async Task<IActionResult> GetAllTaxisIds()
+        {
+            return Ok(await _taxiService.GetAllTaxisIds());
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(long id)
         {

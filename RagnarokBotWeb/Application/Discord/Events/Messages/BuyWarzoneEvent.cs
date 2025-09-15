@@ -50,6 +50,7 @@ public class BuyWarzoneEvent : IMessageEventHandler
               .Build();
 
             await component.RespondAsync(embed: embed, ephemeral: true);
+            await orderService.ProcessOrder(order);
             return;
         }
         catch (NotFoundException)

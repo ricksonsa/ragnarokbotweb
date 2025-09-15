@@ -32,7 +32,7 @@ public class ChatJob(
         {
             var server = await GetServerAsync(serverId);
 
-            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
+            logger.LogDebug("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
 
             var processor = new ScumFileProcessor(server, uow);
 

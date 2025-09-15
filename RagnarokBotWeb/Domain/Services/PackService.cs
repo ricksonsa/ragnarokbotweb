@@ -231,5 +231,12 @@ namespace RagnarokBotWeb.Domain.Services
 
             return await FetchPackById(pack.Id);
         }
+
+        public async Task<IEnumerable<IdsDto>> GetAllPacksIds()
+        {
+            var serverId = ServerId();
+            var packs = await _packRepository.FindAsync(pack => pack.ScumServer.Id == serverId);
+            return packs.Select(pack => new IdsDto { Id = pack.Id, Name = pack.Name });
+        }
     }
 }

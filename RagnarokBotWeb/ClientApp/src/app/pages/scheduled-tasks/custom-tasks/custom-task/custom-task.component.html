@@ -40,6 +40,7 @@
             <nz-option nzLabel="Bot Commands Execute All" [nzValue]="0"></nz-option>
             <nz-option nzLabel="Bot Commands Execute One Randomly" [nzValue]="1"></nz-option>
             <nz-option nzLabel="Server Settings Configuration" [nzValue]="2"></nz-option>
+            <nz-option nzLabel="Enable/Disable Features" [nzValue]="3"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -60,6 +61,23 @@
         </nz-form-control>
       </nz-form-item>
 
+      <nz-form-item nzAlign="top">
+        <nz-form-label [nzSpan]="0" nzFor="expireAt">Expiration Date</nz-form-label>
+        <nz-form-control [nzSpan]="24"
+          nzExtra="Custom Task expiration date determines when this task will be disabled or deleted, leave it blank to not expire.">
+          <nz-date-picker nzSize="large" formControlName="expireAt" nzAllowClear="false"
+            [nzDisabledDate]="disabledDate" [nzShowTime]="true"></nz-date-picker>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nzAlign="top">
+        <nz-form-label [nzSpan]="0" nzFor="deleteExpired">Delete Expired Task</nz-form-label>
+        <nz-form-control [nzSpan]="24"
+          nzExtra="Determine whether this Task will be deleted when expired, if unchecked the task will only be disabled at expiration.">
+          <label nz-checkbox formControlName="deleteExpired"></label>
+        </nz-form-control>
+      </nz-form-item>
+
       <nz-form-item>
         <nz-form-label [nzSpan]="0" nzFor="minPlayerOnline">Minimum Player Required</nz-form-label>
         <nz-form-control [nzSpan]="24" nzExtra="The minimum number of players online required to start the event. Leave it blank for always
@@ -77,7 +95,7 @@
     </form>
   </nz-card>
 
-  <nz-card *ngIf="this.taskForm.value.taskType !== 2" [nzTitle]="GetCommandValuesTitle()" nzSize="small">
+  <nz-card *ngIf="this.taskForm.value.taskType === 0 || this.taskForm.value.taskType === 1" [nzTitle]="GetCommandValuesTitle()" nzSize="small">
     <form nz-form>
       <nz-form-item>
         <nz-form-label nzFor="" nzSpan="24">
@@ -108,6 +126,49 @@
         <nz-form-control nzErrorTip="Value is Required" [nzSpan]="24"
           nzExtra="The ServerSettings.ini field value to replace">
           <input formControlName="value" nz-input name="value" type="text" id="value" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </nz-card>
+
+  <nz-card *ngIf="this.taskForm.value.taskType === 3" [nzTitle]="GetCommandValuesTitle()" nzSize="small">
+    <form nz-form [formGroup]="switchForm">
+
+      <nz-form-item>
+        <nz-form-label nzFor="switchType" nzSpan="24">Type</nz-form-label>
+        <nz-form-control nzErrorTip="Key is Required" [nzSpan]="24" nzExtra="Select what will be enabled or disabled">
+          <nz-select formControlName="switchType" name="switchType"
+            nzPlaceHolder="Select what will be enabled or disabled">
+            <nz-option nzLabel="Taxi" nzValue="taxi"></nz-option>
+            <nz-option nzLabel="Package" nzValue="package"></nz-option>
+            <nz-option *ngIf="account?.server?.uav" nzLabel="UAV" nzValue="uav"></nz-option>
+            <nz-option *ngIf="account?.server?.exchange" nzLabel="Exchange" nzValue="exchange"></nz-option>
+            <nz-option nzLabel="Shop" nzValue="shop"></nz-option>
+            <nz-option nzLabel="Ranking Rewards" nzValue="rank"></nz-option>
+            <nz-option nzLabel="Custom Task" nzValue="task"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzFor="switchValue" nzSpan="24">Value</nz-form-label>
+        <nz-form-control nzErrorTip="Value is Required" [nzSpan]="24" nzExtra="Select what will be enabled or disabled">
+          <nz-select formControlName="switchValue" name="switchValue"
+            nzPlaceHolder="Select what will be enabled or disabled">
+            @for (item of items; track $index) {
+            <nz-option [nzLabel]="item.name" [nzValue]="item.id"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzFor="value" nzSpan="24">Enable/Disable</nz-form-label>
+        <nz-form-control nzErrorTip="Value is Required" [nzSpan]="24">
+          <nz-select formControlName="value" name="value" nzPlaceHolder="Select what will be enabled or disabled">
+            <nz-option nzLabel="Disable" [nzValue]="0"></nz-option>
+            <nz-option nzLabel="Enable" [nzValue]="1"></nz-option>
+          </nz-select>
         </nz-form-control>
       </nz-form-item>
     </form>

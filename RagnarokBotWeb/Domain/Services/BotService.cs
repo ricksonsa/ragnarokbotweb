@@ -15,7 +15,6 @@ namespace RagnarokBotWeb.Domain.Services
     {
         private readonly ILogger<BotService> _logger;
         private readonly ICacheService _cacheService;
-        private readonly IOrderService _orderService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly BotSocketServer _botSocket;
         private readonly IScumServerRepository _scumServerRepository;
@@ -25,7 +24,6 @@ namespace RagnarokBotWeb.Domain.Services
         public BotService(
             IHttpContextAccessor httpContext,
             ICacheService cacheService,
-            IOrderService orderService,
             ILogger<BotService> logger,
             IScumServerRepository scumServerRepository,
             IUnitOfWork unitOfWork,
@@ -34,7 +32,6 @@ namespace RagnarokBotWeb.Domain.Services
             IDiscordService discordService) : base(httpContext)
         {
             _cacheService = cacheService;
-            _orderService = orderService;
             _logger = logger;
             _scumServerRepository = scumServerRepository;
             _unitOfWork = unitOfWork;
@@ -86,11 +83,16 @@ namespace RagnarokBotWeb.Domain.Services
                     user.Fame = player.Fame;
                     user.LastLoggedIn = DateTime.UtcNow;
                     user.ScumServer ??= (await ctx.ScumServers.Include(server => server.Guild).FirstOrDefaultAsync(server => server.Id == serverId))!;
-                    if (!string.IsNullOrEmpty(user.DiscordName) && user.DiscordId.HasValue && user.ScumServer.Guild is not null)
+
+                    try
                     {
-                        var discordUser = await _discordService.GetDiscordUser(user.ScumServer.Guild.DiscordId, user.DiscordId.Value);
-                        user.DiscordName = discordUser?.DisplayName;
+                        if (!string.IsNullOrEmpty(user.DiscordName) && user.DiscordId.HasValue && user.ScumServer.Guild is not null)
+                        {
+                            var discordUser = await _discordService.GetDiscordUser(user.ScumServer.Guild.DiscordId, user.DiscordId.Value);
+                            user.DiscordName = discordUser?.DisplayName;
+                        }
                     }
+                    catch (Exception) { }
 
                     if (user.Id == 0)
                     {
@@ -161,13 +163,6 @@ namespace RagnarokBotWeb.Domain.Services
             return _botSocket.IsBotConnected(serverId);
         }
 
-        public async Task ConfirmDelivery(long orderId)
-        {
-            var serverId = ServerId();
-            if (!serverId.HasValue) throw new UnauthorizedAccessException();
-            await _orderService.ConfirmOrderDelivered(orderId);
-        }
-
         public List<BotUser> FindActiveBotsByServerId(long serverId)
         {
             return _botSocket.GetBots(serverId).Where(bot => bot.LastPinged.HasValue).ToList();
@@ -199,11 +194,6 @@ namespace RagnarokBotWeb.Domain.Services
                 var diff = (now - bot.LastPinged!.Value).TotalMinutes;
                 if (diff >= 5)
                     await _botSocket.SendCommandAsync(serverId, bot.Guid.ToString(), new BotCommand().Reconnect());
-            }
-
-            if (bots.Count() == 0)
-            {
-                await _orderService.ResetCommandOrders(serverId);
             }
         }
 

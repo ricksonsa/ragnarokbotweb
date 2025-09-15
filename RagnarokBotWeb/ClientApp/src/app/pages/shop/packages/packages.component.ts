@@ -110,7 +110,7 @@ export class PackagesComponent implements OnInit, OnDestroy {
   }
 
   getDiscordName(discordId: any) {
-    return this.channels.filter(channel => channel.discordId == discordId)[0].name;
+    return this.channels.filter(channel => channel.discordId == discordId)[0]?.name;
   }
 
   confirmDelete(id: number) {

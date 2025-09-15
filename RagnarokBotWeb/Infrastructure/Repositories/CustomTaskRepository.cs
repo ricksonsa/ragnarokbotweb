@@ -3,6 +3,7 @@ using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories
 {
@@ -14,6 +15,11 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return await DbSet()
                 .Include(task => task.ScumServer)
                 .FirstOrDefaultAsync(task => task.Id == id);
+        }
+
+        public override async Task<IEnumerable<CustomTask>> FindAsync(Expression<Func<CustomTask, bool>> predicate)
+        {
+            return await DbSet().Include(task => task.ScumServer).Where(predicate).ToListAsync();
         }
 
         public Task<Page<CustomTask>> GetPageByServerAndFilter(Paginator paginator, long id, string? filter)

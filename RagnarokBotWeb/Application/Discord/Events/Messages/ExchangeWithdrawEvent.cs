@@ -93,7 +93,8 @@ public class ExchangeWithdrawEvent : IMessageEventHandler
                     }
 
                     var money = new CoinConverterManager(server).ToInGameMoney(value);
-                    await orderService.ExchangeWithdrawOrder(player.ScumServer.Id, player.DiscordId.Value, value);
+                    var order = await orderService.ExchangeWithdrawOrder(player.ScumServer.Id, player.DiscordId.Value, value);
+                    await orderService.ProcessOrder(order);
                     embedBuilder.WithColor(Color.Green);
                     embedBuilder.WithDescription($"Your withdraw of {value} coins to in-game {server.Exchange.CurrencyType} will be processed soon.\n\nCurrent Balance: {player.Coin}\nNext Balance: {player.Coin - value}\nIn-game {server.Exchange.CurrencyType}: +{money}");
                     await message.RespondAsync(embed: embedBuilder.Build(), ephemeral: true);

@@ -3,6 +3,7 @@
     public enum AccessLevel
     {
         Default = 0,
-        Admin = 1
+        Mod = 1,
+        Administrator = 2
     }
 }

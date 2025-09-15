@@ -102,7 +102,11 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             // Filter kills by server and period
             var kills = unitOfWork.Kills
                 .Include(kill => kill.ScumServer)
-                .Where(k => k.ScumServer.Id == server.Id && k.CreateDate >= periodStart && k.KillerSteamId64 != "-1" && !k.IsSameSquad);
+                .Where(k => k.ScumServer.Id == server.Id
+                    && k.CreateDate >= periodStart
+                    && k.KillerSteamId64 != "-1"
+                    && k.KillerSteamId64 != "NPC"
+                    && !k.IsSameSquad);
 
             // Group by KillerName
             var killerStats = await kills

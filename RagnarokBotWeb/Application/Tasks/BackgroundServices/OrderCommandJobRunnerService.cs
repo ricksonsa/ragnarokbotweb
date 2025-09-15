@@ -54,7 +54,7 @@ namespace RagnarokBotWeb.Application.Tasks.BackgroundServices
                     _logger.LogError(ex, "Error while running jobs");
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
     }

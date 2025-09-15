@@ -18,7 +18,6 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             ICacheService cacheService) : base(scumServerRepository)
         {
             _unitOfWork = unitOfWork;
-            _unitOfWork.CreateDbContext();
             _logger = logger;
             _cacheService = cacheService;
         }
@@ -33,6 +32,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
                 var players = _unitOfWork.Players
                     .Include(player => player.Silences)
+                    .Include(player => player.ScumServer)
                     .Where(player =>
                         player.ScumServer != null
                         && player.SteamId64 != null

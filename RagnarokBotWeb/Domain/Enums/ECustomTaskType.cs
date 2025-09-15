@@ -4,6 +4,7 @@
     {
         BatchCommandExecute,
         ExecuteOneRandomly,
-        ServerSettings
+        ServerSettings,
+        Switch,
     }
 }

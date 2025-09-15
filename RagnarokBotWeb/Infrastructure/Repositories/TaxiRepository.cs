@@ -3,20 +3,22 @@ using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Infrastructure.Configuration;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace RagnarokBotWeb.Infrastructure.Repositories
 {
     public class TaxiRepository : Repository<Taxi>, ITaxiRepository
     {
-        private readonly AppDbContext _appDbContext;
-        public TaxiRepository(AppDbContext context) : base(context)
-        {
-            _appDbContext = context;
-        }
+        public TaxiRepository(AppDbContext context) : base(context) { }
 
         public override Task CreateOrUpdateAsync(Taxi entity)
         {
             return base.CreateOrUpdateAsync(entity);
+        }
+
+        public override async Task<IEnumerable<Taxi>> FindAsync(Expression<Func<Taxi, bool>> predicate)
+        {
+            return await DbSet().Include(taxi => taxi.ScumServer).Where(predicate).ToListAsync();
         }
 
         public Task<List<Taxi>> FindActiveByServerId(long serverId)

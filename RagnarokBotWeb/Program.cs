@@ -166,9 +166,11 @@ namespace RagnarokBotWeb
             builder.Services.AddHostedService<LoginJobRunnerService>();
             builder.Services.AddHostedService<KillLogJobRunnerService>();
             builder.Services.AddHostedService<GameplayJobRunnerService>();
+            builder.Services.AddHostedService<PaydayJobRunnerService>();
 
             builder.Services.AddScoped<LoginJob>();
             builder.Services.AddScoped<KillLogJob>();
+            builder.Services.AddScoped<PaydayJob>();
             builder.Services.AddScoped<GamePlayJob>();
             builder.Services.AddScoped<OrderCommandJob>();
             builder.Services.AddScoped<ChatJob>();

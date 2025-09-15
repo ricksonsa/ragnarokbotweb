@@ -158,7 +158,7 @@ public class ScumFileProcessor
         }
     }
 
-    private async Task<List<FtpListItem>> GetLogFilesWithRetryAsync(
+    private async Task<List<FtpListItem>> GetLogFilesWithDateRangeAsync(
         IFtpService ftpService,
         string? rootFolder,
         DateTime from,
@@ -643,7 +643,7 @@ public class ScumFileProcessor
     }
 
     /// <summary>
-    /// True streaming implementation for date-range queries
+    /// True streaming implementation for date-range queries (with batch downloading)
     /// </summary>
     public async IAsyncEnumerable<string> FileLinesAsync(
         EFileType fileType,
@@ -661,7 +661,7 @@ public class ScumFileProcessor
         List<FtpListItem> ftpFiles;
         try
         {
-            ftpFiles = await GetLogFilesWithRetryAsync(ftpService, _ftp.RootFolder, from, to, fileType);
+            ftpFiles = await GetLogFilesWithDateRangeAsync(ftpService, _ftp.RootFolder, from, to, fileType, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -673,38 +673,49 @@ public class ScumFileProcessor
             throw;
         }
 
+        if (!ftpFiles.Any())
+        {
+            _logger.LogDebug("No files found for type {FileType} in range {From} - {To} for server {ServerId}",
+                fileType, from, to, _scumServer.Id);
+            yield break;
+        }
+
+        // Prepare directory
         string localPath = Path.Combine(GetLocalPath(), "logs");
         Directory.CreateDirectory(localPath);
+
+        Dictionary<string, string> localFiles;
+        try
+        {
+            localFiles = await BatchDownloadFilesAsync(ftpFiles, ftpService, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error batch downloading files for server {ServerId}", _scumServer.Id);
+            if (IsConnectionError(ex))
+            {
+                await ftpService.ClearPoolForServerAsync(_ftp);
+            }
+            throw;
+        }
 
         foreach (var file in ftpFiles)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            string? localFilePath = null;
-            try
+            if (!localFiles.TryGetValue(file.Name, out var localFilePath) || !File.Exists(localFilePath))
             {
-                localFilePath = await PrepareLocalFileAsync(file, localPath, ftpService, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error preparing file {FileName} for server {ServerId}", file.Name, _scumServer.Id);
-
-                if (IsConnectionError(ex))
-                {
-                    await ftpService.ClearPoolForServerAsync(_ftp);
-                }
+                _logger.LogWarning("File {FileName} not downloaded successfully for server {ServerId}", file.Name, _scumServer.Id);
                 continue;
             }
 
-            if (localFilePath != null)
+            await foreach (var line in ReadLinesFromLocalFileAsync(localFilePath, cancellationToken))
             {
-                await foreach (var line in ReadLinesFromLocalFileAsync(localFilePath, cancellationToken))
-                {
-                    yield return line;
-                }
+                yield return line;
             }
         }
     }
+
 
     /// <summary>
     /// Prepare local file for streaming (download if needed)

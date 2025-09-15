@@ -19,7 +19,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
     {
         public async Task Execute(long serverId)
         {
-            logger.LogDebug("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
+            logger.LogInformation("Triggered {Job} -> Execute at: {time}", $"{GetType().Name}({serverId})", DateTimeOffset.Now);
             try
             {
                 var server = await GetServerAsync(serverId);
@@ -27,17 +27,19 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 var topKillersDaily = await TopPlayers(unitOfWork, server, ERankingPeriod.Daily);
 
                 var manager = new PlayerCoinManager(unitOfWork);
-                await HandleAwards(unitOfWork, discordService, server, topKillersDaily, manager);
+                await HandleAwards(logger, unitOfWork, discordService, server, topKillersDaily, manager);
             }
             catch (ServerUncompliantException) { }
             catch (FtpNotSetException) { }
-            catch (Exception)
+            catch (Exception exception)
             {
+                logger.LogError(exception, "{Job} Exception", $"{GetType().Name}({serverId})");
                 throw;
             }
         }
 
         private static async Task HandleAwards(
+              ILogger<KillRankDailyAwardJob> logger,
               IUnitOfWork uow,
               IDiscordService discordService,
               ScumServer server,
@@ -55,34 +57,43 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
 
             for (int i = 0; i < topKillers.Count; i++)
             {
-                var (rank, amount) = awards[i];
-                if (amount.HasValue && amount.Value > 0)
+                try
                 {
-                    var stats = topKillers[i];
-
-                    var player = await uow.Players
-                        .Include(p => p.ScumServer)
-                        .Include(p => p.Vips)
-                        .FirstOrDefaultAsync(p => p.SteamId64 == stats.SteamId && p.ScumServerId == server.Id);
-
-                    if (player != null)
+                    var (rank, amount) = awards[i];
+                    if (amount.HasValue && amount.Value > 0)
                     {
-                        if (server.RankVipOnly && !player.IsVip()) continue;
-                        await manager.AddCoinsByPlayerId(player.Id, amount.Value);
+                        var stats = topKillers[i];
 
-                        if (player.DiscordId.HasValue)
+                        var player = await uow.Players
+                            .Include(p => p.ScumServer)
+                            .Include(p => p.Vips)
+                            .FirstOrDefaultAsync(p => p.SteamId64 == stats.SteamId && p.ScumServerId == server.Id);
+
+                        if (player != null)
                         {
-                            var embed = new CreateEmbed(player.DiscordId.Value)
+                            if (server.RankVipOnly && !player.IsVip()) continue;
+                            logger.LogInformation("KillRankDailyAwardJob Awarded player {Player} {Amount} coins", player.Name, amount);
+                            await manager.AddCoinsByPlayerId(player.Id, amount.Value);
+
+                            if (player.DiscordId.HasValue)
                             {
-                                Title = "🏆 Congratulations! 🏆",
-                                Text = $"You secured the Top {rank} spot in the Daily Kill Ranking.\r\n" +
-                                       $"As a reward you’ve earned 💰 {amount.Value} Coins! 🔥\r\n\r\n",
-                                Color = Color.DarkOrange
-                            };
-                            await discordService.SendEmbedToUserDM(embed);
+                                var embed = new CreateEmbed(player.DiscordId.Value)
+                                {
+                                    Title = "🏆 Congratulations! 🏆",
+                                    Text = $"You secured the Top {rank} spot in the Daily Kill Ranking.\r\n" +
+                                           $"As a reward you’ve earned 💰 {amount.Value} Coins! 🔥\r\n\r\n",
+                                    Color = Color.DarkOrange
+                                };
+                                await discordService.SendEmbedToUserDM(embed);
+                            }
                         }
                     }
                 }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "KillRankDailyAwardJob HandleAwards Exception");
+                }
+
             }
         }
 
@@ -123,7 +134,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 .Include(kill => kill.ScumServer)
                 .Where(k => k.ScumServer.Id == server.Id
                     && k.CreateDate >= periodStart
-                    && k.KillerSteamId64 != "-1"
+                    && k.KillerSteamId64 != "-1" && k.KillerSteamId64 != "NPC"
                     && !k.IsSameSquad
                     && k.Rankable);
 
@@ -141,7 +152,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             var topPlayers = killerStats
                 .Select(killer => new PlayerStatsDto
                 {
-                    PlayerName = killer.PlayerName,
+                    PlayerName = killer.PlayerName!,
                     KillCount = killer.KillCount,
                     LastKillDate = killer.LastKillDate
                 })

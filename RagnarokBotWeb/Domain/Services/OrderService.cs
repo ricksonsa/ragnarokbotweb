@@ -10,6 +10,7 @@ using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 using Shared.Enums;
+using Shared.Models;
 
 namespace RagnarokBotWeb.Domain.Services
 {
@@ -25,6 +26,9 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
         private readonly IMapper _mapper;
+        private readonly IBotService _botService;
+        private readonly IFileService _fileService;
+        private readonly IDiscordService _discordService;
 
         public OrderService(
             IHttpContextAccessor contextAccessor,
@@ -37,7 +41,10 @@ namespace RagnarokBotWeb.Domain.Services
             IUnitOfWork unitOfWork,
             ICacheService cacheService,
             IScumServerRepository scumServerRepository,
-            ITaxiRepository taxiRepository) : base(contextAccessor)
+            ITaxiRepository taxiRepository,
+            IBotService botService,
+            IFileService fileService,
+            IDiscordService discordService) : base(contextAccessor)
         {
             _logger = logger;
             _orderRepository = orderRepository;
@@ -49,6 +56,16 @@ namespace RagnarokBotWeb.Domain.Services
             _cacheService = cacheService;
             _scumServerRepository = scumServerRepository;
             _taxiRepository = taxiRepository;
+            _botService = botService;
+            _fileService = fileService;
+            _discordService = discordService;
+        }
+
+        public async Task ConfirmServerDelivery(long orderId)
+        {
+            var serverId = ServerId();
+            if (!serverId.HasValue) throw new UnauthorizedAccessException();
+            await ConfirmOrderDelivered(orderId);
         }
 
         public async Task<OrderDto> ConfirmOrderDelivered(long orderId)
@@ -187,7 +204,7 @@ namespace RagnarokBotWeb.Domain.Services
             return order;
         }
 
-        public async Task<Order?> PlaceUavOrderFromDiscord(ScumServer server, ulong userDiscordId, string sector)
+        public async Task<Order?> PlaceUavOrderFromDiscord(Entities.ScumServer server, ulong userDiscordId, string sector)
         {
             var player = await _playerRepository.FindOneWithServerAsync(u => u.ScumServer.Id == server.Id && u.DiscordId == userDiscordId);
             if (player is null) throw new DomainException("You are not registered, please register using the Welcome Pack.");
@@ -209,6 +226,151 @@ namespace RagnarokBotWeb.Domain.Services
             await new PlayerCoinManager(_unitOfWork).RemoveCoinsByPlayerId(player.Id, price);
 
             return order;
+        }
+
+        public async Task CreateOrder(Order order)
+        {
+            await _orderRepository.CreateOrUpdateAsync(order);
+            await _orderRepository.SaveAsync();
+        }
+
+        public async Task ProcessOrder(Order order)
+        {
+            try
+            {
+                if (!_botService.IsBotOnline(order.ScumServer.Id)) return;
+                var players = _cacheService.GetConnectedPlayers(order.ScumServer.Id);
+                if (!players.Any(p => p.SteamID == order.Player!.SteamId64)) return;
+                if (order?.Player?.SteamId64 is null) return;
+
+                var command = new BotCommand();
+                switch (order.OrderType)
+                {
+                    case EOrderType.Pack:
+                        await HandlePackOrder(order, command);
+                        break;
+                    case EOrderType.Warzone:
+                        await HandleWarzoneOrder(order, command);
+                        break;
+                    case EOrderType.UAV:
+                        await HandleUavOrder(players, order, command);
+                        break;
+                    case EOrderType.Taxi:
+                        await HandleTaxiOrder(order, command);
+                        break;
+                    case EOrderType.Exchange:
+                        await HandleExchangeOrder(_unitOfWork, order, command);
+                        break;
+                }
+
+                if (order.OrderType != EOrderType.UAV)
+                {
+                    await _unitOfWork.AppDbContext.Database.ExecuteSqlAsync($@"UPDATE ""Orders"" SET ""Status"" = {(int)EOrderStatus.Command} WHERE ""Id"" = {order.Id}");
+                }
+
+            }
+            catch (ServerUncompliantException) { }
+            catch (FtpNotSetException) { }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ProcessOrder Exception");
+            }
+        }
+
+        private async Task HandleUavOrder(List<ScumPlayer> players, Order order, BotCommand command)
+        {
+            if (order.ScumServer?.Uav is null) return;
+
+            await new UavHandler(
+                _discordService,
+                _fileService,
+                players,
+                order.ScumServer).Execute(order.Player!, order.Uav!);
+
+            var deliveryText = order.ResolvedDeliveryText();
+            if (deliveryText is not null) command.Say(deliveryText);
+
+            await _botService.SendCommand(order.ScumServer.Id, command);
+            await _unitOfWork.AppDbContext.Database.ExecuteSqlAsync($@"UPDATE ""Orders"" SET ""Status"" = {(int)EOrderStatus.Done} WHERE ""Id"" = {order.Id}");
+        }
+
+        private async Task HandleWarzoneOrder(Order order, BotCommand command)
+        {
+            if (order.Warzone is null) return;
+            var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
+            command.Data = "order_" + order.Id.ToString();
+            command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
+            await _botService.SendCommand(order.ScumServer.Id, command);
+        }
+
+        private async Task HandleTaxiOrder(Order order, BotCommand command)
+        {
+            if (order.Taxi is null) return;
+            var teleport = order.Taxi.TaxiTeleports.FirstOrDefault(t => t.Id.ToString() == order.TaxiTeleportId);
+            if (teleport is null) return;
+            command.Data = "order_" + order.Id.ToString();
+            command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
+            await _botService.SendCommand(order.ScumServer.Id, command);
+        }
+
+        private async Task HandleExchangeOrder(IUnitOfWork uow, Order order, BotCommand command)
+        {
+            if (order.Player is null) return;
+            if (order.Player.ScumServer.Exchange is null) return;
+            command.Data = "order_" + order.Id.ToString();
+
+            var converter = new CoinConverterManager(order.ScumServer);
+            var coinManager = new PlayerCoinManager(uow);
+            switch (order.ExchangeType)
+            {
+                case EExchangeType.Withdraw:
+                    var withdraw = converter.ToInGameMoney(order.ExchangeAmount);
+                    if (order.Player.Coin < order.ExchangeAmount)
+                    {
+                        order.Status = EOrderStatus.Canceled;
+                        return;
+                    }
+                    await coinManager.RemoveCoinsByPlayerId(order.Player.Id, order.ExchangeAmount);
+                    if (order.ScumServer.Exchange.CurrencyType == Enums.EExchangeGameCurrencyType.Money)
+                        command.ChangeMoney(order.Player!.SteamId64!, withdraw);
+                    else if (order.ScumServer.Exchange.CurrencyType == Enums.EExchangeGameCurrencyType.Gold)
+                        command.ChangeGold(order.Player!.SteamId64!, withdraw);
+                    break;
+
+                case EExchangeType.Deposit:
+                    var deposit = converter.ToDiscordCoins(order.ExchangeAmount);
+                    if (!order.Player.HasBalance(order.ExchangeAmount, order.ScumServer.Exchange.CurrencyType))
+                    {
+                        order.Status = EOrderStatus.Canceled;
+                        return;
+                    }
+                    await coinManager.AddCoinsByPlayerId(order.Player.Id, deposit);
+                    if (order.ScumServer.Exchange.CurrencyType == Enums.EExchangeGameCurrencyType.Money)
+                        command.ChangeMoney(order.Player!.SteamId64!, -order.ExchangeAmount);
+                    else if (order.ScumServer.Exchange.CurrencyType == Enums.EExchangeGameCurrencyType.Gold)
+                        command.ChangeGold(order.Player!.SteamId64!, -order.ExchangeAmount);
+                    break;
+            }
+            await _botService.SendCommand(order.ScumServer.Id, command);
+        }
+
+        private async Task HandlePackOrder(Order order, BotCommand command)
+        {
+            if (order.Pack is null) return;
+
+            var deliveryText = order.ResolvedDeliveryText();
+            if (deliveryText is not null) command.Say(deliveryText);
+
+            foreach (var packItem in order.Pack.PackItems)
+            {
+                if (packItem.AmmoCount > 0)
+                    command.MagazineDelivery(order.Player!.SteamId64!, packItem.Item.Code, packItem.Amount, packItem.AmmoCount);
+                else
+                    command.Delivery(order.Player!.SteamId64!, packItem.Item.Code, packItem.Amount);
+            }
+
+            command.Data = "order_" + order.Id.ToString();
+            await _botService.SendCommand(order.ScumServer.Id, command);
         }
 
         public async Task<Order?> PlaceWarzoneOrderFromDiscord(ulong guildId, ulong discordId, long warzoneId)

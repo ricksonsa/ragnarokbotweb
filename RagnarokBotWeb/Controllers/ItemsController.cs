@@ -24,7 +24,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPost]
-        [ValidateAccessLevel(AccessLevel.Admin)]
+        [ValidateAccessLevel(AccessLevel.Mod)]
         public async Task<IActionResult> CreateItem([FromBody] ItemDto item)
         {
             _logger.Log(LogLevel.Debug, "REST Request for creating a new Item with Data: " + JsonConvert.SerializeObject(item));
@@ -32,7 +32,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPut("{id}")]
-        [ValidateAccessLevel(AccessLevel.Admin)]
+        [ValidateAccessLevel(AccessLevel.Mod)]
         public async Task<IActionResult> UpdateItem(long id, ItemDto createItem)
         {
             _logger.Log(LogLevel.Information, "REST Request for updating an Item with Data: " + JsonConvert.SerializeObject(createItem));
@@ -42,7 +42,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPatch("{id}/activate")]
-        [ValidateAccessLevel(AccessLevel.Admin)]
+        [ValidateAccessLevel(AccessLevel.Mod)]
         public async Task<IActionResult> ActivateItem(long id)
         {
             _logger.Log(LogLevel.Debug, "REST Request for activating an Item with Id: " + id);
@@ -52,7 +52,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpPatch("{id}/deactivate")]
-        [ValidateAccessLevel(AccessLevel.Admin)]
+        [ValidateAccessLevel(AccessLevel.Mod)]
         public async Task<IActionResult> DeactivateItem(long id)
         {
             _logger.Log(LogLevel.Debug, "REST Request for deactivating an Item with Id: " + id);
@@ -80,7 +80,7 @@ namespace RagnarokBotWeb.Controllers
 
 
         [HttpDelete("{id}")]
-        [ValidateAccessLevel(AccessLevel.Admin)]
+        [ValidateAccessLevel(AccessLevel.Mod)]
         public async Task<IActionResult> DeleteItem(long id)
         {
             _logger.Log(LogLevel.Debug, "REST Request to delete with id: " + id);

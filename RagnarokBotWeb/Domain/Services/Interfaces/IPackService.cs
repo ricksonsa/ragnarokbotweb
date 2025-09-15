@@ -11,5 +11,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<PackDto> UpdatePackAsync(long id, PackDto createPack);
         Task DeletePackAsync(long id);
         Task<PackDto> FetchWelcomePack();
+        Task<IEnumerable<IdsDto>> GetAllPacksIds();
     }
 }

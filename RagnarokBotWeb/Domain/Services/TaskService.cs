@@ -25,7 +25,6 @@ namespace RagnarokBotWeb.Domain.Services
         private readonly ICustomTaskRepository _customTaskRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
-        private readonly IServiceProvider _serviceProvider;
 
         // Store job IDs for cleanup
         private readonly Dictionary<long, List<string>> _serverJobIds = new();
@@ -51,7 +50,6 @@ namespace RagnarokBotWeb.Domain.Services
             _logger = logger;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _serviceProvider = serviceProvider;
         }
 
         private static string GetCronWithTimeZone(string cron, TimeZoneInfo timeZone)
@@ -167,12 +165,12 @@ namespace RagnarokBotWeb.Domain.Services
                     });
                 jobIds.Add(killRankJobId);
 
-                // LockpickRankJob - every hour
+                // LockpickRankJob - every 5 min
                 var lockpickRankJobId = $"LockpickRankJob-{server.Id}";
                 _recurringJobManager.AddOrUpdate<LockpickRankJob>(
                     lockpickRankJobId,
                     job => job.Execute(server.Id),
-                    "0 * * * *",
+                    "*/5 * * * *",
                     new RecurringJobOptions
                     {
                         TimeZone = server.GetTimeZoneOrDefault()
@@ -239,20 +237,56 @@ namespace RagnarokBotWeb.Domain.Services
                      });
                 jobIds.Add(warzoneBootstartJobId);
 
+                var paydayJobId = $"PaydayJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<PaydayJob>(
+                    paydayJobId,
+                    methodCall: x => x.Execute(server.Id),
+                    cronExpression: Cron.Never());
+                jobIds.Add(paydayJobId);
+
+                var chatJobId = $"ChatJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<ChatJob>(
+                    chatJobId,
+                    methodCall: x => x.Execute(server.Id, EFileType.Chat),
+                    cronExpression: Cron.Never());
+                jobIds.Add(chatJobId);
+
+                var killLogJobId = $"KillLogJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<KillLogJob>(
+                    killLogJobId,
+                    methodCall: x => x.Execute(server.Id, EFileType.Kill),
+                    cronExpression: Cron.Never());
+                jobIds.Add(killLogJobId);
+
+                var gameplayJobId = $"GamePlayJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<GamePlayJob>(
+                    gameplayJobId,
+                    methodCall: x => x.Execute(server.Id, EFileType.Gameplay),
+                    cronExpression: Cron.Never());
+                jobIds.Add(gameplayJobId);
+
+                var loginJobId = $"LoginJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<LoginJob>(
+                    loginJobId,
+                    methodCall: x => x.Execute(server.Id, EFileType.Login),
+                    cronExpression: Cron.Never());
+                jobIds.Add(loginJobId);
+
+                var orderCommandJobId = $"OrderCommandJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<OrderCommandJob>(
+                    orderCommandJobId,
+                    methodCall: x => x.Execute(server.Id),
+                    cronExpression: Cron.Never());
+                jobIds.Add(orderCommandJobId);
+
+                var fileChangeJobId = $"FileChangeJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<FileChangeJob>(
+                    fileChangeJobId,
+                    methodCall: x => x.Execute(server.Id),
+                    cronExpression: Cron.Never());
+                jobIds.Add(fileChangeJobId);
+
                 _serverJobIds[server.Id] = jobIds;
-
-                if (server.CoinAwardIntervalMinutes > 0)
-                {
-                    BackgroundJob.Schedule<PaydayJob>(
-                        job => job.Execute(server.Id),
-                        TimeSpan.FromMinutes(server.CoinAwardIntervalMinutes)
-                    );
-                }
-
-                //BackgroundJob.Schedule<ChatJob>(
-                //    job => job.Execute(server.Id, EFileType.Chat),
-                //    TimeSpan.FromSeconds(20)
-                // );
 
                 _logger.LogInformation("Successfully loaded {JobCount} server tasks for server id {ServerId}",
                     jobIds.Count + 1, server.Id);
@@ -287,18 +321,6 @@ namespace RagnarokBotWeb.Domain.Services
                     });
                 jobIds.Add(economyJobId);
 
-                //// ChatJob - every 1 min
-                //var chatJobId = $"ChatJob-{server.Id}";
-                //_recurringJobManager.AddOrUpdate<ChatJob>(
-                //    chatJobId,
-                //    job => job.Execute(server.Id, EFileType.Chat),
-                //    "*/1 * * * *", // Every minute
-                //     new RecurringJobOptions
-                //     {
-                //         TimeZone = server.GetTimeZoneOrDefault()
-                //     });
-                //jobIds.Add(chatJobId);
-
                 // VipExpireJob - every 10 minutes
                 var vipExpireJobId = $"VipExpireJob-{server.Id}";
                 _recurringJobManager.AddOrUpdate<VipExpireJob>(
@@ -322,6 +344,18 @@ namespace RagnarokBotWeb.Domain.Services
                         TimeZone = server.GetTimeZoneOrDefault()
                     });
                 jobIds.Add(banExpireJobId);
+
+                // CustomTaskExpireJob - every 1 minutes
+                var customTaskExpireJobId = $"CustomTaskExpireJob-{server.Id}";
+                _recurringJobManager.AddOrUpdate<CustomTaskExpireJob>(
+                    customTaskExpireJobId,
+                    job => job.Execute(server.Id),
+                    "* * * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = server.GetTimeZoneOrDefault()
+                    });
+                jobIds.Add(customTaskExpireJobId);
 
                 // SilenceExpireJob - every 10 minutes
                 var silenceExpireJobId = $"SilenceExpireJob-{server.Id}";
@@ -716,6 +750,43 @@ namespace RagnarokBotWeb.Domain.Services
             return _mapper.Map<CustomTaskDto>(customTask);
         }
 
+        public async Task<CustomTaskDto> UpdateTaskFromJob(long id, CustomTaskDto customTaskDto)
+        {
+            var customTask = await _customTaskRepository.FindByIdAsync(id);
+            if (customTask == null) throw new NotFoundException("CustomTask not found");
+
+            customTask = _mapper.Map(customTaskDto, customTask);
+            customTask.ScumServerId = customTaskDto.ScumServerId;
+            await _customTaskRepository.CreateOrUpdateAsync(customTask);
+            await _customTaskRepository.SaveAsync();
+
+            ScheduleCustomTask(customTask);
+
+            return _mapper.Map<CustomTaskDto>(customTask);
+        }
+
+        public async Task<CustomTaskDto> DeleteCustomTaskFromJob(long id)
+        {
+            var customTask = await _customTaskRepository.FindByIdAsync(id);
+            if (customTask == null) throw new NotFoundException("CustomTask not found");
+
+            var jobId = $"CustomTaskJob-{customTask.ScumServerId}-{customTask.Id}";
+
+            _customTaskRepository.Delete(customTask);
+            await _customTaskRepository.SaveAsync();
+
+            try
+            {
+                _recurringJobManager.RemoveIfExists(jobId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to remove custom task job {JobId}", jobId);
+            }
+
+            return _mapper.Map<CustomTaskDto>(customTask);
+        }
+
         public async Task<CustomTaskDto> DeleteCustomTask(long id)
         {
             var serverId = ServerId();
@@ -761,6 +832,13 @@ namespace RagnarokBotWeb.Domain.Services
                 {
                     TimeZone = customTask.ScumServer.GetTimeZoneOrDefault()
                 });
+        }
+
+        public async Task<IEnumerable<IdsDto>> GetAllTaskIds()
+        {
+            var serverId = ServerId();
+            var tasks = await _customTaskRepository.FindAsync(task => task.ScumServer.Id == serverId!.Value);
+            return tasks.Select(task => new IdsDto { Id = task.Id, Name = task.Name });
         }
     }
 }

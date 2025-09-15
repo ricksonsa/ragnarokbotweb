@@ -27,6 +27,7 @@ namespace RagnarokBotWeb.Infrastructure.Repositories.Interfaces
         DbSet<WarzoneTeleport> WarzoneTeleports { get; }
         DbSet<Taxi> Taxis { get; }
         DbSet<TaxiTeleport> TaxiTeleports { get; }
+        DbSet<CustomTask> CustomTasks { get; }
 
         AppDbContext CreateDbContext();
         Task SaveAsync();
