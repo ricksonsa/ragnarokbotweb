@@ -4,6 +4,7 @@ namespace RagnarokBotWeb.Domain.Services.Dto
 {
     public class ExchangeDto
     {
+        public long Id { get; set; }
         public bool Enabled { get; set; }
         public string Name { get; set; }
         public string? Description { get; set; }

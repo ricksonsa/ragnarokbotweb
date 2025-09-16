@@ -30,14 +30,15 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             {
                 var server = await GetServerAsync(serverId, ftpRequired: false, validateSubscription: true);
 
-                var players = _unitOfWork.Players
+                var players = await _unitOfWork.Players
                     .Include(player => player.Silences)
                     .Include(player => player.ScumServer)
                     .Where(player =>
                         player.ScumServer != null
                         && player.SteamId64 != null
                         && player.ScumServer.Id == server.Id
-                        && player.Silences.Any(silence => !silence.Processed && !silence.Indefinitely && silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
+                        && player.Silences.Any(silence => !silence.Processed && !silence.Indefinitely && silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date < DateTime.UtcNow.Date))
+                    .ToListAsync();
 
                 foreach (var player in players)
                 {

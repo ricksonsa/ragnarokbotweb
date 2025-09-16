@@ -123,6 +123,7 @@ public class GamePlayJob(
                         DiscordId = player.DiscordId.Value,
                         GuildId = server.Guild!.DiscordId,
                         Fields = [
+                            new CreateEmbedField("Server", server.Name!, false),
                             new CreateEmbedField("Sector", centerCoord.GetSectorReference(), true),
                             new CreateEmbedField("Lock", lockpick.DisplayLockType, true),
                             new CreateEmbedField("Unlocked", lockpick.Success ? "Yes" : "No", true)

@@ -30,14 +30,18 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
             {
                 var server = await GetServerAsync(serverId, ftpRequired: true, validateSubscription: true);
 
-                var players = _unitOfWork.Players
+                var players = await _unitOfWork.Players
                     .Include(player => player.Vips)
                     .Include(player => player.ScumServer)
                     .Where(player =>
                         player.ScumServer != null
                         && player.SteamId64 != null
                         && player.ScumServer.Id == server.Id
-                        && player.Vips.Any(vip => !vip.Processed && !vip.Indefinitely && vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date < DateTime.UtcNow.Date));
+                        && player.Vips.Any(vip => !vip.Processed
+                            && !vip.Indefinitely
+                            && vip.ExpirationDate.HasValue && DateTime.UtcNow.Date > vip.ExpirationDate.Value.Date)
+                        )
+                    .ToListAsync();
 
                 foreach (var player in players)
                 {

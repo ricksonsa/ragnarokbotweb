@@ -455,10 +455,11 @@ public class ScumFileProcessor
             if (line == null)
                 break;
 
-            if (IsIrrelevantLine(line))
+            var cleanedLine = CleanLine(line);
+
+            if (IsIrrelevantLine(cleanedLine))
                 continue;
 
-            var cleanedLine = CleanLine(line);
             if (!string.IsNullOrWhiteSpace(cleanedLine))
             {
                 yield return cleanedLine;

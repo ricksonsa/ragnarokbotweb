@@ -107,6 +107,46 @@ namespace RagnarokBotWeb.Domain.Services
             return null;
         }
 
+        public async Task<IUserMessage> SendEmbedToDmChannel(CreateEmbed createEmbed, IDMChannel channel)
+        {
+            if (channel != null)
+            {
+                var embedBuilder = new EmbedBuilder()
+                    .WithTitle(createEmbed.Title)
+                    .WithDescription(createEmbed.Text)
+                    .WithFooter(GetAuthor())
+                    .WithColor(createEmbed.Color);
+
+
+                if (!string.IsNullOrEmpty(createEmbed.ImageUrl)) embedBuilder.WithImageUrl($"{_appSettings.BaseUrl}/{createEmbed.ImageUrl}");
+                if (createEmbed.TimeStamp) embedBuilder.WithCurrentTimestamp();
+
+                var builder = new ComponentBuilder();
+
+                createEmbed.Buttons.ForEach(button =>
+                {
+                    builder.WithButton(
+                        label: button.Label,
+                        customId: button.ActionId,
+                        style: ButtonStyle.Primary);
+                });
+
+
+                createEmbed.Fields.ForEach(field =>
+                {
+                    embedBuilder.AddField(
+                        new EmbedFieldBuilder()
+                        .WithName(field.Title)
+                        .WithValue(field.Message)
+                        .WithIsInline(field.Inline));
+                });
+
+                return await channel.SendMessageAsync(embed: embedBuilder.Build(), components: builder.Build());
+            }
+
+            return null;
+        }
+
         public async Task SendEmbedToUserDM(CreateEmbed createEmbed)
         {
             var user = await GetDiscordUser(createEmbed.GuildId, createEmbed.DiscordId);

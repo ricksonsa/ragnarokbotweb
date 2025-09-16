@@ -1,5 +1,6 @@
 using Discord.WebSocket;
 using RagnarokBotWeb.Application.Discord.Handlers;
+using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Crosscutting.Utils;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
@@ -36,6 +37,7 @@ public class WelcomePackEvent : IInteractionEventHandler
             using var scope = _serviceProvider.CreateScope();
             var guildService = scope.ServiceProvider.GetRequiredService<IGuildService>();
             var playerRegisterService = scope.ServiceProvider.GetRequiredService<IPlayerRegisterService>();
+            var discordService = scope.ServiceProvider.GetRequiredService<IDiscordService>();
 
             var guild = await guildService.FindByDiscordIdAsync(guildDiscordId);
             var playerRegister = await playerRegisterService.FindByGuildIdAndDiscordIdAsync(guild.Id, userDiscordId);
@@ -44,10 +46,15 @@ public class WelcomePackEvent : IInteractionEventHandler
 
             if (playerRegister != null)
             {
-                var dmWarningMessage = GetDmWarningMessage(playerRegister);
-                await dmChannel.SendMessageAsync(dmWarningMessage);
-                await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} You have already requested your Welcome Pack!",
-                    ephemeral: true);
+                try
+                {
+                    var dmWarningMessage = GetDmWarningMessage(playerRegister);
+                    await dmChannel.SendMessageAsync(dmWarningMessage);
+                    await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} You have already requested your Welcome Pack!",
+                        ephemeral: true);
+                }
+                catch { }
+
                 return;
             }
 
@@ -61,12 +68,19 @@ public class WelcomePackEvent : IInteractionEventHandler
                 Status = EPlayerRegisterStatus.Registering
             };
             await playerRegisterService.SaveAsync(newPlayerRegister);
+            var code = BuildWelcomePackCommand(registerId);
 
-            await dmChannel.SendMessageAsync(
-$"{DiscordEmoji.Gift} To receive your Welcome Pack, copy and paste the code bellow into the game chat!\n{BuildWelcomePackCommand(registerId)}");
+            var embed = new CreateEmbed
+            {
+                Title = "THE SCUMBOT REGISTRATION",
+                Text = $"{DiscordEmoji.Gift} To receive your Welcome Pack, copy and paste the code bellow into the game chat!\n{code}",
+            };
 
-            await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} Your Welcome Pack has been sent to your DM!",
-                ephemeral: true);
+            embed.AddField(new CreateEmbedField("Server", guild.ScumServer.Name!));
+            embed.AddField(new CreateEmbedField("Welcome Pack Code", code));
+
+            await discordService.SendEmbedToDmChannel(embed, dmChannel);
+            await component.RespondAsync($"{DiscordEmoji.EnvelopeWithArrow} Your Welcome Pack has been sent to your DM!", ephemeral: true);
         }
         catch (Exception e)
         {

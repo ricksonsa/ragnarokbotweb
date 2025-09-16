@@ -129,6 +129,8 @@ export class CustomTaskComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.route.data.subscribe(data => {
       var item = data['customTask'];
+      var account = data['account'];
+      this.account = account;
       if (item) {
         const task = item as CustomTaskDto;
         this.cron = task.cron;
@@ -204,6 +206,7 @@ export class CustomTaskComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (value) => {
           this.items = [];
+          this.switchForm.controls['switchValue'].patchValue(null);
           switch (value) {
             case 'taxi':
               firstValueFrom(this.taxiService.getTaxiIds())
@@ -230,8 +233,9 @@ export class CustomTaskComponent implements OnInit, OnDestroy {
               break;
 
             case 'shop':
+              console.log('account', this.account);
               this.items.push({ id: this.account.server.id, name: 'Shop' });
-              this.switchForm.controls['switchValue'].patchValue(this.account.server.id);
+              this.switchForm.controls['switchValue'].patchValue(this.account.serverId);
               break;
 
             case 'rank':

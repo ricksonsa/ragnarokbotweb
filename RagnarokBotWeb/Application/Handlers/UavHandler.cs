@@ -29,6 +29,8 @@ namespace RagnarokBotWeb.Application.Handlers
                 TimeStamp = true
             };
 
+            embed.AddField(new CreateEmbedField("Server", server.Name!));
+
             if (server.Uav.SendToUserDM)
             {
                 embed.DiscordId = player.DiscordId!.Value;
@@ -39,7 +41,6 @@ namespace RagnarokBotWeb.Application.Handlers
                 embed.Text = $"Scan will expire <t:{((DateTimeOffset)DateTime.UtcNow.AddMinutes(+15)).ToUnixTimeSeconds()}:R>";
                 await discordService.SendEmbedToChannel(embed);
             }
-
         }
     }
 }

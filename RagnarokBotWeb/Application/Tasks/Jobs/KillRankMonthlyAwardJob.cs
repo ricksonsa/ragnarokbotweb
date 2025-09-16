@@ -79,6 +79,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                                        $"As a reward you’ve earned 💰 {amount.Value} Coins! 🔥\r\n\r\n",
                                 Color = Color.DarkOrange
                             };
+                            embed.AddField(new CreateEmbedField("Server", server.Name!));
                             await discordService.SendEmbedToUserDM(embed);
                         }
                     }

@@ -28,5 +28,6 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
         Task<IUserMessage?> CreateUavButtons(ScumServer server, ulong channelId);
         Task<IUserMessage?> CreateTeleportButtons(Taxi taxi);
         Task<IUserMessage?> CreateExchangeButtons(ScumServer server);
+        Task<IUserMessage> SendEmbedToDmChannel(CreateEmbed createEmbed, IDMChannel channel);
     }
 }
