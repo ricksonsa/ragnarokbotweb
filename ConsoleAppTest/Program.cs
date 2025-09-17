@@ -41,13 +41,10 @@ namespace ConsoleAppTest
         {
             try
             {
-                var mapExtractor = new ScumMapExtractor("island_4k.jpg");
+                var mapExtractor = new ScumMapExtractor("island.jpg");
 
                 // Coordenada central - centro do mapa (setor B2)
                 var centerCoord = ScumCoordinate.FromSectorCenter("B2");
-
-                var line = "2025.09.05-09.05.49: '170.246.119.51 76561198356493229:FerreiraJJ(1247)' logged in at: X=155135.000 Y=53565.000 Z=30406.000";
-                var login = Parse(line);
 
 
                 // Lista de pontos usando diferentes métodos
@@ -69,10 +66,13 @@ namespace ConsoleAppTest
                 // {X=-250758.141 Y=-37223.129 Z=35788.141|P=329.433746 Y=234.574814 R=0.000000}
                 var points = new List<ScumCoordinate>
                 {
+                    new ScumCoordinate(-250758.141f, -37223.129f),
+                    new ScumCoordinate(-250758.141f, -37223.129f),
+                    new ScumCoordinate(-250758.141f, -37223.129f),
                     new ScumCoordinate(-250758.141f, -37223.129f)
                 };
                 var mid = ScumCoordinate.MidPoint((285811.59375f, -21049.46875f), (137592.1875f, -31476.5983f));
-                var stream = await mapExtractor.ExtractMapWithPoints(
+                var stream = await mapExtractor.ExtractMapWithPointsWithWatermark(
                     mid,
                     points,
                     extractSize: 256

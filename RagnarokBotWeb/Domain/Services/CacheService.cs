@@ -1,5 +1,4 @@
-﻿using RagnarokBotWeb.Application;
-using RagnarokBotWeb.Application.Models;
+﻿using RagnarokBotWeb.Application.Models;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using Shared.Models;
 using System.Collections.Concurrent;

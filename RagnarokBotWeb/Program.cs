@@ -9,6 +9,7 @@ using RagnarokBotWeb.Application.BotServer;
 using RagnarokBotWeb.Application.Discord;
 using RagnarokBotWeb.Application.Discord.Handlers;
 using RagnarokBotWeb.Application.Mapping;
+using RagnarokBotWeb.Application.Resolvers;
 using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Application.Tasks.BackgroundServices;
 using RagnarokBotWeb.Application.Tasks.Jobs;
@@ -287,7 +288,8 @@ namespace RagnarokBotWeb
                 });
             }
 
-            builder.Services.AddHttpClient();
+            builder.Services.AddHttpClient<IpAddressResolver>();
+            builder.Services.AddHttpClient<SteamAccountResolver>();
             builder.Services.AddMvc();
             builder.Services.AddRateLimiting();
 

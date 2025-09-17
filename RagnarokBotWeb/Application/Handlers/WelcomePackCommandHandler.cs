@@ -14,17 +14,20 @@ namespace RagnarokBotWeb.Application.Handlers
         private readonly IDiscordService _discordService;
         private readonly IOrderService _orderService;
         private readonly IPlayerRepository _playerRepository;
+        private readonly SteamAccountResolver _steamAccountResolver;
 
         public WelcomePackCommandHandler(
             IPlayerRepository playerRepository,
             IPlayerRegisterRepository playerRegisterRepository,
             IDiscordService discordService,
-            IOrderService orderService)
+            IOrderService orderService,
+            SteamAccountResolver steamAccountResolver)
         {
             _playerRepository = playerRepository;
             _playerRegisterRepository = playerRegisterRepository;
             _discordService = discordService;
             _orderService = orderService;
+            _steamAccountResolver = steamAccountResolver;
         }
 
         public async Task ExecuteAsync(ChatTextParseResult input)
@@ -41,7 +44,15 @@ namespace RagnarokBotWeb.Application.Handlers
 
             player ??= new();
             player.SteamId64 = input.SteamId;
-            player.SteamName = await new SteamAccountResolver().Resolve(input.SteamId);
+
+            var steamInfo = await _steamAccountResolver.Resolve(input.SteamId);
+            if (steamInfo is not null)
+            {
+                player.SteamName = steamInfo.PersonaName;
+                player.VacBan = steamInfo.VacBanned;
+                player.VacBanCount = steamInfo.NumberOfVacBans;
+            }
+
             player.Name = input.PlayerName;
             player.DiscordName = (await _discordService.GetDiscordUser(register.ScumServer.Guild!.DiscordId, register.DiscordId))?.DisplayName;
             player.DiscordId = register.DiscordId;

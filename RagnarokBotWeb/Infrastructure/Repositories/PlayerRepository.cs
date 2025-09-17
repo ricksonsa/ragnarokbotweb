@@ -117,6 +117,7 @@ public class PlayerRepository : Repository<Player>, IPlayerRepository
                player.Name!.ToLower().Contains(filter.ToLower())
                || (player.DiscordName != null && player.DiscordName.ToLower().Contains(filter.ToLower()))
                || (player.SteamId64 != null && player.SteamId64.ToLower().Contains(filter.ToLower()))
+               || (player.IpAddress != null && player.IpAddress.Contains(filter))
                || (player.SteamName != null && player.SteamName.ToLower().Contains(filter.ToLower())));
         }
 

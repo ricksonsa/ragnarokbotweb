@@ -31,13 +31,6 @@ public class ScumMapExtractor
         _mapHeight = image.Height;
     }
 
-    //public static (float x, float y) GetMidpoint((float x1, float y1) point1, (float x2, float y2) point2)
-    //{
-    //    float midX = (point1.x1 + point2.x2) / 2;
-    //    float midY = (point1.y1 + point2.y2) / 2;
-    //    return (midX, midY);
-    //}
-
     /// <summary>
     /// Extrai uma porção do mapa equivalente ao tamanho de um setor (3km x 3km)
     /// </summary>
@@ -123,10 +116,10 @@ public class ScumMapExtractor
         var sectorCenter = ScumCoordinate.FromSectorCenter(sectorReference);
 
         // Filtra pontos que estão dentro ou próximos do setor
-        var relevantPoints = FilterPointsNearSector(points, sectorCenter);
+        //var relevantPoints = FilterPointsNearSector(points, sectorCenter);
 
         var memoryStream = new MemoryStream();
-        await ExtractSectorSizeArea(sectorCenter, relevantPoints, memoryStream, showGrid, true);
+        await ExtractSectorSizeAreaWithWatermark(sectorCenter, points, memoryStream, showGrid: showGrid, showLabels: true);
         memoryStream.Position = 0;
         return memoryStream;
     }
@@ -169,37 +162,6 @@ public class ScumMapExtractor
         return relevantPoints;
     }
 
-    /// <summary>
-    /// Adiciona informações contextuais específicas para extração de setor
-    /// </summary>
-    private void AddSectorContextInfo(Image<Rgba32> extractedMap, ScumCoordinate centerCoordinate, List<ScumCoordinate> points, int sectorSize)
-    {
-        extractedMap.Mutate(ctx =>
-        {
-            var headerFont = SystemFonts.CreateFont("Arial", 16, FontStyle.Bold);
-            var infoFont = SystemFonts.CreateFont("Arial", 12);
-
-            // Fundo para informações
-            var infoHeight = 90;
-            ctx.Fill(Color.FromRgba(0, 0, 0, 220), new RectangleF(0, 0, extractedMap.Width, infoHeight));
-
-            // Título destacando que é uma área de setor
-            var sectorRef = centerCoordinate.GetSectorReference();
-            ctx.DrawText($"SETOR {sectorRef} - Área 3km x 3km", headerFont, Color.Orange, new PointF(10, 8));
-
-            // Coordenadas do centro
-            var centerText = $"Centro: ({centerCoordinate.X:F0}, {centerCoordinate.Y:F0})";
-            ctx.DrawText(centerText, infoFont, Color.White, new PointF(10, 30));
-
-            // Informações da extração
-            var extractInfo = $"Tamanho: {sectorSize}x{sectorSize}px | Pontos: {points.Count}";
-            ctx.DrawText(extractInfo, infoFont, Color.LightGray, new PointF(10, 48));
-
-            // Escala exata
-            var scaleText = $"Escala: 1 setor = 3km | {sectorSize}px = 304.803m";
-            ctx.DrawText(scaleText, infoFont, Color.Yellow, new PointF(10, 66));
-        });
-    }
     /// <param name="centerCoordinate">Coordenada central (em coordenadas reais do SCUM)</param>
     /// <param name="points">Lista de pontos para desenhar no mapa</param>
     /// <param name="extractSize">Tamanho da área a extrair em pixels</param>
@@ -208,7 +170,7 @@ public class ScumMapExtractor
     public async Task<Stream> ExtractMapWithPoints(
         ScumCoordinate centerCoordinate,
         List<ScumCoordinate> points,
-        int extractSize = 1024,
+        int extractSize = 512,
         bool autoFitPoints = true,
         bool showLabels = true,
         bool showGrid = true)
@@ -256,6 +218,341 @@ public class ScumMapExtractor
         return memoryStream;
 
         // Salva a imagem resultante
+    }
+
+    /// <summary>
+    /// Watermark position options
+    /// </summary>
+    public enum WatermarkPosition
+    {
+        TopLeft,
+        TopRight,
+        TopCenter,
+        BottomLeft,
+        BottomRight,
+        BottomCenter,
+        Center,
+        CenterLeft,
+        CenterRight
+    }
+
+    /// <summary>
+    /// Applies a PNG watermark to the extracted map
+    /// </summary>
+    /// <param name="extractedMap">The map image to apply watermark to</param>
+    /// <param name="watermarkPath">Path to the PNG watermark file</param>
+    /// <param name="position">Position where to place the watermark</param>
+    /// <param name="opacity">Opacity of the watermark (0.0 to 1.0)</param>
+    /// <param name="scale">Scale factor for the watermark (1.0 = original size)</param>
+    /// <param name="margin">Margin from edges in pixels</param>
+    private void ApplyWatermark(Image<Rgba32> extractedMap, string watermarkPath,
+        WatermarkPosition position = WatermarkPosition.BottomRight,
+        float opacity = 0.7f,
+        float scale = 1.0f,
+        int margin = 10)
+    {
+        if (!File.Exists(watermarkPath))
+        {
+            throw new FileNotFoundException($"Watermark file not found: {watermarkPath}");
+        }
+
+        using var watermark = Image.Load<Rgba32>(watermarkPath);
+        ApplyWatermark(extractedMap, watermark, position, opacity, scale, margin);
+    }
+
+    /// <summary>
+    /// Applies a watermark image to the extracted map
+    /// </summary>
+    /// <param name="extractedMap">The map image to apply watermark to</param>
+    /// <param name="watermark">The watermark image</param>
+    /// <param name="position">Position where to place the watermark</param>
+    /// <param name="opacity">Opacity of the watermark (0.0 to 1.0)</param>
+    /// <param name="scale">Scale factor for the watermark (1.0 = original size)</param>
+    /// <param name="margin">Margin from edges in pixels</param>
+    private void ApplyWatermark(Image<Rgba32> extractedMap, Image<Rgba32> watermark,
+        WatermarkPosition position = WatermarkPosition.BottomRight,
+        float opacity = 0.7f,
+        float scale = 1.0f,
+        int margin = 10)
+    {
+        // Scale watermark if needed
+        Image<Rgba32> scaledWatermark = watermark;
+        if (Math.Abs(scale - 1.0f) > 0.001f)
+        {
+            int newWidth = (int)(watermark.Width * scale);
+            int newHeight = (int)(watermark.Height * scale);
+            scaledWatermark = watermark.Clone();
+            scaledWatermark.Mutate(ctx => ctx.Resize(newWidth, newHeight));
+        }
+
+        try
+        {
+            // Calculate position
+            var watermarkPosition = CalculateWatermarkPosition(
+                extractedMap.Width, extractedMap.Height,
+                scaledWatermark.Width, scaledWatermark.Height,
+                position, margin);
+
+            // Apply watermark
+            extractedMap.Mutate(ctx =>
+            {
+                ctx.DrawImage(scaledWatermark, watermarkPosition, opacity);
+            });
+        }
+        finally
+        {
+            // Dispose scaled watermark if it was created
+            if (scaledWatermark != watermark)
+            {
+                scaledWatermark.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Calculate the position for watermark placement
+    /// </summary>
+    private Point CalculateWatermarkPosition(int mapWidth, int mapHeight,
+        int watermarkWidth, int watermarkHeight,
+        WatermarkPosition position, int margin)
+    {
+        return position switch
+        {
+            WatermarkPosition.TopLeft => new Point(margin, margin),
+
+            WatermarkPosition.TopRight => new Point(
+                mapWidth - watermarkWidth - margin, margin),
+
+            WatermarkPosition.TopCenter => new Point(
+                (mapWidth - watermarkWidth) / 2, margin),
+
+            WatermarkPosition.BottomLeft => new Point(
+                margin, mapHeight - watermarkHeight - margin),
+
+            WatermarkPosition.BottomRight => new Point(
+                mapWidth - watermarkWidth - margin,
+                mapHeight - watermarkHeight - margin),
+
+            WatermarkPosition.BottomCenter => new Point(
+                (mapWidth - watermarkWidth) / 2,
+                mapHeight - watermarkHeight - margin),
+
+            WatermarkPosition.Center => new Point(
+                (mapWidth - watermarkWidth) / 2,
+                (mapHeight - watermarkHeight) / 2),
+
+            WatermarkPosition.CenterLeft => new Point(
+                margin, (mapHeight - watermarkHeight) / 2),
+
+            WatermarkPosition.CenterRight => new Point(
+                mapWidth - watermarkWidth - margin,
+                (mapHeight - watermarkHeight) / 2),
+
+            _ => new Point(mapWidth - watermarkWidth - margin,
+                          mapHeight - watermarkHeight - margin)
+        };
+    }
+
+    /// <summary>
+    /// Enhanced method that applies watermark with automatic sizing based on map size
+    /// </summary>
+    private void ApplyAdaptiveWatermark(Image<Rgba32> extractedMap,
+        WatermarkPosition position = WatermarkPosition.BottomRight,
+        float opacity = 0.7f,
+        float maxSizePercent = 0.2f, // Max 20% of map size
+        int margin = 10)
+    {
+        string watermarkPath = "thescumbot.png";
+        if (!File.Exists(watermarkPath))
+        {
+            throw new FileNotFoundException($"Watermark file not found: {watermarkPath}");
+        }
+
+        using var watermark = Image.Load<Rgba32>(watermarkPath);
+
+        // Calculate adaptive scale
+        float maxWidth = extractedMap.Width * maxSizePercent;
+        float maxHeight = extractedMap.Height * maxSizePercent;
+
+        float scaleX = maxWidth / watermark.Width;
+        float scaleY = maxHeight / watermark.Height;
+        float adaptiveScale = Math.Min(scaleX, scaleY);
+
+        // Don't upscale, only downscale
+        adaptiveScale = Math.Min(adaptiveScale, 1.0f);
+
+        ApplyWatermark(extractedMap, watermark, position, opacity, adaptiveScale, margin);
+    }
+
+    /// <summary>
+    /// Applies multiple watermarks (useful for corners, credits, etc.)
+    /// </summary>
+    private void ApplyMultipleWatermarks(Image<Rgba32> extractedMap,
+        Dictionary<string, (WatermarkPosition position, float opacity, float scale)> watermarks,
+        int margin = 10)
+    {
+        foreach (var watermarkConfig in watermarks)
+        {
+            string watermarkPath = watermarkConfig.Key;
+            var (position, opacity, scale) = watermarkConfig.Value;
+
+            if (File.Exists(watermarkPath))
+            {
+                ApplyWatermark(extractedMap, watermarkPath, position, opacity, scale, margin);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates a text watermark as an image
+    /// </summary>
+    private Image<Rgba32> CreateTextWatermark(string text, Color textColor,
+        int fontSize = 20, string fontFamily = "Arial", FontStyle fontStyle = FontStyle.Regular)
+    {
+        var font = SystemFonts.CreateFont(fontFamily, fontSize, fontStyle);
+        var textOptions = new TextOptions(font);
+        var textSize = TextMeasurer.MeasureSize(text, textOptions);
+
+        // Add padding
+        int padding = 10;
+        int imageWidth = (int)textSize.Width + (padding * 2);
+        int imageHeight = (int)textSize.Height + (padding * 2);
+
+        var textImage = new Image<Rgba32>(imageWidth, imageHeight);
+        textImage.Mutate(ctx =>
+        {
+            // Transparent background
+            ctx.Fill(Color.Transparent);
+
+            // Draw text
+            ctx.DrawText(text, font, textColor, new PointF(padding, padding));
+        });
+
+        return textImage;
+    }
+
+    /// <summary>
+    /// Applies a text watermark
+    /// </summary>
+    private void ApplyTextWatermark(Image<Rgba32> extractedMap, string text,
+        WatermarkPosition position = WatermarkPosition.BottomRight,
+        Color? textColor = null, float opacity = 0.7f,
+        int fontSize = 16, int margin = 10)
+    {
+        textColor ??= Color.White;
+
+        using var textWatermark = CreateTextWatermark(text, textColor.Value, fontSize);
+        ApplyWatermark(extractedMap, textWatermark, position, opacity, 1.0f, margin);
+    }
+
+    /// <summary>
+    /// Updated ExtractSectorSizeArea method with watermark support
+    /// </summary>
+    public async Task ExtractSectorSizeAreaWithWatermark(
+        ScumCoordinate centerCoordinate,
+        List<ScumCoordinate> points,
+        Stream outputStream,
+        WatermarkPosition watermarkPosition = WatermarkPosition.BottomRight,
+        float watermarkOpacity = 0.7f,
+        bool showGrid = true,
+        bool showLabels = true,
+        bool maintainAspectRatio = true)
+    {
+        using var originalMap = Image.Load<Rgba32>(_mapImagePath);
+
+        // Calculate sector size and draw elements (same as before)
+        int sectorSizeInPixels = CalculateSectorSizeInPixels();
+
+        if (showGrid)
+        {
+            DrawSectorGrid(originalMap);
+        }
+
+        if (showLabels)
+        {
+            DrawSectorLabels(originalMap);
+        }
+
+        DrawPointsOnOriginalMapWithOverlapResolution(originalMap, points);
+
+        // Extract the map portion
+        var centerPixel = GameCoordinateToPixel(centerCoordinate);
+        var extractRect = CalculateExtractionRectangle(centerPixel, sectorSizeInPixels);
+
+        using var extractedMap = ExtractMapPortion(originalMap, extractRect);
+
+        Image<Rgba32> finalMap = extractedMap;
+        if (maintainAspectRatio && extractRect.Width != extractRect.Height)
+        {
+            int size = Math.Max(extractRect.Width, extractRect.Height);
+            finalMap = new Image<Rgba32>(size, size);
+            finalMap.Mutate(ctx =>
+            {
+                ctx.Fill(Color.Black);
+                int offsetX = (size - extractedMap.Width) / 2;
+                int offsetY = (size - extractedMap.Height) / 2;
+                ctx.DrawImage(extractedMap, new Point(offsetX, offsetY), 1f);
+            });
+        }
+
+        ApplyAdaptiveWatermark(finalMap, watermarkPosition, watermarkOpacity);
+
+        // Save the final image
+        await finalMap.SaveAsync(outputStream, new JpegEncoder());
+
+        if (finalMap != extractedMap)
+        {
+            finalMap.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Updated ExtractMapWithPoints method with watermark support
+    /// </summary>
+    public async Task<Stream> ExtractMapWithPointsWithWatermark(
+        ScumCoordinate centerCoordinate,
+        List<ScumCoordinate> points,
+        int extractSize = 512,
+        bool autoFitPoints = true,
+        bool showLabels = true,
+        bool showGrid = true,
+        WatermarkPosition watermarkPosition = WatermarkPosition.BottomRight,
+        float watermarkOpacity = 0.7f)
+    {
+        using var originalMap = Image.Load<Rgba32>(_mapImagePath);
+
+        if (showGrid)
+        {
+            DrawSectorGrid(originalMap, lineWidth: 0.5f);
+        }
+
+        if (showLabels)
+        {
+            DrawSectorLabels(originalMap);
+        }
+
+        DrawPointsOnOriginalMapWithOverlapResolution(originalMap, points);
+
+        Rectangle extractRect;
+        if (autoFitPoints && points.Count > 0)
+        {
+            extractRect = CalculateOptimalExtractionArea(centerCoordinate, points, extractSize);
+        }
+        else
+        {
+            var centerPixel = GameCoordinateToPixel(centerCoordinate);
+            extractRect = CalculateExtractionRectangle(centerPixel, extractSize);
+        }
+
+        using var extractedMap = ExtractMapPortion(originalMap, extractRect);
+
+        ApplyAdaptiveWatermark(extractedMap, watermarkPosition, watermarkOpacity);
+
+        var memoryStream = new MemoryStream();
+        await extractedMap.SaveAsync(memoryStream, new JpegEncoder());
+        memoryStream.Position = 0;
+
+        return memoryStream;
     }
 
     /// <summary>
@@ -428,7 +725,7 @@ public class ScumMapExtractor
                             textPosition.X - 4,
                             textPosition.Y - 2,
                             textSize.Width + 8,
-                            textSize.Height + 4
+                            textSize.Height + 8
                         );
                         ctx.Fill(Color.FromRgba(0, 0, 0, 180), bgRect);
 
@@ -444,49 +741,304 @@ public class ScumMapExtractor
     }
 
     /// <summary>
-    /// Cria um mapa completo apenas com a grid dos setores (útil para referência)
+    /// Resolve overlapping points by adjusting their positions
     /// </summary>
-    /// <param name="outputPath">Caminho para salvar o mapa com grid</param>
-    /// <param name="gridColor">Cor das linhas da grid</param>
-    /// <param name="backgroundColor">Cor de fundo (null para manter original)</param>
-    public void CreateGridOnlyMap(string outputPath = "scum_grid_map.png", Color? gridColor = null, Color? backgroundColor = null)
+    private List<AdjustedPoint> ResolveOverlappingPoints(List<ScumCoordinate> points, float minDistance = 8f)
     {
-        using var originalMap = Image.Load<Rgba32>(_mapImagePath);
+        var adjustedPoints = new List<AdjustedPoint>();
 
-        // Aplica cor de fundo se especificada
-        if (backgroundColor.HasValue)
+        // Convert all points to AdjustedPoint objects
+        foreach (var point in points)
         {
-            originalMap.Mutate(ctx => ctx.BackgroundColor(backgroundColor.Value));
+            var pixelPos = GameCoordinateToPixel(point);
+            adjustedPoints.Add(new AdjustedPoint
+            {
+                OriginalCoordinate = point,
+                Color = point.Color,
+                Label = point.Label,
+                PixelPosition = new PointF(pixelPos.X, pixelPos.Y)
+            });
         }
 
-        // Desenha a grid
-        DrawSectorGrid(originalMap, gridColor, lineWidth: 1f);
-        DrawSectorLabels(originalMap);
+        // Sort by priority (points with labels first, then by color importance)
+        adjustedPoints = adjustedPoints.OrderBy(p => string.IsNullOrEmpty(p.Label) ? 1 : 0)
+                                       .ThenBy(p => GetColorPriority(p.Color))
+                                       .ToList();
 
-        // Adiciona título
+        // Resolve overlaps using force-based positioning
+        for (int i = 0; i < adjustedPoints.Count; i++)
+        {
+            var currentPoint = adjustedPoints[i];
+            var adjustedPosition = ResolvePointPosition(currentPoint.PixelPosition, adjustedPoints.Take(i).ToList(), minDistance);
+            currentPoint.PixelPosition = adjustedPosition;
+        }
+
+        return adjustedPoints;
+    }
+
+    /// <summary>
+    /// Resolves position for a single point to avoid overlaps with existing points
+    /// </summary>
+    private PointF ResolvePointPosition(PointF originalPos, List<AdjustedPoint> existingPoints, float minDistance)
+    {
+        if (!existingPoints.Any())
+            return originalPos;
+
+        var currentPos = originalPos;
+        const int maxAttempts = 50;
+        const float stepSize = 2f;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            bool hasOverlap = false;
+
+            foreach (var existingPoint in existingPoints)
+            {
+                float distance = CalculateDistance(currentPos, existingPoint.PixelPosition);
+                if (distance < minDistance)
+                {
+                    hasOverlap = true;
+
+                    // Calculate push direction (away from overlapping point)
+                    var pushDirection = GetPushDirection(currentPos, existingPoint.PixelPosition, minDistance);
+                    currentPos = new PointF(
+                        currentPos.X + pushDirection.X,
+                        currentPos.Y + pushDirection.Y
+                    );
+                    break;
+                }
+            }
+
+            if (!hasOverlap)
+                break;
+        }
+
+        return currentPos;
+    }
+
+    /// <summary>
+    /// Alternative spiral-based overlap resolution
+    /// </summary>
+    private PointF ResolvePointPositionSpiral(PointF originalPos, List<AdjustedPoint> existingPoints, float minDistance)
+    {
+        if (!existingPoints.Any())
+            return originalPos;
+
+        // Check if original position is free
+        if (!HasOverlapAtPosition(originalPos, existingPoints, minDistance))
+            return originalPos;
+
+        // Try positions in expanding spiral pattern
+        const float angleStep = (float)(Math.PI / 6); // 30 degrees
+        const float radiusStep = 3f;
+
+        for (float radius = minDistance; radius <= minDistance * 4; radius += radiusStep)
+        {
+            for (float angle = 0; angle < 2 * Math.PI; angle += angleStep)
+            {
+                var testPos = new PointF(
+                    originalPos.X + radius * (float)Math.Cos(angle),
+                    originalPos.Y + radius * (float)Math.Sin(angle)
+                );
+
+                if (!HasOverlapAtPosition(testPos, existingPoints, minDistance))
+                    return testPos;
+            }
+        }
+
+        // Fallback to force-based if spiral fails
+        return ResolvePointPosition(originalPos, existingPoints, minDistance);
+    }
+
+    /// <summary>
+    /// Check if a position has overlaps with existing points
+    /// </summary>
+    private bool HasOverlapAtPosition(PointF position, List<AdjustedPoint> existingPoints, float minDistance)
+    {
+        return existingPoints.Any(existing =>
+            CalculateDistance(position, existing.PixelPosition) < minDistance);
+    }
+
+    /// <summary>
+    /// Calculate direction to push overlapping point
+    /// </summary>
+    private PointF GetPushDirection(PointF currentPos, PointF blockingPos, float minDistance)
+    {
+        float deltaX = currentPos.X - blockingPos.X;
+        float deltaY = currentPos.Y - blockingPos.Y;
+
+        // If points are exactly on top of each other, pick random direction
+        if (Math.Abs(deltaX) < 0.1f && Math.Abs(deltaY) < 0.1f)
+        {
+            var random = new Random();
+            double angle = random.NextDouble() * 2 * Math.PI;
+            deltaX = (float)Math.Cos(angle);
+            deltaY = (float)Math.Sin(angle);
+        }
+
+        // Normalize direction
+        float distance = (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+        if (distance > 0)
+        {
+            deltaX /= distance;
+            deltaY /= distance;
+        }
+
+        // Scale to minimum distance
+        float pushStrength = minDistance - distance + 1f;
+        return new PointF(deltaX * pushStrength, deltaY * pushStrength);
+    }
+
+    /// <summary>
+    /// Assign priority to colors for overlap resolution (lower = higher priority)
+    /// </summary>
+    private int GetColorPriority(Color color)
+    {
+        if (color == Color.Red) return 0;      // Highest priority
+        if (color == Color.Orange) return 1;
+        if (color == Color.Yellow) return 2;
+        if (color == Color.Green) return 3;
+        if (color == Color.Blue) return 4;
+        if (color == Color.Purple) return 5;
+        return 6; // Default/other colors
+    }
+
+    /// <summary>
+    /// Enhanced method to draw points with overlap resolution
+    /// </summary>
+    private void DrawPointsOnOriginalMapWithOverlapResolution(Image<Rgba32> originalMap, List<ScumCoordinate> points, bool useSpiral = true)
+    {
+        // Resolve overlapping positions
+        var adjustedPoints = useSpiral ?
+            ResolveOverlappingPointsSpiral(points) :
+            ResolveOverlappingPoints(points);
+
         originalMap.Mutate(ctx =>
         {
-            var titleFont = SystemFonts.CreateFont("Arial", 32, FontStyle.Bold);
-            var title = "SCUM - Grid dos Setores";
-            var titleSize = TextMeasurer.MeasureSize(title, new TextOptions(titleFont));
+            // Draw connection lines from original to adjusted positions (optional, for debugging)
+            foreach (var pointData in adjustedPoints)
+            {
+                var originalPixel = GameCoordinateToPixel(pointData.OriginalCoordinate);
+                var adjustedPixel = pointData.PixelPosition;
 
-            // Fundo para o título
-            var titleBg = new RectangleF(10, 10, titleSize.Width + 20, titleSize.Height + 10);
-            ctx.Fill(Color.FromRgba(0, 0, 0, 200), titleBg);
-            ctx.DrawText(title, titleFont, Color.White, new PointF(20, 15));
+                float distance = CalculateDistance(new PointF(originalPixel.X, originalPixel.Y), adjustedPixel);
 
-            // Legenda
-            var legendFont = SystemFonts.CreateFont("Arial", 16);
-            var legendY = titleSize.Height + 35;
+                // Draw subtle connection line if point was moved significantly
+                if (distance > 5f)
+                {
+                    ctx.DrawLine(Color.FromRgba(128, 128, 128, 100), 1f,
+                        new PointF(originalPixel.X, originalPixel.Y),
+                        adjustedPixel);
+                }
+            }
 
-            ctx.DrawText("• Cada setor = 3km x 3km", legendFont, Color.Yellow, new PointF(20, legendY));
-            ctx.DrawText("• Numeração: 0-4 (direita → esquerda) | Letras: Z-D (sul → norte)", legendFont, Color.LightGray, new PointF(20, legendY + 25));
-            ctx.DrawText("• Coordenadas baseadas no fórum oficial SCUM", legendFont, Color.LightGray, new PointF(20, legendY + 50));
+            // Draw adjusted points
+            foreach (var pointData in adjustedPoints)
+            {
+                var pos = pointData.PixelPosition;
+
+                // White border
+                ctx.Fill(Color.White, new EllipsePolygon(pos.X, pos.Y, 4f));
+                // Colored center
+                ctx.Fill(pointData.Color, new EllipsePolygon(pos.X, pos.Y, 3f));
+
+                // Draw label if exists
+                if (!string.IsNullOrEmpty(pointData.Label))
+                {
+                    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
+                    var textSize = TextMeasurer.MeasureSize(pointData.Label, new TextOptions(font));
+
+                    // Position label to avoid further overlaps
+                    var labelPos = CalculateLabelPosition(pos, textSize, adjustedPoints);
+
+                    var textRect = new RectangleF(labelPos.X - 2, labelPos.Y - 1, textSize.Width + 4, textSize.Height + 2);
+                    ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
+                    ctx.DrawText(pointData.Label, font, Color.White, labelPos);
+                }
+            }
         });
-
-        originalMap.Save(outputPath);
-        Console.WriteLine($"Mapa com grid salvo em: {outputPath}");
     }
+
+    /// <summary>
+    /// Spiral-based overlap resolution (alternative approach)
+    /// </summary>
+    private List<AdjustedPoint> ResolveOverlappingPointsSpiral(List<ScumCoordinate> points, float minDistance = 8f)
+    {
+        var adjustedPoints = new List<AdjustedPoint>();
+
+        // Sort by priority
+        var sortedPoints = points.OrderBy(p => string.IsNullOrEmpty(p.Label) ? 1 : 0)
+                               .ThenBy(p => GetColorPriority(p.Color))
+                               .ToList();
+
+        foreach (var point in sortedPoints)
+        {
+            var originalPixel = GameCoordinateToPixel(point);
+            var adjustedPos = ResolvePointPositionSpiral(
+                new PointF(originalPixel.X, originalPixel.Y),
+                adjustedPoints,
+                minDistance);
+
+            adjustedPoints.Add(new AdjustedPoint
+            {
+                OriginalCoordinate = point,
+                Color = point.Color,
+                Label = point.Label,
+                PixelPosition = adjustedPos
+            });
+        }
+
+        return adjustedPoints;
+    }
+
+    /// <summary>
+    /// Calculate optimal label position to avoid overlaps
+    /// </summary>
+    private PointF CalculateLabelPosition(PointF pointPos, FontRectangle textSize, List<AdjustedPoint> allPoints)
+    {
+        // Try positions around the point (right, top-right, top, etc.)
+        var offsets = new[]
+        {
+        new PointF(8, -4),      // Right
+        new PointF(8, -textSize.Height - 2), // Top-right
+        new PointF(-4, -textSize.Height - 4), // Top
+        new PointF(-textSize.Width - 4, -textSize.Height - 2), // Top-left
+        new PointF(-textSize.Width - 4, -4), // Left
+        new PointF(-textSize.Width - 4, 8), // Bottom-left
+        new PointF(-4, 8),      // Bottom
+        new PointF(8, 8)        // Bottom-right
+    };
+
+        foreach (var offset in offsets)
+        {
+            var testPos = new PointF(pointPos.X + offset.X, pointPos.Y + offset.Y);
+            var testRect = new RectangleF(testPos.X, testPos.Y, textSize.Width, textSize.Height);
+
+            // Check if this position overlaps with other points
+            bool hasOverlap = allPoints.Any(p =>
+            {
+                float distance = CalculateDistance(testPos, p.PixelPosition);
+                return distance < 15f; // Minimum distance from points to labels
+            });
+
+            if (!hasOverlap)
+                return testPos;
+        }
+
+        // Fallback to default position if no good position found
+        return new PointF(pointPos.X + 8, pointPos.Y - 4);
+    }
+
+    /// <summary>
+    /// Updated DrawPointsOnOriginalMap method with overlap resolution
+    /// Replace your existing DrawPointsOnOriginalMap method with this one
+    /// </summary>
+    private void DrawPointsOnOriginalMap(Image<Rgba32> originalMap, List<ScumCoordinate> points)
+    {
+        // Use the new overlap resolution method
+        DrawPointsOnOriginalMapWithOverlapResolution(originalMap, points, useSpiral: true);
+    }
+
     private Rectangle CalculateOptimalExtractionArea(ScumCoordinate centerCoordinate, List<ScumCoordinate> points, int minSize)
     {
         var allPoints = new List<ScumCoordinate>(points) { centerCoordinate };
@@ -540,149 +1092,37 @@ public class ScumMapExtractor
         public string? Label { get; internal set; }
     }
 
-
-    /// <summary>
-    /// Resolve sobreposições de pontos reposicionando-os
-    /// </summary>
-    private List<AdjustedPoint> ResolveOverlappingPoints(List<ScumCoordinate> points)
-    {
-        var adjustedPoints = new List<AdjustedPoint>();
-        const int minDistance = 25; // Distância mínima em pixels entre pontos
-        const int maxIterations = 100; // Evita loop infinito
-
-        // Converte todos os pontos para pixels
-        var allCoordinates = new List<ScumCoordinate>(points);
-
-        foreach (var coord in allCoordinates)
-        {
-            var pixel = GameCoordinateToPixel(coord);
-            adjustedPoints.Add(new AdjustedPoint
-            {
-                OriginalCoordinate = coord,
-                PixelPosition = new PointF(pixel.X, pixel.Y)
-            });
-        }
-
-        // Algoritmo de separação de pontos
-        for (int iteration = 0; iteration < maxIterations; iteration++)
-        {
-            bool hadCollision = false;
-
-            for (int i = 0; i < adjustedPoints.Count; i++)
-            {
-                for (int j = i + 1; j < adjustedPoints.Count; j++)
-                {
-                    var point1 = adjustedPoints[i];
-                    var point2 = adjustedPoints[j];
-
-                    float distance = CalculateDistance(point1.PixelPosition, point2.PixelPosition);
-
-                    if (distance < minDistance)
-                    {
-                        hadCollision = true;
-
-                        // Calcula vetor de separação
-                        float deltaX = point2.PixelPosition.X - point1.PixelPosition.X;
-                        float deltaY = point2.PixelPosition.Y - point1.PixelPosition.Y;
-
-                        // Evita divisão por zero
-                        if (Math.Abs(deltaX) < 0.1f && Math.Abs(deltaY) < 0.1f)
-                        {
-                            deltaX = 1f;
-                            deltaY = 0f;
-                        }
-
-                        float length = (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-                        deltaX /= length;
-                        deltaY /= length;
-
-                        // Calcula o deslocamento necessário
-                        float overlap = minDistance - distance;
-                        float moveDistance = overlap / 2f;
-
-                        // Move os pontos para lados opostos
-                        // Ponto central tem prioridade (move menos)
-                        float factor1 = 0.8f;
-                        float factor2 = 0.8f;
-
-                        adjustedPoints[i] = new AdjustedPoint
-                        {
-                            OriginalCoordinate = point1.OriginalCoordinate,
-                            PixelPosition = new PointF(
-                                point1.PixelPosition.X - deltaX * moveDistance * factor1,
-                                point1.PixelPosition.Y - deltaY * moveDistance * factor1
-                            ),
-                            Color = point1.Color,
-                            Label = point1.Label
-                        };
-
-                        adjustedPoints[j] = new AdjustedPoint
-                        {
-                            OriginalCoordinate = point2.OriginalCoordinate,
-                            PixelPosition = new PointF(
-                                point2.PixelPosition.X + deltaX * moveDistance * factor2,
-                                point2.PixelPosition.Y + deltaY * moveDistance * factor2
-                            ),
-                            Color = point2.Color,
-                            Label = point2.Label
-                        };
-                    }
-                }
-            }
-
-            // Se não houve colisões, termina
-            if (!hadCollision)
-                break;
-        }
-
-        return adjustedPoints;
-    }
-
     /// <summary>
     /// Desenha todos os pontos no mapa original
     /// </summary>
-    private void DrawPointsOnOriginalMap(Image<Rgba32> originalMap, List<ScumCoordinate> points)
-    {
-        // Resolve sobreposições antes de desenhar
-        //var adjustedPoints = ResolveOverlappingPoints(points);
+    //private void DrawPointsOnOriginalMap(Image<Rgba32> originalMap, List<ScumCoordinate> points)
+    //{
+    //    // Resolve sobreposições antes de desenhar
 
-        originalMap.Mutate(ctx =>
-        {
-            // Desenha pontos
-            foreach (var pointData in points)
-            {
-                var pointPixel = GameCoordinateToPixel(pointData);
+    //    originalMap.Mutate(ctx =>
+    //    {
+    //        // Desenha pontos
+    //        foreach (var pointData in points)
+    //        {
+    //            var pointPixel = GameCoordinateToPixel(pointData);
 
-                ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 10f));
-                ctx.Fill(pointData.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 8f));
+    //            ctx.Fill(Color.White, new EllipsePolygon(pointPixel.X, pointPixel.Y, 4f));
+    //            ctx.Fill(pointData.Color, new EllipsePolygon(pointPixel.X, pointPixel.Y, 3f));
 
-                //// Linha conectando posição original com ajustada (se moveu)
-                //var originalPointPixel = GameCoordinateToPixel(pointData.OriginalCoordinate);
-                //if (Math.Abs(pointPixel.X - originalPointPixel.X) > 2 || Math.Abs(pointPixel.Y - originalPointPixel.Y) > 2)
-                //{
-                //    ctx.DrawLine(Color.FromRgba(0, 0, 255, 150), 1f,
-                //        new PointF(originalPointPixel.X, originalPointPixel.Y),
-                //        new PointF(pointPixel.X, pointPixel.Y));
-                //}
+    //            if (!string.IsNullOrEmpty(pointData.Label))
+    //            {
+    //                // Label
+    //                var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
+    //                // Fundo semi-transparente para o texto
+    //                var textSize = TextMeasurer.MeasureSize(pointData.Label, new TextOptions(font));
+    //                var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
+    //                ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
+    //                ctx.DrawText(pointData.Label, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
 
-                //if (!string.IsNullOrEmpty(pointData.Label))
-                //{
-                //    // Label com setor
-                //    var font = SystemFonts.CreateFont("Arial", 10, FontStyle.Regular);
-                //    var sectorText = pointData.OriginalCoordinate.GetSectorReference();
-                //    if (!string.IsNullOrEmpty(sectorText))
-                //    {
-                //        // Fundo semi-transparente para o texto
-                //        var textSize = TextMeasurer.MeasureSize(sectorText, new TextOptions(font));
-                //        var textRect = new RectangleF(pointPixel.X + 15, pointPixel.Y - 10, textSize.Width + 4, textSize.Height + 2);
-                //        ctx.Fill(Color.FromRgba(0, 0, 0, 180), textRect);
-                //        ctx.DrawText(sectorText, font, Color.White, new PointF(pointPixel.X + 17, pointPixel.Y - 8));
-                //    }
-                //}
-
-            }
-        });
-    }
+    //            }
+    //        }
+    //    });
+    //}
 
     /// <summary>
     /// Adiciona informações de contexto na imagem extraída
@@ -786,12 +1226,23 @@ public struct ScumCoordinate
         Math.Pow(target.Y - Y, 2) +
         Math.Pow(target.Z - Z, 2));
 
+    /// <summary>
+    /// Calcula se a posição passada está dentro da area do cubo a partir do centro
+    /// </summary>
+    public bool IsInsideCube(ScumCoordinate target, float centerToVertex)
+    {
+        float halfSide = centerToVertex / (float)Math.Sqrt(3);
+
+        return Math.Abs(target.X - X) <= halfSide &&
+               Math.Abs(target.Y - Y) <= halfSide &&
+               Math.Abs(target.Z - Z) <= halfSide;
+    }
     public override readonly string ToString() => $"X={X} Y={Y} Z={Z}".Replace(",", ".");
 
-    public static ScumCoordinate MidPoint((float x1, float y1) point1, (float x2, float y2) point2)
+    public static ScumCoordinate MidPoint((double x1, double y1) point1, (double x2, double y2) point2)
     {
-        float midX = (point1.x1 + point2.x2) / 2;
-        float midY = (point1.y1 + point2.y2) / 2;
+        double midX = (point1.x1 + point2.x2) / 2;
+        double midY = (point1.y1 + point2.y2) / 2;
         return new ScumCoordinate(midX, midY);
     }
 

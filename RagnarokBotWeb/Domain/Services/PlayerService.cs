@@ -164,7 +164,7 @@ namespace RagnarokBotWeb.Domain.Services
             }
         }
 
-        public async Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, double? x, double? y, double? z, string ipAddress)
+        public async Task<Player> PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, double? x, double? y, double? z, string ipAddress)
         {
             var player = await _playerRepository.FindOneWithServerAsync(p => p.SteamId64 == steamId64 && p.ScumServer.Id == server.Id);
 
@@ -187,21 +187,24 @@ namespace RagnarokBotWeb.Domain.Services
 
             if (!_cacheService.GetConnectedPlayers(server.Id).Any(p => p.SteamID == steamId64))
             {
-                _cacheService.GetConnectedPlayers(server.Id).Add(new ScumPlayer()
-                {
-                    Name = name,
-                    SteamID = steamId64,
-                    X = x ?? 0,
-                    Y = y ?? 0,
-                    Z = z ?? 0,
-                    SquadId = squad?.SquadId,
-                    SquadName = squad?.SquadName,
-                    AccountBalance = player.Money ?? 0,
-                    GoldBalance = player.Gold ?? 0,
-                    Fame = player.Fame ?? 0,
-                    SteamName = player.SteamName,
-                });
+                _cacheService.GetConnectedPlayers(server.Id).Add(
+                    new ScumPlayer()
+                    {
+                        Name = name,
+                        SteamID = steamId64,
+                        X = x ?? 0,
+                        Y = y ?? 0,
+                        Z = z ?? 0,
+                        SquadId = squad?.SquadId,
+                        SquadName = squad?.SquadName,
+                        AccountBalance = player.Money ?? 0,
+                        GoldBalance = player.Gold ?? 0,
+                        Fame = player.Fame ?? 0,
+                        SteamName = player.SteamName,
+                    });
             }
+
+            return player;
         }
 
         public ScumPlayer? PlayerDisconnected(long serverId, string steamId64)
@@ -217,6 +220,7 @@ namespace RagnarokBotWeb.Domain.Services
                     _cacheService.GetConnectedPlayers(serverId).Remove(player);
                 }
                 catch { }
+                return player;
             }
 
             return null;

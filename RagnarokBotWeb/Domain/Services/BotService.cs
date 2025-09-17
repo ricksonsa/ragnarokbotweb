@@ -44,6 +44,7 @@ namespace RagnarokBotWeb.Domain.Services
         {
             var serverId = ServerId();
             var players = ListPlayersParser.Parse(input.Value);
+            if (players == null || players.Count == 0) return;
             var squads = _cacheService.GetSquads(serverId!.Value);
             foreach (var player in players)
             {
@@ -120,6 +121,8 @@ namespace RagnarokBotWeb.Domain.Services
             if (server == null) return;
 
             var flags = ListFlagsParser.Parse(input.Value);
+            if (flags == null || flags.Count == 0) return;
+
             _cacheService.SetFlags(serverId.Value, flags);
             await new ScumFileProcessor(server, _unitOfWork).SaveFlagList(JsonConvert.SerializeObject(flags, Formatting.Indented));
         }
@@ -132,6 +135,8 @@ namespace RagnarokBotWeb.Domain.Services
             if (server == null) return;
 
             var squads = ListSquadsParser.Parse(input.Value);
+            if (squads == null || squads.Count == 0) return;
+
             _cacheService.SetSquads(serverId.Value, squads);
             await new ScumFileProcessor(server, _unitOfWork).SaveSquadList(JsonConvert.SerializeObject(squads, Formatting.Indented));
         }

@@ -175,7 +175,7 @@ public class KillLogJob(
         var center = kill.KillerX == 0 ? ScumCoordinate.MidPoint((kill.VictimX, kill.VictimY), (kill.VictimX, kill.VictimY))
             : ScumCoordinate.MidPoint((kill.KillerX, kill.KillerY), (kill.VictimX, kill.VictimY));
 
-        var result = await extractor.ExtractMapWithPoints(
+        var result = await extractor.ExtractMapWithPointsWithWatermark(
             center,
             [
                 new ScumCoordinate(kill.KillerX, kill.KillerY, Color.Red).WithLabel(kill.KillerName!),

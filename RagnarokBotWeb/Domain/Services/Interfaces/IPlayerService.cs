@@ -10,7 +10,7 @@ namespace RagnarokBotWeb.Domain.Services.Interfaces
     public interface IPlayerService
     {
         bool IsPlayerConnected(string steamId64, long? serverId = null);
-        Task PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, double? x, double? y, double? z, string ipAddress);
+        Task<Player> PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, double? x, double? y, double? z, string ipAddress);
         List<ScumPlayer> OnlinePlayers(long serverId);
         Task<List<ScumPlayer>> OfflinePlayers(long serverId);
         void ResetPlayersConnection(long? serverId = null);

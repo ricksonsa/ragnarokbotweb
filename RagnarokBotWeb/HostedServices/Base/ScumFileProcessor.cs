@@ -212,6 +212,7 @@ public class ScumFileProcessor
                         }
                         return DateTime.MinValue;
                     })
+                    .Take(5)
                     .ToArray();
 
                 foreach (var fileName in fileNames)

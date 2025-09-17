@@ -104,7 +104,7 @@ public class GamePlayJob(
                 {
                     var centerCoord = new ScumCoordinate(lockpick.X, lockpick.Y);
                     var extractor = new ScumMapExtractor(Path.Combine("cdn-storage", "scum_images", "island_4k.jpg"));
-                    var result = await extractor.ExtractMapWithPoints(
+                    var result = await extractor.ExtractMapWithPointsWithWatermark(
                         centerCoord,
                         [new ScumCoordinate(lockpick.X, lockpick.Y).WithLabel(lockpick.TargetObject)]
                     );

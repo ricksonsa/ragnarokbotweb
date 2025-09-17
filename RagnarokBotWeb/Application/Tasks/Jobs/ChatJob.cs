@@ -1,6 +1,7 @@
 using RagnarokBotWeb.Application.Handlers;
 using RagnarokBotWeb.Application.LogParser;
 using RagnarokBotWeb.Application.Models;
+using RagnarokBotWeb.Application.Resolvers;
 using RagnarokBotWeb.Domain.Entities;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Exceptions;
@@ -23,7 +24,8 @@ public class ChatJob(
     IDiscordService discordService,
     IFtpService ftpService,
     IBotService botService,
-    DiscordChannelPublisher publisher
+    DiscordChannelPublisher publisher,
+    SteamAccountResolver steamAccountResolver
 ) : AbstractJob(scumServerRepository), IFtpJob
 {
     public async Task Execute(long serverId, EFileType fileType)
@@ -67,7 +69,8 @@ public class ChatJob(
                                playerRespository,
                                playerRegisterRepository,
                                discordService,
-                               orderService
+                               orderService,
+                               steamAccountResolver
                            ).Create(parsed.Text);
 
                         if (chatCommandHandler is not null)
