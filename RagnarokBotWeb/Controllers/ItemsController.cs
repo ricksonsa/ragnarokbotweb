@@ -6,6 +6,7 @@ using RagnarokBotWeb.Application.Security;
 using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.Filters;
 
 namespace RagnarokBotWeb.Controllers
 {

@@ -242,7 +242,7 @@ namespace RagnarokBotWeb.Controllers
                     BotId = bot.Guid.ToString(),
                     SteamId = bot.SteamId ?? "Unknown",
                     Connected = bot.TcpClient?.Connected == true,
-                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value) < BotSocketServer.PING_TIMEOUT,
+                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value) < BotSocketServer.PingTimeout,
                     LastSeen = (bot.LastPinged ?? bot.LastInteracted).ToString("yyyy-MM-dd HH:mm:ss UTC"),
                     MinutesSinceLastSeen = bot.LastPinged.HasValue
                         ? Math.Round((now - bot.LastPinged.Value).TotalMinutes, 1)
@@ -274,7 +274,7 @@ namespace RagnarokBotWeb.Controllers
                     BotId = bot.Guid.ToString(),
                     SteamId = bot.SteamId ?? "Unknown",
                     Connected = bot.TcpClient?.Connected == true,
-                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value) < BotSocketServer.PING_TIMEOUT,
+                    GameActive = bot.LastPinged.HasValue && (now - bot.LastPinged.Value) < BotSocketServer.PingTimeout,
                     LastSeen = (bot.LastPinged ?? bot.LastInteracted).ToString("yyyy-MM-dd HH:mm:ss UTC"),
                     MinutesSinceLastSeen = bot.LastPinged.HasValue
                         ? Math.Round((now - bot.LastPinged.Value).TotalMinutes, 1)

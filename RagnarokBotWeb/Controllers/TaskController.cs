@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using RagnarokBotWeb.Application.Pagination;
 using RagnarokBotWeb.Application.Security;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services.Dto;
 using RagnarokBotWeb.Domain.Services.Interfaces;
+using RagnarokBotWeb.Filters;
 
 namespace RagnarokBotWeb.Controllers
 {
@@ -65,9 +67,9 @@ namespace RagnarokBotWeb.Controllers
             return Ok(task);
         }
 
-        [ValidateAccessLevel(Domain.Enums.AccessLevel.Mod)]
+        [ValidateAccessLevel(AccessLevel.Mod)]
         [HttpPatch("trigger")]
-        public async Task<IActionResult> TriggerJob(string jobId, string groupId)
+        public IActionResult TriggerJob(string jobId, string groupId)
         {
             _logger.Log(LogLevel.Debug, "PATCH Request to trigger job[{Job}] group[{Group}]", jobId, groupId);
             _taskService.TriggerJob(jobId, groupId);
@@ -75,7 +77,7 @@ namespace RagnarokBotWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Jobs()
+        public IActionResult Jobs()
         {
             _logger.Log(LogLevel.Debug, "GET Request to fetch scheduled jobs");
             return Ok(_taskService.ListJobs());

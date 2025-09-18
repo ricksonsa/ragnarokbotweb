@@ -88,7 +88,7 @@ public static class FtpClientFactory
 
         if (validateCertificate)
         {
-            client.ValidateCertificate += Client_ValidateCertificate; ;
+            client.ValidateCertificate += Client_ValidateCertificate;
         }
 
         return client;

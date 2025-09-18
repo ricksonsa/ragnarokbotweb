@@ -40,7 +40,7 @@ namespace RagnarokBotWeb.Application.Handlers
             if (register is null) throw new DomainException($"Register not found for welcompack number {numericValue}");
 
             var player = await _playerRepository.FindOneWithServerAsync(p => p.SteamId64 == input.SteamId && p.ScumServerId == register.ScumServer.Id);
-            if (player?.DiscordId != null) throw new DomainException($"Player with welcompack number {numericValue} already registered"); ;
+            if (player?.DiscordId != null) throw new DomainException($"Player with welcompack number {numericValue} already registered");
 
             player ??= new();
             player.SteamId64 = input.SteamId;

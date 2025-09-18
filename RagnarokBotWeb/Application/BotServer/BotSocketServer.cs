@@ -22,9 +22,9 @@ namespace RagnarokBotWeb.Application.BotServer
         private readonly System.Timers.Timer _cleanupTimer;
 
         // Simplified timeouts
-        public static readonly TimeSpan PING_TIMEOUT = TimeSpan.FromMinutes(30);
-        private static readonly TimeSpan CLEANUP_INTERVAL = TimeSpan.FromMinutes(1); // Check every minute
-        private static readonly TimeSpan CONNECTION_GRACE_PERIOD = TimeSpan.FromMinutes(5); // Grace period for disconnected bots
+        public static readonly TimeSpan PingTimeout = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(1); // Check every minute
+        private static readonly TimeSpan ConnectionGracePeriod = TimeSpan.FromMinutes(5); // Grace period for disconnected bots
 
         public BotSocketServer(ILogger<BotSocketServer> logger, IOptions<AppSettings> options)
         {
@@ -40,7 +40,7 @@ namespace RagnarokBotWeb.Application.BotServer
             _stateSaveTimer.Enabled = true;
 
             // Simplified cleanup timer
-            _cleanupTimer = new System.Timers.Timer(CLEANUP_INTERVAL.TotalMilliseconds);
+            _cleanupTimer = new System.Timers.Timer(CleanupInterval.TotalMilliseconds);
             _cleanupTimer.Elapsed += (s, e) => CleanupStaleConnections();
             _cleanupTimer.AutoReset = true;
             _cleanupTimer.Enabled = true;
@@ -135,7 +135,7 @@ namespace RagnarokBotWeb.Application.BotServer
                                 var restoredBot = new BotUser(persistedBot.Guid)
                                 {
                                     ServerId = persistedBot.ServerId,
-                                    SteamId = persistedBot.SteamId,
+                                    SteamId = persistedBot.SteamId!,
                                     LastPinged = persistedBot.LastPinged,
                                     LastInteracted = persistedBot.LastInteracted,
                                     LastCommand = persistedBot.LastCommand,
@@ -162,8 +162,8 @@ namespace RagnarokBotWeb.Application.BotServer
         {
             try
             {
-                _stateSaveTimer?.Stop();
-                _cleanupTimer?.Stop();
+                _stateSaveTimer.Stop();
+                _cleanupTimer.Stop();
                 SaveBotState();
                 _logger.LogInformation("Bot state saved on shutdown");
             }
@@ -197,7 +197,7 @@ namespace RagnarokBotWeb.Application.BotServer
                     // 2. If TCP connected but no ping for timeout -> send single reconnect
                     if (!isConnected)
                     {
-                        if (timeSinceLastInteraction > CONNECTION_GRACE_PERIOD)
+                        if (timeSinceLastInteraction > ConnectionGracePeriod)
                         {
                             _logger.LogInformation("Removing stale bot {Guid} from server {ServerId} (offline {Minutes}min)",
                                 bot.Guid, serverId, timeSinceLastInteraction.TotalMinutes);
@@ -206,10 +206,10 @@ namespace RagnarokBotWeb.Application.BotServer
                             staleBotsRemoved++;
                         }
                     }
-                    else if (timeSinceLastPing > PING_TIMEOUT)
+                    else if (timeSinceLastPing > PingTimeout)
                     {
                         // Send reconnect only if we haven't sent one recently
-                        if (!bot.LastReconnectSent.HasValue || (now - bot.LastReconnectSent.Value) > PING_TIMEOUT)
+                        if (!bot.LastReconnectSent.HasValue || (now - bot.LastReconnectSent.Value) > PingTimeout)
                         {
                             _logger.LogInformation("Bot {Guid} needs reconnect (no ping for {Minutes}min)",
                                 bot.Guid, timeSinceLastPing.TotalMinutes);
@@ -612,7 +612,7 @@ namespace RagnarokBotWeb.Application.BotServer
             _bots.TryGetValue(serverId, out var botsForServer) &&
             botsForServer.Values.Any(b =>
                 b.TcpClient?.Connected == true ||
-                (b.LastPinged.HasValue && (DateTime.UtcNow - b.LastPinged.Value) < PING_TIMEOUT));
+                (b.LastPinged.HasValue && (DateTime.UtcNow - b.LastPinged.Value) < PingTimeout));
 
         public void BotPingUpdate(long serverId, Guid guid, string steamId)
         {

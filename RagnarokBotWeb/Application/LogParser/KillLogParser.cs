@@ -25,11 +25,11 @@ namespace RagnarokBotWeb.Application.LogParser
                 distance = 0;
             }
 
-            var dateString = line1.Substring(0, line1.IndexOf(":"));
+            var dateString = line1.Substring(0, line1.IndexOf(':'));
             string format = "yyyy.MM.dd-HH.mm.ss";
             var date = DateTime.ParseExact(dateString, format, CultureInfo.InvariantCulture);
 
-            var json = line2.Substring(line2.IndexOf(":") + 2);
+            var json = line2.Substring(line2.IndexOf(':') + 2);
             var preParseKill = JsonConvert.DeserializeObject<PreParseKill>(json)!;
 
             if (preParseKill.Killer.IsInGameEvent || preParseKill.Victim.IsInGameEvent) return null;
@@ -50,12 +50,12 @@ namespace RagnarokBotWeb.Application.LogParser
                 distance = 0;
             }
 
-            var dateString = line1.Substring(0, line1.IndexOf(":"));
+            var dateString = line1.Substring(0, line1.IndexOf(':'));
             string format = "yyyy.MM.dd-HH.mm.ss";
 
             var date = DateTime.ParseExact(dateString, format, CultureInfo.InvariantCulture);
 
-            var json = line2.Substring(line2.IndexOf(":") + 2);
+            var json = line2.Substring(line2.IndexOf(':') + 2);
             var preParseKill = JsonConvert.DeserializeObject<PreParseKill>(json)!;
 
             if (preParseKill.Killer.IsInGameEvent || preParseKill.Victim.IsInGameEvent) return null;

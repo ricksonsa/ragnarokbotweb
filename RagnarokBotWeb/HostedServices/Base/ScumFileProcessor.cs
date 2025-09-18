@@ -25,7 +25,7 @@ public class ScumFileProcessor
     private readonly ILogger<ScumFileProcessor> _logger;
     private readonly ScumServer _scumServer;
     private readonly Ftp? _ftp;
-    private static readonly ConcurrentDictionary<(long, string), DateTime> _semaphores = [];
+    private static readonly ConcurrentDictionary<(long, string), DateTime> Semaphores = [];
 
     public ScumFileProcessor(ScumServer server, IUnitOfWork unitOfWork)
     {
@@ -45,9 +45,8 @@ public class ScumFileProcessor
         return line.ToString().Contains("Game version", StringComparison.Ordinal);
     }
 
-    private static bool IsExpired(DateTime createdAt) => DateTime.UtcNow - createdAt > TimeSpan.FromMinutes(10);
-
-    private async Task<List<FtpListItem>> GetLogFilesAsync(IFtpService ftpService, string? rootFolder, EFileType fileType, CancellationToken cancellationToken)
+    private async Task<List<FtpListItem>> GetLogFilesAsync(IFtpService ftpService, string? rootFolder,
+        EFileType fileType, CancellationToken cancellationToken)
     {
         if (_ftp == null)
         {
@@ -62,7 +61,6 @@ public class ScumFileProcessor
         }
 
         var client = await ftpService.GetClientAsync(_ftp, cancellationToken);
-        var today = DateTime.UtcNow;
         var logPath = $"{rootFolder}/Saved/SaveFiles/Logs/";
 
         try
@@ -70,7 +68,8 @@ public class ScumFileProcessor
             // Ensure client is connected
             if (!client.IsConnected)
             {
-                _logger.LogInformation("FTP client not connected, attempting to connect for server {ServerId}", _scumServer.Id);
+                _logger.LogInformation("FTP client not connected, attempting to connect for server {ServerId}",
+                    _scumServer.Id);
                 await client.Connect(cancellationToken);
             }
 
@@ -87,12 +86,13 @@ public class ScumFileProcessor
                     string fileName = Path.GetFileNameWithoutExtension(f);
                     string datePart = fileName.Replace($"{fileTypePrefix}_", "");
                     if (DateTime.TryParseExact(datePart, "yyyyMMddHHmmss",
-                                               null,
-                                               System.Globalization.DateTimeStyles.None,
-                                               out var dt))
+                            null,
+                            System.Globalization.DateTimeStyles.None,
+                            out var dt))
                     {
                         return dt;
                     }
+
                     return DateTime.MinValue;
                 })
                 .Take(10)
@@ -120,7 +120,6 @@ public class ScumFileProcessor
                 catch (Exception ex)
                 {
                     _logger.LogDebug(ex, "Could not get info for file {FileName}", fileName);
-                    continue;
                 }
             }
 
@@ -137,24 +136,6 @@ public class ScumFileProcessor
             _logger.LogError(ex, "Error getting log files of type {FileType} from path {LogPath} for server {ServerId}",
                 fileType, logPath, _scumServer.Id);
             throw;
-        }
-    }
-
-    private static bool IsFileInValidTimeRange(FtpListItem file, DateTime today, int daysBack = 10)
-    {
-        try
-        {
-            var modified = file.RawModified != DateTime.MinValue
-                ? file.RawModified
-                : file.Modified;
-
-            var cutoffDate = today.AddDays(-daysBack);
-
-            return modified >= cutoffDate && modified <= today;
-        }
-        catch (Exception)
-        {
-            return true;
         }
     }
 
@@ -186,30 +167,31 @@ public class ScumFileProcessor
             {
                 if (!client.IsConnected)
                 {
-                    _logger.LogInformation("FTP client not connected, attempting to connect for server {ServerId}", _scumServer.Id);
+                    _logger.LogInformation("FTP client not connected, attempting to connect for server {ServerId}",
+                        _scumServer.Id);
                     await client.Connect(cancellationToken);
                 }
 
-                var now = DateTime.UtcNow;
                 var fileTypePrefix = fileType.ToString().ToLower();
                 var fileNames = await client.GetNameListing(logPath, cancellationToken);
 
                 var matchingFiles = new List<FtpListItem>();
 
                 fileNames = fileNames
-                    .Select(name => Path.GetFileName(name))
-                    .Where(name => name.StartsWith(fileTypePrefix, StringComparison.OrdinalIgnoreCase))
+                    .Select(Path.GetFileName)
+                    .Where(name => name != null && name.StartsWith(fileTypePrefix, StringComparison.OrdinalIgnoreCase))
                     .OrderByDescending(f =>
                     {
-                        string fileName = Path.GetFileNameWithoutExtension(f);
-                        string datePart = fileName.Replace($"{fileTypePrefix}_", "");
+                        string? fileName = Path.GetFileNameWithoutExtension(f);
+                        string? datePart = fileName?.Replace($"{fileTypePrefix}_", "");
                         if (DateTime.TryParseExact(datePart, "yyyyMMddHHmmss",
-                                                   null,
-                                                   System.Globalization.DateTimeStyles.None,
-                                                   out var dt))
+                                null,
+                                System.Globalization.DateTimeStyles.None,
+                                out var dt))
                         {
                             return dt;
                         }
+
                         return DateTime.MinValue;
                     })
                     .Take(5)
@@ -219,47 +201,46 @@ public class ScumFileProcessor
                 {
                     try
                     {
-                        var fileInfo = await client.GetObjectInfo($"{logPath}{fileName}");
+                        var fileInfo = await client.GetObjectInfo($"{logPath}{fileName}", token: cancellationToken);
 
-                        if (fileInfo != null &&
-                            fileInfo.Type == FtpObjectType.File &&
-                            fileInfo.RawModified.Date >= from.Date &&
-                            fileInfo.RawModified.Date <= to.Date)
+                        if (fileInfo is not { Type: FtpObjectType.File } ||
+                            fileInfo.RawModified.Date < from.Date ||
+                            fileInfo.RawModified.Date > to.Date) continue;
+
+                        var listItem = new FtpListItem
                         {
-                            var listItem = new FtpListItem
-                            {
-                                Name = fileName,
-                                FullName = $"{logPath}{fileName}",
-                                Type = FtpObjectType.File,
-                                Size = fileInfo.Size,
-                                Modified = fileInfo.Modified,
-                                RawModified = fileInfo.RawModified
-                            };
+                            Name = fileName,
+                            FullName = $"{logPath}{fileName}",
+                            Type = FtpObjectType.File,
+                            Size = fileInfo.Size,
+                            Modified = fileInfo.Modified,
+                            RawModified = fileInfo.RawModified
+                        };
 
-                            matchingFiles.Add(listItem);
-                        }
+                        matchingFiles.Add(listItem);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogDebug(ex, "Could not get info for file {FileName}", fileName);
-                        continue;
                     }
                 }
 
                 var ordered = matchingFiles.OrderBy(f => f.RawModified).ToList();
 
-                _logger.LogDebug("Found {Count} log files of type {FileType} between {From} and {To} for server {ServerId}",
+                _logger.LogDebug(
+                    "Found {Count} log files of type {FileType} between {From} and {To} for server {ServerId}",
                     ordered.Count, fileType, from.Date, to.Date, _scumServer.Id);
 
                 return ordered;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting log files of type {FileType} from path {LogPath} for server {ServerId}",
+                _logger.LogError(ex,
+                    "Error getting log files of type {FileType} from path {LogPath} for server {ServerId}",
                     fileType, logPath, _scumServer.Id);
                 throw;
             }
-        });
+        }, cancellationToken);
     }
 
     private string GetLocalPath()
@@ -295,9 +276,8 @@ public class ScumFileProcessor
         Span<char> buffer = stackalloc char[line.Length];
         int writeIndex = 0;
 
-        for (int i = 0; i < line.Length; i++)
+        foreach (var c in line)
         {
-            char c = line[i];
             if (!char.IsControl(c) || c == '\r' || c == '\n')
             {
                 buffer[writeIndex++] = c;
@@ -305,64 +285,6 @@ public class ScumFileProcessor
         }
 
         return buffer[..writeIndex].ToString();
-    }
-
-    /// <summary>
-    /// Prepare a single file for streaming by downloading it
-    /// </summary>
-    private async Task<(string localFilePath, ReaderPointer currentPointer)?> PrepareFileForStreamingAsync(
-        FtpListItem file,
-        ReaderPointer? existingPointer,
-        IFtpService ftpService,
-        CancellationToken cancellationToken = default)
-    {
-        if (_ftp == null)
-        {
-            _logger.LogError("FTP configuration is null, cannot prepare file for streaming");
-            return null;
-        }
-
-        // Download single file to local temp location
-        string localPath = Path.Combine(GetLocalPath(), "temp");
-        Directory.CreateDirectory(localPath);
-
-        string localFilePath = Path.Combine(localPath, file.Name);
-
-        await ftpService.ExecuteAsync(_ftp, async client =>
-        {
-            await ftpService.CopyFilesAsync(client, localPath, [file.FullName], cancellationToken);
-            return true;
-        }, cancellationToken);
-
-        // Prepare pointer
-        ReaderPointer currentPointer = existingPointer is not null
-            ? UpdateReaderPointer(existingPointer, file)
-            : BuildReaderPointer(file);
-
-        return (localFilePath, currentPointer);
-
-    }
-
-    /// <summary>
-    /// Stream lines from a single file with minimal memory allocation
-    /// </summary>
-    private async IAsyncEnumerable<string> StreamLinesFromFileAsync(
-        FtpListItem file,
-        ReaderPointer? existingPointer,
-        IFtpService ftpService,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var preparedFile = await PrepareFileForStreamingAsync(file, existingPointer, ftpService, cancellationToken);
-
-        if (preparedFile == null)
-            yield break;
-
-        var (localFilePath, currentPointer) = preparedFile.Value;
-
-        await foreach (var line in ReadLinesFromFileAsync(localFilePath, currentPointer, cancellationToken))
-        {
-            yield return line;
-        }
     }
 
     /// <summary>
@@ -375,10 +297,11 @@ public class ScumFileProcessor
     {
         int lineNumber = 0;
         int linesSinceLastPointerUpdate = 0;
-        const int PointerUpdateInterval = 100;
+        const int pointerUpdateInterval = 100;
         var readerPointerRepository = new ReaderPointerRepository(_unitOfWork.CreateDbContext());
 
-        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096);
+        await using var fileStream =
+            new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096);
         using var reader = new StreamReader(fileStream, Encoding.UTF8);
 
         while (!reader.EndOfStream)
@@ -404,32 +327,12 @@ public class ScumFileProcessor
                 continue;
             }
 
-            if (!string.IsNullOrWhiteSpace(cleanedLine))
-            {
-                yield return cleanedLine;
-            }
+            if (!string.IsNullOrWhiteSpace(cleanedLine)) yield return cleanedLine;
 
             lineNumber++;
             linesSinceLastPointerUpdate++;
 
-            if (linesSinceLastPointerUpdate >= PointerUpdateInterval)
-            {
-                currentPointer.LineNumber = lineNumber;
-                try
-                {
-                    await readerPointerRepository.CreateOrUpdateAsync(currentPointer);
-                    await readerPointerRepository.SaveAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error updating reader pointer during file read {FileName}", Path.GetFileName(filePath));
-                }
-                linesSinceLastPointerUpdate = 0;
-            }
-        }
-
-        if (lineNumber != currentPointer.LineNumber)
-        {
+            if (linesSinceLastPointerUpdate < pointerUpdateInterval) continue;
             currentPointer.LineNumber = lineNumber;
             try
             {
@@ -438,14 +341,33 @@ public class ScumFileProcessor
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating reader pointer after file read {FileName}", Path.GetFileName(filePath));
+                _logger.LogError(ex, "Error updating reader pointer during file read {FileName}",
+                    Path.GetFileName(filePath));
             }
+
+            linesSinceLastPointerUpdate = 0;
+        }
+
+        if (lineNumber == currentPointer.LineNumber) yield break;
+
+        currentPointer.LineNumber = lineNumber;
+        try
+        {
+            await readerPointerRepository.CreateOrUpdateAsync(currentPointer);
+            await readerPointerRepository.SaveAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating reader pointer after file read {FileName}",
+                Path.GetFileName(filePath));
         }
     }
 
-    private async IAsyncEnumerable<string> ReadLinesFromLocalFileAsync(string filePath, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<string> ReadLinesFromLocalFileAsync(string filePath,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096);
+        await using var fileStream =
+            new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096);
         using var reader = new StreamReader(fileStream, Encoding.UTF8);
 
         while (!reader.EndOfStream)
@@ -477,8 +399,8 @@ public class ScumFileProcessor
         IFtpService ftpService,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (_semaphores.ContainsKey((_scumServer.Id, fileType.ToString()))) yield break;
-        _semaphores.TryAdd((_scumServer.Id, fileType.ToString()), DateTime.UtcNow);
+        if (Semaphores.ContainsKey((_scumServer.Id, fileType.ToString()))) yield break;
+        Semaphores.TryAdd((_scumServer.Id, fileType.ToString()), DateTime.UtcNow);
 
         if (_ftp is null)
         {
@@ -498,6 +420,7 @@ public class ScumFileProcessor
             {
                 await ftpService.ClearPoolForServerAsync(_ftp);
             }
+
             yield break;
         }
 
@@ -511,13 +434,15 @@ public class ScumFileProcessor
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                ReaderPointer? pointer = null;
-                bool shouldProcessFile = false;
+                ReaderPointer? pointer;
+                bool shouldProcessFile;
 
                 try
                 {
-                    pointer = await readerPointerRepository.FindOneAsync(p => p.FileName == file.Name && p.ScumServer.Id == _scumServer.Id);
-                    shouldProcessFile = pointer == null || pointer.LastUpdated != file.Modified || pointer.FileSize != file.Size;
+                    pointer = await readerPointerRepository.FindOneAsync(p =>
+                        p.FileName == file.Name && p.ScumServer.Id == _scumServer.Id);
+                    shouldProcessFile = pointer == null || pointer.LastUpdated != file.Modified ||
+                                        pointer.FileSize != file.Size;
                 }
                 catch (Exception ex)
                 {
@@ -538,7 +463,8 @@ public class ScumFileProcessor
             }
 
             // Download all files at once
-            var localFilesPaths = await BatchDownloadFilesAsync(filesToProcess.Select(x => x.file).ToList(), ftpService, cancellationToken);
+            var localFilesPaths = await BatchDownloadFilesAsync(filesToProcess.Select(x => x.file).ToList(), ftpService,
+                cancellationToken);
 
             // Process each downloaded file
             foreach (var (fileItem, pointer) in filesToProcess)
@@ -564,7 +490,7 @@ public class ScumFileProcessor
         }
         finally
         {
-            _semaphores.Remove((_scumServer.Id, fileType.ToString()), out var value);
+            Semaphores.Remove((_scumServer.Id, fileType.ToString()), out _);
         }
     }
 
@@ -572,7 +498,7 @@ public class ScumFileProcessor
     /// Download all files at once for better performance
     /// </summary>
     private async Task<Dictionary<string, string>> BatchDownloadFilesAsync(
-        List<FtpListItem> files,
+        List<FtpListItem>? files,
         IFtpService ftpService,
         CancellationToken cancellationToken = default)
     {
@@ -584,10 +510,7 @@ public class ScumFileProcessor
 
         var result = new Dictionary<string, string>();
 
-        if (!files.Any())
-        {
-            return result;
-        }
+        if (files is { Count: 0 }) return result;
 
         // Create temp directory for this batch
         string localPath = Path.Combine(GetLocalPath(), "temp");
@@ -595,7 +518,8 @@ public class ScumFileProcessor
 
         try
         {
-            _logger.LogDebug("Starting batch download of {Count} files for server {ServerId}", files.Count, _scumServer.Id);
+            _logger.LogDebug("Starting batch download of {Count} files for server {ServerId}", files!.Count,
+                _scumServer.Id);
 
             await ftpService.ExecuteAsync(_ftp, async client =>
             {
@@ -633,9 +557,7 @@ public class ScumFileProcessor
             _logger.LogError(ex, "Error during batch download for server {ServerId}", _scumServer.Id);
 
             if (IsConnectionError(ex))
-            {
                 await ftpService.ClearPoolForServerAsync(_ftp);
-            }
 
             // Return partial results if any files were downloaded before the error
             return result;
@@ -663,15 +585,16 @@ public class ScumFileProcessor
         List<FtpListItem> ftpFiles;
         try
         {
-            ftpFiles = await GetLogFilesWithDateRangeAsync(ftpService, _ftp.RootFolder, from, to, fileType, cancellationToken);
+            ftpFiles = await GetLogFilesWithDateRangeAsync(ftpService, _ftp.RootFolder, from, to, fileType,
+                cancellationToken);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting file list for server {ServerId}", _scumServer.Id);
+            
             if (IsConnectionError(ex))
-            {
                 await ftpService.ClearPoolForServerAsync(_ftp);
-            }
+
             throw;
         }
 
@@ -694,10 +617,10 @@ public class ScumFileProcessor
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error batch downloading files for server {ServerId}", _scumServer.Id);
+            
             if (IsConnectionError(ex))
-            {
                 await ftpService.ClearPoolForServerAsync(_ftp);
-            }
+            
             throw;
         }
 
@@ -707,7 +630,8 @@ public class ScumFileProcessor
 
             if (!localFiles.TryGetValue(file.Name, out var localFilePath) || !File.Exists(localFilePath))
             {
-                _logger.LogWarning("File {FileName} not downloaded successfully for server {ServerId}", file.Name, _scumServer.Id);
+                _logger.LogWarning("File {FileName} not downloaded successfully for server {ServerId}", file.Name,
+                    _scumServer.Id);
                 continue;
             }
 
@@ -718,43 +642,12 @@ public class ScumFileProcessor
         }
     }
 
-
-    /// <summary>
-    /// Prepare local file for streaming (download if needed)
-    /// </summary>
-    private async Task<string?> PrepareLocalFileAsync(
-        FtpListItem file,
-        string localPath,
-        IFtpService ftpService,
-        CancellationToken cancellationToken)
-    {
-        if (_ftp == null)
-        {
-            _logger.LogError("FTP configuration is null, cannot prepare local file");
-            return null;
-        }
-
-        string localFilePath = Path.Combine(localPath, file.Name);
-        FileInfo localFile = new(localFilePath);
-
-        // Download only if needed
-        if (!localFile.Exists || file.Size != localFile.Length)
-        {
-            await ftpService.ExecuteAsync(_ftp, async client =>
-            {
-                await ftpService.CopyFilesAsync(client, localPath, [file.FullName], cancellationToken);
-                return true;
-            }, cancellationToken);
-        }
-
-        return localFile.Exists ? localFilePath : null;
-    }
-
     public async Task<string> DownloadRaidTimes(IFtpService ftpService)
     {
         if (_ftp == null)
         {
-            _logger.LogError("FTP configuration is null for server {ServerId}, cannot download RaidTimes", _scumServer.Id);
+            _logger.LogError("FTP configuration is null for server {ServerId}, cannot download RaidTimes",
+                _scumServer.Id);
             throw new InvalidOperationException($"FTP configuration is null for server {_scumServer.Id}");
         }
 
@@ -832,18 +725,5 @@ public class ScumFileProcessor
                ex.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
                ex.Message.Contains("network", StringComparison.OrdinalIgnoreCase) ||
                ex.Message.Contains("server", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public async Task ClearFtpPoolAsync(IFtpService ftpService)
-    {
-        if (_ftp != null)
-        {
-            await ftpService.ClearPoolForServerAsync(_ftp);
-            _logger.LogInformation("Manually cleared FTP pool for server {ServerId}", _scumServer.Id);
-        }
-        else
-        {
-            _logger.LogWarning("Cannot clear FTP pool - FTP configuration is null for server {ServerId}", _scumServer.Id);
-        }
     }
 }

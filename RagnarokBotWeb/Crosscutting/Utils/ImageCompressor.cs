@@ -65,7 +65,7 @@ namespace RagnarokBotWeb.Crosscutting.Utils
         private static string CleanBase64(string base64)
         {
             if (base64.Contains(","))
-                base64 = base64.Substring(base64.IndexOf(",") + 1);
+                base64 = base64.Substring(base64.IndexOf(',') + 1);
 
             return base64.Trim().Replace("\n", "").Replace("\r", "").Replace(" ", "");
         }

@@ -100,12 +100,8 @@ namespace RagnarokBotClient
             {
                 return await response.Content.ReadAsStringAsync()!;
             }
-            else
-            {
-                throw new Exception(response.StatusCode.ToString());
-            }
 
-            return default!;
+            throw new Exception(response.StatusCode.ToString());
         }
 
         public async Task<HttpContent> GetAsContentAsync(string url)
@@ -116,7 +112,7 @@ namespace RagnarokBotClient
                 return response.Content;
             }
 
-            return default!;
+            return null!;
         }
 
         public async Task<T> PutAsync<T>(string url, object body)

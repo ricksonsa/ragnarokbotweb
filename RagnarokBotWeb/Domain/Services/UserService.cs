@@ -108,7 +108,7 @@ namespace RagnarokBotWeb.Domain.Services
             };
         }
 
-        public async Task<AccountDto> UpdateAccount(UserDto userDto)
+        public async Task<AccountDto?> UpdateAccount(UserDto userDto)
         {
             var user = await _userRepository.FindOneAsync(user => user.Email == UserLogin());
 

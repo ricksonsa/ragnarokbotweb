@@ -15,7 +15,9 @@ namespace RagnarokBotWeb.Domain.Entities
             get
             {
                 if (string.IsNullOrEmpty(Weapon) || string.IsNullOrWhiteSpace(Weapon)) return "Unknown";
-                var resolved = Weapon.Contains("_C") ? Weapon.Substring(0, Weapon.LastIndexOf("_C")) : Weapon;
+                var resolved = Weapon.Contains("_C")
+                    ? Weapon.Substring(0, Weapon.LastIndexOf("_C", StringComparison.Ordinal))
+                    : Weapon;
                 return resolved.Replace("Weapon_", string.Empty)
                     .Replace("1H_", string.Empty)
                     .Replace("2H_", string.Empty)

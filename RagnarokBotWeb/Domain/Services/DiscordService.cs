@@ -762,7 +762,8 @@ namespace RagnarokBotWeb.Domain.Services
 
                 try
                 {
-                    embedBuilder.WithThumbnailUrl($"{_appSettings.BaseUrl}/images/scum_images/{kill.Weapon!.Substring(0, kill.Weapon.LastIndexOf("_C"))}.webp");
+                    embedBuilder.WithThumbnailUrl(
+                        $"{_appSettings.BaseUrl}/images/scum_images/{kill.Weapon!.Substring(0, kill.Weapon.LastIndexOf("_C", StringComparison.Ordinal))}.webp");
                 }
                 catch { }
 

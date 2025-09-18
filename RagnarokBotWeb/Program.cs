@@ -15,6 +15,7 @@ using RagnarokBotWeb.Application.Tasks.BackgroundServices;
 using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Configuration;
 using RagnarokBotWeb.Configuration.Data;
+using RagnarokBotWeb.Domain.Enums;
 using RagnarokBotWeb.Domain.Services;
 using RagnarokBotWeb.Domain.Services.Interfaces;
 using RagnarokBotWeb.Filters;
@@ -49,7 +50,8 @@ namespace RagnarokBotWeb
 
             builder.Configuration
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true,
+                    reloadOnChange: true)
                 .AddEnvironmentVariables();
 
             var configuration = builder.Configuration;
@@ -57,16 +59,17 @@ namespace RagnarokBotWeb
             var DefaultCorsPolicy = "_defaultCorsPolicy";
             var ProductionCorsPolicy = "_productionCorsPolicy";
 
-            Environment.SetEnvironmentVariable("jwt_secret", "p2tfCQNn6FJrM7XmdAsW5zKc4DHyYbELwuPV93BRv8xeqkSjZaVhN64mSPatj9H5FqfU2rCTEWvpskKQy3eZwLGXnb8RudD7zBYMwRJXr2b6tsQZWNLUDV4C8nmpKyc7fagGqh5MFux39kASvPEdBzZd7wKDnsq8j9WTHaGmbAkeYN4RPJrEp3UXS5LCvQy6hzxBVMcFsDh3SGNHjf7qARkxzMe2VpyPncmbvJCKTX4ruZWtB86dLQ9YF5");
+            Environment.SetEnvironmentVariable("jwt_secret",
+                "p2tfCQNn6FJrM7XmdAsW5zKc4DHyYbELwuPV93BRv8xeqkSjZaVhN64mSPatj9H5FqfU2rCTEWvpskKQy3eZwLGXnb8RudD7zBYMwRJXr2b6tsQZWNLUDV4C8nmpKyc7fagGqh5MFux39kASvPEdBzZd7wKDnsq8j9WTHaGmbAkeYN4RPJrEp3UXS5LCvQy6hzxBVMcFsDh3SGNHjf7qARkxzMe2VpyPncmbvJCKTX4ruZWtB86dLQ9YF5");
 
             builder.Services.AddHangfire(configuration => configuration
-              .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-              .UseSimpleAssemblyNameTypeSerializer()
-              .UseRecommendedSerializerSettings()
-              .UsePostgreSqlStorage(c =>
-              {
-                  c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
-              }));
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UsePostgreSqlStorage(c =>
+                {
+                    c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+                }));
 
             // Add the processing server as IHostedService
             builder.Services.AddHangfireServer(options =>
@@ -115,7 +118,7 @@ namespace RagnarokBotWeb
                                 Scheme = "oauth2",
                                 Name = "Bearer",
                                 In = ParameterLocation.Header,
-                                },
+                            },
                             new List<string>()
                         }
                     });
@@ -239,8 +242,10 @@ namespace RagnarokBotWeb
             builder.Services.AddSingleton(provider =>
                 new FastspringService(
                     provider.GetRequiredService<HttpClient>(),
-                    Environment.GetEnvironmentVariable("FASTSPRING_USERNAME") ?? Environment.GetEnvironmentVariable("FASTSPRING_USERNAME", EnvironmentVariableTarget.User),
-                    Environment.GetEnvironmentVariable("FASTSPRING_PASSWORD") ?? Environment.GetEnvironmentVariable("FASTSPRING_PASSWORD", EnvironmentVariableTarget.User)
+                    Environment.GetEnvironmentVariable("FASTSPRING_USERNAME") ??
+                    Environment.GetEnvironmentVariable("FASTSPRING_USERNAME", EnvironmentVariableTarget.User),
+                    Environment.GetEnvironmentVariable("FASTSPRING_PASSWORD") ??
+                    Environment.GetEnvironmentVariable("FASTSPRING_PASSWORD", EnvironmentVariableTarget.User)
                 )
             );
 
@@ -262,8 +267,8 @@ namespace RagnarokBotWeb
                     options.AddPolicy(DefaultCorsPolicy, policy =>
                     {
                         policy.AllowAnyOrigin()
-                              .AllowAnyMethod()
-                              .AllowAnyHeader();
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
                     });
                 }
                 else
@@ -274,18 +279,15 @@ namespace RagnarokBotWeb
                     options.AddPolicy(ProductionCorsPolicy, policy =>
                     {
                         policy.WithOrigins(allowedOrigins)
-                              .AllowAnyMethod()
-                              .AllowAnyHeader();
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
                     });
                 }
             });
 
             if (!builder.Environment.IsDevelopment())
             {
-                builder.Services.AddHttpsRedirection(options =>
-                {
-                    options.HttpsPort = 443;
-                });
+                builder.Services.AddHttpsRedirection(options => { options.HttpsPort = 443; });
             }
 
             builder.Services.AddHttpClient<IpAddressResolver>();
@@ -295,18 +297,18 @@ namespace RagnarokBotWeb
 
             var app = builder.Build();
 
-            // Protect dashboard with basic auth
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
                 Authorization = new[]
-            {
-                new HangfireCustomBasicAuthenticationFilter
                 {
-                    User = "thescumbot@hangfire",
-                    Pass = "secret"
+                    new HangfireCustomBasicAuthenticationFilter
+                    {
+                        User = "thescumbot@hangfire",
+                        Pass = "secret"
+                    }
                 }
-            }
             });
+            
             if (app.Environment.IsDevelopment())
             {
                 app.UseCors(DefaultCorsPolicy);

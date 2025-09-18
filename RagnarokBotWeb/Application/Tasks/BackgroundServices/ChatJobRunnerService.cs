@@ -1,61 +1,52 @@
 ﻿using RagnarokBotWeb.Application.Tasks.Jobs;
 using RagnarokBotWeb.Infrastructure.Repositories.Interfaces;
 
-namespace RagnarokBotWeb.Application.Tasks.BackgroundServices
+namespace RagnarokBotWeb.Application.Tasks.BackgroundServices;
+
+public class ChatJobRunnerService(IServiceProvider serviceProvider, ILogger<ChatJobRunnerService> logger)
+    : BackgroundService
 {
-    public class ChatJobRunnerService : BackgroundService
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<ChatJobRunnerService> _logger;
+        logger.LogInformation("ChatJobRunnerService started.");
 
-        public ChatJobRunnerService(IServiceProvider serviceProvider, ILogger<ChatJobRunnerService> logger)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _serviceProvider = serviceProvider;
-            _logger = logger;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            _logger.LogInformation("ChatJobRunnerService started.");
-
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                try
+                using var scope = serviceProvider.CreateScope();
+
+                var serverRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
+                var servers = await serverRepository.FindActive();
+
+                foreach (var server in servers)
                 {
-                    using var scope = _serviceProvider.CreateScope();
+                    if (stoppingToken.IsCancellationRequested)
+                        break;
 
-                    var serverRepository = scope.ServiceProvider.GetRequiredService<IScumServerRepository>();
-                    var servers = await serverRepository.FindActive();
-
-                    foreach (var server in servers)
+                    _ = Task.Run(async () =>
                     {
-                        if (stoppingToken.IsCancellationRequested)
-                            break;
+                        using var jobScope = serviceProvider.CreateScope();
+                        var job = jobScope.ServiceProvider.GetRequiredService<ChatJob>();
 
-                        _ = Task.Run(async () =>
+                        try
                         {
-                            using var jobScope = _serviceProvider.CreateScope();
-                            var job = jobScope.ServiceProvider.GetRequiredService<ChatJob>();
-
-                            try
-                            {
-                                await job.Execute(server.Id, Domain.Enums.EFileType.Chat);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "Error while executing ChatJob for server {ServerId}", server.Id);
-                            }
-                        }, stoppingToken);
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error while running jobs");
+                            await job.Execute(server.Id, Domain.Enums.EFileType.Chat);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Error while executing ChatJob for server {ServerId}", server.Id);
+                        }
+                    }, stoppingToken);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken);
             }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error while running jobs");
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken);
         }
     }
 }

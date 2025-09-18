@@ -83,7 +83,7 @@ public class ChatJob(
                         && parsed.Post)
                     {
                         await publisher.Publish(server,
-                         new ChannelPublishDto { Content = $"[{parsed.ChatType}] {parsed.PlayerName.Substring(0, parsed.PlayerName.LastIndexOf("("))}: {parsed.Text}" },
+                         new ChannelPublishDto { Content = $"[{parsed.ChatType}] {parsed.PlayerName.Substring(0, parsed.PlayerName.LastIndexOf('('))}: {parsed.Text}" },
                          ChannelTemplateValues.GameChat);
                     }
                 }
