@@ -151,7 +151,7 @@ public class FtpService : IFtpService, IAsyncDisposable
 
         try
         {
-            var results = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.Throw, token: token);
+            var results = await client.DownloadFiles(targetFolder, remoteFilePaths, FtpLocalExists.Overwrite, FtpVerify.None, token: token);
 
             if (results.Any(result => result.IsFailed))
             {

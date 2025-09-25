@@ -65,7 +65,6 @@ public class ScumFileProcessor
 
         try
         {
-            // Ensure client is connected
             if (!client.IsConnected)
             {
                 _logger.LogInformation("FTP client not connected, attempting to connect for server {ServerId}",
@@ -79,11 +78,11 @@ public class ScumFileProcessor
 
             var matchingFiles = new List<FtpListItem>();
             fileNames = fileNames
-                .Select(name => Path.GetFileName(name))
-                .Where(name => name.StartsWith(fileTypePrefix, StringComparison.OrdinalIgnoreCase))
+                .Select(Path.GetFileName)
+                .Where(name => name is not null && name.StartsWith(fileTypePrefix, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(f =>
                 {
-                    string fileName = Path.GetFileNameWithoutExtension(f);
+                    string fileName = Path.GetFileNameWithoutExtension(f)!;
                     string datePart = fileName.Replace($"{fileTypePrefix}_", "");
                     if (DateTime.TryParseExact(datePart, "yyyyMMddHHmmss",
                             null,
@@ -102,8 +101,8 @@ public class ScumFileProcessor
             {
                 try
                 {
-                    var fileInfo = await client.GetObjectInfo($"{logPath}{fileName}", dateModified: true);
-                    if (fileInfo != null && fileInfo.Type == FtpObjectType.File)
+                    var fileInfo = await client.GetObjectInfo($"{logPath}{fileName}", dateModified: true, token: cancellationToken);
+                    if (fileInfo is { Type: FtpObjectType.File })
                     {
                         var listItem = new FtpListItem
                         {

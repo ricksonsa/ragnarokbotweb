@@ -286,6 +286,12 @@ namespace RagnarokBotClient
 
             [DllImport("user32.dll")]
             static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+            
+            [DllImport("user32.dll", SetLastError = true)]
+            static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+            [DllImport("user32.dll", SetLastError = true)]
+            static extern bool AdjustWindowRectEx(ref RECT lpRect, int dwStyle, bool bMenu, int dwExStyle);
 
             [DllImport("user32.dll", SetLastError = true)]
             static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
@@ -319,6 +325,8 @@ namespace RagnarokBotClient
                 public IntPtr dwExtraInfo;
             }
 
+            const int GWL_STYLE = -16;
+            const int GWL_EXSTYLE = -20;
 
             const uint INPUT_MOUSE = 0;
             const uint MOUSEEVENTF_MOVE = 0x0001;
@@ -406,54 +414,98 @@ namespace RagnarokBotClient
 
                 SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
             }
-
-
+            
             public static async Task ReconnectToServer(bool firstRun)
             {
                 Process[] procs = Process.GetProcessesByName("SCUM");
-                if (procs.Length > 0)
+                if (procs.Length == 0)
                 {
-                    if (procs[0].MainWindowHandle != IntPtr.Zero)
-                    {
-                        MoveWindow(procs[0].MainWindowHandle, 0, 0, 800, 600, false);
-                        SetForegroundWindow(procs[0].MainWindowHandle);
-                        await Task.Delay(2000);
-
-                        if (GetWindowRect(procs[0].MainWindowHandle, out RECT rect))
-                        {
-                            int centerX = (rect.Left + rect.Right) / 2;
-                            int centerY = ((rect.Top + rect.Bottom) / 2);
-
-                            SetCursorPos(centerX, centerY + 25);
-                            await Task.Delay(300);
-
-                            if (firstRun) SendCtrlD();
-
-                            SendMouseClick(); // Click "OK"
-                            await Task.Delay(3000);
-
-                            SetCursorPos(centerX, centerY);
-                            await Task.Delay(300);
-
-                            SetCursorPos(centerX - 300, centerY + 60);
-                            await Task.Delay(300);
-
-                            SendMouseClick(); // Click "Continue"
-                        }
-                    }
+                    Logger.LogWrite("Couldn't find SCUM Window.");
+                    return;
                 }
-                else
+
+                var hWnd = procs[0].MainWindowHandle;
+                if (hWnd == IntPtr.Zero)
                 {
-                    Logger.LogWrite($"Couldn't find SCUM Window.");
+                    Logger.LogWrite("SCUM window handle not found.");
+                    return;
+                }
+
+                // target client size
+                int clientWidth = 800;
+                int clientHeight = 600;
+
+                int style = GetWindowLong(hWnd, GWL_STYLE);
+                int exStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
+
+                RECT desiredRect = new RECT
+                {
+                    Left = 0,
+                    Top = 0,
+                    Right = clientWidth,
+                    Bottom = clientHeight
+                };
+
+                // expand rect to include borders & title bar
+                AdjustWindowRectEx(ref desiredRect, style, false, exStyle);
+
+                int winWidth = desiredRect.Right - desiredRect.Left;
+                int winHeight = desiredRect.Bottom - desiredRect.Top;
+
+                // now move/resize the window
+                MoveWindow(hWnd, 0, 0, winWidth, winHeight, true);
+
+                // bring SCUM window to front
+                SetForegroundWindow(hWnd);
+                await Task.Delay(2000);
+
+                // get actual window rect for mouse positioning
+                if (GetWindowRect(hWnd, out RECT winRect))
+                {
+                    int centerX = (winRect.Left + winRect.Right) / 2;
+                    int centerY = (winRect.Top + winRect.Bottom) / 2;
+
+                    // click "OK"
+                    SetCursorPos(centerX, centerY + 30);
+                    await Task.Delay(300);
+                    SendMouseClick();
+                    await Task.Delay(300);
+                    
+                    SetCursorPos(centerX, centerY + 45);
+                    await Task.Delay(300);
+                    SendMouseClick();
+                    await Task.Delay(300);
+                    
+                    SetCursorPos(centerX, centerY + 50);
+                    await Task.Delay(300);
+                    SendMouseClick();
+                    await Task.Delay(300);
+                    
+                    SetCursorPos(centerX, centerY + 55);
+                    await Task.Delay(300);
+                    SendMouseClick();
+                    await Task.Delay(300);
+                    
+                    SetCursorPos(centerX, centerY + 60);
+                    await Task.Delay(300);
+                    SendMouseClick();
+                    await Task.Delay(300);
+
+                    if (firstRun)
+                        SendCtrlD();
+
+                    await Task.Delay(3000);
+
+                    // reposition for "Continue"
+                    SetCursorPos(centerX, centerY);
+                    await Task.Delay(300);
+                    SetCursorPos(centerX - 300, centerY + 55);
+                    await Task.Delay(300);
+
+                    SendMouseClick();
                 }
             }
-
-
-            private static void User32_Exited(object? sender, EventArgs e)
-            {
-                throw new NotImplementedException();
-            }
-
+            
             internal static bool BringWindowToForeground()
             {
                 Process[] procs = Process.GetProcessesByName("SCUM");
