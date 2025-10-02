@@ -43,6 +43,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 await discordService.SendLockpickRankEmbed(channel.DiscordId, advancedRank, "Gold Lock");
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception ex)
             {

@@ -97,7 +97,6 @@ namespace RagnarokBotWeb.Domain.Services
                 Port = ftpDto.Port,
                 UserName = ftpDto.UserName,
                 Password = ftpDto.Password,
-                Provider = ftpDto.Provider,
                 RootFolder = rootPath
             };
 

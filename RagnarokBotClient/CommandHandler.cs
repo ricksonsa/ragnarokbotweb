@@ -154,17 +154,18 @@ namespace RagnarokBotClient
         private async Task HandleListPlayers()
         {
             await _scumManager.DumpListPlayers();
-            await Task.Delay(1000);
+            await Task.Delay(3000);
 
-            string clipboardContent = await GetClipboardTextAsync();
-
-            var response = await _remote.PostAsync("api/bots/players", new { Value = clipboardContent });
+            await GetClipboardTextAsync().ContinueWith(async clipboardContent =>
+            {
+                await _remote.PostAsync("api/bots/players", new { Value = clipboardContent });
+            });
         }
 
         private async Task HandleListSquads()
         {
             await _scumManager.DumpAllSquadsInfoList();
-            await Task.Delay(1000);
+            await Task.Delay(3000);
             string clipboardContent = await GetClipboardTextAsync();
             var response = await _remote.PostAsync("api/bots/squads", new { Value = clipboardContent });
         }
@@ -180,7 +181,7 @@ namespace RagnarokBotClient
             string content = "";
             int pageCount = 1;
             await _scumManager.DumpAllFlagsInfoList(page);
-            await Task.Delay(1000);
+            await Task.Delay(3000);
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(await GetClipboardTextAsync())))
             using (var reader = new StreamReader(stream))
             {

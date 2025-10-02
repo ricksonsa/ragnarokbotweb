@@ -239,7 +239,6 @@ export class PlayerComponent implements OnInit {
           this.loadingWelcomepack = false;
           this.eventManager.broadcast(new EventWithContent<Alert>('alert', new Alert('Error', err.error.details, 'error')));
         }
-
       });
   }
 
@@ -307,7 +306,6 @@ export class PlayerComponent implements OnInit {
           this.playerForm.patchValue(player);
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have added ${this.addCoinsValue} bot coins to the player ${this.playerForm.value.name}`, 'success')));
           this.addCoinsValue = 0;
-
         },
         error: (err) => {
           this.addingCoins = false;
@@ -325,7 +323,6 @@ export class PlayerComponent implements OnInit {
         next: (player) => {
           this.addingGold = false;
           this.addingLoader = false;
-          this.playerForm.patchValue(player);
           this.playerForm.controls['gold'].patchValue(+this.playerForm.controls['gold'].value + this.addGoldValue);
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addGoldValue} ingame gold to the player ${this.playerForm.value.name}`, 'success')));
           this.addGoldValue = 0;
@@ -346,7 +343,6 @@ export class PlayerComponent implements OnInit {
         next: (player) => {
           this.addingFame = false;
           this.addingLoader = false;
-          this.playerForm.patchValue(player);
           this.playerForm.controls['fame'].patchValue(+this.playerForm.controls['fame'].value + this.addFameValue);
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addFameValue} ingame fame to the player ${this.playerForm.value.name}`, 'success')));
           this.addFameValue = 0;
@@ -367,7 +363,6 @@ export class PlayerComponent implements OnInit {
         next: (player) => {
           this.addingMoney = false;
           this.addingLoader = false;
-          this.playerForm.patchValue(player);
           this.playerForm.controls['money'].patchValue(+this.playerForm.controls['money'].value + this.addMoneyValue);
           this.eventManager.broadcast(new EventWithContent('alert', new Alert('Player', `You have successfully added ${this.addMoneyValue} ingame money to the player ${this.playerForm.value.name}`, 'success')));
           this.addMoneyValue = 0;
@@ -395,6 +390,5 @@ export class PlayerComponent implements OnInit {
       });
       return;
     }
-
   }
 }

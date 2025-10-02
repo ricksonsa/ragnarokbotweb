@@ -29,6 +29,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 await _warzoneService.CloseWarzone(warzoneId);
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception)
             {

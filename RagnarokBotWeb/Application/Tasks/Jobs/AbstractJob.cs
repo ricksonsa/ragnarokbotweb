@@ -17,10 +17,10 @@ public abstract class AbstractJob
     protected async Task<ScumServer> GetServerAsync(long serverId, bool ftpRequired = true, bool validateSubscription = false)
     {
         var server = await _scumServerRepository.FindByIdAsNoTrackingAsync(serverId);
-        if (server is null) throw new Exception("Invalid server: server does not exist");
-        _scumServer = server;
+        _scumServer = server ?? throw new Exception("Invalid server: server does not exist");
+        if (!server.Tenant.Enabled) throw new TenantDisabledException();
+        if ((server.Ftp is null || !server.Ftp.Enabled) && ftpRequired) throw new FtpNotSetException();
         if (validateSubscription && !server.Tenant.IsCompliant()) throw new ServerUncompliantException();
-        if (server!.Ftp is null && ftpRequired) throw new FtpNotSetException();
         return server;
     }
 

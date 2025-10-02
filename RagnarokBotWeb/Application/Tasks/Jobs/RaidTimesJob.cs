@@ -30,6 +30,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 cache.SetRaidTimes(server.Id, raidTime);
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception ex)
             {

@@ -11,7 +11,11 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
     public class OrderRepository : Repository<Order>, IOrderRepository
     {
         private readonly AppDbContext _appDbContext;
-        public OrderRepository(AppDbContext context) : base(context) { _appDbContext = context; }
+
+        public OrderRepository(AppDbContext context) : base(context)
+        {
+            _appDbContext = context;
+        }
 
         public override Task AddAsync(Order entity)
         {
@@ -22,40 +26,42 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public override Task<Order?> FindByIdAsync(long id)
         {
             return DbSet()
-               .Include(order => order.ScumServer)
+                .Include(order => order.ScumServer)
                 .Include(order => order.ScumServer.Uav)
+                .Include(order => order.ScumServer.Exchange)
                 .Include(order => order.Taxi)
                     .ThenInclude(taxi => taxi.TaxiTeleports)
-                    .ThenInclude(tp => tp.Teleport)
+                        .ThenInclude(tp => tp.Teleport)
                 .Include(order => order.Player)
                 .Include(order => order.Pack)
-                .ThenInclude(pack => pack.PackItems)
-                .ThenInclude(packItems => packItems.Item)
+                    .ThenInclude(pack => pack.PackItems)
+                        .ThenInclude(packItems => packItems.Item)
                 .Include(order => order.Warzone)
                     .ThenInclude(warzone => warzone.Teleports)
-                    .ThenInclude(teleport => teleport.Teleport)
-               .AsSplitQuery()
-               .FirstOrDefaultAsync(order => order.Id == id);
+                        .ThenInclude(teleport => teleport.Teleport)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(order => order.Id == id);
         }
 
         public Task<List<Order>> FindManyForProcessor(Expression<Func<Order, bool>> predicate)
         {
             return DbSet()
-               .Include(order => order.ScumServer)
-               .Include(order => order.ScumServer.Uav)
-               .Include(order => order.Taxi)
-                   .ThenInclude(taxi => taxi.TaxiTeleports)
-                   .ThenInclude(tp => tp.Teleport)
-               .Include(order => order.Player)
-               .Include(order => order.Pack)
-               .ThenInclude(pack => pack.PackItems)
-               .ThenInclude(packItems => packItems.Item)
-               .Include(order => order.Warzone)
-                   .ThenInclude(warzone => warzone.Teleports)
-                   .ThenInclude(teleport => teleport.Teleport)
-               .AsSplitQuery()
-               .Where(predicate)
-               .ToListAsync();
+                .Include(order => order.ScumServer)
+                .Include(order => order.ScumServer.Exchange)
+                .Include(order => order.ScumServer.Uav)
+                .Include(order => order.Taxi)
+                .ThenInclude(taxi => taxi.TaxiTeleports)
+                .ThenInclude(tp => tp.Teleport)
+                .Include(order => order.Player)
+                .Include(order => order.Pack)
+                .ThenInclude(pack => pack.PackItems)
+                .ThenInclude(packItems => packItems.Item)
+                .Include(order => order.Warzone)
+                .ThenInclude(warzone => warzone.Teleports)
+                .ThenInclude(teleport => teleport.Teleport)
+                .AsSplitQuery()
+                .Where(predicate)
+                .ToListAsync();
         }
 
         public override Task CreateOrUpdateAsync(Order entity)
@@ -71,17 +77,18 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
+                .Include(order => order.ScumServer.Exchange)
                 .Include(order => order.ScumServer.Uav)
                 .Include(order => order.Taxi)
-                    .ThenInclude(taxi => taxi.TaxiTeleports)
-                    .ThenInclude(tp => tp.Teleport)
+                .ThenInclude(taxi => taxi.TaxiTeleports)
+                .ThenInclude(tp => tp.Teleport)
                 .Include(order => order.Player)
                 .Include(order => order.Pack)
                 .ThenInclude(pack => pack.PackItems)
                 .ThenInclude(packItems => packItems.Item)
                 .Include(order => order.Warzone)
-                    .ThenInclude(warzone => warzone.Teleports)
-                    .ThenInclude(teleport => teleport.Teleport)
+                .ThenInclude(warzone => warzone.Teleports)
+                .ThenInclude(teleport => teleport.Teleport)
                 .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId)
                 .OrderBy(order => order.CreateDate)
                 .AsSplitQuery()
@@ -92,7 +99,8 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         {
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
-                .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId && order.Status == EOrderStatus.Created)
+                .Where(order => order.ScumServer != null && order.ScumServer.Id == serverId &&
+                                order.Status == EOrderStatus.Created)
                 .OrderBy(order => order.CreateDate)
                 .Take(5)
                 .AsNoTracking()
@@ -106,9 +114,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
             return _appDbContext.Orders
                 .Include(order => order.ScumServer)
                 .Where(order => order.ScumServer != null
-                    && order.ScumServer.Id == serverId
-                    && order.Status == EOrderStatus.Command
-                    && order.UpdateDate < time)
+                                && order.ScumServer.Id == serverId
+                                && order.Status == EOrderStatus.Command
+                                && order.UpdateDate < time)
                 .OrderBy(order => order.CreateDate)
                 .ToListAsync();
         }
@@ -122,7 +130,9 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(order => order.Pack)
                 .ThenInclude(pack => pack!.PackItems)
                 .ThenInclude(packItems => packItems.Item)
-                .Where(order => order.Pack != null && order.Pack.Id == packId && order.CreateDate >= now.AddHours(-24) && order.CreateDate <= now)
+                .Where(order =>
+                    order.Pack != null && order.Pack.Id == packId && order.CreateDate >= now.AddHours(-24) &&
+                    order.CreateDate <= now)
                 .OrderByDescending(order => order.CreateDate)
                 .ToListAsync();
         }
@@ -134,9 +144,10 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(order => order.ScumServer)
                 .Include(order => order.Player)
                 .Include(order => order.Warzone)
-                    .ThenInclude(warzone => warzone!.Teleports)
-                    .ThenInclude(teleport => teleport.Teleport)
-                .Where(order => order.Warzone != null && order.Warzone.Id == warzoneId && order.CreateDate >= now.AddHours(-24) && order.CreateDate <= now)
+                .ThenInclude(warzone => warzone!.Teleports)
+                .ThenInclude(teleport => teleport.Teleport)
+                .Where(order => order.Warzone != null && order.Warzone.Id == warzoneId &&
+                                order.CreateDate >= now.AddHours(-24) && order.CreateDate <= now)
                 .OrderByDescending(order => order.CreateDate)
                 .ToListAsync();
         }
@@ -148,9 +159,11 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
                 .Include(order => order.ScumServer)
                 .Include(order => order.Player)
                 .Include(order => order.Taxi)
-                    .ThenInclude(taxi => taxi!.TaxiTeleports)
-                    .ThenInclude(teleport => teleport.Teleport)
-                .Where(order => order.Taxi != null && order.Taxi.Id == taxiId && order.CreateDate >= now.AddHours(-24) && order.CreateDate <= now)
+                .ThenInclude(taxi => taxi!.TaxiTeleports)
+                .ThenInclude(teleport => teleport.Teleport)
+                .Where(order =>
+                    order.Taxi != null && order.Taxi.Id == taxiId && order.CreateDate >= now.AddHours(-24) &&
+                    order.CreateDate <= now)
                 .OrderByDescending(order => order.CreateDate)
                 .ToListAsync();
         }
@@ -158,24 +171,29 @@ namespace RagnarokBotWeb.Infrastructure.Repositories
         public Task<Page<Order>> GetPageByFilter(long serverId, Paginator paginator, string? filter)
         {
             var query = _appDbContext.Orders
-               .Include(order => order.Pack)
-               .Include(order => order.Warzone)
-               .Include(order => order.Taxi)
-               .Include(order => order.ScumServer)
-               .Include(order => order.ScumServer.Uav)
-               .Include(order => order.Player)
-               .Where(order => order.ScumServer.Id == serverId)
-               .OrderByDescending(order => order.Id);
+                .Include(order => order.Pack)
+                .Include(order => order.Warzone)
+                .Include(order => order.Taxi)
+                .Include(order => order.ScumServer)
+                .Include(order => order.ScumServer.Uav)
+                .Include(order => order.Player)
+                .Where(order => order.ScumServer.Id == serverId)
+                .OrderByDescending(order => order.Id);
 
             if (!string.IsNullOrEmpty(filter))
             {
                 filter = filter.ToLower();
-                return base.GetPageAsync(paginator, query.Where(
-                    order =>
-                    order.Player != null && (order.Player.Name != null && order.Player.Name.ToLower().Contains(filter) || (order.Player.SteamId64 != null && order.Player.SteamId64 == filter)
-                    || order.Pack != null && (order.Pack.Name.ToLower().Contains(filter) || (order.Pack.Description != null && order.Pack.Description.ToLower().Contains(filter)))
-                    || order.Warzone != null && (order.Warzone.Name.ToLower().Contains(filter) || (order.Warzone.Description != null && order.Warzone.Description.ToLower().Contains(filter)))
-                    || order.Id.ToString() == filter)));
+                return base.GetPageAsync(paginator, query.Where(order =>
+                    order.Player != null &&
+                    (order.Player.Name != null && order.Player.Name.ToLower().Contains(filter) ||
+                     (order.Player.SteamId64 != null && order.Player.SteamId64 == filter)
+                     || order.Pack != null && (order.Pack.Name.ToLower().Contains(filter) ||
+                                               (order.Pack.Description != null &&
+                                                order.Pack.Description.ToLower().Contains(filter)))
+                     || order.Warzone != null && (order.Warzone.Name.ToLower().Contains(filter) ||
+                                                  (order.Warzone.Description != null && order.Warzone.Description
+                                                      .ToLower().Contains(filter)))
+                     || order.Id.ToString() == filter)));
             }
 
             return base.GetPageAsync(paginator, query);

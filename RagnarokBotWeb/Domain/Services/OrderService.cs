@@ -240,7 +240,7 @@ namespace RagnarokBotWeb.Domain.Services
             {
                 if (!_botService.IsBotOnline(order.ScumServer.Id)) return;
                 var players = _cacheService.GetConnectedPlayers(order.ScumServer.Id);
-                if (!players.Any(p => p.SteamID == order.Player!.SteamId64)) return;
+                if (players.All(p => p.SteamID != order.Player!.SteamId64)) return;
                 if (order?.Player?.SteamId64 is null) return;
 
                 var command = new BotCommand();
@@ -264,12 +264,10 @@ namespace RagnarokBotWeb.Domain.Services
                 }
 
                 if (order.OrderType != EOrderType.UAV)
-                {
                     await _unitOfWork.AppDbContext.Database.ExecuteSqlAsync($@"UPDATE ""Orders"" SET ""Status"" = {(int)EOrderStatus.Command} WHERE ""Id"" = {order.Id}");
-                }
-
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception ex)
             {
@@ -298,7 +296,7 @@ namespace RagnarokBotWeb.Domain.Services
         {
             if (order.Warzone is null) return;
             var teleport = WarzoneRandomSelector.SelectTeleportPoint(order.Warzone!);
-            command.Data = "order_" + order.Id.ToString();
+            command.Data = "order_" + order.Id;
             command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
             await _botService.SendCommand(order.ScumServer.Id, command);
         }
@@ -308,16 +306,15 @@ namespace RagnarokBotWeb.Domain.Services
             if (order.Taxi is null) return;
             var teleport = order.Taxi.TaxiTeleports.FirstOrDefault(t => t.Id.ToString() == order.TaxiTeleportId);
             if (teleport is null) return;
-            command.Data = "order_" + order.Id.ToString();
+            command.Data = "order_" + order.Id;
             command.Teleport(order.Player!.SteamId64!, teleport.Teleport.Coordinates);
             await _botService.SendCommand(order.ScumServer.Id, command);
         }
 
         private async Task HandleExchangeOrder(IUnitOfWork uow, Order order, BotCommand command)
         {
-            if (order.Player is null) return;
-            if (order.Player.ScumServer.Exchange is null) return;
-            command.Data = "order_" + order.Id.ToString();
+            if (order.Player?.ScumServer.Exchange is null) return;
+            command.Data = "order_" + order.Id;
 
             var converter = new CoinConverterManager(order.ScumServer);
             var coinManager = new PlayerCoinManager(uow);
@@ -332,9 +329,21 @@ namespace RagnarokBotWeb.Domain.Services
                     }
                     await coinManager.RemoveCoinsByPlayerId(order.Player.Id, order.ExchangeAmount);
                     if (order.ScumServer.Exchange.CurrencyType == Enums.EExchangeGameCurrencyType.Money)
-                        command.ChangeMoney(order.Player!.SteamId64!, withdraw);
+                    {
+                        command.ChangeMoney(order.Player.SteamId64!, withdraw);
+                        await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync(
+                            @"UPDATE ""Players"" 
+                              SET ""Money"" = ""Money"" + {0} 
+                              WHERE ""Id"" = {1}", withdraw, order.Player.Id);
+                    }
                     else if (order.ScumServer.Exchange.CurrencyType == Enums.EExchangeGameCurrencyType.Gold)
-                        command.ChangeGold(order.Player!.SteamId64!, withdraw);
+                    {
+                        command.ChangeGold(order.Player.SteamId64!, withdraw);
+                        await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync(
+                            @"UPDATE ""Players"" 
+                              SET ""Gold"" = ""Gold"" + {0} 
+                              WHERE ""Id"" = {1}", withdraw, order.Player.Id);
+                    }
                     break;
 
                 case EExchangeType.Deposit:
@@ -346,9 +355,21 @@ namespace RagnarokBotWeb.Domain.Services
                     }
                     await coinManager.AddCoinsByPlayerId(order.Player.Id, deposit);
                     if (order.ScumServer.Exchange.CurrencyType == Enums.EExchangeGameCurrencyType.Money)
-                        command.ChangeMoney(order.Player!.SteamId64!, -order.ExchangeAmount);
+                    {
+                        command.ChangeMoney(order.Player.SteamId64!, -order.ExchangeAmount);
+                        await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync(
+                            @"UPDATE ""Players"" 
+                              SET ""Money"" = ""Money"" + {0} 
+                              WHERE ""Id"" = {1}", -order.ExchangeAmount, order.Player.Id);
+                    }
                     else if (order.ScumServer.Exchange.CurrencyType == Enums.EExchangeGameCurrencyType.Gold)
-                        command.ChangeGold(order.Player!.SteamId64!, -order.ExchangeAmount);
+                    {
+                        command.ChangeGold(order.Player.SteamId64!, -order.ExchangeAmount);
+                        await _unitOfWork.AppDbContext.Database.ExecuteSqlRawAsync(
+                            @"UPDATE ""Players"" 
+                              SET ""Gold"" = ""Gold"" + {0} 
+                              WHERE ""Id"" = {1}", -order.ExchangeAmount, order.Player.Id);
+                    }
                     break;
             }
             await _botService.SendCommand(order.ScumServer.Id, command);
@@ -427,8 +448,7 @@ namespace RagnarokBotWeb.Domain.Services
 
             return order;
         }
-
-
+        
         public async Task<List<GrapthDto>> GetBestSellingOrdersPacks()
         {
             var serverId = ServerId();

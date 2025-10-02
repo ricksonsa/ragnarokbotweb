@@ -30,6 +30,7 @@ public class CommandQueueProcessorJob(
             }
         }
         catch (ServerUncompliantException) { }
+        catch (TenantDisabledException) { }
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {

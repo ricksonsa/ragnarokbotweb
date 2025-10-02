@@ -68,6 +68,7 @@ public class LoginJob(
             }
         }
         catch (ServerUncompliantException) { }
+        catch (TenantDisabledException) { }
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {

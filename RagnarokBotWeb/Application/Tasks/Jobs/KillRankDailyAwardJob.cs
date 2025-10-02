@@ -30,6 +30,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 await HandleAwards(logger, unitOfWork, discordService, server, topKillersDaily, manager);
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception exception)
             {

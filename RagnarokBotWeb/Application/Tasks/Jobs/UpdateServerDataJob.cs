@@ -28,6 +28,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 await _serverService.UpdateServerData(server);
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception)
             {

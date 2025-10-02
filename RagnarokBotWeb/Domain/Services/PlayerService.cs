@@ -167,7 +167,7 @@ namespace RagnarokBotWeb.Domain.Services
         public async Task<Player> PlayerConnected(Entities.ScumServer server, string steamId64, string scumId, string name, double? x, double? y, double? z, string ipAddress)
         {
             var player = await _playerRepository.FindOneWithServerAsync(p => p.SteamId64 == steamId64 && p.ScumServer.Id == server.Id);
-
+  
             player ??= new();
             player.SteamId64 = steamId64;
             player.ScumId = scumId;
@@ -178,17 +178,13 @@ namespace RagnarokBotWeb.Domain.Services
             player.Y = y;
             player.Z = z;
             player.IpAddress = ipAddress;
-
-            await _playerRepository.CreateOrUpdateAsync(player);
-            await _playerRepository.SaveAsync();
-
+            
             var squads = _cacheService.GetSquads(server.Id);
-            var squad = squads.FirstOrDefault(s => s.Members.Any(x => x.SteamId == steamId64));
-
-            if (!_cacheService.GetConnectedPlayers(server.Id).Any(p => p.SteamID == steamId64))
+            var squad = squads.FirstOrDefault(s => s.Members.Any(squadMember => squadMember.SteamId == steamId64));
+            if (_cacheService.GetConnectedPlayers(server.Id).All(p => p.SteamID != steamId64))
             {
                 _cacheService.GetConnectedPlayers(server.Id).Add(
-                    new ScumPlayer()
+                    new ScumPlayer
                     {
                         Name = name,
                         SteamID = steamId64,
@@ -204,6 +200,9 @@ namespace RagnarokBotWeb.Domain.Services
                     });
             }
 
+            await _playerRepository.CreateOrUpdateAsync(player);
+            await _playerRepository.SaveAsync();
+            
             return player;
         }
 

@@ -61,6 +61,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 await _botService.SendCommand(server.Id, command);
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception ex)
             {

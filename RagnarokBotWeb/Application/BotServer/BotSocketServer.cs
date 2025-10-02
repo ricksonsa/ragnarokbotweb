@@ -22,7 +22,7 @@ namespace RagnarokBotWeb.Application.BotServer
         private readonly System.Timers.Timer _cleanupTimer;
 
         // Simplified timeouts
-        public static readonly TimeSpan PingTimeout = TimeSpan.FromMinutes(30);
+        public static readonly TimeSpan PingTimeout = TimeSpan.FromMinutes(5);
         private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(1); // Check every minute
         private static readonly TimeSpan ConnectionGracePeriod = TimeSpan.FromMinutes(5); // Grace period for disconnected bots
 

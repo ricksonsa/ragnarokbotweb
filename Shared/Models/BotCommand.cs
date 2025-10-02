@@ -182,7 +182,7 @@ namespace Shared.Models
                 Type = ECommandType.ChangeFame,
                 Target = target,
                 Value = amount.ToString(),
-                CheckTargetOnline = true
+                CheckTargetOnline = false
             });
             return this;
         }

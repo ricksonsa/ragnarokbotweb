@@ -45,6 +45,7 @@ public class FileChangeJob(
             }
         }
         catch (ServerUncompliantException) { }
+        catch (TenantDisabledException) { }
         catch (FtpNotSetException) { }
         catch (Exception ex)
         {

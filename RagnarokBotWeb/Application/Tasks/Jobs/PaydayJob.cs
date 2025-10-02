@@ -42,6 +42,7 @@ public class PaydayJob(
             }
         }
         catch (ServerUncompliantException) { }
+        catch (TenantDisabledException) { }
         catch (FtpNotSetException) { }
         catch (Exception)
         {

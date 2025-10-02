@@ -33,6 +33,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 await _warzoneService.OpenWarzone(server);
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception)
             {

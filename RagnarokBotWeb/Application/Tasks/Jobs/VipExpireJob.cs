@@ -68,6 +68,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 }
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception)
             {

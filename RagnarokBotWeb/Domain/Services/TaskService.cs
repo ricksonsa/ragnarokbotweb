@@ -592,15 +592,11 @@ namespace RagnarokBotWeb.Domain.Services
 
             // WarzoneItemSpawnJob - recurring
             var warzoneItemSpawnJobId = $"WarzoneItemSpawnJob-{server.Id}-{warzone.Id}";
-            _recurringJobManager.AddOrUpdate<CloseWarzoneJob>(
+            _recurringJobManager.AddOrUpdate<WarzoneItemSpawnJob>(
                 warzoneItemSpawnJobId,
                 job => job.Execute(server.Id, warzone.Id),
-                $"*/{warzone.ItemSpawnInterval} * * * *", // Every X minutes
-                 new RecurringJobOptions
-                 {
-                     TimeZone = server.GetTimeZoneOrDefault()
-                 });
-
+                $"*/{(int)Math.Clamp(warzone.ItemSpawnInterval, 1, 59)} * * * *"); // Every X minutes
+         
             // Track these jobs for cleanup
             if (!_serverJobIds.ContainsKey(server.Id))
                 _serverJobIds[server.Id] = new List<string>();

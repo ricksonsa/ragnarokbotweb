@@ -37,6 +37,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 await SendTopSnipers(discordService, unitOfWork, server, sniperRankChannel);
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception)
             {

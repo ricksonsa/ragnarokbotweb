@@ -50,6 +50,7 @@ namespace RagnarokBotWeb.Application.Tasks.Jobs
                 await discordService.SendEmbedToChannel(embed);
             }
             catch (ServerUncompliantException) { }
+            catch (TenantDisabledException) { }
             catch (FtpNotSetException) { }
             catch (Exception)
             {

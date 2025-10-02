@@ -488,15 +488,15 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("timestamptz");
 
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<long>("Port")
                         .HasColumnType("bigint");
-
-                    b.Property<int>("Provider")
-                        .HasColumnType("integer");
 
                     b.Property<string>("RootFolder")
                         .HasColumnType("text");
