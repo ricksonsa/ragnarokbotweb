@@ -129,12 +129,7 @@ namespace RagnarokBotWeb
             {
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
-
-            builder.Services.AddDbContextFactory<AppDbContext>(options =>
-            {
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });
-
+            
             // Register DbContext for scoped services using the factory
             builder.Services.AddScoped<AppDbContext>(sp =>
                 sp.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext());
