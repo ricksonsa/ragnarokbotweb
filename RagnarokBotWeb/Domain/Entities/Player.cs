@@ -28,6 +28,7 @@ public class Player : BaseEntity
     public string? IpAddress { get; set; }
     public bool VacBan { get; set; }
     public int? VacBanCount { get; set; }
+    public bool WelcomePackClaimed { get; set; }
 
     public bool IsVip() => Vips?.Any(vip => vip.Indefinitely || vip.ExpirationDate.HasValue && vip.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !vip.Processed) ?? false;
     public bool IsSilenced() => Silences?.Any(silence => silence.Indefinitely || silence.ExpirationDate.HasValue && silence.ExpirationDate.Value.Date > DateTime.UtcNow.Date && !silence.Processed) ?? false;

@@ -34,6 +34,7 @@ namespace RagnarokBotWeb.Domain.Services.Dto
         public string? Sector { get; set; }
         public bool VacBan { get; set; }
         public int? VacBanCount { get; set; }
+        public bool WelcomePackClaimed { get; set; }
 
         public void SetSquad(ScumSquad? squad)
         {

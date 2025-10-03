@@ -997,6 +997,9 @@ namespace RagnarokBotWeb.Migrations
                     b.Property<int?>("VacBanCount")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("WelcomePackClaimed")
+                        .HasColumnType("boolean");
+
                     b.Property<double?>("X")
                         .HasColumnType("double precision");
 

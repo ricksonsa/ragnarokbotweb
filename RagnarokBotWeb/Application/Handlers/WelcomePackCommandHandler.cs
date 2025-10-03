@@ -57,6 +57,7 @@ namespace RagnarokBotWeb.Application.Handlers
             player.DiscordName = (await _discordService.GetDiscordUser(register.ScumServer.Guild!.DiscordId, register.DiscordId))?.DisplayName;
             player.DiscordId = register.DiscordId;
             player.ScumServer = register.ScumServer;
+            player.WelcomePackClaimed = true;
 
             if (register.ScumServer.WelcomePackCoinAward > 0)
                 player.Coin += register.ScumServer.WelcomePackCoinAward;
