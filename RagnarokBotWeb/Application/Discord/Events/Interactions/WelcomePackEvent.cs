@@ -53,16 +53,20 @@ public class WelcomePackEvent : IInteractionEventHandler
 
                 if (player is not null && !player.WelcomePackClaimed)
                     playerRegister.Status = EPlayerRegisterStatus.Registering;
-                
+
                 try
                 {
                     var dmWarningMessage = GetDmWarningMessage(playerRegister);
                     await dmChannel.SendMessageAsync(dmWarningMessage);
-                    await component.RespondAsync(
-                        $"{DiscordEmoji.EnvelopeWithArrow} You have already requested your Welcome Pack!",
-                        ephemeral: true);
+                    var responseTxt = playerRegister.Status == EPlayerRegisterStatus.Registering
+                        ? $"{DiscordEmoji.EnvelopeWithArrow} Your Welcome Pack has been sent to your DM!"
+                        : $"{DiscordEmoji.EnvelopeWithArrow} You have already requested your Welcome Pack!";
+                    
+                    await component.RespondAsync(responseTxt, ephemeral: true);
                 }
-                catch { }
+                catch
+                {
+                }
 
                 return;
             }
@@ -110,7 +114,7 @@ public class WelcomePackEvent : IInteractionEventHandler
         {
             EPlayerRegisterStatus.Registering =>
                 "I saw that you already requested the Welcome Pack and haven't yet pasted the code into the game chat. " +
-                $"Copy and paste the code bellow into the game chat!\n{BuildWelcomePackCommand(playerRegister.WelcomePackId)}",
+                $"Copy and paste the code bellow into the game chat!\n\n{BuildWelcomePackCommand(playerRegister.WelcomePackId)}",
             EPlayerRegisterStatus.Registered =>
                 $"I saw that you requested a new Welcome Pack, unfortunately I can't help you {DiscordEmoji.Pensive}.",
             _ => throw new ArgumentOutOfRangeException(nameof(status), $"Unexpected player register status: {status}.")
